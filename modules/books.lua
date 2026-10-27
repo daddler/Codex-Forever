@@ -220,7 +220,11 @@ local function Row(i, body)
     r:SetScript("OnEnter", function(self) self._hot = true BP.PaintRow(self) end)
     r:SetScript("OnLeave", function(self) self._hot = nil BP.PaintRow(self) end)
     r:SetScript("OnClick", function(self)
-        BP.sel = self.entry and self.entry.b[1]
+        if self.stepIndex then
+            BP.selStep = self.stepIndex
+        else
+            BP.sel = self.entry and self.entry.b[1]
+        end
         BP.Show()
     end)
     rows[i] = r
@@ -228,7 +232,8 @@ local function Row(i, body)
 end
 
 function BP.PaintRow(r)
-    local on = r.entry and r.entry.b[1] == BP.sel
+    local on
+    if r.stepIndex then on = r.stepIndex == BP.selStep else on = r.entry and r.entry.b[1] == BP.sel end
     local s = (on and C.surface3) or (r._hot and C.surface2) or C.surface1
     r.bg:SetColorTexture(s[1], s[2], s[3], (on or r._hot) and 1 or 0)
 end
@@ -334,6 +339,15 @@ local function SidebarItems(list)
             order[#order + 1] = key
         end
     end
+    -- 1.4.0.0: der Gemuetliche Schlafsack, eine versteckte Questreihe.
+    local SB = WeintCodex.SleepingBag
+    if SB and WeintCodex.SleepingBagData then
+        local p = SB.Progress()
+        items[#items + 1] = { label = "Schlafsack",
+            status = { text = p and (p.done .. "/" .. p.total) or "?", color = (p and not p.current) and "success" or "textMuted" },
+            onClick = function() BP.cat = "sleepingbag" BP.Show() end }
+        order[#order + 1] = "sleepingbag"
+    end
     return items, order
 end
 
@@ -424,6 +438,10 @@ function BP.Show()
             if key ~= "all" then WeintCodex.SetBreadcrumb("Bücher", items[i].label) end
         end
     end
+    if BP.cat == "sleepingbag" then
+        BP.ShowBag(f)
+        return
+    end
     local list, chosen = {}, nil
     for _, e in ipairs(all) do
         if BP.cat == "all" or e.cat == BP.cat then list[#list + 1] = e end
@@ -440,7 +458,7 @@ function BP.Show()
     f.ListBody:SetWidth(w - 10)
     for i, e in ipairs(list) do
         local r = Row(i, f.ListBody)
-        r.entry = e
+        r.entry, r.stepIndex = e, nil
         r:ClearAllPoints()
         r:SetPoint("TOPLEFT", f.ListBody, "TOPLEFT", 0, -(i - 1) * BP.ROW_H)
         r:SetPoint("RIGHT", f.ListBody, "RIGHT", 0, 0)
@@ -461,5 +479,135 @@ function BP.Show()
     for i = #list + 1, #rows do rows[i]:Hide() end
     f.ListBody:SetHeight(math.max(1, #list * BP.ROW_H))
     f.Foot:SetText(#list == 0 and "Hier ist nichts." or "Klick auf ein Buch: Karte und Angaben rechts.")
+    f.drawnWidth = Plain(f:GetWidth())
+end
+
+--------------------------------------------------
+-- Gemuetlicher Schlafsack (1.4.0.0): dieselbe Seite, die Schritte statt
+-- der Buecher - Stand oben, Liste in Reihenfolge, rechts Karte, Hinweis
+-- und Questpfeil. Bestand data/sleepingbag.lua, Stand modules/sleepingbag.lua.
+--------------------------------------------------
+
+local function BagInspector(step, i, state)
+    local SB, lb = WeintCodex.SleepingBag, LB()
+    local d = WeintCodex.SleepingBagData
+    if not step then
+        return {
+            { type = "header", text = "Gemütlicher Schlafsack" },
+            { type = "card", lines = {
+                "Eine versteckte Questreihe quer durch",
+                "Azeroth: an jedem Ort etwas anklicken,",
+                "am Ende liegt der Schlafsack in der",
+                "Tasche. Ab Stufe " .. d.level .. ".",
+            }},
+            { type = "divider" },
+            { type = "header", text = "Woher das stammt" },
+            { type = "card", lines = {
+                "Was erledigt ist, sagt das Spiel.",
+                "Orte und Wege: unbestätigt,",
+                "Wissensstand aus der Beta.",
+            }},
+        }
+    end
+    local zone = lb.ZoneName(step.map) or "Gebiet unbekannt"
+    local blocks = {
+        { type = "header", text = (i and (i .. ". ") or "") .. SB.Name(step) },
+        { type = "custom", create = function(parent, width)
+            local w = BP.MapWidget(parent, width)
+            BP.PaintMap(w, step.map, step.x / 100, step.y / 100)
+            return w
+        end },
+        { type = "rows", rows = {
+            { label = "Gebiet", value = zone },
+            { label = "Ort", value = step.place },
+            { label = "Fundort", value = string.format("%.1f, %.1f", step.x, step.y) },
+            { label = "Stand", value = state },
+        }},
+        { type = "text", text = step.tip },
+    }
+    if state ~= "erledigt" then
+        blocks[#blocks + 1] = { type = "custom", create = function(parent, width)
+            if not BP.bagGuideBtn then BP.bagGuideBtn = BP.Pill(parent, "Questpfeil hierhin", { height = 32, size = 12, primary = true }) end
+            local g = BP.bagGuideBtn
+            g:SetWidth(width)
+            g:SetScript("OnClick", function() SB.Guide(step) end)
+            g:Paint(false)
+            return g
+        end }
+    end
+    blocks[#blocks + 1] = { type = "divider" }
+    blocks[#blocks + 1] = { type = "text", text = "Unbestätigt – Wissensstand aus der Beta." }
+    return blocks
+end
+
+function BP.ShowBag(f)
+    local SB, lb = WeintCodex.SleepingBag, LB()
+    local d = WeintCodex.SleepingBagData
+    local nav = WeintCodex.Navigation
+    local steps = SB.Steps()
+    local p = SB.Progress()
+    local list = {}
+    for i, st in ipairs(steps) do list[#list + 1] = { step = st, index = i } end
+    if d.optional then list[#list + 1] = { step = d.optional, index = #steps + 1, optional = true } end
+
+    local function State(e)
+        local v = SB.StepDone(e.step)
+        if v == nil then return "unbekannt" end
+        if v then return "erledigt" end
+        if e.optional then return "nebenbei" end
+        if p and p.current == e.index then return "als Nächstes" end
+        return "offen"
+    end
+
+    -- Stand oben: Zahl und Leiste, keine Marken.
+    for _, t in ipairs(f.Ticks) do t.mark:Hide() t.text:Hide() end
+    if not p then
+        f.Count:SetText("Stand unbekannt")
+        f.Goal:SetText("Das Spiel nennt nicht, welche Schritte erledigt sind.")
+        f.Fill:Hide()
+    else
+        f.Count:SetText(p.current and ("Schritt " .. p.current .. " von " .. p.total) or "Schlafsack erhalten")
+        local lvl = SB.LevelOk()
+        f.Goal:SetText(p.current and (lvl == false and ("Ab Stufe " .. d.level .. " – noch zu früh.") or (p.done .. " von " .. p.total .. " erledigt"))
+            or "Alle Schritte erledigt.")
+        local w = Plain(f.Track:GetWidth()) or 0
+        local a = C.accent
+        f.Fill:SetColorTexture(a[1], a[2], a[3], 1)
+        f.Fill:SetWidth(math.max(1, w * p.done / math.max(1, p.total)))
+        f.Fill:SetShown(p.done > 0)
+    end
+
+    local chosen
+    for _, e in ipairs(list) do if e.index == BP.selStep then chosen = e end end
+    nav.SetInspector(BagInspector(chosen and chosen.step, chosen and not chosen.optional and chosen.index or nil,
+        chosen and State(chosen)))
+
+    local w = Plain(f.Card:GetWidth()) or 460
+    local h = Plain(f.Card:GetHeight()) or 360
+    w = (type(w) == "number" and w or 460) - 24
+    h = (type(h) == "number" and h or 360) - 84 - 34
+    f.ListScroll:SetSize(w, math.max(60, h))
+    f.ListBody:SetWidth(w - 10)
+    for i, e in ipairs(list) do
+        local r = Row(i, f.ListBody)
+        r.entry, r.stepIndex = nil, e.index
+        r:ClearAllPoints()
+        r:SetPoint("TOPLEFT", f.ListBody, "TOPLEFT", 0, -(i - 1) * BP.ROW_H)
+        r:SetPoint("RIGHT", f.ListBody, "RIGHT", 0, 0)
+        local state = State(e)
+        local c = Col((state == "erledigt" and "success") or (state == "als Nächstes" and "accent") or "textMuted")
+        r.dot:SetVertexColor(c[1], c[2], c[3], 1)
+        r.name:SetText(e.optional and ("Nebenbei: " .. SB.Name(e.step) .. (e.step.quest and (" („" .. e.step.quest .. "“)") or ""))
+            or (e.index .. ". " .. SB.Name(e.step)))
+        r.sub:SetText((lb.ZoneName(e.step.map) or "?") .. " · " .. e.step.place .. " · " .. state)
+        local step = e.step
+        r.go:SetShown(state ~= "erledigt")
+        r.go:SetScript("OnClick", function() SB.Guide(step) end)
+        BP.PaintRow(r)
+        r:Show()
+    end
+    for i = #list + 1, #rows do rows[i]:Hide() end
+    f.ListBody:SetHeight(math.max(1, #list * BP.ROW_H))
+    f.Foot:SetText("Klick auf einen Schritt: Karte, Weg und Questpfeil rechts.")
     f.drawnWidth = Plain(f:GetWidth())
 end

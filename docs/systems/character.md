@@ -453,3 +453,19 @@ Rezepte · Gilde · Planer · Merkliste · Abklingzeiten.
   Reagenzien gegen Taschen + Bank, Twinks über den Bestand.
 - **Abklingzeiten:** welche Rezepte eine haben, sagt der Client beim
   Herstellen (`SavedData.profCD`), keine feste Liste.
+
+## Bücher und Gemütlicher Schlafsack
+
+Seite „Bücher“ (`modules/books.lua`, 6.59.0.0): Bücher der Bibliothek aus
+`data/books.lua` (erzeugt, `community`), bewertet nach Stufe und Lage
+(`modules/library.lua`), Karte aus den Kacheln des Clients, Questpfeil.
+
+**Seit 1.4.0.0** steht darunter in der Unternavigation „Schlafsack“: die
+versteckte Questreihe zum Gemütlichen Schlafsack (`data/sleepingbag.lua`,
+`modules/sleepingbag.lua`), je Fraktion sieben Schritte plus die
+Feuerstelle „Rekindle“ nebenbei. Nach dem Discovery-Bereich von Naowh
+Forever (all rights reserved): übernommen sind nur Fakten – Objektnamen
+(englisch, der Client nennt keine), Questnummern, Karten, Koordinaten; die
+Hinweise sind eigene Sätze. Erledigt ist, was der Client als abgeschlossene
+versteckte Quest meldet (der erste Schritt auch, sobald die Startquest
+angenommen ist). Antwortet er nicht: „Stand unbekannt“, nie „0 von 7“.

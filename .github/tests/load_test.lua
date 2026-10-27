@@ -19707,6 +19707,48 @@ do
     Check(ok, "Buecher-Seite: Bewertung nach Stufe und Lage, Karte aus dem Client, Liste" .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 1.4.0.0: Gemuetlicher Schlafsack - Schritte je Fraktion, Stand vom Client,
+-- unbekannt ehrlich, Seite in den Buechern, Questpfeil.
+do
+    local G = _G
+    local ok, err = pcall(function()
+        local SB, BP, D = WeintCodex.SleepingBag, WeintCodex.BooksPage, WeintCodex.SleepingBagData
+        assert(SB and D and #D.steps.Alliance == 7 and #D.steps.Horde == 7, "Bestand fehlt")
+        local oQ, oF, oL = G.C_QuestLog, G.UnitFactionGroup, G.UnitLevel
+        G.UnitFactionGroup = function() return "Horde", "Horde" end
+        G.UnitLevel = function() return 20 end
+        G.C_QuestLog = {}
+        assert(SB.Progress() == nil, "ohne Antwort des Clients ein Stand")
+        local done, on = {}, {}
+        G.C_QuestLog = { IsQuestFlaggedCompleted = function(q) return done[q] == true end,
+                         IsOnQuest = function(q) return on[q] == true end }
+        assert(SB.Steps()[1].map == 1413, "Horde beginnt nicht im Brachland")
+        local p = SB.Progress()
+        assert(p.done == 0 and p.current == 1 and p.total == 7, "Anfang falsch")
+        on[79007] = true
+        p = SB.Progress()
+        assert(p.done == 1 and p.current == 2, "angenommene Startquest zaehlt nicht")
+        done[79007], done[79192] = true, true
+        p = SB.Progress()
+        assert(p.done == 3 and p.current == 4, "Stand nach drei Schritten: " .. p.done .. "/" .. tostring(p.current))
+        assert(SB.Name(SB.Steps()[1]):find("Burned-Out Remains (", 1, true), "gleicher Name ohne Gebiet")
+        BP.cat, BP.selStep = "sleepingbag", 4
+        BP.Show()
+        assert(BP.page:IsShown() and BP.page.Count:GetText() == "Schritt 4 von 7", "Seite: " .. tostring(BP.page.Count:GetText()))
+        local QA = WeintCodex.UIQuestArrow
+        local custom
+        local oSet = QA.SetCustom
+        QA.SetCustom = function(t) custom = t end
+        assert(SB.Guide() and custom.map == 1442 and custom.title == "Schlafsack: Mound of Dirt", "Pfeil nicht auf den aktuellen Schritt")
+        QA.SetCustom = oSet
+        G.UnitLevel = function() return 10 end
+        assert(SB.LevelOk() == false, "Stufe nicht geprueft")
+        BP.cat, BP.selStep = "all", nil
+        G.C_QuestLog, G.UnitFactionGroup, G.UnitLevel = oQ, oF, oL
+    end)
+    Check(ok, "Schlafsack: Schritte je Fraktion, Stand vom Client, Seite, Questpfeil" .. (ok and "" or (": " .. tostring(err))))
+end
+
 -- 6.56.0.0: Buecher der Bibliothek - gezaehlt vom Client, naechste Belohnung.
 do
     local G = _G
