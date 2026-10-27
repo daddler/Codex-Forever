@@ -245,7 +245,7 @@ local function BuildPage()
     f:SetAllPoints(cp)
     local M = WeintCodex.Metrics
     f.Head = WeintCodex.PageHead(f, {
-        eyebrow = "Leveln",
+        eyebrow = "Entdecken",
         title   = "Bücher der Bibliothek",
         sub     = "Wo sie liegen, was zu deiner Stufe passt – und wie weit es bis zur nächsten Belohnung ist.",
         height  = BP.HEAD,
@@ -327,26 +327,31 @@ end
 local function SidebarItems(list)
     local n = { all = #list }
     for _, e in ipairs(list) do n[e.cat] = (n[e.cat] or 0) + 1 end
+    -- 1.5.0.0: Oberkategorie "Entdecken" mit zwei Abschnitten. `order`
+    -- zaehlt nur die anklickbaren Eintraege - so wie die Knoepfe der
+    -- Spalte (Zwischenueberschriften sind keine Knoepfe).
     local items, order = {}, {}
-    items[1] = { label = "Alle Bücher", status = { text = tostring(#list), color = "textMuted" },
+    items[1] = { isGroup = true, label = "Bücher der Bibliothek" }
+    items[2] = { label = "Alle Bücher", status = { text = tostring(#list), color = "textMuted" },
                  onClick = function() BP.cat = "all" BP.Show() end }
-    order[1] = "all"
+    order[1] = { key = "all", label = "Alle Bücher" }
     for _, c in ipairs(LB().CATS) do
         if (n[c.key] or 0) > 0 then
             local key = c.key
             items[#items + 1] = { label = c.label, status = { text = tostring(n[key]), color = c.color },
                                   onClick = function() BP.cat = key BP.Show() end }
-            order[#order + 1] = key
+            order[#order + 1] = { key = key, label = c.label }
         end
     end
     -- 1.4.0.0: der Gemuetliche Schlafsack, eine versteckte Questreihe.
     local SB = WeintCodex.SleepingBag
     if SB and WeintCodex.SleepingBagData then
         local p = SB.Progress()
-        items[#items + 1] = { label = "Schlafsack",
+        items[#items + 1] = { isGroup = true, label = "Questreihen" }
+        items[#items + 1] = { label = "Gemütlicher Schlafsack",
             status = { text = p and (p.done .. "/" .. p.total) or "?", color = (p and not p.current) and "success" or "textMuted" },
             onClick = function() BP.cat = "sleepingbag" BP.Show() end }
-        order[#order + 1] = "sleepingbag"
+        order[#order + 1] = { key = "sleepingbag", label = "Gemütlicher Schlafsack" }
     end
     return items, order
 end
@@ -428,17 +433,23 @@ function BP.Show()
     local all = lb.Rated()
     local items, order = SidebarItems(all)
     local known = false
-    for _, k in ipairs(order) do if k == BP.cat then known = true end end
+    for _, k in ipairs(order) do if k.key == BP.cat then known = true end end
     if not known then BP.cat = "all" end
-    nav.BuildSidebar("Bücher", items)
-    for i, key in ipairs(order) do
-        if key == BP.cat and nav.SidebarButtons then
+    nav.BuildSidebar("Entdecken", items)
+    for i, k in ipairs(order) do
+        if k.key == BP.cat and nav.SidebarButtons then
             local btn = nav.SidebarButtons()[i]
             if btn and btn.SetActive then btn:SetActive(true) end
-            if key ~= "all" then WeintCodex.SetBreadcrumb("Bücher", items[i].label) end
+            WeintCodex.SetBreadcrumb("Entdecken", k.label)
         end
     end
-    if BP.cat == "sleepingbag" then
+    local bag = BP.cat == "sleepingbag"
+    f.Head.Title:SetText(bag and "Gemütlicher Schlafsack" or "Bücher der Bibliothek")
+    if f.Head.Sub then
+        f.Head.Sub:SetText(bag and "Eine versteckte Questreihe: jeder Schritt mit Karte und Questpfeil, der Stand kommt aus dem Spiel."
+            or "Wo sie liegen, was zu deiner Stufe passt – und wie weit es bis zur nächsten Belohnung ist.")
+    end
+    if bag then
         BP.ShowBag(f)
         return
     end

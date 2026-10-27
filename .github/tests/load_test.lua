@@ -19751,6 +19751,13 @@ do
         BP.cat, BP.selStep = "sleepingbag", 4
         BP.Show()
         assert(BP.page:IsShown() and BP.page.Count:GetText() == "Schritt 4 von 7", "Seite: " .. tostring(BP.page.Count:GetText()))
+        -- 1.5.0.0: Oberkategorie "Entdecken" mit Buechern und Schlafsack
+        assert(BP.page.Head.Title:GetText() == "Gemütlicher Schlafsack", "Titel: " .. tostring(BP.page.Head.Title:GetText()))
+        local navLabel
+        for _, t in ipairs(WeintCodex.Navigation.Tabs()) do
+            if t.id == "buecher" then navLabel = t.label end
+        end
+        assert(navLabel == "Entdecken", "Navigation: " .. tostring(navLabel))
         local QA = WeintCodex.UIQuestArrow
         local custom
         local oSet = QA.SetCustom

@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.5.0.0",
+        date    = "27.10.2026",
+        notes   = {
+            "|cff7C6CFFEntdecken statt Bücher|r – der Eintrag in der Navigation heißt jetzt „Entdecken“. Darin stehen die Bücher der Bibliothek und, als eigener Abschnitt, der Gemütliche Schlafsack.",
+        },
+    },
+    {
         version = "1.4.0.0",
         date    = "27.10.2026",
         notes   = {

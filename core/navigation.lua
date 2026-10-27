@@ -53,7 +53,10 @@ local tabs = {
     { id = "taschen",    icon = ICON_PATH .. "nav_taschen",    label = "Taschen" },
     -- Seit 6.59.0.0: Buecher der Bibliothek - wo sie liegen, was passt
     -- (modules/books.lua). Ohne feature: Stand aus dem eigenen Client.
-    { id = "buecher",    icon = ICON_PATH .. "nav_buecher",    label = "Bücher" },
+    -- 1.5.0.0 (Wunsch: "Buecher in eine Oberkategorie, darin Buecher und
+    -- der Schlafsack"): Beschriftung "Entdecken"; die Kennung bleibt
+    -- "buecher", damit gemerkte Seiten und /wc buecher weiter treffen.
+    { id = "buecher",    icon = ICON_PATH .. "nav_buecher",    label = "Entdecken" },
 
     -- Die Dungeons, ohne feature: Namen, Gebiete und Stufenbereiche stehen
     -- in data/dungeons.lua. Gildenintern sind allein die Rollen-Tipps des

@@ -454,7 +454,12 @@ Rezepte · Gilde · Planer · Merkliste · Abklingzeiten.
 - **Abklingzeiten:** welche Rezepte eine haben, sagt der Client beim
   Herstellen (`SavedData.profCD`), keine feste Liste.
 
-## Bücher und Gemütlicher Schlafsack
+## Entdecken: Bücher und Gemütlicher Schlafsack
+
+**Seit 1.5.0.0** heißt der Eintrag in der Navigation „Entdecken“ (Kennung
+weiter `buecher`). Die Unternavigation hat zwei Abschnitte (`isGroup`):
+„Bücher der Bibliothek“ und „Questreihen“ mit „Gemütlicher Schlafsack“;
+der Seitentitel folgt der Auswahl.
 
 Seite „Bücher“ (`modules/books.lua`, 6.59.0.0): Bücher der Bibliothek aus
 `data/books.lua` (erzeugt, `community`), bewertet nach Stufe und Lage

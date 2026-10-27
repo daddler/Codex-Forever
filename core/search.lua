@@ -58,7 +58,7 @@ local PAGES = {
     { id = "klassenquests", label = "Klassenquests" },
     { id = "berufe",      label = "Berufe" },
     { id = "taschen",     label = "Taschen" },
-    { id = "buecher",     label = "Bücher" },
+    { id = "buecher",     label = "Entdecken" },
     { id = "dungeons",    label = "Dungeons" },
     { id = "beute",       label = "Beute" },
     { id = "gruppe",      label = "Gruppencheck" },
@@ -239,7 +239,7 @@ local function BuildStatic()
     -- BUECHER der Bibliothek.
     for _, b in ipairs((WeintCodex.BooksData and WeintCodex.BooksData.books) or {}) do
         if type(b[4]) == "string" then
-            Add(index, "book", b[4] .. "  · Bücher", function() GoTo("buecher") end)
+            Add(index, "book", b[4] .. "  · Entdecken › Bücher", function() GoTo("buecher") end)
         end
     end
 

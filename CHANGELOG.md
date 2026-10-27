@@ -9,6 +9,11 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.5.0.0] – 2026-10-27
+
+### Geändert
+- Navigation: „Bücher“ heißt jetzt „Entdecken“ (Oberkategorie, Wunsch des Besitzers). Die Unternavigation hat zwei Abschnitte: „Bücher der Bibliothek“ (Alle Bücher und die Gruppen nach Einschätzung) und „Questreihen“ mit „Gemütlicher Schlafsack“. Der Seitentitel folgt der Auswahl. Die Kennung der Seite bleibt `buecher`; `/wc entdecken` und `/wc schlafsack` öffnen sie zusätzlich. Suche: Bücher stehen unter „Entdecken › Bücher“.
+
 ## [1.4.0.0] – 2026-10-27
 
 ### Neu
