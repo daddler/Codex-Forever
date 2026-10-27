@@ -210,8 +210,11 @@ WeintCodex_Dungeons = {
                 position = "Am Ende des ersten Gangs, in der ersten Biegung.",
             },
             {
-                id   = "lordaeron_captain",
-                name = "Lordaeron Captain",
+                -- 1.4.0.0: ein seltener Elite (Abgleich vom 27.10.2026).
+                id       = "lordaeron_captain",
+                name     = "Lordaeron Captain",
+                optional = true,
+                note     = "Seltener Elite.",
             },
             {
                 id   = "bjork",
@@ -292,6 +295,15 @@ WeintCodex_Dungeons = {
                 name = "Relic Guardian",
                 position = "Steinernes Titanenkonstrukt, der Endboss.",
             },
+            {
+                -- 1.4.0.0: hat eine eigene Encounter-Nummer (3644, Abgleich
+                -- vom 27.10.2026) - also doch ein Kampf, aber nur zur Quest
+                -- „Horrors in the Highland“. Keine eigene Beute berichtet.
+                id       = "highland_horror",
+                name     = "Highland Horror",
+                optional = true,
+                note     = "Erscheint zur Quest „Horrors in the Highland“.",
+            },
         },
     },
 
@@ -325,7 +337,7 @@ WeintCodex_Dungeons = {
         bossSource     = SRC.COMMUNITY,
         bossesComplete = true,
         orderKnown     = false,
-        bossCount      = 8,
+        bossCount      = 9,
         bosses = {
             {
                 id   = "atrexis",
@@ -349,6 +361,15 @@ WeintCodex_Dungeons = {
             },
             { id = "mana_devourer",  name = "Mana Devourer" },
             { id = "arcanic_enigma", name = "Arcanic Enigma" },
+            {
+                -- 6.28.1.0 als „kein Boss mehr“ gestrichen; 1.4.0.0 zurück:
+                -- er hat eine eigene Encounter-Nummer (3312) und gilt als
+                -- optional (Abgleich vom 27.10.2026). Neun Kämpfe, wie schon
+                -- vor 6.28.1.0 berichtet.
+                id       = "mana_wraith",
+                name     = "Mana Wraith",
+                optional = true,
+            },
             {
                 id       = "lyn_the_ignored",
                 name     = "Lyn the Ignored",
@@ -378,14 +399,17 @@ WeintCodex_Dungeons = {
                 .. "wieder aufgetaucht.",
         mapArt   = false,
 
-        -- ZWEI BOSSE VON UNBEKANNT VIELEN, und sie sind die einzigen
-        -- auf dieser Seite, die Blizzard selbst gezeigt hat: die
-        -- Drowned City war auf der BlizzCon 2026 spielbar. Das ist
-        -- eine festere Quelle als ein Beta-Bericht - aber es sind
-        -- eben zwei Kämpfe aus einer Messeversion und nicht die
-        -- Liste. `bossesComplete = false` ist hier keine Formalie:
-        -- ohne sie läse sich das wie ein Dungeon mit zwei Bossen.
-        bossSource     = SRC.BLIZZCON,
+        -- BIS 1.4.0.0 ZWEI BOSSE VON UNBEKANNT VIELEN: Zul'Alai und Zin'aka,
+        -- die beiden Kämpfe der BlizzCon-Fassung (2026). Seit 1.4.0.0
+        -- (Abgleich vom 27.10.2026, Bestand vom Client-Build 1.60.1.70532)
+        -- stehen fünf Gegner mit fortlaufenden Forever-NPC-Nummern
+        -- (270882-270886) da. „Zin'aka“ kommt darin nicht vor - ob der
+        -- Kampf umbenannt wurde oder entfiel, sagt niemand; er steht
+        -- deshalb nicht mehr in der Liste (ein Boss, den keiner findet,
+        -- ist schlimmer als einer, der fehlt). Der Dungeon ist in der
+        -- Beta noch geschlossen: `community`, nicht vollständig, keine
+        -- Reihenfolge.
+        bossSource     = SRC.COMMUNITY,
         bossesComplete = false,
         orderKnown     = false,
         bossCount      = nil,
@@ -394,14 +418,12 @@ WeintCodex_Dungeons = {
             {
                 id   = "zulalai",
                 name = "Zul'Alai",
-                position = "Auf der BlizzCon-Fassung der erste der beiden "
-                        .. "gezeigten Kämpfe.",
+                position = "Auf der BlizzCon-Fassung der erste gezeigte Kampf.",
             },
-            {
-                id   = "zinaka",
-                name = "Zin'aka",
-                position = "Höherstufig als Zul'Alai, also später im Dungeon.",
-            },
+            { id = "vartaka",           name = "Var'Taka" },
+            { id = "captain_dreadrise", name = "Captain Dreadrise" },
+            { id = "deathless_marrow",  name = "Deathless Marrow" },
+            { id = "minloth",           name = "Min'loth the Serpent" },
         },
     },
 
@@ -447,8 +469,15 @@ WeintCodex_Dungeons = {
                 .. "Defias und Naga kämpfen darin gegeneinander.",
         mapArt   = false,
 
-        bossSource = nil,
-        bosses     = {},
+        -- Seit 1.4.0.0 ein Name (Abgleich vom 27.10.2026): Blazeroar, ohne
+        -- NPC-Nummer, der Dungeon ist in der Beta geschlossen. Einer von
+        -- unbekannt vielen - `bossesComplete = false`.
+        bossSource     = SRC.COMMUNITY,
+        bossesComplete = false,
+        orderKnown     = false,
+        bosses = {
+            { id = "blazeroar", name = "Blazeroar" },
+        },
     },
 
     {
@@ -500,8 +529,18 @@ WeintCodex_Dungeons = {
         -- Titanenthema heisst NICHT Uldaman-Bosse. Forever erzählt
         -- seine eigene Geschichte, und ein Boss, den man aus einem
         -- anderen Spiel erwartet, ist kein Beleg.
-        bossSource = nil,
-        bosses     = {},
+        -- Seit 1.4.0.0 vier Namen (Abgleich vom 27.10.2026), ohne
+        -- NPC-Nummern, Dungeon in der Beta geschlossen: `community`,
+        -- nicht vollständig, keine Reihenfolge.
+        bossSource     = SRC.COMMUNITY,
+        bossesComplete = false,
+        orderKnown     = false,
+        bosses = {
+            { id = "nanaya",    name = "Nanaya" },
+            { id = "snowtalon", name = "Snowtalon" },
+            { id = "cinder",    name = "Cinder" },
+            { id = "bolt",      name = "Bolt" },
+        },
     },
 
 }

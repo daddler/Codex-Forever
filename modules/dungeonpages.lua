@@ -1705,6 +1705,14 @@ local function QualityRGB(q)
 end
 
 local function PaintItemRow(row)
+    -- 1.4.0.0: Gegenstaende, die der Server (noch) nicht kennt, fragt der
+    -- Client vergeblich ab - Name aus dem Bestand, Fragezeichen, fertig.
+    if row.notYet then
+        row.label:SetText(row.fallbackName or ("Gegenstand " .. row.itemID))
+        row.label:SetTextColor(QualityRGB(row.fallbackQuality))
+        row.icon:SetTexture(QUESTION_ICON)
+        return true
+    end
     local name, _, quality, icon = ItemInfo(row.itemID)
     row.label:SetText(type(name) == "string" and name or row.fallbackName)
     local q = type(quality) == "number" and quality or row.fallbackQuality
@@ -1727,13 +1735,22 @@ itemEvents:SetScript("OnEvent", function(_, _, itemID)
 end)
 
 -- Eine Gegenstandszeile: Bild, Name in Qualitaetsfarbe, Platz rechts.
-local function ItemRow(parent, y, w, id, name, slot, quality, prefix)
+-- `chance` (1.4.0.0): Dropchance in ganzen Prozent, nil = unbekannt (dann
+-- steht keine Zahl da, nie "0 %"). Gegenstaende, die der Server noch nicht
+-- kennt (J.NotYet), sagen das rechts statt des Platzes.
+local function ItemRow(parent, y, w, id, name, slot, quality, prefix, chance)
     WeintCodex.DungeonPages.itemRows = (WeintCodex.DungeonPages.itemRows or 0) + 1
     local row = CreateFrame("Button", nil, parent)
     row:SetHeight(ITEM_ROW_H)
     row:SetPoint("TOPLEFT",  parent, "TOPLEFT",  0, y)
     row:SetPoint("TOPRIGHT", parent, "TOPRIGHT", 0, y)
-    row.itemID, row.fallbackName, row.fallbackQuality = id, name, quality
+    row.notYet = J and J.NotYet and J.NotYet(id)
+    row.itemID, row.fallbackName, row.fallbackQuality = id, name or (not row.notYet and "lädt …" or nil), quality
+    if row.notYet then
+        slot = "noch nicht im Spiel"
+    elseif chance then
+        slot = (slot and (slot .. " · ") or "") .. chance .. " %"
+    end
 
     local hl = row:CreateTexture(nil, "HIGHLIGHT")
     hl:SetAllPoints(row)
@@ -1771,7 +1788,10 @@ local function ItemRow(parent, y, w, id, name, slot, quality, prefix)
     row:SetScript("OnEnter", function(self)
         if not _G.GameTooltip then return end
         _G.GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
-        if _G.GameTooltip.SetItemByID then
+        if self.notYet then
+            _G.GameTooltip:SetText(self.fallbackName or ("Gegenstand " .. self.itemID))
+            _G.GameTooltip:AddLine("Der Server kennt diesen Gegenstand noch nicht.", 0.7, 0.7, 0.7, true)
+        elseif _G.GameTooltip.SetItemByID then
             _G.GameTooltip:SetItemByID(self.itemID)
         else
             _G.GameTooltip:SetText(self.fallbackName)
@@ -1804,7 +1824,7 @@ local function DrawLoot(inner, y, w, dungeon, boss)
     if #loot == 0 then return y end
     y = BodyHeading(inner, y, "Beute")
     for _, e in ipairs(loot) do
-        y = ItemRow(inner, y, w, e[1], e[2], e[3], e[4], e.from and (e.from .. ":") or nil)
+        y = ItemRow(inner, y, w, e[1], e[2], e[3], e[4], e.from and (e.from .. ":") or nil, e.chance)
     end
     y = JournalSource(inner, y - 4, w, J.LootSource and J.LootSource(dungeon.id, boss.id))
     return y - 14
@@ -2266,9 +2286,9 @@ local function DrawJournal(inner, y, w, dungeon)
         rubric:SetPoint("TOPLEFT", inner, "TOPLEFT", 0, y)
         y = y - JOURNAL_RUBRIC_H
         for _, grp in ipairs(others) do
-            y = BodyText(inner, y, grp.name, w, { size = 11, color = "textMuted" })
+            y = BodyText(inner, y, grp.note and (grp.name .. " · " .. grp.note) or grp.name, w, { size = 11, color = "textMuted" })
             for _, e in ipairs(grp.items) do
-                y = ItemRow(inner, y, w, e[1], e[2], e[3], e[4])
+                y = ItemRow(inner, y, w, e[1], e[2], e[3], e[4], nil, e.chance)
             end
             y = y - 6
         end
@@ -2664,6 +2684,12 @@ local function DrawBossDetail(f, y, dungeon, boss)
                 lead:SetPoint("TOPLEFT",  inner, "TOPLEFT",  0, y)
                 lead:SetPoint("TOPRIGHT", inner, "TOPRIGHT", 0, y)
                 y = y - leadH - 14
+            end
+
+            -- 1.4.0.0: Stufe aus den Clienttabellen (Abgleich), nur wenn bekannt.
+            local level = J and J.BossLevel and J.BossLevel(dungeon.id, boss.id)
+            if level then
+                y = BodyText(inner, y, "Stufe " .. level, w, { size = 12, color = "textDim" }) - 10
             end
 
             if boss.nameAlt then

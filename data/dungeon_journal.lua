@@ -1959,6 +1959,121 @@ function J.MergeForeverGuide()
     end
 end
 
+--------------------------------------------------
+-- Abgleich mit Naowh Forever (1.4.0.0, data/dungeon_journal_nf.lua)
+--------------------------------------------------
+-- Erzeugt, ruft am Ende J.MergeNaowh(). Regeln:
+--   * Beute des Journals bleibt, wie sie ist - sie bekommt nur ihre
+--     Dropchance, und was dort fehlt, wird angehaengt.
+--   * Beute aus Classic (J.LOOT_KIND = "classic") wird ERSETZT: der Abgleich
+--     nennt, was in Forever faellt; J.LOOT_KIND = "nf", Herkunft J.NF_SOURCE.
+--     Bosse ohne Beute bekommen sie ebenso.
+--   * Weitere Beute: Gruppen gleichen Namens aus Classic werden ersetzt,
+--     solche des Journals bekommen Chancen; "Gegner unterwegs" nur mit dem,
+--     was keine Gruppe des Journals schon fuehrt.
+--   * Eingaenge nur, wo keiner bekannt ist.
+-- Zweimal einmischen aendert nichts.
+J.NOT_YET = J.NOT_YET or {}
+J.BOSS_LEVEL = J.BOSS_LEVEL or {}
+
+function J.MergeNaowh()
+    local function entry(did)
+        local e = J.DATA[did]
+        if not e then
+            e = { loot = {}, quests = {} }
+            J.DATA[did] = e
+        end
+        e.loot, e.quests = e.loot or {}, e.quests or {}
+        return e
+    end
+    local function chances(list, rows)
+        local by = {}
+        for _, r in ipairs(rows) do by[r[1]] = r end
+        local have = {}
+        for _, it in ipairs(list) do
+            have[it[1]] = true
+            local r = by[it[1]]
+            if r and r.chance and not it.chance then it.chance = r.chance end
+        end
+        return have
+    end
+    -- Zeilen des Abgleichs tragen `nf`: ihnen duerfen Name, Platz und
+    -- Qualitaet fehlen - die nennt der Client.
+    for _, bosses in pairs(J.NF_LOOT or {}) do
+        for _, rows in pairs(bosses) do
+            for _, r in ipairs(rows) do r.nf = true end
+        end
+    end
+    for _, groups in pairs(J.NF_OTHERS or {}) do
+        for _, g in ipairs(groups) do
+            for _, r in ipairs(g.items) do r.nf = true end
+        end
+    end
+    for did, bosses in pairs(J.NF_LOOT or {}) do
+        local e = entry(did)
+        J.LOOT_KIND[did] = J.LOOT_KIND[did] or {}
+        for bid, rows in pairs(bosses) do
+            local list, kind = e.loot[bid], J.LOOT_KIND[did][bid]
+            if list and kind ~= "classic" and kind ~= "nf" then
+                local have = chances(list, rows)
+                for _, r in ipairs(rows) do
+                    if not have[r[1]] then list[#list + 1] = r end
+                end
+            else
+                e.loot[bid] = rows
+                J.LOOT_KIND[did][bid] = "nf"
+            end
+        end
+    end
+    for did, groups in pairs(J.NF_OTHERS or {}) do
+        local e = entry(did)
+        e.others = e.others or {}
+        local listed = {}
+        for _, g in ipairs(e.others) do
+            if g.kind ~= "classic" then
+                for _, it in ipairs(g.items) do listed[it[1]] = true end
+            end
+        end
+        for _, ng in ipairs(groups) do
+            local found
+            for i, g in ipairs(e.others) do
+                if g.name == ng.name then found = i break end
+            end
+            local old = found and e.others[found]
+            if old and old.kind ~= "classic" and old.kind ~= "nf" then
+                local have = chances(old.items, ng.items)
+                for _, r in ipairs(ng.items) do
+                    if not have[r[1]] then old.items[#old.items + 1] = r end
+                end
+            else
+                local items = {}
+                for _, r in ipairs(ng.items) do
+                    if not listed[r[1]] then items[#items + 1] = r end
+                end
+                if #items > 0 then
+                    local g = { name = ng.name, note = ng.note, items = items, kind = "nf" }
+                    if found then e.others[found] = g else e.others[#e.others + 1] = g end
+                end
+            end
+        end
+    end
+    for did, list in pairs(J.NF_ENTRANCES or {}) do
+        if not J.ENTRANCES[did] then J.ENTRANCES[did] = list end
+    end
+end
+
+-- Stufe eines Bosses als Text ("21" oder "52-54"), oder nil.
+function J.BossLevel(dungeonId, bossId)
+    local l = J.BOSS_LEVEL[dungeonId] and J.BOSS_LEVEL[dungeonId][bossId]
+    if not l then return nil end
+    return l[1] == l[2] and tostring(l[1]) or (l[1] .. "–" .. l[2])
+end
+
+-- Kennt der Server den Gegenstand (noch) nicht?
+function J.NotYet(itemId)
+    return J.NOT_YET[itemId] == true
+end
+
 -- Beute aus Classic fuer einen Dungeon einmischen (6.14.0.2: erst bei
 -- Bedarf). Eine Funktion wird gebaut und durch ihre Tabelle ersetzt; nie
 -- ersetzt wird Beute des Journals, zweimal einmischen aendert nichts.
@@ -2014,11 +2129,12 @@ function J.EnsureAllClassic()
     for did in pairs(J.CLASSIC_OTHERS or {}) do EnsureClassic(did) end
 end
 
--- Herkunft einer Beute: J.CLASSIC_LOOT_SOURCE oder J.SOURCE.
+-- Herkunft einer Beute: J.CLASSIC_LOOT_SOURCE, J.NF_SOURCE oder J.SOURCE.
 function J.LootSource(dungeonId, bossId)
     EnsureClassic(dungeonId)
     local k = J.LOOT_KIND[dungeonId]
     if k and k[bossId] == "classic" and J.CLASSIC_LOOT_SOURCE then return J.CLASSIC_LOOT_SOURCE end
+    if k and k[bossId] == "nf" and J.NF_SOURCE then return J.NF_SOURCE end
     return J.SOURCE
 end
 

@@ -683,7 +683,7 @@ do
         back()
         Check(contested, "Zustand 'Quellen widersprechen sich' wird gezeichnet (geliehene Tabelle)")
         Check(counted, "Zustand 'gezaehlt, Namen offen' wird gezeichnet, samt Teilliste (geliehene Tabelle)")
-        Check(#D.Get("excavation_site").bosses == 3 and #D.Get("city_of_dalaran").bosses == 8,
+        Check(#D.Get("excavation_site").bosses == 4 and #D.Get("city_of_dalaran").bosses == 9,
             "nach dem Leihen stehen die echten Listen wieder da")
     end
 
@@ -7337,7 +7337,9 @@ do
         for _, q in ipairs(brd) do if q.id == 4126 then q4126 = q end end
         assert(q4126 and q4126.src == "fg" and J.QuestSource(q4126) == J.FG_SOURCE, "Quest 4126 nicht aus dem Abgleich")
         assert(J.QuestSource(J.Quests("hall_of_thanes")[1]) == J.SOURCE, "Journal-Quest traegt die Herkunft des Abgleichs")
-        assert(J.LootSource("scholomance", "darkmaster_gandling") == J.CLASSIC_LOOT_SOURCE, "Classic-Beute ohne Classic-Herkunft")
+        assert(J.LootSource("dire_maul", "guard_fengus") == J.CLASSIC_LOOT_SOURCE, "Classic-Beute ohne Classic-Herkunft")
+        -- 1.4.0.0: Classic-Beute, die der Naowh-Abgleich kennt, ist ersetzt.
+        assert(J.LootSource("scholomance", "darkmaster_gandling") == J.NF_SOURCE, "Abgleich ersetzt Classic-Beute nicht")
         assert(J.LootSource("hall_of_thanes", "faldrim_anvilmar") == J.SOURCE, "Journal-Beute als Classic ausgewiesen")
         assert(J.Chain(4242) and J.Chain(4242).prev[1] == 4241 and J.QuestName(4241) == "Marshal Windsor", "Kette von 4242")
         -- Einmischen ersetzt nie Handgepflegtes und ist wiederholbar - auch
@@ -7388,10 +7390,24 @@ do
         assert(DP.entranceLinks == 2, "Stratholme hat zwei Eingaenge: " .. tostring(DP.entranceLinks))
         -- Boss mit Classic-Beute: die Zeile nennt Classic.
         texts = {}
-        DP.Select("scholomance", "darkmaster_gandling")
+        DP.Select("dire_maul", "guard_fengus")
         WeintCodex.Navigation.SwitchTo("dungeons")
         assert(table.concat(texts, "\n"):find("Beute aus Classic", 1, true), "Boss mit Classic-Beute ohne Hinweis")
         assert(DP.itemRows > 0, "Classic-Beute ohne Zeilen")
+        -- 1.4.0.0: ersetzte Beute nennt ihre Art, mit Dropchance in der Zeile.
+        texts = {}
+        local label = WeintCodex.Label
+        WeintCodex.Label = function(parent, text, opts)
+            texts[#texts + 1] = tostring(text)
+            return label(parent, text, opts)
+        end
+        DP.Select("scholomance", "darkmaster_gandling")
+        WeintCodex.Navigation.SwitchTo("dungeons")
+        WeintCodex.Label = label
+        local sch = table.concat(texts, "\n")
+        assert(sch:find("Wissensstand aus der Beta, Dropchancen", 1, true), "Herkunft der Abgleichsbeute fehlt")
+        assert(not sch:find("Beute aus Classic", 1, true), "ersetzte Beute noch als Classic ausgewiesen")
+        assert(sch:find("%d+ %%"), "Dropchance fehlt")
     end)
     WeintCodex.Paragraph, _G.UnitFactionGroup, _G.C_Map, _G.C_QuestLog = saved[1], saved[2], saved[3], saved[4]
     Check(ok, "Dungeons: Abgleich mit ForeverGuide - Geber, Ketten, Belohnungen, Herkunft, Eingaenge"
@@ -9050,7 +9066,7 @@ do
 
         -- Kontinent: nur, wo der Client das Rechteck nennt.
         mapID = 1415
-        assert(ME.Place() == 15, "Oestliche Koenigreiche: " .. tostring(ME.Place()))
+        assert(ME.Place() == 17, "Oestliche Koenigreiche: " .. tostring(ME.Place()))
         mapID = 1414
         assert(ME.Place() == 8, "Kalimdor: " .. tostring(ME.Place()))
         mapID = 1415
@@ -9104,7 +9120,7 @@ do
 
         -- Selbstpruefung.
         local sc = table.concat(ME.StatusLines(), "\n")
-        assert(sc:find("Eingänge im Bestand: 25 an 23 Stellen", 1, true) and sc:find("GetMapRectOnMap): ja", 1, true), "Selbstpruefung: " .. sc)
+        assert(sc:find("Eingänge im Bestand: 27 an 25 Stellen", 1, true) and sc:find("GetMapRectOnMap): ja", 1, true), "Selbstpruefung: " .. sc)
         local page
         for _, pg in ipairs(K.Module("comfort").pages) do if pg.key == "karte" then page = pg end end
         assert(page and page.label == "Karte", "Seite fehlt")

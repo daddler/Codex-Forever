@@ -977,6 +977,49 @@ im ForeverGuide-Abgleich in Razorfen Downs; der Eingang der Hall of Thanes
 liegt dort bei 43,5; 52,0, im Abgleich bei 31,8; 46,4. Bosslisten: nichts
 Neues seit 1.6.2 (Dalaran schon in 6.28.1.0).
 
+**1.4.0.0 (27.10.2026): abgeglichen mit „Naowh Forever: Dungeon Journal“
+1.1.47** (Daten vom 21.10.2026, Client-Build 1.60.1.70532) – erzeugt wie der
+ForeverGuide-Abgleich: `.github/scripts/import_naowh.py <Ordner>` liest die
+Datendateien über `nf_dump.lua` in leerer Umgebung, den eigenen Bestand über
+`journal_dump.lua` (Journal + ForeverGuide, vor diesem Abgleich), schreibt
+`data/dungeon_journal_nf.lua` und druckt einen Bericht. Keine Lizenz genannt –
+übernommen sind nur Fakten; die Tipps des Addons (eigene Sätze) nicht.
+Herkunft der Daten dort: Beute/Dropchancen von Wowhead Forever und wowsrc.com,
+Bosse/Stufen/Encounter aus den Clienttabellen (wago.tools). Im Spiel: `community`.
+
+* **Beute mit Dropchance** (`J.NF_LOOT`, `chance` in ganzen Prozent; keine Zahl
+  = unbekannt, nie 0 %): 1408 Zeilen, 1115 mit Chance. Bei Bossen aus Classic
+  zählt die Quelle Kills aus Classic Era und Forever zusammen – die
+  Herkunftszeile sagt das („alte Bosse zusammen mit Classic“).
+  `J.MergeNaowh`: Beute des Journals bleibt und bekommt nur Chancen (fehlende
+  Gegenstände angehängt, `nf = true`); **Beute aus Classic wird ersetzt**
+  (`J.LOOT_KIND = "nf"`, `J.NF_SOURCE`) – bis auf 7 Bosse, die der Abgleich
+  nicht kennt. Zeilen des Abgleichs dürfen ohne Namen/Platz/Qualität stehen
+  (der Client nennt sie, bis dahin „lädt …“).
+* **Weitere Beute** (`J.NF_OTHERS`): „Gegner unterwegs“ (nur, was keine Gruppe
+  des Journals schon führt), seltene Gegner und Truhen ohne eigenen Boss
+  (Spirestone-Gegner, Ring of Law läuft über `ring_of_law` mit `from`).
+* **Noch nicht im Spiel** (`J.NOT_YET`, 718): der Server schickt diese
+  Gegenstände nicht – die Zeile zeigte ewig „lädt …“; jetzt Name aus dem
+  Bestand, Fragezeichen, rechts „noch nicht im Spiel“.
+* **Stufe je Boss** (`J.BOSS_LEVEL`, 183 Bosse) unter dem Namen.
+* **Eingänge** der Drowned City und der Shaper's Terrace.
+* **Bosslisten von Hand** (`data/dungeons.lua`): Drowned City fünf Gegner
+  (270882–270886) statt der zwei der BlizzCon – „Zin'aka“ kommt darin nicht vor
+  und ist gestrichen; Shaper's Terrace vier, Alcaz Island Prison einer
+  (beide ohne NPC-Nummer, Dungeon geschlossen, `bossesComplete = false`);
+  Highland Horror (Encounter 3644, nur zur Quest) und Mana Wraith (3312) als
+  optionale Kämpfe zurück – Dalaran wieder neun; Lordaeron Captain ist ein
+  seltener Elite.
+* **Nicht übernommen:** Reihenfolge (das Addon listet in Ruins of Lordaeron
+  Viktor vor Rath'mael, obwohl er erst nach Rath'mael beschworen wird),
+  Schlachtzüge (Liste aus dem Beta-Client steht; Reihenfolge dort „die eines
+  Erfolgs“; Onyxia nur mit Classic-Encounter – Onyxias Hort bleibt leer),
+  Quests (Codex führt 328, das Addon rund 250; 16 fehlende wären ohne Ziel und
+  Geber), Fähigkeiten als Zaubernummern, Bosspositionen auf eigenen
+  Kartenbildern, Ruf/PvP, BiS. **Widerspruch, stehen gelassen:** Hyjal Summit
+  „Sylvesteris Dusksong“ (Beta-Client hier) gegen „Sylvestris“ dort.
+
 **6.14.0.0: abgeglichen mit dem Addon ForeverGuide 1.25.6** – erzeugt,
 nicht von Hand: `.github/scripts/import_foreverguide.py <Ordner>` liest
 dessen Datendateien in einer leeren Umgebung (`fg_dump.lua`), den eigenen

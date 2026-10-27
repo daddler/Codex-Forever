@@ -1069,13 +1069,20 @@ do
             for _, e in ipairs(list) do
                 items = items + 1
                 Check(IsId(e[1]), "Beute " .. dungeonId .. "/" .. bossId .. ": Gegenstandsnummer " .. tostring(e[1]))
-                Check(type(e[2]) == "string" and e[2] ~= "", "Beute " .. tostring(e[1]) .. " hat einen Namen")
-                Check(type(e[3]) == "string" and e[3] ~= "", "Beute " .. tostring(e[1]) .. " hat einen Platz")
+                -- 1.4.0.0: Beute aus dem Naowh-Abgleich darf ohne Namen, Platz und
+                -- Qualitaet dastehen - die nennt der Client (Nummer reicht).
+                local kind = J.LOOT_KIND[dungeonId] and J.LOOT_KIND[dungeonId][bossId]
+                local nf = kind == "nf" or e.nf == true
+                Check((type(e[2]) == "string" and e[2] ~= "") or (nf and e[2] == nil), "Beute " .. tostring(e[1]) .. " hat einen Namen")
+                Check((type(e[3]) == "string" and e[3] ~= "") or (nf and e[3] == nil), "Beute " .. tostring(e[1]) .. " hat einen Platz")
                 -- Qualitaet: aus dem Bericht; bei Classic-Beute aus dem Abgleich
                 -- (6.14.0.0) nil, wo die Clienttabellen sie nicht nennen.
-                local classic = J.LOOT_KIND[dungeonId] and J.LOOT_KIND[dungeonId][bossId] == "classic"
-                Check((type(e[4]) == "number" and e[4] >= 0 and e[4] <= 7) or (classic and e[4] == nil),
+                local classic = kind == "classic"
+                Check((type(e[4]) == "number" and e[4] >= 0 and e[4] <= 7) or ((classic or nf) and e[4] == nil),
                     "Beute " .. tostring(e[1]) .. " hat eine Qualitaet")
+                -- Dropchance: ganze Prozent ueber 0 oder keine - nie 0 (unbekannt ~= 0).
+                Check(e.chance == nil or (type(e.chance) == "number" and e.chance >= 1 and e.chance <= 100
+                    and e.chance == math.floor(e.chance)), "Beute " .. tostring(e[1]) .. ": Dropchance 1-100 oder keine")
                 Check(not seen[e[1]], "Beute " .. tostring(e[1]) .. " nur einmal an " .. bossId)
                 seen[e[1]] = true
             end
@@ -1172,8 +1179,9 @@ do
     end
     Check(badChain == 0, "Questketten: Nummern mit Namen (" .. badChain .. " ohne)")
     for did, kinds in pairs(J.LOOT_KIND) do
-        for bid in pairs(kinds) do
-            Check(J.LootSource(did, bid) == J.CLASSIC_LOOT_SOURCE, "Beute " .. did .. "/" .. bid .. " als Classic ausgewiesen")
+        for bid, kind in pairs(kinds) do
+            local want = kind == "nf" and J.NF_SOURCE or J.CLASSIC_LOOT_SOURCE
+            Check(J.LootSource(did, bid) == want, "Beute " .. did .. "/" .. bid .. " mit ihrer Art ausgewiesen (" .. kind .. ")")
         end
     end
     -- Handgepflegtes bleibt: Hall of Thanes behaelt seine Texte und Beute.
