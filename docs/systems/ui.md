@@ -1968,6 +1968,22 @@ Name im Tooltip – seit 6.27.0.5 Aura gleichen Namens, Kern des Namens
 Gespräche (`ui/dialogue.lua`): Belohnungen zeigen den Vergleich des Spiels
 (`DL.Compare`, `GameTooltip_ShowCompareItem` an `ShoppingTooltip1/2`).
 
+## Angeln mit einer Taste *(1.3.0.0, `ui/fishing.lua`, Seite „Sammeln“)*
+
+Verhalten von SKTools „Easy Fishing“, eigener Code (keine Lizenz genannt).
+Eine Taste des Spielers (`fishKey`, Feld zum Drücken) liegt als
+Vorrang-Belegung an `WeintCodexFishingKeys`; `FI.Wanted()` entscheidet:
+Beute offen (Angelbeute, kein Auto-Plündern) → `WeintCodexFishingLoot`;
+Schwimmer (GUID-Objekt 35591) ist `softinteract` → `INTERACTTARGET`;
+sonst `WeintCodexFishingCast` (`/cast [nocombat,noflying,nostealth,noswimming] <Name von 7620>`).
+Ohne Angel (Hauptwaffe Klasse 2/Unterklasse 20) keine Belegung, im Kampf
+keine Änderung (nach `PLAYER_REGEN_ENABLED` nachgeholt). Eine Sitzung = ein
+Wurf: `FI.SESSION` (+ `FI.LOUD`/`FI.BG`/`FI.ICON` nach Schalter) über
+`PF.SetCVar(…, "fishing")`, nie über einen Wert, den schon ein anderer
+Besitzer hält (`PF.Record`); zurück mit `PF.ReleaseOwner("fishing")` am
+Kanalende, beim Ausloggen und beim Einloggen. Prüfung: `load_test.lua`,
+Abschnitt *Angeln mit einer Taste*.
+
 ## Glitzern *(6.29.0.0, `ui/sparkles.lua`, Seite „Glitzern“)*
 
 Verhalten von ForeverLootSparkles (GPL-3.0), kein Code daraus. Quest:

@@ -292,6 +292,28 @@ function PF.Release(name)
     return PF.Same(PF.GetCVar(name), rec.set) and RawSet(name, rec.orig) or false
 end
 
+-- Was ein Besitzer gesetzt hat, gemerkt? (nur lesen)
+function PF.Record(name)
+    local ui = Root()
+    return ui and ui.cvars and ui.cvars[name] or nil
+end
+
+-- Alles eines Besitzers zurueckgeben (z. B. nach einem Absturz mitten
+-- in einer Sitzung, ui/fishing.lua). Zahl der zurueckgestellten Werte.
+function PF.ReleaseOwner(owner)
+    local ui = Root()
+    if not (ui and ui.cvars) then return 0 end
+    local names = {}
+    for name, rec in pairs(ui.cvars) do
+        if rec.owner == owner then names[#names + 1] = name end
+    end
+    local n = 0
+    for _, name in ipairs(names) do
+        if PF.Release(name) then n = n + 1 end
+    end
+    return n
+end
+
 -- Gibt zurueck, was kein laufender Teil mehr braucht. Zahl der
 -- zurueckgestellten Werte.
 function PF.Sweep()

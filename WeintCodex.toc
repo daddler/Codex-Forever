@@ -2,7 +2,7 @@
 ## Title: |cff7C6CFFWeintCodex|r
 ## Notes: Raid Guide & Intelligence System — Forever Edition
 ## Author: Fabian
-## Version: 1.2.0.0
+## Version: 1.3.0.0
 ## SavedVariables: WeintCodex_SavedData, WeintCompanionDB, WeintCompanionInboxDB, WeintCodex_WhispersAccount
 ## SavedVariablesPerCharacter: WeintCodex_Whispers
 
@@ -317,6 +317,8 @@ ui/gatheratlas.lua
 ui/crafttimer.lua
 # Ausmisten (Verhalten von LootTriage, eigener Code): Wert je Taschenplatz, Muenze an der Beute.
 ui/bagtriage.lua
+# Angeln mit einer Taste (1.3.0.0, Komfort "Sammeln"; Verhalten von SKTools Easy Fishing, eigener Code).
+ui/fishing.lua
 # Glitzern: Questgegenstaende, Kraeuter und Erz (6.29.0.0, Komfort; Verhalten von ForeverLootSparkles, eigener Code).
 ui/sparkles.lua
 ui/dialogue.lua

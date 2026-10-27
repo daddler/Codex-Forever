@@ -9,6 +9,14 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.3.0.0] – 2026-10-27
+
+### Neu
+- Angeln mit einer Taste (Wunsch des Spielers, Verhalten von SKTools „Easy Fishing“, eigener Code – SKTools nennt keine Lizenz): `ui/fishing.lua`, Komfortseite „Sammeln“. Eine frei wählbare Taste (Feld: anklicken, Taste drücken; Esc/Entf) liegt als Vorrang-Belegung an einem eigenen Rahmen: auswerfen (geschützter Makroknopf `/cast Angeln`), Schwimmer einholen, sobald er weiches Interaktionsziel ist (`INTERACTTARGET`, Spielobjekt 35591), Angelbeute nehmen, wenn „Automatisch plündern“ aus ist. Nur mit Angel in der Hand, Änderungen nur außerhalb des Kampfes; die Belegung des Spielers wird nie geschrieben, die Seite nennt, was dort im Spiel liegt. Während eines Wurfs Reichweite der Interaktion (mind. 30 m) und auf Wunsch Ton (Effekte voll, Ton im Hintergrund, Symbol über dem Schwimmer) über `PF.SetCVar` mit Besitzer „fishing“; zurück nach dem Wurf, beim Ausloggen und nach einem Absturz beim Einloggen (`PF.ReleaseOwner`), nur wo noch unser Wert steht. Was ein anderer Teil schon gesetzt hat (Glitzern), bleibt ihm (`PF.Record`).
+
+### Geändert
+- Sammeln: „Wechsel alle … s“ (Kräuter-/Mineraliensuche) steht unter „Erweitert“ – die Seite zeigt zugeklappt höchstens 15 Einstellungen.
+
 ## [1.2.0.0] – 2026-10-26
 
 ### Neu

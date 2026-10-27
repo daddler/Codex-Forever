@@ -22260,6 +22260,125 @@ do
     Check(ok, "Aufträge" .. (ok and "" or (": " .. tostring(err))))
 end
 
+Section("Angeln mit einer Taste")
+-- 1.3.0.0: eine Taste wirft aus, holt ein und nimmt die Beute; ohne Angel
+-- und im Kampf bleibt die Belegung des Spielers; die Spieleinstellungen
+-- eines Wurfs kommen danach zurueck - aber nicht, was ein anderer Teil
+-- (Glitzern) schon gesetzt hatte.
+do
+    local G = _G
+    local FI = WeintCodex.UIFishing
+    local names = { "SetOverrideBinding", "SetOverrideBindingClick", "ClearOverrideBindings", "InCombatLockdown",
+                    "GetInventoryItemID", "C_Item", "C_CVar", "UnitGUID", "IsFishingLoot", "C_Spell",
+                    "GetNumLootItems", "LootSlot", "C_Timer", "GetBindingAction", "GetBindingName" }
+    local saved = {}
+    for _, n in ipairs(names) do saved[n] = G[n] end
+    local ok, err = pcall(function()
+        Check(FI ~= nil, "Angeln: Modul geladen")
+        local bound, combat, pole, soft = {}, false, true, nil
+        local cv = { SoftTargetInteract = "1", SoftTargetInteractRange = "10", SoftTargetInteractArc = "0",
+                     Sound_EnableSFX = "0", Sound_SFXVolume = "0.3", Sound_EnableSoundWhenGameIsInBG = "0",
+                     SoftTargetIconGameObject = "0", SoftTargetIconInteract = "0" }
+        G.SetOverrideBinding = function(_, _, key, action) bound[key] = action end
+        G.SetOverrideBindingClick = function(_, _, key, name) bound[key] = "CLICK " .. name end
+        G.ClearOverrideBindings = function() bound = {} end
+        G.InCombatLockdown = function() return combat end
+        G.GetInventoryItemID = function(_, slot) if slot == 16 and pole then return 6256 end end
+        G.C_Item = { GetItemInfoInstant = function() return 6256, "", "", "", "", 2, 20 end }
+        G.C_CVar = { GetCVar = function(n) return cv[n] end, SetCVar = function(n, v) cv[n] = v return true end }
+        G.UnitGUID = function() return soft end
+        G.IsFishingLoot = function() return true end
+        G.C_Spell = { GetSpellName = function(id) if id == 7620 then return "Angeln" end end }
+        local looted = 0
+        G.GetNumLootItems = function() return 2 end
+        G.LootSlot = function() looted = looted + 1 end
+        G.C_Timer = { NewTimer = function() return { Cancel = function() end } end, After = function() end }
+        G.GetBindingAction = function(key) if key == "F" then return "ASSISTTARGET" end return "" end
+        G.GetBindingName = function(a) return a == "ASSISTTARGET" and "Ziel unterstützen" or a end
+
+        -- Ohne fremde Besitzer anfangen (Glitzern setzt dieselbe Reichweite).
+        for _, list in ipairs({ FI.SESSION, FI.LOUD, FI.BG, FI.ICON }) do
+            for _, e in ipairs(list) do WeintCodex.UIProfile.ForgetCVar(e.name) end
+        end
+        K.Set("comfort", "fishKey", "F")
+        K.Set("comfort", "fishKeyOn", true)
+        FI.Apply()
+        Check(bound.F == "CLICK WeintCodexFishingCast", "Angeln: Taste wirft aus (" .. tostring(bound.F) .. ")")
+        Check(_G.WeintCodexFishingCast and _G.WeintCodexFishingCast:GetAttribute("macrotext") == "/cast " .. FI.CONDITIONS .. " Angeln",
+            "Angeln: Makro wirft per Namen aus")
+        Check(FI.BoundTo("F") == "Ziel unterstützen", "Angeln: eigene Belegung wird genannt, nie geändert")
+        Check(FI.KeyText("SHIFT-BUTTON4") == "Umschalt + Maustaste 4", "Angeln: Taste lesbar")
+
+        -- Wurf: Sitzung setzt Reichweite und Ton; Glitzern hatte die Reichweite schon.
+        WeintCodex.UIProfile.SetCVar("SoftTargetInteractArc", "2", "sparkles")
+        FI.OnEvent(nil, "UNIT_SPELLCAST_CHANNEL_START", "player", "x", 7620)
+        -- Mindestens 30 m; steht schon mehr (Glitzern: 60), bleibt das.
+        Check(tonumber(cv.SoftTargetInteractRange) >= 30 and cv.SoftTargetInteract == "3", "Angeln: Reichweite während des Wurfs ("
+            .. tostring(cv.SoftTargetInteractRange) .. "/" .. tostring(cv.SoftTargetInteract) .. ")")
+        Check(cv.Sound_SFXVolume == "1" and cv.Sound_EnableSoundWhenGameIsInBG == "1", "Angeln: Ton während des Wurfs")
+        Check(bound.F == "CLICK WeintCodexFishingCast", "Angeln: ohne Schwimmer in Reichweite bleibt Auswerfen")
+        FI.OnEvent(nil, "PLAYER_SOFT_INTERACT_CHANGED", nil, "GameObject-0-1-0-1-35591-0001")
+        Check(bound.F == "INTERACTTARGET", "Angeln: Schwimmer in Reichweite - Taste holt ein (" .. tostring(bound.F) .. ")")
+        FI.OnEvent(nil, "PLAYER_SOFT_INTERACT_CHANGED", nil, "Creature-0-1-0-1-1234-0001")
+        Check(bound.F == "CLICK WeintCodexFishingCast", "Angeln: anderes Ziel ist kein Schwimmer")
+        FI.OnEvent(nil, "UNIT_SPELLCAST_CHANNEL_STOP", "player", "x", 7620)
+        local mine = 0
+        for _, list in ipairs({ FI.SESSION, FI.LOUD, FI.BG, FI.ICON }) do
+            for _, e in ipairs(list) do
+                local rec = WeintCodex.UIProfile.Record(e.name)
+                if rec and rec.owner == "fishing" then mine = mine + 1 end
+            end
+        end
+        Check(mine == 0 and cv.Sound_SFXVolume == "0.3" and cv.Sound_EnableSoundWhenGameIsInBG == "0",
+            "Angeln: nach dem Wurf alles wie vorher")
+        Check(WeintCodex.UIProfile.Record("SoftTargetInteractArc").owner == "sparkles",
+            "Angeln: fremde Einstellung bleibt ihrem Besitzer")
+        WeintCodex.UIProfile.Release("SoftTargetInteractArc")
+
+        -- Spieler hat den Ton waehrend des Wurfs selbst verstellt: seiner bleibt.
+        FI.OnEvent(nil, "UNIT_SPELLCAST_CHANNEL_START", "player", "x", 7620)
+        cv.Sound_SFXVolume = "0.5"
+        FI.OnEvent(nil, "UNIT_SPELLCAST_CHANNEL_STOP", "player", "x", 7620)
+        Check(cv.Sound_SFXVolume == "0.5", "Angeln: vom Spieler verstellter Wert bleibt")
+
+        -- Beute ohne automatisches Pluendern.
+        FI.OnEvent(nil, "LOOT_OPENED", false)
+        Check(bound.F == "CLICK WeintCodexFishingLoot", "Angeln: Beute offen - Taste nimmt sie")
+        FI.LootAll()
+        Check(looted == 2, "Angeln: alle Plätze genommen")
+        FI.OnEvent(nil, "LOOT_CLOSED")
+        FI.OnEvent(nil, "LOOT_OPENED", true)
+        Check(bound.F == "CLICK WeintCodexFishingCast", "Angeln: automatisches Plündern - nichts zu tun")
+
+        -- Ohne Angel: die eigene Belegung gilt.
+        pole = false
+        FI.OnEvent(nil, "PLAYER_EQUIPMENT_CHANGED", 16)
+        Check(bound.F == nil, "Angeln: ohne Angel keine Vorrang-Belegung")
+        pole = true
+        -- Im Kampf nichts aendern, danach nachholen.
+        combat = true
+        FI.OnEvent(nil, "PLAYER_EQUIPMENT_CHANGED", 16)
+        Check(bound.F == nil, "Angeln: im Kampf bleibt die Belegung")
+        combat = false
+        FI.OnEvent(nil, "PLAYER_REGEN_ENABLED")
+        Check(bound.F == "CLICK WeintCodexFishingCast", "Angeln: nach dem Kampf nachgeholt")
+
+        -- Absturz mitten im Wurf: beim naechsten Einloggen zurueck.
+        FI.OnEvent(nil, "UNIT_SPELLCAST_CHANNEL_START", "player", "x", 7620)
+        FI.OnEvent(nil, "PLAYER_LOGIN")
+        Check(cv.Sound_SFXVolume == "0.5", "Angeln: nach Absturz beim Einloggen zurück")  -- 0.5: oben vom Spieler gesetzt
+        FI.OnEvent(nil, "UNIT_SPELLCAST_CHANNEL_STOP", "player", "x", 7620)
+
+        -- Ausschalten gibt die Taste frei.
+        K.Set("comfort", "fishKeyOn", false)
+        FI.Apply()
+        Check(bound.F == nil, "Angeln: aus - Taste frei")
+        K.Set("comfort", "fishKey", "")
+    end)
+    for _, n in ipairs(names) do G[n] = saved[n] end
+    Check(ok, "Angeln mit einer Taste" .. (ok and "" or (": " .. tostring(err))))
+end
+
 if failures == 0 then
     print("BESTANDEN")
     os.exit(0)

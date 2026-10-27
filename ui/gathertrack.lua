@@ -277,8 +277,14 @@ local function Build(B)
     B:Section("Kräuter und Erz", "Das Spiel lässt nur eine Suche zugleich laufen. WeintCodex wechselt zwischen Kräuter- und Mineraliensuche – auf der Minikarte steht jede Art jeden zweiten Takt. Im Kampf wechselt nichts: dort bleibt die Suche, die gerade an ist. Schneller an und aus: unten im Aufspürmenü an der Minikarte, Eintrag „WeintCodex“.")
     B:Row({ type = "toggle", label = "Kräuter- und Mineraliensuche wechseln", key = "gatherSwap",
             description = "Im Kampf, tot und beim Zaubern kein Wechsel." },
-          { type = "slider", label = "Wechsel alle", key = "gatherEvery", min = GT.MIN, max = 100, step = 5,
-            format = function(v) return string.format("%.1f s", v / 10) end, disabled = off })
+          { type = "empty" })
+    -- Seit 1.3.0.0 unter "Erweitert": die Seite ist voll (Angeln mit
+    -- einer Taste, ui/fishing.lua), und der Takt ist eine Feinheit.
+    B:Advanced()
+    B:Row({ type = "slider", label = "Wechsel alle", key = "gatherEvery", min = GT.MIN, max = 100, step = 5,
+            format = function(v) return string.format("%.1f s", v / 10) end, disabled = off },
+          { type = "empty" })
+    B:EndAdvanced()
     B:Note("Jeder Wechsel ist ein Zauber mit globaler Abklingzeit – darum nicht schneller als 1,5 s. Die Punkte bleiben gelb: welcher Punkt Kraut und welcher Erz ist, verrät das Spiel Addons nicht.")
 end
 
