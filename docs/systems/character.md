@@ -469,3 +469,16 @@ Forever (all rights reserved): übernommen sind nur Fakten – Objektnamen
 Hinweise sind eigene Sätze. Erledigt ist, was der Client als abgeschlossene
 versteckte Quest meldet (der erste Schritt auch, sobald die Startquest
 angenommen ist). Antwortet er nicht: „Stand unbekannt“, nie „0 von 7“.
+
+## Gewinn beim Herstellen (1.4.0.0)
+
+Werkzeug „Gewinn“ auf der Seite „Berufe“ (`PT.DrawProfit`, `PT.Profit` in
+`modules/proftools.lua`), nach dem Verhalten von Naowh Forever Professions
+(eigener Code). Erlös = eigener Auktionspreis des Erzeugnisses ×
+Stückzahl (`C_TradeSkillUI.GetRecipeSchematic`, Mittel aus min/max) − 5 %
+Gebühr; Kosten je Reagenz der günstigste bekannte Einkauf
+(`PT.BuyPrice`: selbst gesehener Händler je Stück, `data/vendorprices.lua`,
+Auktionshaus). Fehlt eine dieser Zahlen, steht das Rezept unter „Ohne
+Preis“ mit dem Grund – nie ein geschätzter Gewinn. Die Einstellgebühr ist
+nicht eingerechnet. Die Werkzeugleiste bricht seit 1.4.0.0 um (`PT.FitBar`,
+Karten hängen am `f.BarHolder`).

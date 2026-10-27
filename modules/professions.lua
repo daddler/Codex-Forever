@@ -518,9 +518,12 @@ local function BuildPage()
     local rc = WeintCodex.CreateSurface(f, { tone = "plain", radius = 14, backdrop = "bgDark" })
     -- 6.129.0.0: Umschalter Rezepte/Werkzeuge (modules/proftools.lua) unter dem Kopf.
     local PT = WeintCodex.ProfTools
-    local barH = PT and PT.BAR_H or 0
-    if PT then PT.AttachBar(f, "rezepte") end
-    rc:SetPoint("TOPLEFT",    f, "TOPLEFT",    PAD_X, -(PAD_Y + 84 + barH))
+    if PT then
+        PT.AttachBar(f, "rezepte")
+        rc:SetPoint("TOPLEFT", f.BarHolder, "BOTTOMLEFT", 0, 0)
+    else
+        rc:SetPoint("TOPLEFT", f, "TOPLEFT", PAD_X, -(PAD_Y + 84))
+    end
     rc:SetPoint("BOTTOMLEFT", f, "BOTTOMLEFT", PAD_X, PAD_Y)
     rc:SetWidth(460)
     f.RecipeCard = rc
@@ -1055,6 +1058,10 @@ function PRO.Show()
     if PRO.selRecipe then nav.SetInspector(RecipeInspector(PRO.selRecipe))
     else nav.SetInspector(InspectorBlocks(selected, skill, cat)) end
 
+    if PT and PT.FitBar then
+        PT.FitBar(f)
+        if f.ToolBar then f.ToolBar:Select(1) end
+    end
     local total = Plain(f:GetWidth())
     if type(total) == "number" and total > 400 then
         f.RecipeCard:SetWidth(math.floor((total - 2 * WeintCodex.Metrics.PAD_X - WeintCodex.Metrics.GAP) * 0.62))

@@ -56,6 +56,8 @@ PT.TOOLS = {
     { key = "cooldowns", label = "Abklingzeiten" },
     -- 1.3.0.0: das Angel-Logbuch (modules/fishlog.lua).
     { key = "angeln",    label = "Angeln" },
+    -- 1.4.0.0: was Herstellen nach dem Auktionshaus-Scan einbringt.
+    { key = "gewinn",    label = "Gewinn" },
 }
 
 --------------------------------------------------
@@ -365,6 +367,86 @@ function PT.CraftCost(r)
         sum = sum + p * e[2]
     end
     return sum
+end
+
+--------------------------------------------------
+-- Gewinn je Rezept (1.4.0.0, Wunsch: "anzeigen lassen, wie profitabel das
+-- Herstellen eines Items ist - nach dem Scannen des Auktionshauses"; nach
+-- dem Verhalten von Naowh Forever Professions, eigener Code).
+--   Erloes  = Auktionspreis des Erzeugnisses × Stueckzahl, minus 5 % Gebuehr
+--   Kosten  = je Reagenz der guenstigste bekannte Einkauf: selbst gesehener
+--             Haendler, Haendlerpreis aus dem Bestand, Auktionshaus
+--   Stueckzahl je Herstellen sagt der Client (GetRecipeSchematic). Fehlt
+--   eine Zahl, gibt es keinen Gewinn - nie einen geschaetzten.
+-- Die Ablage der Gebuehr fuer das Einstellen ist nicht eingerechnet (haengt
+-- an Dauer und Verkaufspreis beim Haendler).
+--------------------------------------------------
+
+PT.AH_CUT = 0.05
+
+-- Guenstigster Haendlerpreis je Stueck, oder nil.
+function PT.VendorPrice(id)
+    local best
+    for _, v in ipairs(PT.Vendors(id)) do
+        if type(v.p) == "number" and v.p > 0 then
+            local each = v.p / math.max(1, v.q or 1)
+            if not best or each < best then best = each end
+        end
+    end
+    local d = WeintCodex.VendorPrices
+    local fixed = d and d[id]
+    if type(fixed) == "number" and (not best or fixed < best) then best = fixed end
+    return best
+end
+
+-- Einkauf eines Reagenz: Preis je Stueck und woher ("Händler"/"Auktion").
+function PT.BuyPrice(id)
+    local v, a = PT.VendorPrice(id), PT.Price(id)
+    if v and (not a or v <= a) then return v, "Händler" end
+    if a then return a, "Auktion" end
+    return nil
+end
+
+-- Stueckzahl je Herstellen (Client), oder nil.
+local madeCache = {}
+function PT.Made(r)
+    if madeCache[r.spell] ~= nil then return madeCache[r.spell] or nil end
+    local tsu = _G.C_TradeSkillUI
+    local n
+    if tsu and tsu.GetRecipeSchematic then
+        local ok, sch = pcall(tsu.GetRecipeSchematic, r.spell, false)
+        if ok and type(sch) == "table" then
+            local lo, hi = Plain(sch.quantityMin), Plain(sch.quantityMax)
+            if type(lo) == "number" and lo > 0 then
+                n = (type(hi) == "number" and hi > lo) and (lo + hi) / 2 or lo
+            end
+        end
+    end
+    madeCache[r.spell] = n or false
+    return n
+end
+PT.madeCache = madeCache
+
+-- { sale, cost, profit, roi, made, missing = Grund } fuer ein Rezept.
+function PT.Profit(r)
+    local out = {}
+    if not r.item then out.missing = "kein Erzeugnis" return out end
+    local each = PT.Price(r.item)
+    if not each then out.missing = "Erzeugnis nie im Auktionshaus gesehen" return out end
+    local made = PT.Made(r)
+    if not made then out.missing = "Stückzahl unbekannt" return out end
+    local cost = 0
+    for _, e in ipairs(r.reagents) do
+        local p = PT.BuyPrice(e[1])
+        if not p then out.missing = "Preis von " .. PRO.ItemName(e[1]) .. " unbekannt" return out end
+        cost = cost + p * e[2]
+    end
+    out.made = made
+    out.sale = math.floor(each * made * (1 - PT.AH_CUT))
+    out.cost = math.floor(cost + 0.5)
+    out.profit = out.sale - out.cost
+    out.roi = out.cost > 0 and (out.profit / out.cost * 100) or nil
+    return out
 end
 
 -- Chance auf einen Punkt bei Fertigkeit s (Regel aus Classic): orange sicher,
@@ -885,6 +967,7 @@ local SUBS = {
     merkliste = "Vorgemerkte Rezepte und was dir an Reagenzien noch fehlt.",
     cooldowns = "Welche Rezepte gerade abklingen – für alle deine Charaktere.",
     angeln    = "Was du wo geangelt hast – je Gebiet, mit Würfen und Fängen.",
+    gewinn    = "Was Herstellen einbringt: Auktionspreis abzüglich Gebühr minus Reagenzien.",
 }
 
 local function BuildPage()
@@ -896,7 +979,7 @@ local function BuildPage()
     f.Head = WeintCodex.PageHead(f, { eyebrow = "Leveln", title = "Berufe", sub = SUBS.gilde, height = 84 })
     PT.AttachBar(f, "gilde")
     local card = WeintCodex.CreateSurface(f, { tone = "plain", radius = 14, backdrop = "bgDark" })
-    card:SetPoint("TOPLEFT", f, "TOPLEFT", PAD_X, -(PAD_Y + 84 + PT.BAR_H))
+    card:SetPoint("TOPLEFT", f.BarHolder, "BOTTOMLEFT", 0, 0)
     card:SetPoint("BOTTOMRIGHT", f, "BOTTOMRIGHT", -PAD_X, PAD_Y)
     f.Card = card
     f.Title = WeintCodex.Label(card, "", { size = 14, color = "textBright", font = WeintCodex.Fonts.sansSemi })
@@ -906,6 +989,7 @@ local function BuildPage()
     f.Action:SetPoint("TOPRIGHT", card, "TOPRIGHT", -16, -12)
     f.Scroll, f.Body = WeintCodex.CreateScrollArea(card, 20, -46, 600, 300, true)
     page = f
+    PT.page = f
     return f
 end
 
@@ -1067,6 +1151,79 @@ function PT.DrawPlanner(body, w)
             end })
     end
     y = Note(body, y - 6, w, "Gerechnet wird mit Rezepten, die du kannst oder beim Lehrer lernst, und der Chance auf einen Punkt wie in Classic: orange immer, gelb meist, grün selten, grau nie. Orange und Gelb gehen vor; Grün nur, wenn es nichts anderes gibt. Preise nur aus deinen Auktionspreisen – „Preis unbekannt“ heißt: nie gesehen, nicht umsonst. Klick auf einen Schritt setzt ihn auf die Merkliste.")
+    return y
+end
+
+function PT.DrawProfit(body, w)
+    local y = 0
+    local f = page
+    f.Title:SetText("Gewinn")
+    f.Action:Hide()
+    local skills, order = Skills()
+    local crafting = {}
+    for _, key in ipairs(order) do
+        for _, p in ipairs(P.PROFS) do if p.key == key and p.cat ~= 2 then crafting[#crafting + 1] = key end end
+    end
+    if #crafting == 0 then
+        return Note(body, y, w, "Du hast keinen herstellenden Beruf gelernt.")
+    end
+    local sel = PRO.Selected and PRO.Selected()
+    local key = PT.profitKey
+    for _, k in ipairs(crafting) do if k == sel then key = sel end end
+    local okKey = false
+    for _, k in ipairs(crafting) do if k == key then okKey = true end end
+    if not okKey then key = crafting[1] end
+    PT.profitKey = key
+    if #crafting > 1 then
+        f.Action:SetText("Beruf wechseln")
+        f.Action.run = function()
+            local i = 1
+            for k, kk in ipairs(crafting) do if kk == PT.profitKey then i = k end end
+            PT.profitKey = crafting[i % #crafting + 1]
+            PRO.Select(PT.profitKey)
+            PT.Draw("gewinn")
+        end
+        f.Action:Show()
+    end
+    f.Title:SetText("Gewinn · " .. PRO.ProfName(key))
+    local AP = WeintCodex.UIAuctionPrices
+    local store = AP and AP.Store and AP.Store(AP.side or AP.Faction())
+    if not (store and next(store.items or {})) then
+        return Note(body, y, w, "Noch keine Auktionspreise. Scanne einmal das Auktionshaus (Knopf „Preise scannen“ dort) – danach steht hier, was jedes deiner Rezepte einbringt.")
+    end
+    local m = PRO.Memory()
+    local good, unknown = {}, {}
+    for _, r in ipairs(PRO.Recipes(key)) do
+        if r.item and #r.reagents > 0 and PRO.Learned(r, m) then
+            local pr = PT.Profit(r)
+            if pr.profit then good[#good + 1] = { r = r, p = pr } else unknown[#unknown + 1] = { r = r, p = pr } end
+        end
+    end
+    table.sort(good, function(a, b) return a.p.profit > b.p.profit end)
+    if #good == 0 and #unknown == 0 then
+        return Note(body, y, w, "Keine gelernten Rezepte bekannt. Öffne einmal dein Berufsfenster – dann kennt WeintCodex sie.")
+    end
+    if store.full and AP.AgeText then
+        y = Note(body, y, w, "Letzter vollständiger Scan: " .. AP.AgeText(store.full) .. ".")
+    end
+    y = Head(body, y, w, "Mit Preis", #good .. " Rezepte")
+    for _, e in ipairs(good) do
+        local pr = e.p
+        local sign = pr.profit >= 0 and "+" or "−"
+        local tone = pr.profit > 0 and "successBright" or (pr.profit < 0 and "dangerBright" or "textMuted")
+        local roi = pr.roi and string.format("  %d %%", math.floor(pr.roi + 0.5)) or ""
+        y = Row(body, y, w, (pr.made ~= 1 and (pr.made .. "× ") or "") .. PRO.ItemName(e.r.item),
+            WeintCodex.ColorText(tone, sign .. Money(math.abs(pr.profit))) .. roi,
+            { recipe = e.r, hint = "Erlös " .. Money(pr.sale) .. " (nach 5 % Gebühr)\nKosten " .. Money(pr.cost) })
+    end
+    if #unknown > 0 then
+        y = y - 8
+        y = Head(body, y, w, "Ohne Preis", #unknown .. " Rezepte")
+        for _, e in ipairs(unknown) do
+            y = Row(body, y, w, PRO.ItemName(e.r.item), e.p.missing, { recipe = e.r, tone = "textMuted" })
+        end
+    end
+    y = Note(body, y - 6, w, "Erlös: dein zuletzt gesehener Auktionspreis × Stückzahl, minus 5 % Gebühr; die Einstellgebühr ist nicht eingerechnet. Reagenzien zum günstigsten bekannten Preis – Händler oder Auktionshaus. Fehlt eine Zahl, steht kein Gewinn da.")
     return y
 end
 
@@ -1474,14 +1631,46 @@ end
 PT.BAR_H = 46
 PT.BAR_ITEMS = { { key = "rezepte", text = "Rezepte" } }
 for _, t in ipairs(PT.TOOLS) do PT.BAR_ITEMS[#PT.BAR_ITEMS + 1] = { key = t.key, text = t.label } end
+-- 1.4.0.0: die Leiste bricht um, wenn sie nicht passt (sieben Eintraege;
+-- schon sechs liefen bei kleinem Fenster mit Detailbereich ueber den Rand).
+-- Sie liegt in einem Halter, an dessen Unterkante die Karten haengen - eine
+-- zweite Zeile schiebt sie mit nach unten (PT.FitBar vor jedem Zeichnen).
+local function BuildBar(f, sel, maxW)
+    local bar = WeintCodex.CreateSegmentedControl(f.BarHolder, { items = PT.BAR_ITEMS, selected = sel, backdrop = "bgDark",
+        maxWidth = maxW, onSelect = function(key) PT.Show(key ~= "rezepte" and key or nil) end })
+    bar:SetPoint("TOPLEFT", f.BarHolder, "TOPLEFT", 0, 0)
+    bar._maxW, bar._sel = maxW, sel
+    local sel0 = bar.Select
+    bar.Select = function(self, i) self._sel = i return sel0(self, i) end
+    f.BarHolder:SetHeight((Plain(bar:GetHeight()) or 38) + (PT.BAR_H - 38))
+    f.ToolBar = bar
+    return bar
+end
+
 function PT.AttachBar(f, active)
     local sel = 1
     for i, it in ipairs(PT.BAR_ITEMS) do if it.key == active then sel = i end end
-    local bar = WeintCodex.CreateSegmentedControl(f, { items = PT.BAR_ITEMS, selected = sel, backdrop = "bgDark",
-        onSelect = function(key) PT.Show(key ~= "rezepte" and key or nil) end })
-    bar:SetPoint("TOPLEFT", f, "TOPLEFT", WeintCodex.Metrics.PAD_X, -(WeintCodex.Metrics.PAD_Y + 84))
-    f.ToolBar = bar
+    local holder = CreateFrame("Frame", nil, f)
+    holder:SetPoint("TOPLEFT", f, "TOPLEFT", WeintCodex.Metrics.PAD_X, -(WeintCodex.Metrics.PAD_Y + 84))
+    holder:SetSize(1, PT.BAR_H)
+    f.BarHolder = holder
+    local bar = BuildBar(f, sel, nil)
+    f.BarNatural = Plain(bar:GetWidth())
     return bar
+end
+
+-- Passt die Leiste in die Breite der Seite? Sonst neu, umgebrochen.
+function PT.FitBar(f)
+    local bar = f and f.ToolBar
+    -- Die Seite fuellt den Inhaltsbereich - seine Breite zaehlt (sie
+    -- schrumpft mit dem Detailbereich).
+    local w = Plain(WeintCodex.ContentPanel:GetWidth())
+    if not (bar and f.BarHolder and type(w) == "number" and w > 0) then return end
+    local avail = math.floor(w - 2 * WeintCodex.Metrics.PAD_X)
+    local want = (type(f.BarNatural) == "number" and f.BarNatural > avail) and avail or nil
+    if bar._maxW == want then return end
+    bar:Hide()
+    BuildBar(f, bar._sel or 1, want)
 end
 
 PT.view = nil
@@ -1497,7 +1686,6 @@ function PT.Draw(key)
     WeintCodex.SetBreadcrumb("Berufe", label)
     if f.Head and f.Head.Title then f.Head.Title:SetText("Berufe · " .. label) end
     if f.Head and f.Head.Sub and SUBS[key] then f.Head.Sub:SetText(SUBS[key]) end
-    for i, it in ipairs(PT.BAR_ITEMS) do if it.key == key and f.ToolBar then f.ToolBar:Select(i) end end
     local nav = WeintCodex.Navigation
     if nav and nav.ClearInspector then nav.ClearInspector() end
     -- 6.134.0.1 (Beta-Test: "das ueberlappt"): erst der Detailbereich, dann
@@ -1505,6 +1693,8 @@ function PT.Draw(key)
     if key == "merkliste" and PT.selItem and nav and nav.SetInspector then
         nav.SetInspector(PT.ItemBlocks(PT.selItem))
     end
+    PT.FitBar(f)
+    for i, it in ipairs(PT.BAR_ITEMS) do if it.key == key and f.ToolBar then f.ToolBar:Select(i) end end
     local cw = (Plain(f.Card:GetWidth()) or 640) - 40
     local ch = (Plain(f.Card:GetHeight()) or 360) - 62
     f.Scroll:SetSize(cw, math.max(60, ch))
@@ -1516,6 +1706,7 @@ function PT.Draw(key)
     elseif key == "merkliste" then y = PT.DrawWatch(f.Body, w)
     elseif key == "cooldowns" then y = PT.DrawCooldowns(f.Body, w)
     elseif key == "angeln" then y = PT.DrawFishing(f.Body, w)
+    elseif key == "gewinn" then y = PT.DrawProfit(f.Body, w)
     else y = PT.DrawGuild(f.Body, w) end
     f.Body:SetHeight(math.max(1, -(y or 0)))
     PT.lastDraw = { key = key, rows = used.row }

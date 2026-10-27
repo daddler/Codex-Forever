@@ -22542,6 +22542,51 @@ do
     Check(ok, "Angel-Logbuch" .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 1.4.0.0: Gewinn je Rezept - Auktionspreis minus 5 %, Reagenzien zum
+-- guenstigsten bekannten Preis, Stueckzahl vom Client, unbekannt ehrlich.
+Section("Berufe: Gewinn")
+do
+    local G = _G
+    local PT, PRO = WeintCodex.ProfTools, WeintCodex.Professions
+    local oPrice, oTSU, oVendors = PT.Price, G.C_TradeSkillUI, PT.Vendors
+    local ok, err = pcall(function()
+        local prices = { [100] = 1000, [1] = 50, [2] = 300 }
+        PT.Price = function(id) return prices[id] end
+        PT.Vendors = function(id) if id == 2 then return { { n = "Händler", p = 400, q = 2 } } end return {} end
+        G.C_TradeSkillUI = { GetRecipeSchematic = function(spell) if spell == 9 then return { quantityMin = 2, quantityMax = 2 } end end }
+        for k in pairs(PT.madeCache) do PT.madeCache[k] = nil end
+        local r = { spell = 9, item = 100, reagents = { { 1, 4 }, { 2, 1 } } }
+        local pr = PT.Profit(r)
+        -- Erloes 2 × 1000 × 0,95 = 1900; Kosten 4 × 50 + 1 × 200 (Haendler 400/2 schlaegt Auktion 300) = 400.
+        Check(pr.sale == 1900 and pr.cost == 400 and pr.profit == 1500 and pr.made == 2, "Gewinn: Rechnung ("
+            .. tostring(pr.sale) .. "/" .. tostring(pr.cost) .. "/" .. tostring(pr.profit) .. ")")
+        Check(select(2, PT.BuyPrice(2)) == "Händler", "Gewinn: Haendler vor teurer Auktion")
+        prices[1] = nil
+        Check(PT.Profit(r).profit == nil and PT.Profit(r).missing:find("unbekannt", 1, true), "Gewinn: fehlender Reagenzpreis ist keine Null")
+        prices[1] = 50
+        local r2 = { spell = 10, item = 100, reagents = { { 1, 1 } } }
+        Check(PT.Profit(r2).missing == "Stückzahl unbekannt", "Gewinn: Stueckzahl nicht geraten")
+        prices[100] = nil
+        Check(PT.Profit(r).missing:find("nie im Auktionshaus", 1, true), "Gewinn: ohne Auktionspreis kein Erloes")
+        Check(WeintCodex.VendorPrices and WeintCodex.VendorPrices[2320] == 10, "Gewinn: Haendlerpreise im Bestand")
+        PT.Show("gewinn")
+        Check(PT.lastDraw and PT.lastDraw.key == "gewinn", "Gewinn: Seite zeichnet")
+        -- Werkzeugleiste: sieben Eintraege, geschaetzt wie im Steuerelement.
+        local sum = 8
+        for _, it in ipairs(PT.BAR_ITEMS) do sum = sum + WeintCodex.Utf8Len(it.text) * WeintCodex.SEG_CHAR_W + 28 + 6 end
+        -- Bei schmaler Seite bricht sie um und schiebt die Karte nach unten.
+        local pg = PT.page
+        local bar = PT.page and PT.page.ToolBar
+        Check(bar ~= nil, "Gewinn: Werkzeugleiste da")
+        local avail = (WeintCodex.ContentPanel:GetWidth() or 0) - 2 * WeintCodex.Metrics.PAD_X
+        Check(sum <= avail or (bar and bar._maxW == avail and bar.rows > 1), "Gewinn: Werkzeugleiste passt oder bricht um ("
+            .. sum .. " px auf " .. avail .. ", maxW " .. tostring(bar and bar._maxW) .. ", Zeilen " .. tostring(bar and bar.rows) .. ", natuerlich " .. tostring(pg and pg.BarNatural) .. ")")
+    end)
+    PT.Price, G.C_TradeSkillUI, PT.Vendors = oPrice, oTSU, oVendors
+    for k in pairs(PT.madeCache) do PT.madeCache[k] = nil end
+    Check(ok, "Berufe: Gewinn" .. (ok and "" or (": " .. tostring(err))))
+end
+
 if failures == 0 then
     print("BESTANDEN")
     os.exit(0)
