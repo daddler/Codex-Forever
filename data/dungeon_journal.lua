@@ -2069,6 +2069,13 @@ function J.BossLevel(dungeonId, bossId)
     return l[1] == l[2] and tostring(l[1]) or (l[1] .. "–" .. l[2])
 end
 
+-- Faehigkeiten eines Bosses als Zaubernummern (Liste, leer wenn unbekannt).
+J.BOSS_ABILITIES = J.BOSS_ABILITIES or {}
+function J.Abilities(dungeonId, bossId)
+    local d = J.BOSS_ABILITIES[dungeonId]
+    return d and d[bossId] or {}
+end
+
 -- Kennt der Server den Gegenstand (noch) nicht?
 function J.NotYet(itemId)
     return J.NOT_YET[itemId] == true

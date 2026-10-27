@@ -26,6 +26,7 @@ WeintCodex_ChangelogData = {
         date    = "27.10.2026",
         notes   = {
             "|cff7C6CFFDungeonbeute mit Dropchance|r – an fast allen Bossen steht jetzt, was in Forever fällt und wie oft, dazu die Stufe des Bosses. Was es im Spiel noch nicht gibt, sagt das, statt ewig zu laden. Neue Bosse in der Drowned City, der Shaper's Terrace und der Alcaz-Insel.",
+            "|cff7C6CFFFähigkeiten der Bosse|r – unter jedem Boss steht, was er kann: Name und Beschreibung jeder Fähigkeit, direkt aus dem Spiel.",
             "|cff7C6CFFFlugzeit mit Zwischenstopps|r – wann du an jedem Halt bist, und auf Wunsch landest du schon am nächsten. Ein Knopf öffnet die Flugspiele.",
             "|cff7C6CFFGemütlicher Schlafsack|r – auf der Seite „Bücher“ die ganze versteckte Questreihe: jeder Schritt mit Karte, Weg und Questpfeil, erledigt oder offen.",
             "|cff7C6CFFGewinn beim Herstellen|r – auf der Seite „Berufe“ unter „Gewinn“: was jedes deiner Rezepte nach dem Auktionshaus-Scan einbringt, nach Gebühr und Materialkosten.",

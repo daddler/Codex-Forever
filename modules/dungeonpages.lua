@@ -1818,6 +1818,45 @@ local function JournalSource(inner, y, w, src)
     return BodyText(inner, y - 2, label, w, { size = 10, color = "warningBright" })
 end
 
+-- Faehigkeiten eines Bosses (1.4.0.0, Wunsch: "Erklaerung von Bossen, was
+-- gemacht werden muss"). Welche Zauber ein Boss hat, steht im Abgleich
+-- (Zaubernummern aus den Clienttabellen); Name und Beschreibung nennt der
+-- Client selbst - geschrieben wird hier nichts. Nennt er keinen Namen, faellt
+-- die Zeile weg. Was eine Rolle tun soll, kommt weiter nur vom Bot.
+function WeintCodex.DungeonPages.AbilityText(spellID)
+    local K = WeintCodex.UIKit
+    local function Plain(v) if K and K.Plain then return K.Plain(v) end return v end
+    local cs = _G.C_Spell
+    if not (cs and cs.GetSpellName) then return nil end
+    local ok, name = pcall(cs.GetSpellName, spellID)
+    name = ok and Plain(name) or nil
+    if type(name) ~= "string" or name == "" then return nil end
+    local desc
+    if cs.GetSpellDescription then
+        local ok2, d = pcall(cs.GetSpellDescription, spellID)
+        d = ok2 and Plain(d) or nil
+        if type(d) == "string" and d ~= "" then desc = d end
+    end
+    return name, desc
+end
+
+local function DrawAbilities(inner, y, w, dungeon, boss)
+    local ids = J and J.Abilities and J.Abilities(dungeon.id, boss.id) or {}
+    local any = false
+    for _, id in ipairs(ids) do
+        local name, desc = WeintCodex.DungeonPages.AbilityText(id)
+        if name then
+            if not any then y = BodyHeading(inner, y, "Fähigkeiten") any = true end
+            y = BodyText(inner, y, WeintCodex.ColorText("textBright", name), w, { size = 12 }) - 2
+            if desc then y = BodyText(inner, y, desc, w, { size = 11, color = "textMuted" }) - 6 end
+        end
+    end
+    if not any then return y end
+    y = BodyText(inner, y - 2, "Fähigkeiten und Texte aus dem Spiel; welcher Boss sie hat: Wissensstand aus der Beta.", w,
+        { size = 10, color = "warningBright" })
+    return y - 14
+end
+
 -- Beute eines Bosses. Gibt y zurueck, unveraendert, wenn keine berichtet ist.
 local function DrawLoot(inner, y, w, dungeon, boss)
     local loot = J and J.Loot(dungeon.id, boss.id) or {}
@@ -2715,6 +2754,7 @@ local function DrawBossDetail(f, y, dungeon, boss)
                 y = BodyText(inner, y, boss.position, w) - 14
             end
 
+            y = DrawAbilities(inner, y, w, dungeon, boss)
             y = DrawLoot(inner, y, w, dungeon, boss)
 
             y = BodyHeading(inner, y, "Rollen")

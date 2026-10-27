@@ -7408,6 +7408,22 @@ do
         assert(sch:find("Wissensstand aus der Beta, Dropchancen", 1, true), "Herkunft der Abgleichsbeute fehlt")
         assert(not sch:find("Beute aus Classic", 1, true), "ersetzte Beute noch als Classic ausgewiesen")
         assert(sch:find("%d+ %%"), "Dropchance fehlt")
+        -- Faehigkeiten: Name und Text vom Client, ohne Antwort keine Zeile.
+        local DPg = WeintCodex.DungeonPages
+        local oCS = _G.C_Spell
+        _G.C_Spell = { GetSpellName = function(id) if id == 11977 then return "Rend" end end,
+                       GetSpellDescription = function(id) if id == 11977 then return "Blutet 30 Sek." end end }
+        local abil = J.Abilities("hall_of_thanes", "durgen_dirgehammer")
+        assert(#abil >= 1, "Faehigkeiten fehlen im Bestand")
+        local an, ad = DPg.AbilityText(11977)
+        assert(an == "Rend" and ad == "Blutet 30 Sek.", "Faehigkeit nicht vom Client")
+        assert(DPg.AbilityText(19134) == nil, "Faehigkeit ohne Namen gezeigt")
+        texts = {}
+        DP.Select("hall_of_thanes", "durgen_dirgehammer")
+        WeintCodex.Navigation.SwitchTo("dungeons")
+        local hot = table.concat(texts, "\n")
+        assert(hot:find("Rend", 1, true) and hot:find("Blutet 30 Sek.", 1, true), "Faehigkeiten nicht auf der Seite")
+        _G.C_Spell = oCS
     end)
     WeintCodex.Paragraph, _G.UnitFactionGroup, _G.C_Map, _G.C_QuestLog = saved[1], saved[2], saved[3], saved[4]
     Check(ok, "Dungeons: Abgleich mit ForeverGuide - Geber, Ketten, Belohnungen, Herkunft, Eingaenge"

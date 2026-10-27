@@ -1003,6 +1003,7 @@ Bosse/Stufen/Encounter aus den Clienttabellen (wago.tools). Im Spiel: `community
   Gegenstände nicht – die Zeile zeigte ewig „lädt …“; jetzt Name aus dem
   Bestand, Fragezeichen, rechts „noch nicht im Spiel“.
 * **Stufe je Boss** (`J.BOSS_LEVEL`, 183 Bosse) unter dem Namen.
+* **Fähigkeiten je Boss** (`J.BOSS_ABILITIES`, 206 Bosse): nur die Zaubernummern; Name und Beschreibung nennt der Client (`DungeonPages.AbilityText`), sonst keine Zeile. Das ist bewusst keine Taktik – die gibt es für Forever nicht belegt; Rollen-Anweisungen bleiben beim Bot.
 * **Eingänge** der Drowned City und der Shaper's Terrace.
 * **Bosslisten von Hand** (`data/dungeons.lua`): Drowned City fünf Gegner
   (270882–270886) statt der zwei der BlizzCon – „Zin'aka“ kommt darin nicht vor

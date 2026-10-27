@@ -17,7 +17,7 @@ local function load(path)
     fn()
 end
 
-for _, f in ipairs({ "Build.lua", "Items.lua", "BossInfo.lua" }) do load(dir .. "/" .. f) end
+for _, f in ipairs({ "Build.lua", "Items.lua", "BossInfo.lua", "Abilities.lua" }) do load(dir .. "/" .. f) end
 local p = io.popen('ls "' .. dir .. '/Dungeons"')
 for f in p:lines() do load(dir .. "/Dungeons/" .. f) end
 p:close()
@@ -39,4 +39,4 @@ local function dump(v)
     else return tostring(v) end
 end
 io.write(dump({ build = J.DATA_BUILD, date = J.DATA_DATE, dungeons = J.dungeons,
-                notYet = J.NotYet, bossInfo = J.BossInfo }))
+                notYet = J.NotYet, bossInfo = J.BossInfo, abilities = J.Abilities }))

@@ -120,6 +120,7 @@ def build(nf, cx):
     names = {e["id"]: e for e in cx["items"]}
     not_yet = {int(k): v for k, v in nf["notYet"].items()}
     info = {int(k): v for k, v in nf["bossInfo"].items()}
+    abil = {int(k): as_list(v) for k, v in (nf.get("abilities") or {}).items()}
     codex = {d["id"]: d for d in cx["dungeons"]}
 
     def item(i, chance, prefix=None):
@@ -134,7 +135,7 @@ def build(nf, cx):
         return {"id": i, "n": n, "s": s, "q": q, "c": chance if chance and chance > 0 else None,
                 "from": prefix}
 
-    out = {"loot": {}, "others": {}, "levels": {}, "entrances": {}, "notyet": {}}
+    out = {"loot": {}, "others": {}, "levels": {}, "entrances": {}, "notyet": {}, "abilities": {}}
     stats = {"chance": 0, "items": 0, "unnamed": 0}
     for d in nf["dungeons"]:
         did = DUNGEON_MAP.get(d["key"])
@@ -158,6 +159,9 @@ def build(nf, cx):
                     if lo > 0 and hi > 0:
                         have = out["levels"].setdefault(did, {}).get(bid)
                         out["levels"][did][bid] = (min(lo, have[0]), max(hi, have[1])) if have else (lo, hi)
+                if bid and b.get("npc") and abil.get(b["npc"]):
+                    have = out["abilities"].setdefault(did, {}).setdefault(bid, [])
+                    have.extend(x for x in abil[b["npc"]] if x not in have)
                 if not ids:
                     continue
                 rows = [item(i, chances[k] if k < len(chances) else None, prefix) for k, i in enumerate(ids)]
@@ -188,6 +192,7 @@ def build(nf, cx):
         f"{stats['unnamed']} ohne Namen im Bestand (der Client nennt ihn)")
     say(f"  Noch nicht im Spiel: {len(out['notyet'])} der gelisteten Gegenstaende")
     say(f"  Stufen: {sum(len(v) for v in out['levels'].values())} Bosse")
+    say(f"  Faehigkeiten: {sum(len(v) for v in out['abilities'].values())} Bosse")
     say(f"  Eingaenge ergaenzt: {', '.join(sorted(out['entrances'])) or 'keine'}")
     return out
 
@@ -264,6 +269,14 @@ def write(nf, dd):
     w("J.BOSS_LEVEL = {")
     for did in sorted(dd["levels"]):
         parts = ", ".join(f"{bid} = {{ {lo}, {hi} }}" for bid, (lo, hi) in sorted(dd["levels"][did].items()))
+        w(f"    {did} = {{ {parts} }},")
+    w("}")
+    w("")
+    w("-- Faehigkeiten je Boss als Zaubernummern (Clienttabellen). Name und")
+    w("-- Beschreibung nennt der Client; nennt er keine, steht die Faehigkeit nicht da.")
+    w("J.BOSS_ABILITIES = {")
+    for did in sorted(dd["abilities"]):
+        parts = ", ".join(f"{bid} = {{ {', '.join(str(x) for x in ids)} }}" for bid, ids in sorted(dd["abilities"][did].items()))
         w(f"    {did} = {{ {parts} }},")
     w("}")
     w("")
