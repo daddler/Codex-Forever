@@ -20052,7 +20052,8 @@ do
         FT.Tick()
         assert(FT.frame:IsShown(), "Anzeige im Flug nicht da")
         if f.total then
-            assert(FT.frame.time:GetText():find("Landung", 1, true), "keine Landezeit trotz Dauer")
+            assert(FT.frame.time:GetText():find("^%d+:%d%d$"), "keine Restzeit trotz Dauer")
+            assert(FT.frame.next:GetText() == "Direktflug", "Direktflug nicht genannt")
         end
         assert(FT.Land() == 60, "Flug nicht gemessen")
         assert(FT.Seconds(6, 8) == 60, "Messung geht nicht vor")
@@ -20073,12 +20074,71 @@ do
         now = 200
         FT.Tick()
         assert(FT.state() == nil and not FT.frame:IsShown(), "Balken nach der Landung noch da")
+        -- 1.4.0.0: Zwischenstopps - Halte aus der Route, Ankunft je Halt,
+        -- Etappe per Position gemessen, Landen am naechsten Halt.
+        G.UnitOnTaxi = function() return true end
+        WeintCodex_SavedData.flightTimes, WeintCodex_SavedData.flightLegs = nil, nil
+        G.C_TaxiMap = { GetAllTaxiNodes = function() return {
+            { nodeID = 23, slotIndex = 1, state = 0, name = "Orgrimmar, Durotar", position = { x = 0.6, y = 0.3 } },
+            { nodeID = 25, slotIndex = 2, state = 1, name = "Crossroads, The Barrens", position = { x = 0.5, y = 0.4 } },
+            { nodeID = 80, slotIndex = 3, state = 1, name = "Ratchet, The Barrens", position = { x = 0.6, y = 0.5 } } } end }
+        local oR, oS, oE, oP = G.GetNumRoutes, G.TaxiGetNodeSlot, G.TaxiRequestEarlyLanding, G.C_Map
+        G.GetNumRoutes = function(slot) return slot == 3 and 2 or 1 end
+        G.TaxiGetNodeSlot = function(slot, hop, src) return ({ 2, 3 })[hop] end
+        local landed = 0
+        G.TaxiRequestEarlyLanding = function() landed = landed + 1 end
+        local px, py = 0.6, 0.3
+        G.C_Map = setmetatable({ GetPlayerMapPosition = function() return { x = px, y = py } end }, { __index = oP })
+        WeintCodex_SavedData.flightLegs = { ["23>25"] = 80, ["25>80"] = 40 }
+        now = 1000
+        FT.ReadMap()
+        FT.OnTake(3)
+        assert(FT.Start(), "Flug mit Halt nicht begonnen")
+        f = FT.state()
+        assert(#f.stops == 2 and f.stops[1].name == "Crossroads" and f.at[1] == 80 and f.at[2] == 120, "Halte/Zeiten falsch")
+        now = 1010
+        FT.Tick()
+        assert(FT.frame.title:GetText() == "Orgrimmar › Ratchet", "Titel: " .. tostring(FT.frame.title:GetText()))
+        assert(FT.frame.time:GetText() == "1:50", "Restzeit: " .. tostring(FT.frame.time:GetText()))
+        assert(FT.frame.next:GetText() == "Nächster Halt: Crossroads · 1:10", "Halt: " .. tostring(FT.frame.next:GetText()))
+        assert(FT.frame.land:IsShown(), "Landen fehlt")
+        px, py = 0.5, 0.4
+        now = 1075
+        FT.Tick()
+        assert(f.reached == 1 and f.reachedAt[1] == 75, "Halt nicht erreicht")
+        assert(FT.frame.next:GetText() == "Letzte Etappe", "nach dem Halt: " .. tostring(FT.frame.next:GetText()))
+        now = 1118
+        assert(FT.Land() == 118, "Gesamtflug nicht gemessen")
+        assert(WeintCodex_SavedData.flightLegs["23>25"] == 75 and WeintCodex_SavedData.flightLegs["25>80"] == 43, "Etappen nicht gemessen")
+        -- Landen: am naechsten Halt, keine Messung der ganzen Strecke.
+        WeintCodex_SavedData.flightTimes = nil
+        px, py = 0.6, 0.3
+        now = 2000
+        FT.ReadMap()
+        FT.OnTake(3)
+        FT.Start()
+        now = 2010
+        assert(FT.RequestLanding() and landed == 1, "Landen nicht angefragt")
+        assert(FT.frame.next:GetText() == "Landet in Crossroads" and not FT.frame.land:IsShown(), "Landen nicht angezeigt")
+        now = 2080
+        assert(FT.Land() == nil and WeintCodex_SavedData.flightTimes["23>80"] == nil, "abgebrochener Flug als Strecke gemessen")
+        assert(WeintCodex_SavedData.flightLegs["23>25"] == 80, "Etappe bis zum Landen nicht gemessen")
+        -- Ohne Funktion des Spiels kein Knopf.
+        G.TaxiRequestEarlyLanding = nil
+        FT.ReadMap()
+        FT.OnTake(3)
+        FT.Start()
+        FT.Tick()
+        assert(not FT.frame.land:IsShown(), "Landen ohne Funktion")
+        FT.Land()
+        G.GetNumRoutes, G.TaxiGetNodeSlot, G.TaxiRequestEarlyLanding, G.C_Map = oR, oS, oE, oP
+        WeintCodex_SavedData.flightLegs = nil
         assert(WeintCodex.UIErrors.Ours("x tainted by 'Questie'", "WeintCodex/ui/a.lua") == false, "fremder Taint als unserer")
         assert(WeintCodex.UIErrors.Ours("x tainted by 'WeintCodex'", "") == true, "eigener Taint nicht erkannt")
         WeintCodex_SavedData.flightTimes = nil
         G.C_TaxiMap, G.GetTaxiMapID, G.GetTime, G.UnitOnTaxi = oT, oM, oG, oTaxi
     end)
-    Check(ok, "Flugzeit: Ziel vom Klick, Dauer gemessen vor Daten, unbekannt ehrlich" .. (ok and "" or (": " .. tostring(err))))
+    Check(ok, "Flugzeit: Ziel vom Klick, Dauer gemessen vor Daten, unbekannt ehrlich, Zwischenstopps, Landen" .. (ok and "" or (": " .. tostring(err))))
 end
 
 -- 6.53.3.0: Danke in Instanzen schaltbar, ab Werk aus.
