@@ -22379,6 +22379,51 @@ do
     Check(ok, "Angeln mit einer Taste" .. (ok and "" or (": " .. tostring(err))))
 end
 
+Section("Angel-Logbuch")
+-- 1.3.0.0: Wuerfe und Faenge je Gebiet; Quote erst ab einem Fang; ein
+-- Beutefenster zaehlt einmal; Muenzen zaehlen nicht.
+do
+    local G = _G
+    local FL = WeintCodex.FishLog
+    local names = { "GetRealZoneText", "IsFishingLoot", "GetNumLootItems", "GetLootSlotLink", "GetLootSlotInfo", "C_Spell" }
+    local saved = {}
+    for _, n in ipairs(names) do saved[n] = G[n] end
+    local ok, err = pcall(function()
+        FL.Clear()
+        G.GetRealZoneText = function() return "Wald von Elwynn" end
+        G.C_Spell = { GetSpellName = function(id) if id == 7620 then return "Angeln" end end }
+        G.IsFishingLoot = function() return true end
+        local slots = { "|cffffffff|Hitem:6303::::::::|h[Roher geschuppter Lachs]|h|r", nil }
+        G.GetNumLootItems = function() return 2 end
+        G.GetLootSlotLink = function(i) return slots[i] end
+        G.GetLootSlotInfo = function(i) return nil, "x", i == 1 and 2 or 0 end
+        FL.OnEvent(nil, "UNIT_SPELLCAST_CHANNEL_START", "player", "x", 7620)
+        local z = FL.Zones()[1]
+        Check(z and z.casts == 1 and z.catches == 0, "Angel-Logbuch: Wurf gezählt")
+        Check(FL.ZoneLine(z) == "1 Wurf", "Angel-Logbuch: ohne Fang keine Quote (" .. FL.ZoneLine(z) .. ")")
+        FL.OnEvent(nil, "LOOT_OPENED", false)
+        FL.OnEvent(nil, "LOOT_OPENED", false)
+        FL.OnEvent(nil, "LOOT_CLOSED")
+        z = FL.Zones()[1]
+        Check(z.catches == 1 and z.items[1].id == 6303 and z.items[1].qty == 2 and #z.items == 1,
+            "Angel-Logbuch: ein Fang, Münzen nicht gezählt")
+        Check(FL.ZoneLine(z) == "1 Wurf · 1 Fang (100 %)", "Angel-Logbuch: Zeile (" .. FL.ZoneLine(z) .. ")")
+        G.IsFishingLoot = function() return false end
+        FL.OnEvent(nil, "LOOT_OPENED", false)
+        FL.OnEvent(nil, "LOOT_CLOSED")
+        Check(FL.Zones()[1].catches == 1, "Angel-Logbuch: Truhe oder Leiche ist kein Fang")
+        FL.OnEvent(nil, "UNIT_SPELLCAST_CHANNEL_START", "target", "x", 7620)
+        Check(FL.Zones()[1].casts == 1, "Angel-Logbuch: nur eigene Würfe")
+        local PT = WeintCodex.ProfTools
+        PT.Show("angeln")
+        Check(PT.lastDraw and PT.lastDraw.key == "angeln" and PT.lastDraw.rows >= 1, "Angel-Logbuch: Seite zeigt den Fang")
+        FL.Clear()
+        Check(#FL.Zones() == 0, "Angel-Logbuch: leeren")
+    end)
+    for _, n in ipairs(names) do G[n] = saved[n] end
+    Check(ok, "Angel-Logbuch" .. (ok and "" or (": " .. tostring(err))))
+end
+
 if failures == 0 then
     print("BESTANDEN")
     os.exit(0)

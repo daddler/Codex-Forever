@@ -54,6 +54,8 @@ PT.TOOLS = {
     { key = "planer",   label = "Planer" },
     { key = "merkliste", label = "Merkliste" },
     { key = "cooldowns", label = "Abklingzeiten" },
+    -- 1.3.0.0: das Angel-Logbuch (modules/fishlog.lua).
+    { key = "angeln",    label = "Angeln" },
 }
 
 --------------------------------------------------
@@ -882,6 +884,7 @@ local SUBS = {
     planer    = "Der günstigste Weg bis zur Obergrenze deiner Fertigkeit – mit Einkaufsliste.",
     merkliste = "Vorgemerkte Rezepte und was dir an Reagenzien noch fehlt.",
     cooldowns = "Welche Rezepte gerade abklingen – für alle deine Charaktere.",
+    angeln    = "Was du wo geangelt hast – je Gebiet, mit Würfen und Fängen.",
 }
 
 local function BuildPage()
@@ -1413,6 +1416,53 @@ function PT.DrawCooldowns(body, w)
     return y
 end
 
+-- Angel-Logbuch (1.3.0.0): je Gebiet Wuerfe, Faenge und was dabei war.
+function PT.DrawFishing(body, w)
+    local y = 0
+    local f = page
+    local FL = WeintCodex.FishLog
+    f.Title:SetText("Angel-Logbuch")
+    local zones = FL and FL.Zones() or {}
+    if #zones > 0 then
+        f.Action:SetText("Logbuch leeren")
+        f.Action.run = function()
+            -- Zweiter Klick binnen weniger Sekunden bestaetigt.
+            local now = _G.GetTime and Plain(_G.GetTime()) or 0
+            if PT.clearAsk and now - PT.clearAsk < 4 then
+                PT.clearAsk = nil
+                FL.Clear()
+            else
+                PT.clearAsk = now
+                f.Action:SetText("Wirklich leeren?")
+                return
+            end
+            PT.Draw("angeln")
+        end
+        f.Action:Show()
+    else
+        f.Action:Hide()
+    end
+    if #zones == 0 then
+        return Note(body, y, w, "Noch nichts geangelt. Sobald du die Angel auswirfst, merkt sich WeintCodex je Gebiet, wie oft du geworfen hast und was am Haken war. Tipp: Angeln mit einer Taste findest du im Komfort unter „Sammeln“.")
+    end
+    for _, z in ipairs(zones) do
+        y = Head(body, y, w, z.name, FL.ZoneLine(z))
+        if #z.items == 0 then
+            y = Note(body, y, w, "Noch kein Fang in diesem Gebiet.")
+        end
+        for i, it in ipairs(z.items) do
+            if i > FL.MAX_ROWS then
+                y = Note(body, y, w, "… und " .. (#z.items - FL.MAX_ROWS) .. " weitere.")
+                break
+            end
+            local share = z.total > 0 and string.format("%d × · %d %%", it.qty, math.floor(it.qty / z.total * 100 + 0.5)) or (it.qty .. " ×")
+            y = Row(body, y, w, PRO.ItemName(it.id), share, { item = it.id })
+        end
+        y = y - 8
+    end
+    return y
+end
+
 -- Die Seite "Berufe" mit diesem Werkzeug (nil = Rezepte).
 function PT.Show(key)
     PRO.view = key
@@ -1465,6 +1515,7 @@ function PT.Draw(key)
     if key == "planer" then y = PT.DrawPlanner(f.Body, w)
     elseif key == "merkliste" then y = PT.DrawWatch(f.Body, w)
     elseif key == "cooldowns" then y = PT.DrawCooldowns(f.Body, w)
+    elseif key == "angeln" then y = PT.DrawFishing(f.Body, w)
     else y = PT.DrawGuild(f.Body, w) end
     f.Body:SetHeight(math.max(1, -(y or 0)))
     PT.lastDraw = { key = key, rows = used.row }

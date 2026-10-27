@@ -166,6 +166,8 @@ modules/beasts.lua
 # Berufe (6.14.0.0): Rezepte nach deiner Fertigkeit, Lehrer auf der Karte.
 modules/professions.lua
 modules/proftools.lua
+# Angel-Logbuch (1.3.0.0): Wuerfe und Faenge je Gebiet, gezeigt als Werkzeug "Angeln".
+modules/fishlog.lua
 # Taschen (6.25.0.0): Bestand aller Charaktere als Seite; Daten aus ui/inventory.lua.
 modules/bags.lua
 modules/encounter_tracking.lua

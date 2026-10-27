@@ -26,6 +26,7 @@ WeintCodex_ChangelogData = {
         date    = "27.10.2026",
         notes   = {
             "|cff7C6CFFAngeln mit einer Taste|r – eine Taste wirft aus, holt den Schwimmer ein, wenn er anbeißt, und nimmt die Beute. Welche Taste, wählst du im Komfort unter „Sammeln“. Sie gilt nur mit Angel in der Hand; sonst bleibt deine eigene Belegung.",
+            "|cff7C6CFFAngel-Logbuch|r – auf der Seite „Berufe“ unter „Angeln“ steht je Gebiet, wie oft du geworfen hast und was am Haken war, mit Anteil je Fang.",
         },
     },
     {

@@ -1984,6 +1984,13 @@ Besitzer hält (`PF.Record`); zurück mit `PF.ReleaseOwner("fishing")` am
 Kanalende, beim Ausloggen und beim Einloggen. Prüfung: `load_test.lua`,
 Abschnitt *Angeln mit einer Taste*.
 
+Dazu das **Angel-Logbuch** (`modules/fishlog.lua`, Werkzeug „Angeln“ auf der
+Berufsseite, `PT.DrawFishing`): `SavedData.fishLog.zones[Gebiet] = { casts,
+catches, last, items = { [itemID] = Anzahl } }`. Ein Wurf ist ein eigener
+Angel-Kanal, ein Fang ein Beutefenster mit `IsFishingLoot` (einmal je
+Fenster, ohne Münzen). Ohne Fang keine Quote – „0 %“ wäre eine erfundene
+Messung. Prüfung: Abschnitt *Angel-Logbuch*.
+
 ## Glitzern *(6.29.0.0, `ui/sparkles.lua`, Seite „Glitzern“)*
 
 Verhalten von ForeverLootSparkles (GPL-3.0), kein Code daraus. Quest:
