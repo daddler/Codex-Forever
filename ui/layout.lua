@@ -91,6 +91,13 @@ K.LAYOUT = {
     rarealert       = { point = "TOP",         relPoint = "TOP", x = 0, y = -340 },
     -- Flugzeit (ui/flighttimer.lua, 6.54.0.0): oben, unter dem Hinweis.
     flighttimer     = { point = "TOP",         relPoint = "TOP", x = 0, y = -230 },
+    -- Wuerfe in der Gruppe (ui/rollwatch.lua, 1.6.0.0): rechts ueber den
+    -- Wuerfelfenstern des Spiels.
+    rollwatch       = { point = "RIGHT",       relPoint = "RIGHT", x = -260, y = 120 },
+    -- PvP (ui/pvpframes.lua, 1.6.0.0): Gegner rechts, wie das Spiel sie
+    -- zeigt; Arena oben, Schlachtfeld darunter (nie beide zugleich).
+    arenaframes     = { point = "RIGHT",       relPoint = "RIGHT", x = -120, y = 140 },
+    bgenemies       = { point = "RIGHT",       relPoint = "RIGHT", x = -120, y = 60 },
     -- Herstellzeit (ui/crafttimer.lua, 6.88.0.0): unter der Flugzeit.
     crafttimer      = { point = "TOP",         relPoint = "TOP", x = 0, y = -276 },
     -- Fluestern (ui/messenger.lua, 6.19.0.0): das Fenster links ueber dem Chat.

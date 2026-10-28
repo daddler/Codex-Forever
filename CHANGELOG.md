@@ -9,6 +9,17 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.6.0.0] – 2026-10-28
+
+### Neu
+- Würfe in der Gruppe (`ui/rollwatch.lua`, Wunsch aus der Gilde): nur in Dungeons (Instanzart `party`) ein Fenster mit den letzten vier Gegenständen – Wahl je Spieler (Bedarf/Gier/Entzaubern/Transmog/Passen), Wurf, Gewinner. Quelle: Beutezeilen im Chat, Muster beim Laden aus den Texten des Clients (`LOOT_ROLL_*`, auch `%2$s`), geheime Zeilen werden nicht gelesen. Schalter `rollWatch` (Komfort → Anzeigen, ab Werk an), Platz `rollwatch`.
+- PvP (`ui/pvpframes.lua`, neue Komfortseite „PvP“ unter Kampf & Gruppe; Verhalten nach Gladius Reloaded und Healers Have To Die, eigener Code – Gladius ist „All rights reserved“):
+  - Gegnerrahmen in der Arena: `SecureUnitButtonTemplate` für arena1–5, Links Ziel, Rechts Fokus; Leben/Name auch als geheime Werte an Balken und Text; Spezialisierung aus `GetArenaOpponentSpec`, wo vorhanden.
+  - Gegnerliste im Schlachtfeld aus der Punktetafel (`C_PvP.GetScoreInfo`/`GetBattlefieldScore`), Heiler oben, Klick `/targetexact`; Leben nur bei sichtbaren Gegnern (Plakette, Ziel, Fokus); belegt nur außerhalb des Kampfes.
+  - Heiler-Kreuz an der Plakette: Spieler nur nach Spezialisierung (Rolle aus `data/specs.lua`), Gegner in Instanzen nach einem gewirkten Zauber, dessen Beschreibung im Client vom Heilen spricht.
+  - Feind in der Nähe (ab Werk aus): außerhalb von Instanzen, auf Wunsch nur beim Rasten; Chat, Ton, Hinweis der seltenen Gegner mit Zielknopf (`RA.TargetToast`); je Name höchstens alle zwei Minuten.
+- Nichts davon sendet etwas; jedes Ziel ist ein Klick des Spielers.
+
 ## [1.5.0.0] – 2026-10-27
 
 ### Geändert

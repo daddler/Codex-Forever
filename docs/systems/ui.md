@@ -4605,3 +4605,38 @@ Spielertexten nicht genannt).
 - **Nichts wird gesendet** – keine Addon-Nachrichten.
 - Ungemessen: `spell` als Nummer im Forever-Client, `IsSpellInRange` für
   Gruppenmitglieder.
+
+## Würfe in der Gruppe *(1.6.0.0, `ui/rollwatch.lua`, Seite „Anzeigen“)*
+
+Nur in Dungeons (`IsInInstance` → `party`). Quelle sind die Beutezeilen im Chat (`CHAT_MSG_LOOT`) plus `START_LOOT_ROLL` für den Link. Die Muster baut `RW.BuildPatterns()` beim Einloggen aus den Texten des Clients (`LOOT_ROLL_NEED`, `…_ROLLED_NEED`, `…_WON`, `…_SELF` usw.; `%2$s` wird nach Position zugeordnet). WeintCodex schreibt also keinen Satz selbst und passt in jeder Sprache. Fehlt ein Text im Client, fehlt nur dieses Muster. Eine geheime Zeile (12.x) wird übersprungen, statt sie falsch zu lesen.
+
+Das Fenster zeigt die letzten vier Gegenstände und schließt 30 s nach der letzten Änderung. Schalter `rollWatch`, Platz `rollwatch`.
+
+## PvP *(1.6.0.0, `ui/pvpframes.lua`, Komfortseite „PvP“)*
+
+Übernommen ist nur das Verhalten von Gladius Reloaded („All rights reserved“) und Healers Have To Die, der Code ist eigener. Die Tabelle heißt `WeintCodex.UIPvPFrames`, weil `UIPvP` schon das PvP-Profil in Gold ist.
+
+- **Arena:** `WeintCodexArena1..5` sind `SecureUnitButtonTemplate`-Knöpfe (`*type1` = target, `*type2` = focus).
+  - Leben und Name gehen roh an Balken und Text, das geht auch mit geheimen Werten.
+  - Die Spezialisierung kommt aus `GetArenaOpponentSpec` und `GetSpecializationInfoByID`.
+  - Zeigen und Verstecken passiert nur außerhalb des Kampfes (`K.AfterCombat`).
+- **Schlachtfeld:** Die Gegner kommen aus der Punktetafel (`C_PvP.GetScoreInfo`, sonst `GetBattlefieldScore`). Feind ist, wessen `faction` ≠ `GetBattlefieldArenaFaction()` ist.
+  - Gezeigt werden 15 geschützte Makroknöpfe mit `/targetexact Name`. Belegt werden sie nur außerhalb des Kampfes.
+  - Leben gibt es nur über eine sichtbare Einheit: Plakette, Ziel oder Fokus.
+  - Die Punktetafel wird alle 5 s angefordert.
+- **Heiler:**
+  - Spieler bekommen das Kreuz nur nach ihrer Rolle: Spezialisierung aus der Arena, oder Talentbaum aus der Punktetafel über `data/specs.lua`. Ohne diese Angabe gibt es kein Kreuz, und „Wilder Kampf“ bleibt ohne Rolle.
+  - Gegner in Instanzen bekommen es nach einem gewirkten Zauber, dessen Beschreibung (`C_Spell.GetSpellDescription`) „heil“ oder „heal“ enthält.
+  - Eine fehlende Beschreibung wird nicht als „kein Heilzauber“ gemerkt.
+  - Das Kreuz ist ein eigener Rahmen, angehängt an die Plakette. Gesperrte Plaketten (`IsForbidden`) bleiben unberührt.
+- **Feind in der Nähe:** ab Werk aus (`pvpAlert`).
+  - Gilt nur außerhalb von Instanzen, auf Wunsch nur beim Rasten (`pvpAlertCity`).
+  - Ausgelöst wird beim Erscheinen der Plakette eines feindlichen Spielers (`UnitIsEnemy`).
+  - Gemeldet wird je Name höchstens alle 120 s.
+  - Der Zielknopf kommt vom Hinweis der seltenen Gegner (`RA.TargetToast`, `RA.ArmClick(name, true)`). Dort gilt auch die Regel „vor dem Kampf entschärfen“.
+
+Nicht gemessen auf Forever:
+- ob `GetArenaOpponentSpec`, `C_PvP.GetScoreInfo` und die Spalte `talentSpec` Werte liefern;
+- ob die Beschreibungen der Zauber von Gegnern geladen sind.
+
+In allen drei Fällen fehlt die Angabe nur, falsch gezeigt wird nichts.

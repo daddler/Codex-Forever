@@ -276,12 +276,12 @@ function RA.ClickButton()
 end
 
 -- Scharf machen fuer einen Gegner; im Kampf nicht (geschuetzt).
-function RA.ArmClick(name)
-    if not Get("rareClick") or type(name) ~= "string" or name == "" then return false end
+function RA.ArmClick(name, force)
+    if not (force or Get("rareClick")) or type(name) ~= "string" or name == "" then return false end
     if K.InCombat() then return false end
     local b = RA.ClickButton()
     if not b or not toast then return false end
-    local mark = tonumber(K.Get(KEY, "rareMark")) or 0
+    local mark = force and 0 or (tonumber(K.Get(KEY, "rareMark")) or 0)
     b._name, b._mark = name, mark >= 1 and mark <= 8
     -- 6.48.3.0 (Fehlerbericht: wieder "WeintCodexRareAlert:Hide()" blockiert):
     -- NICHT am Hinweis verankern - ein geschuetzter Knopf, der an einem
@@ -393,6 +393,22 @@ function RA.Alert(name, info, level, elite, how)
             t:Show()
         end
     end
+end
+
+-- Derselbe Hinweis fuer andere Meldungen mit Zielknopf (1.6.0.0, Feind in
+-- der Naehe, ui/pvpframes.lua): eigener Titel, kein Markieren, der Knopf
+-- unabhaengig vom Schalter der seltenen Gegner.
+function RA.TargetToast(title, sub, name)
+    local t = EnsureToast()
+    local locked = K.InCombat() and t.IsProtected and K.Bool(t:IsProtected(), false)
+    if t._unlock or locked then return false end
+    local armed = RA.ArmClick(name, true)
+    if armed then sub = (sub ~= "" and (sub .. "  ·  ") or "") .. "Klick: ins Ziel" end
+    RA.FillToast(title, sub)
+    t._t = 0
+    t:SetAlpha(1)
+    t:Show()
+    return true
 end
 
 --------------------------------------------------

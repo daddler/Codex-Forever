@@ -519,6 +519,8 @@ K.Register({
                   { type = "slider", label = "Warnen ab", key = "durabilityThreshold", min = 5, max = 50, step = 5,
                     format = function(v) return string.format("%d %%", v) end,
                     disabled = function() return not K.Get(KEY, "durability") end })
+            B:Row(Row2({ type = "toggle", label = "Würfe in der Gruppe zeigen", key = "rollWatch",
+                         description = "In Dungeons ein kleines Fenster: wer auf welchen Gegenstand Bedarf, Gier oder Passen gewählt hat, mit Wurf und Gewinner – so siehst du, ob jemand ein Teil braucht, ohne zu fragen." }))
             B:Section("Stufenaufstieg")
             B:Row(Row2({ type = "toggle", label = "Neues beim Lehrer zeigen", key = "levelUpPopup",
                          description = "Nach dem Aufstieg ein Fenster mit den Zaubern, die du jetzt lernen kannst, und was sie kosten. Ihre Zahl steht am Symbol an der Minikarte." }))

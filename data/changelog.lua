@@ -22,6 +22,17 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.6.0.0",
+        date    = "28.10.2026",
+        notes   = {
+            "|cff7C6CFFWer würfelt worauf|r – im Dungeon zeigt ein kleines Fenster, wer bei welchem Gegenstand Bedarf, Gier oder Passen gewählt hat, mit Wurf und Gewinner. Schalter: Komfort → Anzeigen.",
+            "|cff7C6CFFGegnerrahmen in der Arena|r – Name, Leben, Klasse und Spezialisierung jedes Gegners; Links ins Ziel, Rechts Fokus.",
+            "|cff7C6CFFGegnerliste im Schlachtfeld|r – schon vor dem Start siehst du, wer gegen dich steht, Heiler zuerst. Ein Klick nimmt ihn ins Ziel, sobald er in Sichtweite ist.",
+            "|cff7C6CFFHeiler markieren|r – ein grünes Kreuz über gegnerischen Heilern, im PvP nach Spezialisierung und in Dungeons über Gegnern, die heilen.",
+            "|cff7C6CFFFeind in der Nähe|r – auf Wunsch eine Meldung mit Klick ins Ziel, wenn ein feindlicher Spieler in deine Stadt kommt. Alles unter Komfort → PvP.",
+        },
+    },
+    {
         version = "1.5.0.0",
         date    = "27.10.2026",
         notes   = {

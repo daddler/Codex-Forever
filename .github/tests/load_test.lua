@@ -18926,10 +18926,10 @@ do
         end
         local order = table.concat(keys, ",")
         local pal = WeintCodex.UIPaladinBuffs.IsPaladin()
-        assert(order == "automatik,anzeigen,rausda,automark,klickzauber,makros," .. (pal and "segen," or "") .. "ringe,karte,questhilfe,sammeln,glitzern,selten,flugspiele,auktion,fluestern,danke,gespraeche",
+        assert(order == "automatik,anzeigen,rausda,automark,klickzauber,makros," .. (pal and "segen," or "") .. "ringe,pvp,karte,questhilfe,sammeln,glitzern,selten,flugspiele,auktion,fluestern,danke,gespraeche",
             "Reihenfolge: " .. order)
         local d = pal and 0 or -1
-        assert(O.PageIndex("comfort", "gespraeche") == 18 + d and O.PageIndex("comfort", "fluestern") == 16 + d, "Index nach Sortieren")
+        assert(O.PageIndex("comfort", "gespraeche") == 19 + d and O.PageIndex("comfort", "fluestern") == 17 + d, "Index nach Sortieren")
         for _, h in ipairs(WL.HELPERS) do
             local mod = K.Module(h.module)
             assert(mod and mod.group ~= "ui" or h.module == "groupframes", h.label .. ": haengt an einem Modul der Oberflaeche")
@@ -22608,6 +22608,74 @@ do
     PT.Price, G.C_TradeSkillUI, PT.Vendors = oPrice, oTSU, oVendors
     for k in pairs(PT.madeCache) do PT.madeCache[k] = nil end
     Check(ok, "Berufe: Gewinn" .. (ok and "" or (": " .. tostring(err))))
+end
+
+-- 1.6.0.0: Wer wuerfelt worauf - Muster aus den Texten des Spiels.
+Section("Wuerfe in der Gruppe")
+do
+    local RW = WeintCodex.UIRollWatch
+    local saved = {}
+    local strings = {
+        LOOT_ROLL_NEED = "%s wählt 'Bedarf' für: %s",
+        LOOT_ROLL_GREED = "%s wählt 'Gier' für: %s",
+        LOOT_ROLL_PASSED = "%s passt bei: %s",
+        LOOT_ROLL_ROLLED_NEED = "Bedarfswurf (%d) für %s von %s",
+        LOOT_ROLL_WON = "%2$s geht an %1$s",
+        LOOT_ROLL_NEED_SELF = "Ihr wählt 'Bedarf' für: %s",
+    }
+    for k, v in pairs(strings) do saved[k] = _G[k]; _G[k] = v end
+    local ok, err = pcall(function()
+        RW.BuildPatterns()
+        local link = "|cff0070dd|Hitem:4711::::|h[Testklinge]|h|r"
+        local a = RW.Parse("Lena wählt 'Bedarf' für: " .. link)
+        Check(a and a.kind == "need" and a.who == "Lena" and a.item == link, "Wuerfe: Bedarf erkannt")
+        local b = RW.Parse("Bedarfswurf (87) für " .. link .. " von Lena")
+        Check(b and b.kind == "need" and b.roll == 87 and b.who == "Lena", "Wuerfe: Wurf mit Zahl")
+        local c = RW.Parse(link .. " geht an Ole")
+        Check(c and c.kind == "won" and c.who == "Ole", "Wuerfe: Platzhalter mit Position (%2$s)")
+        Check(RW.Parse("Irgendein anderer Satz") == nil, "Wuerfe: fremde Zeile ignoriert")
+        wipe(RW.items)
+        RW.Apply(a); RW.Apply(b)
+        RW.Apply(RW.Parse("Ole wählt 'Gier' für: " .. link))
+        RW.Apply(RW.Parse("Bruni passt bei: " .. link))
+        local sum = RW.Summary(RW.items[1])
+        Check(sum:find("Lena 87", 1, true) and sum:find("Ole", 1, true) and sum:find("Bruni", 1, true), "Wuerfe: Zusammenfassung")
+        Check(sum:find("Bedarf", 1, true) < sum:find("Gier", 1, true) and sum:find("Gier", 1, true) < sum:find("Passen", 1, true), "Wuerfe: Bedarf vor Gier vor Passen")
+        RW.Apply(c)
+        Check(RW.items[1].winner == "Ole", "Wuerfe: Gewinner")
+        Check(K.Get("comfort", "rollWatch") == true, "Wuerfe: ab Werk an")
+        wipe(RW.items)
+    end)
+    for k in pairs(strings) do _G[k] = saved[k] end
+    RW.BuildPatterns()
+    Check(ok, "Wuerfe in der Gruppe" .. (ok and "" or (": " .. tostring(err))))
+end
+
+-- 1.6.0.0: PvP - Rollen nur aus Spezialisierungen, Heiler nur aus Zaubern.
+Section("PvP")
+do
+    local PV = WeintCodex.UIPvPFrames
+    local oDesc = _G.C_Spell
+    local ok, err = pcall(function()
+        Check(PV.RoleOfSpec("Heilig", "PRIEST") == "healer" and PV.RoleOfSpec("Holy", "PALADIN") == "healer", "PvP: Heiler aus der Spezialisierung")
+        Check(PV.RoleOfSpec("Wilder Kampf", "DRUID") == nil and PV.RoleOfSpec(nil) == nil, "PvP: unbekannte Rolle bleibt unbekannt")
+        _G.C_Spell = setmetatable({ GetSpellDescription = function(id)
+            if id == 1 then return "Heilt ein freundliches Ziel um 300 Punkte." end
+            if id == 2 then return "Verursacht 50 Feuerschaden." end
+            return ""
+        end }, { __index = oDesc })
+        Check(PV.IsHealSpell(1) == true and PV.IsHealSpell(2) == false, "PvP: Heilzauber aus der Beschreibung des Clients")
+        Check(PV.IsHealSpell(3) == false and PV.healSpell[3] == nil, "PvP: fehlende Beschreibung wird nicht gemerkt")
+        local list = { { name = "A-Realm", short = "A", class = "PRIEST", spec = "Heilig", role = "healer" },
+                       { name = "B", short = "B", class = "WARRIOR" } }
+        Check(PV.FillBg(list) == true and PV.bg.rows[1]:GetAttribute("macrotext1") == "/targetexact A-Realm", "PvP: Klick nimmt per Name ins Ziel")
+        Check(not PV.bg.rows[3]:IsShown(), "PvP: leere Zeilen versteckt")
+        local layout = K.Layout("arenaframes")
+        Check(layout and K.Layout("bgenemies") and K.Layout("rollwatch"), "PvP: Plaetze im Layout")
+        Check(K.Get("comfort", "pvpAlert") == false, "PvP: Feindmeldung ab Werk aus")
+    end)
+    _G.C_Spell = oDesc
+    Check(ok, "PvP" .. (ok and "" or (": " .. tostring(err))))
 end
 
 if failures == 0 then
