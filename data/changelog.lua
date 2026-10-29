@@ -22,6 +22,14 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.7.0.0",
+        date    = "29.10.2026",
+        notes   = {
+            "|cff7C6CFFKomplexere Makros mit dem Makro-Helfer|r – neue Ziele: Heilen auf Maus, sonst Ziel, sonst dich; Angriff auf den Gegner unter der Maus; Ziel deines Ziels; dein Begleiter; Flächenzauber auf das Maus-Ziel, sonst am Mauszeiger.",
+            "|cff7C6CFFBedingungen und Extras|r – unter „Erweitert“: nur im Kampf, außerhalb oder ohne Reittier, nur in einer Haltung oder Gestalt, Begleiter greift an, Schmuckstücke und eine eigene Zeile am Ende.",
+        },
+    },
+    {
         version = "1.6.0.0",
         date    = "28.10.2026",
         notes   = {

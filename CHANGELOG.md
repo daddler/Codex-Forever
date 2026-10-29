@@ -9,6 +9,11 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.7.0.0] – 2026-10-29
+
+### Neu
+- Makro-Helfer (`ui/macros.lua`) für komplexere Makros: Ziele als Ketten (`conds`) – `smartheal` (`[@mouseover,help,nodead][@target,help,nodead][@player]`), `smartharm` (`[@mouseover,harm,nodead][harm,nodead]`), `targettarget`, `pet`, `mouseovercursor` (`[@mouseover,exists,nodead][@cursor]`). Bedingungen für jede Klammer: Wann (`combat`/`nocombat`/`nomounted`), Haltung/Gestalt (`stance:N`, geprüft). Extras: `/use 13`+`/use 14`, `/petattack`, eine eigene Zeile am Ende (muss mit `/` oder `#` beginnen). Neue Einstellungen unter „Erweitert“.
+
 ## [1.6.0.0] – 2026-10-28
 
 ### Neu

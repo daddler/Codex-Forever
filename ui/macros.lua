@@ -1,5 +1,5 @@
 --------------------------------------------------
--- WeintCodex :: Oberflaeche - Makro-Helfer (6.8.1.0)
+-- WeintCodex :: Oberflaeche - Makro-Helfer (6.8.1.0, erweitert 1.7.0.0)
 --------------------------------------------------
 -- Beta-Test: "Viele wissen nicht, wie man ein Makro schreibt. Der Nutzer
 -- kann auswaehlen, was das Makro machen soll, und es wird geschrieben."
@@ -49,21 +49,41 @@ MH.KINDS = {
     { value = "sequence", text = "Zauber nacheinander (Abfolge)" },
 }
 
--- AUF WEN. cond: die Bedingung; fallback: was gilt, wenn sie nicht greift
--- ("" = dein Ziel, nil = nichts weiter).
+-- AUF WEN. conds: die Klammern der Reihe nach - die erste, die greift,
+-- gilt ("" = dein Ziel als letzte Stufe). Ohne conds: keine Klammer.
+-- 1.7.0.0 (Wunsch: "auch komplexe Makros inkl. Mouseover, Cursor"):
+-- Ketten ueber mehrere Stufen, Gegner/Verbuendeter getrennt.
 MH.TARGETS = {
     { value = "target",       text = "Dein Ziel",
       explain = "auf dein aktuelles Ziel" },
-    { value = "mouseover",    text = "Maus-Ziel, sonst dein Ziel", cond = "@mouseover,exists,nodead", fallback = "",
+    { value = "mouseover",    text = "Maus-Ziel, sonst dein Ziel", conds = { "@mouseover,exists,nodead", "" },
       explain = "auf den, über dem deine Maus steht (Rahmen oder Spielwelt) – sonst auf dein Ziel" },
-    { value = "mouseoverself", text = "Maus-Ziel, sonst du selbst", cond = "@mouseover,help,nodead", fallback = "@player",
+    { value = "mouseoverself", text = "Maus-Ziel, sonst du selbst", conds = { "@mouseover,help,nodead", "@player" },
       explain = "auf den Verbündeten unter deiner Maus – sonst auf dich selbst (zum Heilen)" },
-    { value = "focus",        text = "Fokus, sonst dein Ziel", cond = "@focus,exists,nodead", fallback = "",
+    { value = "smartheal",    text = "Heilen: Maus, sonst Ziel, sonst du", conds = { "@mouseover,help,nodead", "@target,help,nodead", "@player" },
+      explain = "auf den Verbündeten unter der Maus – sonst auf dein Ziel, wenn es ein Verbündeter ist – sonst auf dich" },
+    { value = "smartharm",    text = "Angriff: Maus-Gegner, sonst dein Ziel", conds = { "@mouseover,harm,nodead", "harm,nodead" },
+      explain = "auf den Gegner unter deiner Maus – sonst auf dein Ziel, wenn es ein Gegner ist" },
+    { value = "focus",        text = "Fokus, sonst dein Ziel", conds = { "@focus,exists,nodead", "" },
       explain = "auf deinen Fokus – sonst auf dein Ziel" },
-    { value = "player",       text = "Du selbst", cond = "@player",
+    { value = "targettarget", text = "Ziel deines Ziels", conds = { "@targettarget,exists,nodead" },
+      explain = "auf das Ziel deines Ziels (z. B. den, den der Gegner angreift)" },
+    { value = "pet",          text = "Dein Begleiter", conds = { "@pet,exists,nodead" },
+      explain = "auf deinen Begleiter" },
+    { value = "player",       text = "Du selbst", conds = { "@player" },
       explain = "immer auf dich selbst, egal was ausgewählt ist" },
-    { value = "cursor",       text = "Am Mauszeiger (Flächenzauber)", cond = "@cursor",
+    { value = "cursor",       text = "Am Mauszeiger (Flächenzauber)", conds = { "@cursor" },
       explain = "sofort dort, wo dein Mauszeiger steht – ohne Zielkreis" },
+    { value = "mouseovercursor", text = "Fläche: auf Maus-Ziel, sonst Mauszeiger", conds = { "@mouseover,exists,nodead", "@cursor" },
+      explain = "unter den, über dem deine Maus steht – sonst sofort am Mauszeiger" },
+}
+
+-- WANN: gilt fuer jede Klammer des Zaubers.
+MH.WHEN = {
+    { value = "",          text = "Immer" },
+    { value = "combat",    text = "Nur im Kampf",          explain = "nur im Kampf" },
+    { value = "nocombat",  text = "Nur außerhalb des Kampfes", explain = "nur außerhalb des Kampfes" },
+    { value = "nomounted", text = "Nicht auf dem Reittier", explain = "nicht auf dem Reittier" },
 }
 
 MH.MODS = {
@@ -94,6 +114,7 @@ MH.draft = {
     kind = "cast", target = "target", mod = "shift", reset = "target",
     spells = { "", "", "" }, slot = 1,
     tooltip = true, startattack = false, stopcasting = false,
+    when = "", stance = "", trinkets = false, petattack = false, custom = "",
     name = "", save = "account",
 }
 local draft = MH.draft
@@ -116,15 +137,40 @@ local function Bracket(a, b)
 end
 
 -- Die Klammern fuer ein Ziel, optional mit einer weiteren Bedingung
--- (Zusatztaste). "" = keine Klammer noetig.
+-- (Zusatztaste, Kampf, Haltung). "" = keine Klammer noetig.
 function MH.Conditions(targetValue, extra)
+    if extra == "" then extra = nil end
     local t = Find(MH.TARGETS, targetValue)
-    if not t.cond then
+    if not t.conds then
         return extra and Bracket(extra) or ""
     end
-    local out = Bracket(extra, t.cond)
-    if t.fallback then out = out .. Bracket(extra, t.fallback) end
-    return out
+    local out = {}
+    for i, c in ipairs(t.conds) do out[i] = Bracket(extra, c) end
+    return table.concat(out)
+end
+
+-- Haltung/Gestalt: nur Ziffern, mehrere mit "/" (stance:1/3). nil = keine.
+function MH.Stance(v)
+    v = Trim(v)
+    if v == "" then return nil end
+    if not v:match("^%d+[/%d]*$") or v:match("//") or v:match("/$") then return false end
+    return "stance:" .. v
+end
+
+-- Was fuer jede Klammer des Zaubers gilt (Kampf, Haltung), als Komma-Teil.
+function MH.Base(d)
+    local parts = {}
+    local w = d.when or ""
+    if w ~= "" then parts[#parts + 1] = w end
+    local st = MH.Stance(d.stance)
+    if st then parts[#parts + 1] = st end
+    return table.concat(parts, ",")
+end
+
+local function With(a, b)
+    if a == "" then return b end
+    if b == "" then return a end
+    return a .. "," .. b
 end
 
 local function Join(cond, spell)
@@ -155,7 +201,16 @@ function MH.Build(d)
     d = d or draft
     local s1, s2, s3 = Trim(d.spells[1]), Trim(d.spells[2]), Trim(d.spells[3])
     if s1 == "" then return nil, {}, "Wähle zuerst einen Zauber." end
+    if MH.Stance(d.stance) == false then return nil, {}, "Haltung/Gestalt: nur Nummern, mehrere mit „/“ (z. B. 1/3)." end
     local t = Find(MH.TARGETS, d.target)
+    local base = MH.Base(d)
+    local when = Find(MH.WHEN, d.when or "")
+    local cond = ""
+    if when.explain then cond = " (" .. when.explain end
+    if MH.Stance(d.stance) then
+        cond = (cond == "" and " (" or (cond .. ", ")) .. "in Haltung/Gestalt " .. Trim(d.stance)
+    end
+    if cond ~= "" then cond = cond .. ")" end
     local lines, explain = {}, {}
     local function Line(text, why)
         lines[#lines + 1] = text
@@ -163,6 +218,11 @@ function MH.Build(d)
     end
     if d.tooltip then Line("#showtooltip", "zeigt auf der Leiste Symbol, Abklingzeit und Reichweite des Zaubers") end
     if d.stopcasting then Line("/stopcasting", "bricht ab, was du gerade wirkst – der Zauber kommt sofort") end
+    if d.trinkets then
+        Line("/use 13", "benutzt dein oberes Schmuckstück (wenn es etwas kann und bereit ist)")
+        Line("/use 14", "benutzt dein unteres Schmuckstück")
+    end
+    if d.petattack then Line("/petattack", "schickt deinen Begleiter auf dein Ziel") end
     if d.startattack then
         -- 6.61.19.0 (Beta-Test: "nach Schlangengift oder Arkanem Schuss geht
         -- der Jaeger in den Autohit statt Autoshot"): /startattack ist der
@@ -179,21 +239,27 @@ function MH.Build(d)
     if d.kind == "modifier" then
         if s2 == "" then return nil, {}, "Wähle den zweiten Zauber (mit Zusatztaste)." end
         local m = Find(MH.MODS, d.mod)
-        Line("/cast " .. Join(MH.Conditions(d.target, "mod:" .. m.value), s2) .. "; "
-                .. Join(MH.Conditions(d.target), s1),
-            string.format("mit %s: %s, sonst %s – jeweils %s", m.text, s2, s1, t.explain))
+        Line("/cast " .. Join(MH.Conditions(d.target, With("mod:" .. m.value, base)), s2) .. "; "
+                .. Join(MH.Conditions(d.target, base), s1),
+            string.format("mit %s: %s, sonst %s – jeweils %s%s", m.text, s2, s1, t.explain, cond))
     elseif d.kind == "sequence" then
         local list = { s1 }
         if s2 ~= "" then list[#list + 1] = s2 end
         if s3 ~= "" then list[#list + 1] = s3 end
         if #list < 2 then return nil, {}, "Eine Abfolge braucht mindestens zwei Zauber." end
         local r = Find(MH.RESETS, d.reset)
-        local cond = MH.Conditions(d.target)
-        local head = "/castsequence " .. (cond ~= "" and (cond .. " ") or "") .. (r.word and ("reset=" .. r.word .. " ") or "")
+        local cc = MH.Conditions(d.target, base)
+        local head = "/castsequence " .. (cc ~= "" and (cc .. " ") or "") .. (r.word and ("reset=" .. r.word .. " ") or "")
         Line(head .. table.concat(list, ", "),
-            string.format("jeder Druck wirkt den nächsten: %s – %s; %s", table.concat(list, ", dann "), t.explain, r.explain))
+            string.format("jeder Druck wirkt den nächsten: %s – %s%s; %s", table.concat(list, ", dann "), t.explain, cond, r.explain))
     else
-        Line("/cast " .. Join(MH.Conditions(d.target), s1), string.format("wirkt %s %s", s1, t.explain))
+        Line("/cast " .. Join(MH.Conditions(d.target, base), s1), string.format("wirkt %s %s%s", s1, t.explain, cond))
+    end
+    -- Eigene Zeile: unveraendert ans Ende, nur ein Befehl ("/") oder "#".
+    local own = Trim(d.custom)
+    if own ~= "" then
+        if not own:match("^[/#]") then return nil, {}, "Die eigene Zeile muss mit „/“ beginnen (z. B. /cleartarget)." end
+        Line(own, "deine eigene Zeile – unverändert übernommen")
     end
     local text = table.concat(lines, "\n")
     if #text > MH.LIMIT then
@@ -512,6 +578,19 @@ function MH.BuildPage(B)
     B:Row({ type = "toggle", label = "Laufenden Zauber abbrechen", description = "/stopcasting – zum Unterbrechen und Notfallheilen.",
             get = function() return draft.stopcasting end, set = function(v) draft.stopcasting = v and true or false Changed() end },
           { type = "empty" })
+    B:Advanced()
+    B:Row({ type = "dropdown", label = "Wann", items = MH.WHEN,
+            get = function() return draft.when end, set = function(v) draft.when = v or "" Changed() end },
+          { type = "input", label = "Nur in Haltung/Gestalt (Nummer, z. B. 1 oder 1/3)",
+            get = function() return draft.stance end, set = function(v) draft.stance = v or "" Changed() end })
+    B:Row({ type = "toggle", label = "Begleiter greift an", description = "/petattack – schickt deinen Begleiter auf dein Ziel.",
+            get = function() return draft.petattack end, set = function(v) draft.petattack = v and true or false Changed() end },
+          { type = "input", label = "Eigene Zeile am Ende (z. B. /cleartarget)",
+            get = function() return draft.custom end, set = function(v) draft.custom = v or "" Changed() end })
+    B:Row({ type = "toggle", label = "Schmuckstücke benutzen", description = "/use 13 und /use 14 – beide Schmuckplätze, wenn sie etwas können.",
+            get = function() return draft.trinkets end, set = function(v) draft.trinkets = v and true or false Changed() end },
+          { type = "empty" })
+    B:EndAdvanced()
     B:Section("Ergebnis")
     B:Row({ type = "custom", height = MH.PREVIEW_H, create = function(parent, width)
                 return MH.BuildPreview(parent, width)
