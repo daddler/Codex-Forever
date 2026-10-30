@@ -2,7 +2,7 @@
 ## Title: |cff7C6CFFWeintCodex|r
 ## Notes: Raid Guide & Intelligence System — Forever Edition
 ## Author: Fabian
-## Version: 1.7.0.0
+## Version: 1.8.0.0
 ## SavedVariables: WeintCodex_SavedData, WeintCompanionDB, WeintCompanionInboxDB, WeintCodex_WhispersAccount
 ## SavedVariablesPerCharacter: WeintCodex_Whispers
 
@@ -247,6 +247,7 @@ ui/auras.lua
 ui/glanz.lua
 ui/castbar.lua
 ui/nameplates.lua
+ui/timetodie.lua
 # Plaketten nach NPC: Zaubernde, eigene Farben (6.6.2.2); haengt sich an die Plaketten.
 ui/npccolors.lua
 ui/unitframes.lua

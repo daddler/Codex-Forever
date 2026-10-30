@@ -22,6 +22,15 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.8.0.0",
+        date    = "30.10.2026",
+        notes   = {
+            "|cff7C6CFFSterbezeit an der Plakette|r – auf Wunsch steht rechts neben dem Lebensbalken, in wie vielen Sekunden dein Ziel stirbt, gerechnet aus dem Schaden, den alle in den letzten Sekunden auf ihm gemacht haben.",
+            "|cff7C6CFFReichen meine DoTs?|r – grün „DoTs reichen“, wenn deine laufenden Schadenszauber den Gegner auch ohne einen weiteren Zauber töten. Lass sie auslaufen und spar dir das Mana. Rot heißt: noch nachlegen.",
+            "|cff7C6CFFBeides ist optional|r – Namensplaketten → Texte → Sterbezeit, ab Werk aus. Nennt das Spiel die Lebenspunkte im Kampf nicht offen, bleibt der Platz leer statt zu raten.",
+        },
+    },
+    {
         version = "1.7.0.0",
         date    = "29.10.2026",
         notes   = {

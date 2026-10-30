@@ -2308,6 +2308,24 @@ Fassung des Clients eine Antwort nicht stillschweigend überholt.
 | Talentfenster | kein `PlayerTalentFrame`/`TalentFrame`/`ClassTalentFrame` und kein `Blizzard_TalentUI` – die Talente stehen im `PlayerSpellsFrame` (`ui/talents.lua`) | 04.10.2026, 1.60.1 (70205) |
 | PvP-Fenster | kein eigenes `PVPFrame`/`HonorFrame` – PvP ist ein Reiter des Charakterfensters (`ui/pvp.lua`) | 04.10.2026, 1.60.1 (70205) |
 
+## Sterbezeit und „Reichen meine DoTs?“ *(1.8.0.0, `ui/timetodie.lua`)*
+
+Optional (Plaketten → Texte → Sterbezeit, ab Werk aus), Text rechts neben
+dem Balken, ab Werk nur am Ziel. `NP.UpdateHealth`/`UpdateTarget` rufen
+`TD.Update(p, S[, false])`; ein Takt (1 s) zählt stehende Texte herunter.
+
+- **Zeit:** Ring je GUID (24 Plätze, höchstens 40 Gegner, einmal angelegt –
+  keine Tabelle je Ereignis), Fenster 12 s, Steigung per kleinster Quadrate =
+  Schaden aller je Sekunde; Leben / Schaden = Sekunden. Steigt das Leben,
+  beginnt der Verlauf neu. Unter 2 s Messung: keine Zahl.
+- **DoTs:** Wirken des Spielers + Beschreibung des Clients (`TD.ParseDot`,
+  de/en). Kein Zauberbestand von Hand; Kanäle (`UNIT_SPELLCAST_CHANNEL_START`)
+  zählen nie. Das Ziel ist das Ziel beim Wirken.
+- **Geheim:** Rechnet nur mit `K.Plain(UnitHealth)`. Geheimes Leben → kein
+  Text (unbekannt ≠ 0), `TD.stats.secret`, Zeile „Sterbezeit“ in `/wcui prüfen`.
+  Ob Forever das Leben fremder Plaketten im Kampf offen nennt, ist **nicht
+  gemessen** – zeigt die Prüfung nur Geheimes, kann die Funktion dort nichts.
+
 ## Namensplaketten 3.0: Bewegung *(6.8.1.0, `ui/nameplates.lua`)*
 
 Beta-Test: „insgesamt wirklich schon gut, aber es fehlt noch etwas

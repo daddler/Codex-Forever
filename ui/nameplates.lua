@@ -183,6 +183,11 @@ local defaults = {
     -- "mittig, rechts, links - Stand jetzt nur links").
     auraAlign = "left",        -- left | center | right
     pvpMark = true,            -- 6.52.4.0: "PvP" unter Spielern mit PvP-Markierung
+    -- 1.8.0.0: Sterbezeit rechts neben dem Balken und "reichen die DoTs?"
+    -- (ui/timetodie.lua). Ab Werk aus - nur mit offenen Lebenspunkten.
+    ttd = false,
+    ttdDots = false,
+    ttdTargetOnly = true,
 
     -- Questfortschritt links vom Namen ("8/10"), wenn der Gegner zu einer
     -- deiner Quests gehoert - aus dem Tooltip des Spiels, nur draussen.
@@ -909,6 +914,12 @@ local function Build(parent)
     p.aggro:SetJustifyH("RIGHT")
     p.aggro:SetWordWrap(false)
     p.aggro:Hide()
+    -- Sterbezeit (1.8.0.0), rechts neben dem Balken.
+    p.ttd = K.NewText(textHost, 10)
+    p.ttd:SetPoint("LEFT", health, "RIGHT", 4, 0)
+    p.ttd:SetJustifyH("LEFT")
+    p.ttd:SetWordWrap(false)
+    p.ttd:Hide()
     return p
 end
 
@@ -1351,6 +1362,8 @@ local function UpdateHealth(p, hit, snap)
         p.flashAnim:Play()
     end
     FillTexts(p, true)
+    local TD = WeintCodex.UITimeToDie
+    if TD then TD.Update(p, S) end
 end
 
 -- Die Farbe des Balkens, in Rangfolge. Jede Frage, die der Client geheim
@@ -1484,7 +1497,13 @@ local function UpdateTarget(p)
     -- Ziel oben, dann die unter der Maus: sonst liegt die ausgewaehlte
     -- Plakette halb unter der naechsten.
     if p.SetFrameLevel then p:SetFrameLevel(isTarget and 20 or (isHover and 15 or 5)) end
+    -- Ohne neuen Lebensstand: nur zeigen oder verbergen.
+    local TD = WeintCodex.UITimeToDie
+    if TD then TD.Update(p, S, false) end
 end
+
+-- Die aufgeloesten Einstellungen fuer Nachbarn (ui/timetodie.lua).
+function NP.Settings() return S end
 
 -- Die Maus: das Spiel meldet, WENN eine Einheit unter die Maus kommt
 -- (UPDATE_MOUSEOVER_UNIT), aber nicht, wenn sie wieder geht. Solange eine
@@ -2867,6 +2886,14 @@ K.Register({
             B:Row({ type = "dropdown", label = "Name steht", items = NAME_PLACES,
                     get = NP.NamePlace, set = NP.SetNamePlace,
                     description = "Stellt die Textplätze unten passend ein; dort lässt sich alles weiter einzeln belegen." },
+                  { type = "empty" })
+            B:Section("Sterbezeit", "Rechnet nur, solange das Spiel die Lebenspunkte offen nennt – sonst bleibt der Platz leer.")
+            B:Row({ type = "toggle", label = "Sterbezeit anzeigen", key = "ttd",
+                    description = "Rechts neben dem Balken: in wie vielen Sekunden der Gegner stirbt – aus dem Schaden, den alle in den letzten Sekunden auf ihm gemacht haben." },
+                  { type = "toggle", label = "Reichen meine DoTs?", key = "ttdDots",
+                    description = "Grün „DoTs reichen“: deine laufenden Schadenszauber töten ihn, auch wenn du nichts mehr tust – spart Mana. Rot: noch nicht. Geschätzt aus dem Schaden in der Zauberbeschreibung, ohne Kritische." })
+            B:Row({ type = "toggle", label = "Nur am Ziel", key = "ttdTargetOnly",
+                    disabled = function() return not (K.Get(KEY, "ttd") or K.Get(KEY, "ttdDots")) end },
                   { type = "empty" })
             B:Advanced()
             B:Section("Textplätze")

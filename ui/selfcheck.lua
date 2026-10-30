@@ -682,6 +682,15 @@ Check("Buffzeiten", function(add)
     for _, line in ipairs(BT.StatusLines()) do add("", "   " .. line) end
 end)
 
+-- Sterbezeit an der Plakette (1.8.0.0, ui/timetodie.lua)
+Check("Sterbezeit", function(add)
+    local TD = WeintCodex.UITimeToDie
+    if not TD then add(SC.OPEN, "Sterbezeit nicht geladen.") return end
+    local s = TD.stats
+    -- Nur geheimes Leben gesehen: dann rechnet hier nichts.
+    add((s.secret > 0 and s.samples == 0) and SC.BAD or SC.OK, TD.Report())
+end)
+
 -- Buffs im WeintCodex-Stil (6.37.0.0)
 Check("Buffs", function(add)
     local BS = WeintCodex.UIBuffSkin

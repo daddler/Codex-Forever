@@ -22694,6 +22694,63 @@ do
     Check(ok, "PvP" .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- Sterbezeit an der Plakette (1.8.0.0, ui/timetodie.lua)
+do
+    local TD = WeintCodex.UITimeToDie
+    local K = WeintCodex.UIKit
+    local oTime, oHp, oGuid, oSecret, oAtk, oSpell =
+        _G.GetTime, _G.UnitHealth, _G.UnitGUID, _G.issecretvalue, _G.UnitCanAttack, _G.C_Spell
+    local ok, err = pcall(function()
+        Check(TD ~= nil, "Sterbezeit: geladen")
+        local t, d = TD.ParseDot("Ein Wort der Dunkelheit, das im Verlauf von 18 Sek. 1.230 Schattenschaden verursacht.")
+        Check(t == 1230 and d == 18, "Sterbezeit: DoT aus deutscher Beschreibung")
+        t, d = TD.ParseDot("Verursacht 9 bis 12 Arkanschaden und im Verlauf von 9 Sek. weitere 12 Arkanschaden.")
+        Check(t == 12 and d == 9, "Sterbezeit: Direktschaden davor wird nicht gezaehlt")
+        t, d = TD.ParseDot("Corrupts the target, causing 66 Shadow damage over 18 sec.")
+        Check(t == 66 and d == 18, "Sterbezeit: DoT aus englischer Beschreibung")
+        Check(TD.ParseDot("Verursacht 50 Feuerschaden.") == nil, "Sterbezeit: ohne Dauer kein DoT")
+        Check(TD.Format(14.4) == "14 s" and TD.Format(83) == "1:23", "Sterbezeit: Format sekundengenau")
+        TD.Reset()
+        local now, hp = 100, 1000
+        _G.GetTime = function() return now end
+        _G.UnitHealth = function() return hp end
+        _G.UnitGUID = function() return "Creature-1" end
+        local text
+        local p = { unit = "nameplate1", _isTarget = true, ttd = {
+            SetFormattedText = function(_, f, a, b, c) text = string.format(f, a, b, c) end,
+            Show = function(self) self.on = true end, Hide = function(self) self.on = false end,
+            IsShown = function(self) return self.on end } }
+        local S = { ttd = true, ttdDots = true, ttdTargetOnly = true }
+        for i = 0, 4 do now = 100 + i hp = 1000 - i * 100 TD.Update(p, S) end
+        -- 100 Schaden je Sekunde, 600 Leben: 6 s.
+        Check(p.ttd.on and text == "6 s", "Sterbezeit: 100/s bei 600 Leben = 6 s (" .. tostring(text) .. ")")
+        p._isTarget = false
+        TD.Update(p, S, false)
+        Check(not p.ttd.on, "Sterbezeit: nur am Ziel")
+        p._isTarget = true
+        -- DoT: 18 s, 1800 Schaden auf das Ziel, Leben 600 -> reicht.
+        _G.UnitCanAttack = function() return true end
+        _G.C_Spell = setmetatable({ GetSpellDescription = function() return "im Verlauf von 18 Sek. 1800 Schattenschaden" end }, { __index = oSpell })
+        Check(TD.DotRemaining("Creature-1", now) == nil, "Sterbezeit: ohne DoT kein Urteil")
+        TD.OnCast(589)
+        TD.Update(p, S, false)
+        Check(text and text:find("DoTs reichen|r", 1, true) ~= nil, "Sterbezeit: DoT mit 1800 Rest bei 600 Leben reicht")
+        hp = 5000
+        TD.Update(p, S, false)
+        Check(text and text:find("reichen nicht", 1, true) ~= nil, "Sterbezeit: DoT reicht bei 5000 Leben nicht")
+        now = now + 30
+        Check(TD.DotRemaining("Creature-1", now) == nil, "Sterbezeit: abgelaufener DoT zaehlt nicht")
+        _G.issecretvalue = function(v) return v == hp end
+        TD.Update(p, S)
+        Check(not p.ttd.on, "Sterbezeit: geheimes Leben -> keine Zahl")
+        Check(TD.stats.secret > 0, "Sterbezeit: geheim gezaehlt")
+        Check(K.Get("nameplates", "ttd") == false and K.Get("nameplates", "ttdDots") == false, "Sterbezeit: ab Werk aus")
+    end)
+    _G.GetTime, _G.UnitHealth, _G.UnitGUID, _G.issecretvalue, _G.UnitCanAttack, _G.C_Spell =
+        oTime, oHp, oGuid, oSecret, oAtk, oSpell
+    Check(ok, "Sterbezeit" .. (ok and "" or (": " .. tostring(err))))
+end
+
 if failures == 0 then
     print("BESTANDEN")
     os.exit(0)

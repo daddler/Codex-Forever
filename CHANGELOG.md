@@ -9,6 +9,13 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.8.0.0] – 2026-10-30
+
+### Neu
+- Sterbezeit an der Plakette (`ui/timetodie.lua`, Wunsch des Besitzers): Namensplaketten → Texte → „Sterbezeit“, ab Werk aus (`ttd`, `ttdDots`, `ttdTargetOnly` = an). Je Gegner (GUID) die Lebensstände der letzten 12 s aus `UNIT_HEALTH`, Schaden je Sekunde per kleinster Quadrate über alle, die draufhauen; Anzeige rechts neben dem Balken („14 s“, ab einer Minute „1:23“), zählt sekündlich herunter. Rechnet nur mit offenen Lebenspunkten – geheim (12.x im Kampf) heißt kein Text, gezählt in `/wcui prüfen` („Sterbezeit“). Unter 2 s Messung oder ohne sinkendes Leben keine Zeit; Heilung setzt den Verlauf zurück.
+- „Reichen meine DoTs?“: eigenes Wirken (`UNIT_SPELLCAST_SUCCEEDED`) auf ein angreifbares Ziel, Schaden und Dauer aus der Zauberbeschreibung des Clients („im Verlauf von N Sek. X …schaden“ / „X … damage over N sec“) – kein Bestand von Hand; kanalisierte Zauber zählen nie. Restschaden = Gesamt × Rest / Dauer je DoT, gegen das aktuelle Leben: grün „DoTs reichen“, rot „DoTs reichen nicht“. Schätzung ohne Kritische und Talente; im Kampf auf das Ziel zum Zeitpunkt des Wirkens bezogen (Maus-/Fokuszauber werden dem Ziel zugeschrieben).
+- Nichts davon sendet etwas.
+
 ## [1.7.0.0] – 2026-10-29
 
 ### Neu
