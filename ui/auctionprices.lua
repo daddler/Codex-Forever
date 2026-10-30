@@ -183,13 +183,25 @@ function AP.Prune(store, today)
     for id in pairs(store.hist or {}) do
         if not store.items[id] then store.hist[id] = nil end
     end
+    for id in pairs(store.names or {}) do
+        if not store.items[id] then store.names[id] = nil end
+    end
     return n
 end
 
 -- Gesammeltes in die Ablage: price[id] = Stueckpreis, qty[id] = Menge.
-function AP.Merge(store, price, qty, day)
+-- names[id] (1.8.1.0): der Name, wie ihn der Client beim Scan nannte - fuer
+-- die Preisverlaeufe der Companion, die sonst nur Nummern haette. Das Spiel
+-- selbst braucht ihn nicht (der Tooltip kennt seinen Gegenstand).
+function AP.Merge(store, price, qty, day, names)
     day = day or AP.Day()
     local n = 0
+    if names then
+        store.names = store.names or {}
+        for id, nm in pairs(names) do
+            if price[id] then store.names[id] = nm end
+        end
+    end
     for id, p in pairs(price) do
         store.items[id] = AP.Pack(p, qty[id], day)
         AP.Remember(store, id, p, day)
@@ -489,7 +501,7 @@ local function Finish(full)
         return
     end
     local store = s.store
-    AP.Merge(store, s.price, s.qty)
+    AP.Merge(store, s.price, s.qty, nil, s.names)
     if full then store.full, store.via, store.lots, store.n = Time(), s.via, s.lots, n end
     local kept = AP.Prune(store)
     if full and AP.OnOwnScanHook then AP.OnOwnScanHook(s.side) end
@@ -571,6 +583,8 @@ local function CollectBrowse()
         local price, qty = type(r) == "table" and K.Plain(r.minPrice), type(r) == "table" and K.Plain(r.totalQuantity)
         if type(id) == "number" and type(price) == "number" and price > 0 then
             qty = type(qty) == "number" and qty or 0
+            local nm = _G.C_Item and _G.C_Item.GetItemNameByID and K.Plain(_G.C_Item.GetItemNameByID(id))
+            if type(nm) == "string" and nm ~= "" then s.names[id] = nm end
             Record(s, id, price, qty)
             s.lots = s.lots + 1
         end
@@ -600,10 +614,11 @@ local function ReadBatch()
     if not f then return Fail("Vollscan nicht lesbar") end
     local last = math.min(s.i + AP.BATCH, s.n) - 1
     for i = s.i, last do
-        local ok, _, _, count, _, _, _, _, _, _, buyout, _, _, _, _, _, _, itemID = pcall(f, i)
+        local ok, name, _, count, _, _, _, _, _, _, buyout, _, _, _, _, _, _, itemID = pcall(f, i)
         if ok then
-            count, buyout, itemID = K.Plain(count), K.Plain(buyout), K.Plain(itemID)
+            count, buyout, itemID, name = K.Plain(count), K.Plain(buyout), K.Plain(itemID), K.Plain(name)
             if type(itemID) == "number" and type(buyout) == "number" and buyout > 0 then
+                if type(name) == "string" and name ~= "" then s.names[itemID] = name end
                 count = (type(count) == "number" and count > 0) and count or 1
                 Record(s, itemID, math.floor(buyout / count), count)
                 s.lots = s.lots + 1
@@ -667,7 +682,7 @@ function AP.Start()
         return false
     end
     local store = AP.Store(AP.side, true)
-    scan = { store = store, side = AP.side, price = {}, qty = {}, lots = 0, wait = 0, poll = 0, stable = 0, pages = 0 }
+    scan = { store = store, side = AP.side, price = {}, qty = {}, names = {}, lots = 0, wait = 0, poll = 0, stable = 0, pages = 0 }
     AP.log = {}
     local now = Time()
     if not ah.ReplicateItems then

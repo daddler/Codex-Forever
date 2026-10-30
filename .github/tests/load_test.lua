@@ -22694,6 +22694,18 @@ do
     Check(ok, "PvP" .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- Namen fuer die Preisverlaeufe der Companion (1.8.1.0)
+do
+    local AP = WeintCodex.UIAuctionPrices
+    local store = { items = {} }
+    AP.Merge(store, { [2770] = 120, [2771] = 300 }, { [2770] = 5, [2771] = 1 }, 300,
+        { [2770] = "Kupfererz", [9999] = "ohne Preis" })
+    Check(store.names and store.names[2770] == "Kupfererz", "Auktionsnamen: gemerkt")
+    Check(store.names[9999] == nil and store.names[2771] == nil, "Auktionsnamen: nur mit Preis, nichts geraten")
+    AP.Prune(store, 300 + AP.KEEP_DAYS + 1)
+    Check(store.names[2770] == nil, "Auktionsnamen: fallen mit dem Preis heraus")
+end
+
 -- Sterbezeit an der Plakette (1.8.0.0, ui/timetodie.lua)
 do
     local TD = WeintCodex.UITimeToDie

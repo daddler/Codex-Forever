@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.8.1.0",
+        date    = "30.10.2026",
+        notes   = {
+            "|cff7C6CFFPreisverläufe in der Companion|r – deine Scans am Auktionshaus merken sich jetzt auch die Namen der Gegenstände. Die Companion zeigt damit auf der Seite „Berufe“ unter „Preise“, was diese Woche billiger oder teurer geworden ist, und den Verlauf über Monate.",
+        },
+    },
+    {
         version = "1.8.0.0",
         date    = "30.10.2026",
         notes   = {

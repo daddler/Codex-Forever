@@ -9,6 +9,11 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.8.1.0] – 2026-10-30
+
+### Neu
+- Auktionspreise: `store.names[id]` – der Name aus dem Scan (Vollscan: erste Rückgabe von `GetReplicateItemInfo`; Suche: `C_Item.GetItemNameByID`, nur offene Werte), nur für Gegenstände mit Preis, fällt mit dem Preis heraus (`AP.Prune`). Für die Preisverläufe der Companion 1.3.0 (`../Companion-Forever/docs/auction-history-bridge.md`); das Spiel selbst braucht ihn nicht. Etwa 25 Byte je Gegenstand im Spielstand.
+
 ## [1.8.0.0] – 2026-10-30
 
 ### Neu
