@@ -4667,6 +4667,26 @@ do
         assert(ranks == 2 or p2.gap, "Raenge fehlen: " .. ranks)
         assert(#PT.PlanLines(p2) == #p2.steps, "Zeilen fehlen")
         for _, it in ipairs(plan.shop) do assert(it.price == nil or type(it.price) == "number", "Preis kein Wert") end
+        -- 1.9.0.0: Anzahl fuer 9 von 10 Faellen, nie unter dem Schnitt; orange genau.
+        assert(PT.Covered({ 1, 1, 1 }) == 3, "orange nicht genau")
+        assert(PT.Covered({ 0.5 }) == 4, "halbe Chance: 4 Versuche fuer 90 %")
+        assert(PT.Covered({ 0.5, 0.5 }) > 4, "zwei Punkte mit halber Chance brauchen mehr")
+        for _, st in ipairs(p2.steps) do
+            if st.kind == "craft" then assert(st.crafts >= st.mean, "unter dem Schnitt geplant") end
+        end
+        -- Schwellen aus dem neueren Build: gruen abgerundet, kaputtes Gelb ersetzt.
+        local soup
+        for _, rr in ipairs(PRO.Recipes("cooking")) do if rr.spell == 1270633 then soup = rr end end
+        assert(soup and soup.yellow == 30 and soup.green == 37 and soup.learn <= soup.yellow, "Schwellen nicht abgeglichen")
+        -- Raenge: Erste Hilfe Experte als Buch, Fachmann ueber Quest; nichts ueber 300.
+        local fa = PT.Ranks("first-aid")
+        assert(fa[150].how == "trainer" and fa[225].how == "book" and fa[225].book == 16084 and fa[300].how == "quest", "Raenge der Ersten Hilfe")
+        local line = PT.RankLine({ kind = "rank", at = 150, cap = 150, name = "Experte", rank = fa[225] })
+        assert(line.left:find("Buch", 1, true) and line.item == 16084, "Buch nicht genannt: " .. line.left)
+        line = PT.RankLine({ kind = "rank", at = 225, cap = 225, name = "Fachmann", rank = fa[300] })
+        assert(line.left:find("Quest", 1, true) and line.hint:find("Stufe 35", 1, true), "Quest nicht genannt: " .. line.left)
+        local t3 = PT.Goal("tailoring", { rank = 10, max = 75 })
+        assert(t3 <= 300, "Ziel ueber 300")
         -- Merkliste.
         sd.profWatch = nil
         PT.AddWatch(r1.spell, 2)

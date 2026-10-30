@@ -50,6 +50,9 @@ local parsed = {}
 local bySpell   -- Zauber -> Beruf, fuer das Auslesen des Berufsfensters
 local function Num(s) return s ~= "-" and tonumber(s) or nil end
 
+-- Fertigkeitslinie eines Berufs (171 Alchemie …), fuer P.RANKS.
+function PRO.Line(key) return byKey[key] and byKey[key].line end
+
 function PRO.Recipes(key)
     if parsed[key] then return parsed[key] end
     local raw = P and P.RAW and P.RAW[key]
@@ -65,6 +68,15 @@ function PRO.Recipes(key)
                 state = f[7], trainer = f[8]:find("t", 1, true) ~= nil, bop = f[8]:find("b", 1, true) ~= nil,
                 recipeItem = Num(f[9]), favor = Num(f[10]), name = name, reagents = {}, key = key,
             }
+            -- 1.9.0.0: Schwellen aus dem neueren Client-Build (data/professions_su.lua).
+            local fix = r.spell and P.SU_THRESH and P.SU_THRESH[r.spell]
+            if fix then
+                local l, y, g, gr = fix:match("^(%S+) (%d+) (%d+) (%d+)$")
+                if l then
+                    r.learn = Num(l)
+                    r.yellow, r.green, r.grey = tonumber(y), tonumber(g), tonumber(gr)
+                end
+            end
             for id, n in reag:gmatch("(%d+):(%d+)") do
                 r.reagents[#r.reagents + 1] = { tonumber(id), tonumber(n) }
             end

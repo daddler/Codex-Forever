@@ -2,7 +2,7 @@
 ## Title: |cff7C6CFFWeintCodex|r
 ## Notes: Raid Guide & Intelligence System — Forever Edition
 ## Author: Fabian
-## Version: 1.8.1.0
+## Version: 1.9.0.0
 ## SavedVariables: WeintCodex_SavedData, WeintCompanionDB, WeintCompanionInboxDB, WeintCodex_WhispersAccount
 ## SavedVariablesPerCharacter: WeintCodex_Whispers
 
@@ -104,6 +104,8 @@ data/specs.lua
 data/trainer.lua
 # Rezepte und Lehrer der Berufe (6.14.0.0, erzeugt); gelesen von modules/professions.lua.
 data/professions.lua
+# Abgleich der Schwellen und Raenge (1.9.0.0, erzeugt); gelesen von modules/professions.lua.
+data/professions_su.lua
 # Klassenquests und Klassenlehrer (6.15.0.0, erzeugt); gelesen von modules/classquests.lua.
 data/classquests.lua
 # Wildtierkunde des Jaegers (erzeugt); gelesen von modules/beasts.lua.

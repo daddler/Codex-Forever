@@ -22,6 +22,15 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.9.0.0",
+        date    = "30.10.2026",
+        notes   = {
+            "|cff7C6CFFDer Berufe-Planer plant mit Pech|r – die Anzahl je Schritt reicht jetzt in 9 von 10 Fällen, nicht mehr nur im Schnitt. Die Einkaufsliste geht dir also nicht mitten im Gelb aus; wie viel es im Schnitt sind, steht im Tooltip.",
+            "|cff7C6CFFRänge richtig|r – Erste Hilfe, Kochen und Angeln lernst du ab Experte nicht beim Lehrer: der Planer schickt dich zum Buch beim Händler oder zur Quest und nennt, ab welcher Fertigkeit und Stufe es geht. Er plant nicht mehr über den letzten Rang hinaus, den es gibt.",
+            "|cff7C6CFFFarben wie im Spiel|r – die Schwellen von fast 600 Rezepten stimmen jetzt mit dem aktuellen Client überein; manche Kochrezepte waren bisher deutlich zu früh gelb.",
+        },
+    },
+    {
         version = "1.8.1.0",
         date    = "30.10.2026",
         notes   = {

@@ -449,6 +449,18 @@ Rezepte · Gilde · Planer · Merkliste · Abklingzeiten.
 - **Planer:** je Punkt das Rezept mit den geringsten Kosten je erwartetem
   Punkt (Chance wie Classic), nur gelernte oder Lehrer-Rezepte; Preise nur
   aus den eigenen Auktionspreisen, fehlt einer: „Preis unbekannt“.
+  **Seit 1.9.0.0** (Abgleich mit SkillUp Forever 0.20.3, nur Daten,
+  `.github/scripts/import_skillup.py` → `data/professions_su.lua`):
+  Schwellen aus Build 1.60.1.70707 (`P.SU_THRESH`, angewandt in
+  `PRO.Recipes`: Gelb/Grau wo abweichend, Grün abgerundet wie der Client,
+  „Lernen“ nur wo es über Gelb lag); Ränge je Beruf (`P.RANKS`, `classic`:
+  Lehrer, Buch beim Händler, Quest je Seite, Fertigkeit und Stufe) –
+  Erste Hilfe, Kochen und Angeln haben Ränge ohne Lehrer, und der Weg endet
+  am letzten lernbaren Rang (`plan.stop`). Anzahl je Schritt reicht mit
+  `PT.CONFIDENCE` (90 %) statt im Schnitt (`PT.Covered`, Verteilung der
+  Punkte), der Schnitt steht im Hinweis. Nicht übernommen: Rezepte nur
+  dort (die vier Lehrer-Heiltränke der Alchemie liegen in Forever in der
+  Ersten Hilfe), Mehrfachpunkte je Herstellen, Lehrergebühren.
 - **Merkliste:** `SavedData.profWatch` (Zauber → Anzahl), fehlende
   Reagenzien gegen Taschen + Bank, Twinks über den Bestand.
 - **Abklingzeiten:** welche Rezepte eine haben, sagt der Client beim

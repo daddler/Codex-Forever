@@ -495,6 +495,57 @@ end
 PT.RANK_STEP = 75
 PT.STICKY = 0.7
 PT.RANK_NAMES = { [75] = "Geselle", [150] = "Experte", [225] = "Fachmann" }
+-- 1.9.0.0: so sicher soll die Anzahl je Schritt reichen. Mit dem Durchschnitt
+-- reichte die Einkaufsliste bei gelben und gruenen Schritten in etwa jedem
+-- zweiten Fall nicht - Pech ist beim Skillen die Regel, nicht die Ausnahme.
+PT.CONFIDENCE = 0.9
+
+-- Wie viele Herstellungen reichen mit PT.CONFIDENCE fuer alle Punkte eines
+-- Schritts, wenn der i-te Punkt mit chances[i] kommt (je Versuch, unabhaengig).
+-- Gerechnet ueber die Verteilung der erreichten Punkte nach n Versuchen.
+function PT.Covered(chances, conf)
+    conf = conf or PT.CONFIDENCE
+    local need = #chances
+    if need == 0 then return 0 end
+    local all = true
+    for i = 1, need do if chances[i] < 1 then all = false break end end
+    if all then return need end
+    local odds, nxt = { [0] = 1 }, {}
+    local n = 0
+    while (odds[need] or 0) < conf and n < 5000 do
+        n = n + 1
+        for k in pairs(nxt) do nxt[k] = nil end
+        nxt[need] = odds[need] or 0
+        for k = 0, need - 1 do
+            local p = odds[k]
+            if p and p > 0 then
+                local c = chances[k + 1]
+                nxt[k] = (nxt[k] or 0) + p * (1 - c)
+                nxt[k + 1] = (nxt[k + 1] or 0) + p * c
+            end
+        end
+        odds, nxt = nxt, odds
+    end
+    return n
+end
+
+-- Die Raenge eines Berufs ueber Lehrling (data/professions_su.lua, Art
+-- `classic`): Obergrenze -> { how = trainer|book|quest, req, level, book, quest }.
+function PT.Ranks(key)
+    local P = WeintCodex.ProfessionData
+    local line = PRO.Line and PRO.Line(key)
+    local rows = line and P and P.RANKS and P.RANKS[line]
+    if not rows then return nil end
+    local out = {}
+    local horde = _G.UnitFactionGroup and Plain(_G.UnitFactionGroup("player")) == "Horde"
+    for _, r in ipairs(rows) do
+        local q = horde and r[7] or r[6]
+        out[r[1]] = { cap = r[1], how = r[2], req = r[3], level = r[4],
+            book = r[5] ~= 0 and r[5] or nil, quest = q ~= 0 and q or nil }
+    end
+    return out
+end
+
 function PT.Plan(key, rank, target, cap)
     local usable = PT.Usable(key)
     local steps, shop = {}, {}
@@ -526,10 +577,15 @@ function PT.Plan(key, rank, target, cap)
     end
     local announced = {}
     local lastCraft
+    local ranks = PT.Ranks(key)
+    local stop
     for s = rank, target - 1 do
-        -- Obergrenze erreicht: naechster Rang beim Lehrer.
+        -- Obergrenze erreicht: naechster Rang - beim Lehrer, als Buch oder
+        -- ueber eine Quest (1.9.0.0; vorher hiess es immer "Lehrer").
         if cap and s >= cap and cap < target then
-            steps[#steps + 1] = { kind = "rank", at = s, cap = cap, name = PT.RANK_NAMES[cap] }
+            local nextRank = ranks and ranks[cap + PT.RANK_STEP]
+            if ranks and not nextRank then stop = s break end
+            steps[#steps + 1] = { kind = "rank", at = s, cap = cap, name = PT.RANK_NAMES[cap], rank = nextRank }
             cap = cap + PT.RANK_STEP
             cur = nil
         end
@@ -550,11 +606,12 @@ function PT.Plan(key, rank, target, cap)
         local RANKC = { orange = 1, yellow = 2, green = 3 }
         if cur and cur.recipe == best then
             cur.to, cur.crafts = s + 1, cur.crafts + 1 / ch
+            cur.chances[#cur.chances + 1] = ch
             cur.minChance = math.min(cur.minChance, ch)
             if (RANKC[col] or 0) > (RANKC[cur.color] or 0) then cur.color = col end
             if col == "green" then cur.risky = true end
         else
-            cur = { kind = "craft", from = s, to = s + 1, recipe = best, crafts = 1 / ch, color = col, minChance = ch, risky = col == "green" }
+            cur = { kind = "craft", from = s, to = s + 1, recipe = best, crafts = 1 / ch, color = col, minChance = ch, risky = col == "green", chances = { ch } }
             steps[#steps + 1] = cur
             lastCraft = cur
         end
@@ -562,7 +619,9 @@ function PT.Plan(key, rank, target, cap)
     local total, unknown = 0, 0
     for _, st in ipairs(steps) do
         if st.kind == "craft" then
-            st.crafts = math.ceil(st.crafts - 0.001)
+            -- Im Schnitt `mean`, eingeplant wird, was in 9 von 10 Faellen reicht.
+            st.mean = math.ceil(st.crafts - 0.001)
+            st.crafts = math.max(st.mean, PT.Covered(st.chances))
             for _, e in ipairs(st.recipe.reagents) do shop[e[1]] = (shop[e[1]] or 0) + e[2] * st.crafts end
         end
     end
@@ -573,7 +632,7 @@ function PT.Plan(key, rank, target, cap)
         list[#list + 1] = { id = id, count = n, price = p }
     end
     table.sort(list, function(a, b) return a.count > b.count end)
-    return { steps = steps, shop = list, total = total, unknown = unknown, gap = gap }
+    return { steps = steps, shop = list, total = total, unknown = unknown, gap = gap, stop = stop }
 end
 
 -- Ziel und Obergrenze fuer "den Beruf maxen": bis zum hoechsten Grau
@@ -585,7 +644,44 @@ function PT.Goal(key, s)
     local cap = s.max
     if not cap or cap <= s.rank then cap = nil end
     if cap and cap % PT.RANK_STEP ~= 0 then cap = nil end
+    -- 1.9.0.0: nicht ueber den letzten Rang hinaus, den es zu lernen gibt.
+    local ranks = cap and PT.Ranks(key)
+    if ranks then
+        local ceiling = cap
+        while ranks[ceiling + PT.RANK_STEP] do ceiling = ceiling + PT.RANK_STEP end
+        target = math.max(s.rank, math.min(target, ceiling))
+    end
     return target, cap
+end
+
+-- Ein Rang als Zeile: Lehrer, Buch beim Haendler oder Quest (1.9.0.0).
+local function QuestTitle(id)
+    local q = _G.C_QuestLog and _G.C_QuestLog.GetTitleForQuestID
+    local t = q and Plain(q(id))
+    return (type(t) == "string" and t ~= "") and t or nil
+end
+function PT.RankLine(st)
+    local r, name = st.rank, st.name or ""
+    local need = ""
+    if r then
+        if r.req > 0 then need = "ab Fertigkeit " .. r.req end
+        if (r.level or 0) > 0 then need = need .. (need ~= "" and ", " or "ab ") .. "Stufe " .. r.level end
+    end
+    local from = "\nWissensstand aus Classic."
+    local hint = "Deine Obergrenze ist " .. st.cap .. "."
+    if r and r.how == "book" and r.book then
+        return { left = "→ Händler: Buch für Rang " .. name .. " kaufen", right = "bei " .. st.at, tone = "goldBright", item = r.book,
+            hint = hint .. " Den Rang lehrt ein Buch: " .. PRO.ItemName(r.book) .. " – beim Händler kaufen und benutzen"
+                .. (need ~= "" and (" (" .. need .. ")") or "") .. "." .. from }
+    elseif r and r.how == "quest" then
+        local title = r.quest and QuestTitle(r.quest)
+        return { left = "→ Quest: Rang " .. name .. (title and (" („" .. title .. "“)") or ""), right = "bei " .. st.at, tone = "accent",
+            hint = hint .. " Den Rang gibt es über eine Quest" .. (r.quest and (" (Nummer " .. r.quest .. ")") or "")
+                .. (need ~= "" and (", " .. need) or "") .. ", nicht beim Lehrer." .. from }
+    end
+    return { left = "→ Lehrer: Rang " .. name .. " lernen", right = "bei " .. st.at, tone = "accent",
+        hint = hint .. " Beim Berufslehrer den nächsten Rang lernen" .. (need ~= "" and (" – " .. need) or "")
+            .. "." .. (r and from or "") }
 end
 
 -- Der Weg als Zeilen fuer beide Ansichten: { left, right, tone, recipe, hint, crafts }.
@@ -594,8 +690,7 @@ function PT.PlanLines(plan)
     local out = {}
     for _, st in ipairs(plan.steps) do
         if st.kind == "rank" then
-            out[#out + 1] = { left = "→ Lehrer: Rang " .. (st.name or "") .. " lernen", right = "bei " .. st.at,
-                tone = "accent", hint = "Deine Obergrenze ist " .. st.cap .. ". Beim Berufslehrer den nächsten Rang lernen (der Lehrer nennt die nötige Stufe)." }
+            out[#out + 1] = PT.RankLine(st)
         elseif st.kind == "learn" then
             out[#out + 1] = { left = "→ Lehrer: " .. PRO.RecipeName(st.recipe) .. " lernen", right = "bei " .. st.at,
                 tone = "accent", recipe = st.recipe, hint = "Beim Berufslehrer lernen (falls du es noch nicht kannst)." }
@@ -605,12 +700,14 @@ function PT.PlanLines(plan)
                 tone = "goldBright", recipe = st.recipe, hint = v and ("Bei " .. v[1] .. " – Händler aus Classic, in Forever unbestätigt.") or "Händler unbekannt." }
         else
             local pct = math.floor(st.minChance * 100 + 0.5)
+            local sure = st.mean == st.crafts
             out[#out + 1] = {
-                left = (st.color == "orange" and "" or "ca. ") .. st.crafts .. "× " .. PRO.RecipeName(st.recipe) .. (st.risky and " (Glückssache)" or ""),
+                left = (sure and "" or "bis zu ") .. st.crafts .. "× " .. PRO.RecipeName(st.recipe) .. (st.risky and " (Glückssache)" or ""),
                 right = st.from .. "–" .. st.to, tone = LTONE[st.color], recipe = st.recipe, crafts = st.crafts, step = st,
-                hint = st.color == "orange" and "Orange: jedes Herstellen bringt einen Punkt."
+                hint = (st.color == "orange" and "Orange: jedes Herstellen bringt einen Punkt."
                     or st.color == "yellow" and ("Gelb: meist ein Punkt, zuletzt etwa " .. pct .. " %.")
-                    or ("Grün: nur etwa " .. pct .. " % – kein Punkt garantiert."),
+                    or ("Grün: nur etwa " .. pct .. " % – kein Punkt garantiert."))
+                    .. (sure and "" or ("\n" .. st.crafts .. "× reichen in 9 von 10 Fällen, im Schnitt sind es " .. st.mean .. "×.")),
             }
         end
     end
@@ -1124,11 +1221,14 @@ function PT.DrawPlanner(body, w)
             if l.step.risky then risky = true end
         end
         y = Row(body, y, w, l.left, right,
-            { recipe = l.recipe, tone = l.tone, hint = l.hint .. (l.crafts and ("\nKlick: auf die Merkliste (" .. l.crafts .. "×)") or ""),
+            { recipe = l.recipe, item = l.item, tone = l.tone, hint = l.hint .. (l.crafts and ("\nKlick: auf die Merkliste (" .. l.crafts .. "×)") or ""),
               onClick = l.crafts and function() PT.AddWatch(l.recipe.spell, l.crafts) end or nil })
     end
     if risky then
-        y = Note(body, y, w, "Grüne Schritte sind Glückssache: die Zahl ist der Durchschnitt, es können deutlich mehr werden. Besser: ein neues Rezept beim Lehrer oder Händler suchen, das dort noch orange oder gelb ist.")
+        y = Note(body, y, w, "Grüne Schritte sind Glückssache: die Zahl reicht in 9 von 10 Fällen, mit Pech werden es mehr. Besser: ein neues Rezept beim Lehrer oder Händler suchen, das dort noch orange oder gelb ist.")
+    end
+    if plan.stop then
+        y = Note(body, y, w, "Ab " .. plan.stop .. " gibt es keinen höheren Rang, den du lernen kannst – hier endet der Weg.")
     end
     if plan.gap then
         y = Note(body, y, w, "Ab " .. plan.gap .. " ist jedes deiner Rezepte grau und bringt keinen Punkt mehr – vielleicht gibt es eins beim Händler oder als Fundstück (siehe Rezepte des Berufs).")
@@ -1150,7 +1250,7 @@ function PT.DrawPlanner(body, w)
                 print(WeintCodex.AC .. "[WeintCodex]|r " .. e.count .. "× " .. PRO.ItemName(e.id) .. " auf der Merkliste.")
             end })
     end
-    y = Note(body, y - 6, w, "Gerechnet wird mit Rezepten, die du kannst oder beim Lehrer lernst, und der Chance auf einen Punkt wie in Classic: orange immer, gelb meist, grün selten, grau nie. Orange und Gelb gehen vor; Grün nur, wenn es nichts anderes gibt. Preise nur aus deinen Auktionspreisen – „Preis unbekannt“ heißt: nie gesehen, nicht umsonst. Klick auf einen Schritt setzt ihn auf die Merkliste.")
+    y = Note(body, y - 6, w, "Gerechnet wird mit Rezepten, die du kannst oder beim Lehrer lernst, und der Chance auf einen Punkt wie in Classic: orange immer, gelb meist, grün selten, grau nie. Orange und Gelb gehen vor; Grün nur, wenn es nichts anderes gibt. Die Anzahl reicht in 9 von 10 Fällen – im Schnitt brauchst du weniger. Preise nur aus deinen Auktionspreisen – „Preis unbekannt“ heißt: nie gesehen, nicht umsonst. Klick auf einen Schritt setzt ihn auf die Merkliste.")
     return y
 end
 

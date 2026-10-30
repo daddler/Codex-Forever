@@ -9,7 +9,16 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
-## [1.8.1.0] – 2026-10-30
+## [1.9.0.0] – 2026-10-30
+
+### Geändert
+- Berufe-Planer nach Abgleich mit SkillUp Forever 0.20.3 (nur Daten, GPL-3.0; `.github/scripts/import_skillup.py` → `data/professions_su.lua`, erzeugt):
+  - Schwellen aus den Clienttabellen von Build 1.60.1.70707 (`P.SU_THRESH`, 576 Rezepte): Gelb 24, Grau 19, Grün 557 (der Client rundet ab, der alte Bestand auf), „Lernen“ 20 (nur wo es über Gelb lag, z. B. Kochen 1270633 Gelb 20 < Lernen 25). Herkunft bleibt `community`.
+  - Ränge je Beruf (`P.RANKS`, `classic`, aus CMaNGOS classic-db): Lehrer, Buch beim Händler (Erste Hilfe/Kochen/Angeln Experte) oder Quest je Seite (Erste Hilfe/Kochen Fachmann), mit Fertigkeit und Stufe. Vorher schickte der Planer immer zum Lehrer. Das Ziel endet am letzten lernbaren Rang, der Weg sagt „hier endet der Weg“.
+  - Anzahl je Herstell-Schritt für 90 % Sicherheit (`PT.Covered`, Verteilung der Punkte je Versuch) statt des Erwartungswerts; Einkaufsliste und Kosten folgen. Orange bleibt genau, sonst „bis zu N×“, der Schnitt im Tooltip.
+- Nicht übernommen: Rezepte, die nur SkillUp kennt (die vier Lehrer-Heiltränke der Alchemie liegen in Forever in der Ersten Hilfe), Mehrfachpunkte je Herstellen, Lehrergebühren, Unterrezepte.
+
+ – 2026-10-30
 
 ### Neu
 - Auktionspreise: `store.names[id]` – der Name aus dem Scan (Vollscan: erste Rückgabe von `GetReplicateItemInfo`; Suche: `C_Item.GetItemNameByID`, nur offene Werte), nur für Gegenstände mit Preis, fällt mit dem Preis heraus (`AP.Prune`). Für die Preisverläufe der Companion 1.3.0 (`../Companion-Forever/docs/auction-history-bridge.md`); das Spiel selbst braucht ihn nicht. Etwa 25 Byte je Gegenstand im Spielstand.
