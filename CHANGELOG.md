@@ -9,7 +9,17 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
-## [1.9.0.0] – 2026-10-30
+## [1.9.1.0] – 2026-11-01
+
+### Behoben
+- `local a, b = f and f()` kappt in Lua auf einen Wert – `b` war immer nil (statische Prüfung mit luacheck):
+  - Sammel-Atlas, Kräuter/Erz im Wechsel (`ui/gatheratlas.lua`): `ore` und `SetTracking` kamen nie an, die Wahl meldete immer „nicht gelernt“ und schaltete nichts um.
+  - Klasse aus `UnitClass` nie gelesen: „Aggro: Name“ (`ui/nameplates.lua`) und Bedrohungsliste (`ui/damagemeter.lua`) ohne Klassenfarbe, `SavedData.inventory` ohne `class` (`ui/inventory.lua`), Diagnose der Kombopunkte (`ui/unitframes.lua`).
+  - Koordinaten beim Ziehen im Gestaltungsmodus (`ui/editmode.lua`); seltene Gegner (`ui/rares.lua`, harmlos, aufgeräumt).
+  - Ladetest: neue Prüfung gegen das Muster (nur `and`/`or` auf oberster Ebene, `pcall(…)` ausgenommen).
+- `GameColors.hitFlash` stand zweimal in der Tabelle: die rote Fläche der Gruppenknöpfe wurde vom weißen Aufblitzen der Plakette überschrieben. Jetzt `groupHitFlash` (`core/ui.lua`, `ui/groupframes.lua`).
+
+ – 2026-10-30
 
 ### Geändert
 - Berufe-Planer nach Abgleich mit SkillUp Forever 0.20.3 (nur Daten, GPL-3.0; `.github/scripts/import_skillup.py` → `data/professions_su.lua`, erzeugt):

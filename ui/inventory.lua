@@ -72,7 +72,8 @@ local function Char(create)
         st.chars[key] = c
     end
     if c then
-        local _, class = _G.UnitClass and _G.UnitClass("player")
+        local class   -- nicht "_G.UnitClass and _G.UnitClass(u)": kappt auf einen Wert, die Klasse fehlte immer
+        if _G.UnitClass then class = select(2, _G.UnitClass("player")) end
         c.class = Str(class) or c.class
         c.faction = _G.UnitFactionGroup and Str(_G.UnitFactionGroup("player")) or c.faction
     end

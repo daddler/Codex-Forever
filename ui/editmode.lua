@@ -374,7 +374,8 @@ local function BuildBar()
         local key = K.dragging
         if not key then return end
         local m = K.MoverFrame and K.MoverFrame(key)
-        local p, _, rp, x, y = m and m:GetPoint(1)
+        if not m then return end
+        local p, _, rp, x, y = m:GetPoint(1)   -- nicht "m and m:GetPoint(1)": kappt auf einen Wert
         if p and type(x) == "number" then E.ShowCoords(x, y, p) end
     end)
     coords:Hide()

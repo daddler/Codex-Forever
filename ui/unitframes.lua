@@ -1249,11 +1249,12 @@ function UF.ComboReport()
         local p = K.Plain(v)
         return type(p) == "number" and tostring(p) or "geheim"
     end
-    local _, class = _G.UnitClass and _G.UnitClass("player")
+    local class   -- nicht "_G.UnitClass and _G.UnitClass(u)": kappt auf einen Wert, die Klasse fehlte immer
+    if _G.UnitClass then class = select(2, _G.UnitClass("player")) end
     return {
         string.format("Kombopunkte: GetComboPoints(Ziel) = %s · UnitPower(Spieler) = %s · gilt: %s",
             show(a), show(b), UF.cpSource == "target" and "am Ziel" or (UF.cpSource == "player" and "am Spieler" or "noch unbekannt (Spieler)")),
-        string.format("Klasse %s · Anzeige %s · Ziel %s", tostring(class),
+        string.format("Klasse %s · Anzeige %s · Ziel %s", tostring(K.Plain(class)),
             Opt("comboPoints") and "an" or "aus",
             K.Bool(_G.UnitExists and _G.UnitExists("target"), false) and "da" or "keins"),
     }

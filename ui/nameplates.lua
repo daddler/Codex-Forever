@@ -1938,7 +1938,8 @@ local function UpdateAggro(p, onList, iHold)
         local name = _G.UnitName and _G.UnitName(u)
         if type(name) == "nil" then fs:Hide() return end
         fs:SetFormattedText("%s %s", label, name)
-        local _, class = _G.UnitClass and _G.UnitClass(u)
+        local class   -- nicht "_G.UnitClass and _G.UnitClass(u)": kappt auf einen Wert, die Klasse fehlte immer
+        if _G.UnitClass then class = select(2, _G.UnitClass(u)) end
         class = K.Plain(class)
         local cc = class and _G.RAID_CLASS_COLORS and _G.RAID_CLASS_COLORS[class]
         if cc then fs:SetTextColor(cc.r, cc.g, cc.b, 1) else fs:SetTextColor(1, 1, 1, 1) end

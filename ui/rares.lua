@@ -431,7 +431,8 @@ end
 function RA.Seen(key, name, info, level, elite, dead, how)
     local mem = RA.Memory()
     if mem then
-        local map, x, y = K.BestMap and K.BestMap()
+        local map = K.BestMap and K.BestMap()
+        local x, y
         if map and K.PlayerMapXY then x, y = K.PlayerMapXY(map) end
         local e = mem[key] or {}
         e.name, e.at, e.dead = name, (_G.time and _G.time()) or 0, dead or nil

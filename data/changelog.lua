@@ -22,6 +22,16 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.9.1.0",
+        date    = "01.11.2026",
+        notes   = {
+            "|cff7C6CFFKräuter und Erz im Wechsel aus dem Sammel-Atlas|r – die Wahl „Kräuter“ oder „Erz“ schaltet die Suche des Spiels jetzt wirklich um, statt immer „nicht gelernt“ zu melden.",
+            "|cff7C6CFFKlassenfarben, wo sie fehlten|r – „Aggro: Name“ an den Namensplaketten und die Bedrohungsliste der Schadensanzeige zeigen den Namen wieder in seiner Klassenfarbe, und der Bestand merkt sich die Klasse jedes Charakters.",
+            "|cff7C6CFFTreffer an den Gruppenrahmen in Rot|r – das kurze Aufblitzen bei einem Treffer ist wieder rot statt weiß.",
+            "|cff7C6CFFKoordinaten beim Verschieben|r – im Gestaltungsmodus laufen die Zahlen beim Ziehen wieder mit.",
+        },
+    },
+    {
         version = "1.9.0.0",
         date    = "30.10.2026",
         notes   = {

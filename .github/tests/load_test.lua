@@ -2937,6 +2937,51 @@ do
         .. (#offenders == 0 and "" or (": " .. table.concat(offenders, ", "))))
 end
 
+-- KEIN "local a, b = f and f()" (1.9.1.0). Ein and/or-Ausdruck kappt auf
+-- EINEN Wert: b ist immer nil. So fehlte die Klasse an "Aggro: Name", in der
+-- Bedrohungsliste und im Bestand, und die Sammel-Suche im Wechsel meldete
+-- immer "nicht gelernt". Richtig: erst pruefen, dann aufrufen (select(n, …)).
+do
+    local offenders = {}
+    for _, dir in ipairs({ "core", "data", "modules", "ui" }) do
+        local pipe = io.popen and io.popen('ls "' .. ROOT .. '/' .. dir .. '" 2>/dev/null')
+        if pipe then
+            for name in pipe:lines() do
+                if name:match("%.lua$") then
+                    local h = io.open(ROOT .. "/" .. dir .. "/" .. name, "r")
+                    local n = 0
+                    for line in h:lines() do
+                        n = n + 1
+                        local code = line:gsub("%-%-.*$", "")
+                        local rhs = code:match("^%s*local%s+[%w_]+%s*,[%w_%s,]*=%s*(.-)%s*$")
+                        -- Nur and/or auf oberster Ebene: in den Klammern eines
+                        -- Aufrufs ist es harmlos ("f(a and b)").
+                        local top = false
+                        if rhs and rhs:find("%)$") and not rhs:find("^pcall%(") then
+                            local depth, flat = 0, {}
+                            for c in rhs:gmatch(".") do
+                                if c == "(" or c == "{" or c == "[" then depth = depth + 1
+                                elseif c == ")" or c == "}" or c == "]" then depth = depth - 1
+                                end
+                                flat[#flat + 1] = (depth == 0 and c ~= ")" and c ~= "}" and c ~= "]") and c or "#"
+                            end
+                            flat = " " .. table.concat(flat) .. " "
+                            top = not flat:find(",", 1, true) and (flat:find("%sand%s") or flat:find("%sor%s")) and true or false
+                        end
+                        if top then
+                            offenders[#offenders + 1] = dir .. "/" .. name .. ":" .. n
+                        end
+                    end
+                    h:close()
+                end
+            end
+            pipe:close()
+        end
+    end
+    Check(#offenders == 0, "kein mehrfaches local aus einem and/or-Ausdruck (kappt auf einen Wert)"
+        .. (#offenders == 0 and "" or (": " .. table.concat(offenders, ", "))))
+end
+
 -- WELTKARTE UND QUESTVERFOLGUNG NICHT BERUEHREN (6.6.0.1). Was das Addon
 -- in die Weltkarte (SetMapID, OpenWorldMap, Oeffnen/Schliessen ueber
 -- Show-/HideUIPanel) oder in die Questverfolgung (SetSuperTrackedQuestID)

@@ -675,7 +675,8 @@ function DM.ThreatList(mob)
                 local st = K.Plain(status)
                 e.status = type(st) == "number" and st or nil
                 e.name = _G.UnitName and _G.UnitName(u) or nil
-                local _, class = _G.UnitClass and _G.UnitClass(u)
+                local class   -- nicht "_G.UnitClass and _G.UnitClass(u)": kappt auf einen Wert, die Klasse fehlte immer
+                if _G.UnitClass then class = select(2, _G.UnitClass(u)) end
                 e.class = K.Plain(class)
                 e.me = K.Bool(_G.UnitIsUnit and _G.UnitIsUnit(u, "player"), false)
                 if not e.pct then open = false end

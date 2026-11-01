@@ -456,7 +456,7 @@ local function Style(b)
     -- Rand - den roten Rand hat schon die Aggro.
     c.flash = host:CreateTexture(nil, "OVERLAY", nil, -1)
     c.flash:SetAllPoints(c)
-    local fc = WeintCodex.GameColors.hitFlash
+    local fc = WeintCodex.GameColors.groupHitFlash
     c.flash:SetColorTexture(fc[1], fc[2], fc[3], fc[4])
     c.flash:SetShown(false)
     c.debuffs = WeintCodex.UIAuras.Create(host, { filter = "HARMFUL|RAID", max = 3, size = 16,

@@ -1157,9 +1157,11 @@ function GA.Choose(kind)
     if GT.wasSwap == nil then GT.wasSwap = K.Get(KEY, "gatherSwap") and true or false end
     K.Set(KEY, "gatherSwap", false)
     if _G.InCombatLockdown and K.Bool(_G.InCombatLockdown(), false) then return end
-    local herb, ore = GT.Find and GT.Find()
+    -- Nicht "f and f()": das kappt auf einen Wert (1.9.1.0).
+    local herb, ore, set
+    if GT.Find then herb, ore = GT.Find() end
     local want = kind == "herb" and herb or ore
-    local _, _, set = GT.API and GT.API()
+    if GT.API then set = select(3, GT.API()) end
     if want and set then
         pcall(set, want, true)
     else
