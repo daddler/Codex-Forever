@@ -2378,7 +2378,7 @@ do
                 seen[s.id] = true
             end
         end
-        assert(files == 13, "eigene Alarme (9 gerechnete + 4 Memes): " .. files)
+        assert(files == 14, "eigene Alarme (9 gerechnete + 5 Memes): " .. files)
         local n = 0
         for _ in pairs(FA.SOUNDS) do n = n + 1 end
         assert(n == #FA.ORDER, "Ton fehlt in der Auswahl")
@@ -22926,7 +22926,7 @@ do
         assert(items[1].value == "none", "Kein Ton fehlt vorn")
         local memes = 0
         for _, it in ipairs(items) do if tostring(it.value):find("^meme_") then memes = memes + 1 end end
-        assert(memes == 4, "Memes in der Auswahl: " .. memes)
+        assert(memes == 5, "Memes in der Auswahl: " .. memes)
     end)
     K.IsActive, _G.GetTime, _G.IsInGroup, _G.IsInInstance = oActive, oTime, oGroup, oInst
     _G.PlaySoundFile, _G.PlaySound = oPSF, oPS

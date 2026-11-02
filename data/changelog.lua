@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.10.5.0",
+        date    = "02.11.2026",
+        notes   = {
+            "|cff7C6CFFNoch ein Meme|r – „Alarm“ steht in der Auswahl der Töne, für „Raus da!“ und die Bosskämpfe.",
+        },
+    },
+    {
         version = "1.10.4.0",
         date    = "02.11.2026",
         notes   = {

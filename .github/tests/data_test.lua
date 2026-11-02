@@ -1304,7 +1304,7 @@ do
                 "Ton " .. key .. ": nur eine Vorbis-Tonspur, kein Video (" .. s.file .. ")")
         end
     end
-    Check(files >= 13, "Raus da!: alle mitgelieferten Toene geprueft (" .. files .. ")")
+    Check(files >= 14, "Raus da!: alle mitgelieferten Toene geprueft (" .. files .. ")")
 end
 
 if failures == 0 then

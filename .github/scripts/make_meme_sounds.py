@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Meme-Toene fuer "Raus da!" (1.10.1.0, Wunsch des Besitzers; vier seit 1.10.3.0).
+"""Meme-Toene fuer "Raus da!" (1.10.1.0, Wunsch des Besitzers; fuenf seit 1.10.5.0).
 
 Aufruf (im Wurzelordner des Repos):
 
@@ -19,6 +19,7 @@ gebogene Obertoene, Hintergrund als Rauschen oder gleichbleibender Ton.
   * rose: 1,94-7,33 s - vom Besitzer nach Gehoer festgelegt (1.10.2.0);
     der erste Schnitt 0,25-4,10 s nach dem Spektrogramm lag daneben.
   * hallo: 17,50-20,80 s - vom Besitzer festgelegt (1.10.3.0).
+  * alarm: 14,00-18,00 s - vom Besitzer festgelegt (1.10.5.0).
 Jeder Ton: mono, 44,1 kHz, Ogg Vorbis, Lautheit angeglichen (-16 LUFS,
 Spitze -1,5 dB), 0,02 s Ein- und 0,12 s Ausblenden gegen Knacken.
 """
@@ -36,6 +37,7 @@ CUTS = {
     "meme_fahr": ("fahr.mp3", 3.70, 8.40),
     "meme_rose": ("rose.mp3", 1.94, 7.33),
     "meme_hallo": ("hallo.mp3", 17.50, 20.80),
+    "meme_alarm": ("alarm.mp3", 14.00, 18.00),
 }
 
 

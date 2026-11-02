@@ -9,6 +9,11 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.10.5.0] – 2026-11-02
+
+### Neu
+- Fünftes Meme `meme_alarm` („Alarm“), 14,00–18,00 s der gelieferten mp3, vom Besitzer festgelegt; `len = 4.0`, in `FA.ORDER` nach `meme_hallo`; nur Tonspur (Titelbild der mp3 nicht übernommen).
+
 ## [1.10.4.0] – 2026-11-02
 
 ### Neu
