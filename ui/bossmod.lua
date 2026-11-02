@@ -21,7 +21,13 @@
 --     (SavedData.bossTimes) oder "Wipe nach 1:47".
 --   * Faehigkeiten des Bosses als Leisten aus der Zeitleiste des Spiels
 --     (ENCOUNTER_TIMELINE_EVENT_ADDED/REMOVED) und Warnungen des Spiels
---     gross in der Mitte (ENCOUNTER_WARNING), auf Wunsch mit Ton.
+--     gross in der Mitte (ENCOUNTER_WARNING).
+--   * Toene je Anlass (1.10.3.0, Wunsch: "welche Toene kann ich wann wo
+--     einstellen"): Pull zu Ende, Pause zu Ende, kurz vor einer Faehigkeit
+--     (Vorwarnung 2-5 s), Warnung des Spiels, Sieg, Wipe - jeder aus der
+--     Liste von "Raus da!" (FA.SOUNDS, mit Memes und eigenen Toenen der
+--     Companion) oder "Kein Ton"; dazu "Wo" und der Lautstaerke-Kanal.
+--     Ein Probekampf spielt alles einmal ab.
 --
 -- WAS ES NICHT KANN, mit Absicht
 --   * Taktiken je Boss, eigene Warnungen "lauf raus" - fuer keinen Kampf in
@@ -46,8 +52,23 @@ BM.DEFAULTS = {
     bossFight    = true,    -- Kampftimer und Bestzeit
     bossTimeline = true,    -- Faehigkeiten aus der Zeitleiste des Spiels
     bossWarnings = false,   -- Warnungen des Spiels gross in der Mitte (das Spiel zeigt eigene)
-    bossSound    = true,    -- Ton bei Warnung und Pull-Ende
+    bossSound    = true,    -- Hauptschalter fuer alle Toene unten
+    -- Toene je Anlass (1.10.3.0): Schluessel aus FA.SOUNDS oder "none".
+    -- Ab Werk wie vorher: Pull-Ende mit Bereitschaftscheck, sonst still -
+    -- das Spiel hat fuer seine Warnungen eigene Toene.
+    bossSndPull  = "ready",
+    bossSndBreak = "alarm2",
+    bossSndSoon  = "none",
+    bossSndWarn  = "none",
+    bossSndKill  = "none",
+    bossSndWipe  = "none",
+    bossSoonSecs = 3,       -- Vorwarnung: so viele Sekunden vor der Faehigkeit
+    bossWhere    = "all",   -- all | group | instance (wie bei "Raus da!")
+    bossChannel  = "Master",
 }
+
+-- Die Anlaesse, in der Reihenfolge der Seite.
+BM.SOUND_EVENTS = { "Pull", "Break", "Soon", "Warn", "Kill", "Wipe" }
 
 BM.ROWS = 8
 BM.W, BM.ROW_H = 240, 20
@@ -57,6 +78,40 @@ local function Plain(v) return K.Plain(v) end
 local function Now() return (_G.GetTime and Plain(_G.GetTime())) or 0 end
 local function Opt(k) return K.IsActive(KEY) and K.Get(KEY, k) and true or false end
 BM.Opt = Opt
+
+-- Wo die Toene gelten - dieselbe Regel wie bei "Raus da!".
+function BM.Here()
+    local where = K.Get(KEY, "bossWhere")
+    if where == "group" then
+        return K.Bool(_G.IsInGroup and _G.IsInGroup(), false) or K.Bool(_G.IsInRaid and _G.IsInRaid(), false)
+    elseif where == "instance" then
+        if not _G.IsInInstance then return false end
+        local _, kind = _G.IsInInstance()
+        kind = Plain(kind)
+        return type(kind) == "string" and kind ~= "none"
+    end
+    return true
+end
+
+-- Ton fuer einen Anlass. Ein langer Ton (Meme) wird nicht vom naechsten
+-- ueberspielt: bis er zu Ende ist, bleibt jeder weitere still.
+BM.busyUntil = 0
+function BM.Sound(event, force)
+    if not force and (not Opt("bossSound") or not BM.Here()) then return nil end
+    local key = K.Get(KEY, "bossSnd" .. event)
+    if key == "none" or type(key) ~= "string" then return nil end
+    local FA = WeintCodex.UIFireAlarm
+    if not (FA and FA.PlayKey) then return nil end
+    FA.MergeCustom()
+    if not FA.SOUNDS[key] then key = BM.DEFAULTS["bossSnd" .. event] end
+    if key == "none" or not FA.SOUNDS[key] then return nil end
+    local now = Now()
+    if not force and now < BM.busyUntil then return nil end
+    local len = FA.PlayKey(key, K.Get(KEY, "bossChannel") or "Master")
+    if not len then return nil end
+    BM.busyUntil = now + math.max(len, 0.3)
+    return key
+end
 
 local function Say(text)
     print(WeintCodex.ColorText("accent", "[WeintCodex]") .. " " .. text)
@@ -203,6 +258,10 @@ function BM.Tick()
                     local total = t.ends - t.start
                     r.bar:SetValue(total > 0 and left / total or 0)
                     r.time:SetText(BM.Format(left))
+                    if t.soon and not t.warned and left <= (tonumber(K.Get(KEY, "bossSoonSecs")) or 3) then
+                        t.warned = true
+                        if not t.demo or Opt("bossSound") then BM.Sound("Soon", t.demo) end
+                    end
                 end
             else
                 r.bar:SetValue(1)
@@ -251,9 +310,6 @@ function BM.Warn(text, icon)
             if not self._unlock and Now() > (self.until_ or 0) then self:Hide() end
         end)
     end
-    if Opt("bossSound") and _G.PlaySound and _G.SOUNDKIT and _G.SOUNDKIT.RAID_WARNING then
-        pcall(_G.PlaySound, _G.SOUNDKIT.RAID_WARNING, "Master")
-    end
 end
 
 --------------------------------------------------
@@ -264,18 +320,14 @@ function BM.PullBar(secs, by)
     if not Opt("bossPull") then return end
     if not secs or secs <= 0 then BM.Stop("pull") return end
     local t = BM.Start("pull", by and ("Pull (" .. by .. ")") or "Pull", secs, nil, "accent")
-    t.onEnd = function()
-        if Opt("bossSound") and _G.PlaySound and _G.SOUNDKIT and _G.SOUNDKIT.READY_CHECK then
-            pcall(_G.PlaySound, _G.SOUNDKIT.READY_CHECK, "Master")
-        end
-    end
+    t.onEnd = function() BM.Sound("Pull") end
 end
 
 function BM.BreakBar(secs, by)
     if not Opt("bossPull") then return end
     if not secs or secs <= 0 then BM.Stop("break") return end
     local t = BM.Start("break", by and ("Pause (" .. by .. ")") or "Pause", secs, nil, "blue")
-    t.onEnd = function() Say("Die Pause ist vorbei.") end
+    t.onEnd = function() Say("Die Pause ist vorbei.") BM.Sound("Break") end
 end
 
 -- /pull: ueber den Countdown des Spiels; ohne ihn nur die eigene Leiste.
@@ -352,6 +404,7 @@ function BM.EncounterEnd(id, name, difficulty, size, success)
     if not Opt("bossFight") then return nil end
     local label = f.name or (type(Plain(name)) == "string" and Plain(name)) or "Boss"
     if not won then
+        BM.Sound("Wipe")
         Say(label .. ": Wipe nach " .. BM.Format(secs) .. ".")
         return "wipe"
     end
@@ -365,6 +418,7 @@ function BM.EncounterEnd(id, name, difficulty, size, success)
         end
         if type(best) ~= "number" or secs < best then times[key] = math.floor(secs + 0.5) end
     end
+    BM.Sound("Kill")
     Say(text .. ".")
     return "kill"
 end
@@ -386,7 +440,8 @@ function BM.TimelineAdded(info)
     end
     local name = info.spellName
     if type(name) == "nil" then name = "Fähigkeit" end
-    BM.Start("tl" .. id, name, dur, info.iconFileID, "blue")
+    local t = BM.Start("tl" .. id, name, dur, info.iconFileID, "blue")
+    t.soon = true
     return true
 end
 
@@ -395,13 +450,41 @@ function BM.TimelineRemoved(id)
     if type(id) == "number" then BM.Stop("tl" .. id) end
 end
 
+-- Der Ton kommt auch ohne die grosse Anzeige - beides ist einzeln
+-- einstellbar.
 function BM.Warning(info)
     BM.stats.warnings = BM.stats.warnings + 1
-    if not Opt("bossWarnings") or type(info) ~= "table" then return nil end
+    if type(info) ~= "table" then return nil end
+    BM.Sound("Warn")
+    if not Opt("bossWarnings") then return nil end
     local text = info.text
     if type(text) == "nil" then text = info.spellName end
     if type(text) == "nil" then return nil end
     BM.Warn(text, Plain(info.iconFileID))
+    return true
+end
+
+-- Probekampf: Pull, Faehigkeit mit Vorwarnung, Warnung, Sieg - jeder Ton
+-- so, wie er eingestellt ist (auch wenn "Wo" gerade nicht passt; der
+-- Hauptschalter gilt). Nichts wird gesendet, kein Countdown des Spiels.
+function BM.Demo()
+    local function play(event) if Opt("bossSound") then BM.Sound(event, true) end end
+    local pull = BM.Start("demoPull", "Pull (Probe)", 4, nil, "accent")
+    pull.onEnd = function()
+        play("Pull")
+        local ab = BM.Start("demoSkill", "Fähigkeit des Bosses (Probe)", 6, 136116, "blue")
+        ab.soon, ab.demo = true, true
+        ab.onEnd = function()
+            BM.Warn("Warnung des Spiels (Probe)", 136116)
+            play("Warn")
+            local fin = BM.Start("demoEnd", "Kampf (Probe)", 4, nil, "textMuted")
+            fin.onEnd = function()
+                play("Kill")
+                Say("Probe zu Ende – so klingt ein Sieg. Ein Wipe hätte seinen eigenen Ton.")
+            end
+        end
+    end
+    BM.Refresh()
     return true
 end
 
@@ -480,19 +563,58 @@ end
 
 local function BuildPage(B)
     local function off(k) return function() return not K.Get(KEY, k) end end
+    local FA = WeintCodex.UIFireAlarm
+    local items = FA and FA.Items(true) or { { value = "none", text = "Kein Ton" } }
+    local soundOff = off("bossSound")
+    -- Eine Auswahl spielt den Ton einmal vor - so hoert man, was man waehlt.
+    local function Sound(event, label, description)
+        local key = "bossSnd" .. event
+        return { type = "dropdown", label = label, key = key, items = items, disabled = soundOff,
+                 tooltip = description,
+                 set = function(v)
+                     K.Set(KEY, key, v)
+                     if v ~= "none" and FA then FA.PlayKey(v, K.Get(KEY, "bossChannel") or "Master") end
+                 end }
+    end
+    B:Section("Töne", "Für jeden Anlass ein eigener Ton – oder „Kein Ton“. Eine Auswahl spielt ihn einmal vor; dabei sind auch die Memes und deine eigenen Töne aus der Companion. Ein langer Ton wird nicht vom nächsten unterbrochen.")
+    B:Row({ type = "toggle", label = "Töne bei Bosskämpfen", key = "bossSound",
+            description = "Schaltet alle Töne dieser Seite auf einmal." },
+          { type = "dropdown", label = "Wo", key = "bossWhere", disabled = soundOff, items = {
+                { value = "all",      text = "Überall" },
+                { value = "group",    text = "Nur in einer Gruppe" },
+                { value = "instance", text = "Nur in Dungeons und Schlachtzügen" } } })
+    B:Row({ type = "button", label = "Probe", text = "Probekampf abspielen", onClick = BM.Demo,
+            tooltip = "Pull, Fähigkeit mit Vorwarnung, Warnung und Sieg – mit deinen Tönen, in gut 14 Sekunden. Nur bei dir." },
+          { type = "button", label = "Wo die Leisten stehen", text = "Gestaltungsmodus öffnen",
+            onClick = function() K.SetUnlocked(true) end,
+            tooltip = "Leisten und Warnung verschieben – sie zeigen sich dort mit Beispielen." })
     B:Section("Pull und Pause", "/pull 10 startet den Countdown des Spiels – die ganze Gruppe sieht ihn, auch ohne WeintCodex. /break 5 ist eine Pause von fünf Minuten, nur für dich. 0 bricht ab. Haben BigWigs oder DBM die Befehle schon, heißen sie /wcpull und /wcbreak.")
     B:Row({ type = "toggle", label = "Pull- und Pausenleiste", key = "bossPull" },
           { type = "toggle", label = "Timer von BigWigs und DBM zeigen", key = "bossListen", disabled = off("bossPull"),
             description = "Startet jemand mit diesen Addons einen Pull oder eine Pause, erscheint die Leiste auch bei dir. WeintCodex hört nur zu." })
+    B:Row(Sound("Pull", "Ton, wenn der Pull endet"), Sound("Break", "Ton, wenn die Pause endet"))
     B:Section("Kampf", "Wie lange der Bosskampf läuft, und am Ende „besiegt in 3:12“ mit deiner Bestzeit für diesen Boss – oder „Wipe nach …“.")
     B:Row({ type = "toggle", label = "Kampftimer und Bestzeit", key = "bossFight" },
-          { type = "empty" })
+          Sound("Kill", "Ton, wenn der Boss fällt"))
     B:Section("Was das Spiel meldet", "Fähigkeiten des Bosses als Leisten und Warnungen, so wie das Spiel sie ankündigt. Eigene Taktiken gibt es nicht – für Forever kennt sie niemand. Ob Forever das in jedem Kampf schickt, zeigt /wcui prüfen.")
     B:Row({ type = "toggle", label = "Fähigkeiten als Leisten", key = "bossTimeline" },
-          { type = "toggle", label = "Warnungen groß in der Mitte", key = "bossWarnings",
-            description = "Das Spiel zeigt eigene Warnungen; das hier ist eine zweite, größere Anzeige." })
-    B:Row({ type = "toggle", label = "Mit Ton", key = "bossSound" },
+          Sound("Soon", "Ton kurz vor einer Fähigkeit", "Wenn die Leiste einer Fähigkeit fast abgelaufen ist – wie früh, steht unten in den Feineinstellungen."))
+    B:Row({ type = "toggle", label = "Warnungen groß in der Mitte", key = "bossWarnings",
+            description = "Das Spiel zeigt eigene Warnungen; das hier ist eine zweite, größere Anzeige." },
+          Sound("Warn", "Ton bei einer Warnung des Spiels", "Kommt auch ohne die große Anzeige. Das Spiel hat oft schon einen eigenen Ton dafür."))
+    B:Advanced()
+    B:Row({ type = "dropdown", label = "Vorwarnung vor einer Fähigkeit", key = "bossSoonSecs", disabled = soundOff, items = {
+                { value = 2, text = "2 Sekunden vorher" },
+                { value = 3, text = "3 Sekunden vorher" },
+                { value = 5, text = "5 Sekunden vorher" } } },
+          Sound("Wipe", "Ton bei einem Wipe"))
+    B:Row({ type = "dropdown", label = "Lautstärke über", key = "bossChannel", disabled = soundOff, items = {
+                { value = "Master", text = "Gesamtlautstärke" },
+                { value = "SFX",    text = "Effekte" },
+                { value = "Dialog", text = "Dialog" } },
+            tooltip = "Welcher Regler in den Toneinstellungen des Spiels diese Töne lauter oder leiser macht. Gesamtlautstärke hört man auch, wenn Effekte stumm sind." },
           { type = "empty" })
+    B:EndAdvanced()
 end
 BM.BuildPage = BuildPage
 

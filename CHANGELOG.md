@@ -9,6 +9,15 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.10.4.0] – 2026-11-02
+
+### Neu
+- Bosskämpfe: Ton je Anlass (`bossSndPull/Break/Soon/Warn/Kill/Wipe`, Schlüssel aus `FA.SOUNDS` oder `"none"`), Vorwarnung vor einer Fähigkeit der Zeitleiste (`bossSoonSecs` 2/3/5, einmal je Leiste), `bossWhere` wie bei „Raus da!“, `bossChannel` (Master/SFX/Dialog), Probekampf (`BM.Demo`), Knopf zum Gestaltungsmodus. Eine Auswahl spielt den Ton vor. Lange Töne werden nicht überspielt (`BM.busyUntil`).
+- `FA.PlayKey(key, channel)` und `FA.Items(withNone)` – eine Stelle zum Spielen und Auflisten der Töne für „Raus da!“ und Bosskämpfe.
+
+### Geändert
+- Der Warnton kommt jetzt unabhängig von der großen Anzeige (ab Werk „Kein Ton“ statt vorher Schlachtzugswarnung nur mit Anzeige). Pull-Ende ab Werk wie bisher Bereitschaftscheck; Pause vorbei neu mit „Wecker, kurz“.
+
 ## [1.10.3.0] – 2026-11-02
 
 ### Neu

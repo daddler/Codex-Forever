@@ -2342,6 +2342,22 @@ lebt es von den Ereignissen des Spiels; genau die nutzt WeintCodex.
 - Leisten: höchstens `BM.ROWS` (8), feste Zeilen, Takt 0,1 s nur bei
   sichtbarer Leiste, Sortierung in eine feste Liste. Plätze `bossbars`,
   `bosswarn`.
+- **Töne je Anlass (1.10.3.0, Wunsch „welche Töne kann ich wann wo
+  einstellen“):** `BM.SOUND_EVENTS` = Pull, Break, Soon, Warn, Kill, Wipe;
+  je Anlass `bossSnd<Anlass>` = Schlüssel aus `FA.SOUNDS` (Liste von „Raus
+  da!“ mit Memes und eigenen Tönen der Companion, `FA.Items`) oder `"none"`.
+  Gespielt über `FA.PlayKey(key, channel)` – eine Stelle für beide Seiten.
+  Ab Werk nur Pull (`ready`) und Pause (`alarm2`); Warnung, Vorwarnung,
+  Sieg, Wipe still – das Spiel hat für seine Warnungen eigene Töne.
+  `bossSound` ist Hauptschalter, `bossWhere` wie `fireWhere`,
+  `bossChannel` (Master/SFX/Dialog), `bossSoonSecs` (2/3/5) für die
+  Vorwarnung: einmal je Leiste der Zeitleiste (`t.soon`, `t.warned`), im
+  Takt ohne neue Tabelle. Ein langer Ton sperrt weitere bis zu seinem Ende
+  (`BM.busyUntil`, `len`). Ein verschwundener eigener Ton fällt auf die
+  Voreinstellung des Anlasses zurück. Der Warnton kommt auch ohne die große
+  Anzeige. Eine Auswahl auf der Seite spielt den Ton vor; „Probekampf“
+  (`BM.Demo`) spielt Pull → Fähigkeit mit Vorwarnung → Warnung → Sieg mit
+  den eingestellten Tönen (Hauptschalter gilt, „Wo“ nicht), sendet nichts.
 
 ## Sterbezeit und „Reichen meine DoTs?“ *(1.8.0.0, `ui/timetodie.lua`)*
 

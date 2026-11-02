@@ -131,16 +131,40 @@ local function Now()
     return type(t) == "number" and t or 0
 end
 
-function FA.Play()
+-- Einen Ton aus der Liste spielen (1.10.3.0 auch fuer die Bosskaempfe,
+-- ui/bossmod.lua). Gibt die Laenge zurueck, soweit bekannt (Memes, eigene
+-- Toene mit `len`), sonst 0; nil, wenn es den Ton nicht gibt.
+function FA.PlayKey(key, channel)
     FA.MergeCustom()
-    local s = FA.SOUNDS[K.Get(KEY, "fireSound")] or FA.SOUNDS.raus
+    local s = FA.SOUNDS[key]
+    if type(s) ~= "table" then return nil end
+    channel = channel or "Master"
     local path = FA.FileOf(s)
     if path then
-        if _G.PlaySoundFile then pcall(_G.PlaySoundFile, path, "Master") end
-        return
+        if _G.PlaySoundFile then pcall(_G.PlaySoundFile, path, channel) end
+    else
+        local kit = _G.SOUNDKIT and _G.SOUNDKIT[s.kit] or s.id
+        if _G.PlaySound and kit then pcall(_G.PlaySound, kit, channel) end
     end
-    local kit = _G.SOUNDKIT and _G.SOUNDKIT[s.kit] or s.id
-    if _G.PlaySound then pcall(_G.PlaySound, kit, "Master") end
+    return tonumber(s.len) or 0
+end
+
+function FA.Play()
+    FA.MergeCustom()
+    local key = K.Get(KEY, "fireSound")
+    if not FA.SOUNDS[key] then key = "raus" end
+    FA.PlayKey(key, "Master")
+end
+
+-- Die Auswahl fuer eine Liste der Toene (Einstellungsseiten).
+function FA.Items(withNone)
+    FA.MergeCustom()
+    local items = {}
+    if withNone then items[1] = { value = "none", text = "Kein Ton" } end
+    for _, k in ipairs(FA.ORDER) do
+        if FA.SOUNDS[k] then items[#items + 1] = { value = k, text = FA.SOUNDS[k].text } end
+    end
+    return items
 end
 
 -- Die eigene Summe: Zahl, "secret" (geheim) oder nil (keine Zeile).
@@ -432,9 +456,7 @@ end
 local function Build(B)
     local off = function() return not K.Get(KEY, "fireAlarm") end
     B:Section("Raus da!", "Ein Ton, sobald du in etwas stehst, das dir schadet und dem man ausweichen kann – nicht nur Feuer: alles am Boden (Gift, Leere, Eis, Blitze, Wirbel), Kegel und Wellen vor dem Gegner. Was vermeidbar ist, sagt das Spiel; ein Kampflog gibt es für Addons nicht.")
-    FA.MergeCustom()
-    local items = {}
-    for _, k in ipairs(FA.ORDER) do items[#items + 1] = { value = k, text = FA.SOUNDS[k].text } end
+    local items = FA.Items(false)
     B:Row({ type = "toggle", label = "Warnton, wenn du in etwas stehst", key = "fireAlarm",
             description = "Höchstens einmal je Sekunde." },
           { type = "dropdown", label = "Ton", key = "fireSound", items = items, disabled = off })

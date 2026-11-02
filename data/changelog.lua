@@ -22,6 +22,15 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.10.4.0",
+        date    = "02.11.2026",
+        notes   = {
+            "|cff7C6CFFBosskämpfe: ein Ton für jeden Anlass|r – Pull zu Ende, Pause vorbei, kurz vor einer Fähigkeit, Warnung des Spiels, Sieg und Wipe bekommen je einen eigenen Ton oder keinen. Zur Auswahl stehen alle Töne von „Raus da!“ samt Memes und deinen eigenen.",
+            "|cff7C6CFFProbekampf auf Knopfdruck|r – spielt Pull, Vorwarnung, Warnung und Sieg mit deinen Tönen einmal durch, nur bei dir.",
+            "|cff7C6CFFWo und wie laut|r – Töne überall, nur in der Gruppe oder nur in Instanzen; dazu, über welchen Lautstärkeregler des Spiels sie laufen. Ein Knopf führt direkt zum Verschieben der Leisten.",
+        },
+    },
+    {
         version = "1.10.3.0",
         date    = "02.11.2026",
         notes   = {

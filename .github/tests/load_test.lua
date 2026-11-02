@@ -22831,6 +22831,109 @@ do
     Check(ok, "Bosskämpfe: Pull/Pause, BigWigs/DBM hören, Kampftimer und Bestzeit, Zeitleiste ohne geratene Zeit" .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- Bosskaempfe: Toene je Anlass (1.10.3.0)
+do
+    local BM, FA = WeintCodex.UIBossMod, WeintCodex.UIFireAlarm
+    local oActive, oTime, oGroup, oInst = K.IsActive, _G.GetTime, _G.IsInGroup, _G.IsInInstance
+    local oPSF, oPS = _G.PlaySoundFile, _G.PlaySound
+    local saved = {}
+    for k in pairs(BM.DEFAULTS) do saved[k] = K.Get("comfort", k) end
+    local played = {}
+    local ok, err = pcall(function()
+        local now = 1000
+        _G.GetTime = function() return now end
+        K.IsActive = function() return true end
+        _G.IsInGroup = function() return false end
+        _G.IsInInstance = function() return false, "none" end
+        _G.PlaySoundFile = function(f, ch) played[#played + 1] = f .. "@" .. tostring(ch) end
+        _G.PlaySound = function(k, ch) played[#played + 1] = "kit:" .. tostring(k) .. "@" .. tostring(ch) end
+        for k, v in pairs(BM.DEFAULTS) do K.Set("comfort", k, v) end
+        for _, e in ipairs(BM.SOUND_EVENTS) do
+            assert(BM.DEFAULTS["bossSnd" .. e], "Anlass ohne Voreinstellung: " .. e)
+            local d = BM.DEFAULTS["bossSnd" .. e]
+            assert(d == "none" or FA.SOUNDS[d], "Voreinstellung kein Ton der Liste: " .. e)
+        end
+        -- Ab Werk: Pull-Ende mit Ton, Warnung still (das Spiel hat eigene).
+        BM.PullBar(1) now = now + 2 BM.Tick()
+        assert(#played == 1 and played[1]:find("@Master$"), "Pull-Ende ohne Ton: " .. tostring(played[1]))
+        now = now + 5
+        BM.Warning({ text = "x" })
+        assert(#played == 1, "Warnung ab Werk mit Ton")
+        -- Eigener Ton je Anlass, ueber den gewaehlten Kanal; Ton auch ohne grosse Anzeige.
+        K.Set("comfort", "bossSndWarn", "meme_hallo")
+        K.Set("comfort", "bossChannel", "SFX")
+        BM.Warning({ text = "x" })
+        assert(played[2] == FA.SOUND_PATH .. "meme_hallo.ogg@SFX", "Warnton falsch: " .. tostring(played[2]))
+        -- Ein langes Meme wird nicht ueberspielt.
+        BM.Warning({ text = "x" })
+        assert(#played == 2, "Meme ueberspielt")
+        now = now + 4
+        BM.Warning({ text = "x" })
+        assert(#played == 3, "nach dem Meme kein Ton mehr")
+        -- Wo: nur in Instanzen -> draussen still.
+        now = now + 5
+        K.Set("comfort", "bossWhere", "instance")
+        BM.Warning({ text = "x" })
+        assert(#played == 3, "Ton trotz 'nur in Instanzen'")
+        _G.IsInInstance = function() return true, "party" end
+        BM.Warning({ text = "x" })
+        assert(#played == 4, "Ton in der Instanz fehlt")
+        -- Hauptschalter aus: alles still.
+        now = now + 5
+        K.Set("comfort", "bossSound", false)
+        BM.Warning({ text = "x" })
+        assert(#played == 4, "Ton trotz Hauptschalter aus")
+        K.Set("comfort", "bossSound", true)
+        -- Vorwarnung vor einer Faehigkeit, einmal je Leiste.
+        K.Set("comfort", "bossSndSoon", "boss")
+        K.Set("comfort", "bossSoonSecs", 3)
+        now = now + 5
+        BM.TimelineAdded({ id = 9, duration = 10, spellName = "Feueratem" })
+        BM.Refresh()
+        now = now + 6 BM.Tick()
+        assert(#played == 4, "Vorwarnung zu frueh")
+        now = now + 1.5 BM.Tick()
+        assert(#played == 5 and played[5]:find("^kit:"), "Vorwarnung fehlt")
+        now = now + 1 BM.Tick()
+        assert(#played == 5, "Vorwarnung doppelt")
+        BM.TimelineRemoved(9)
+        -- Sieg und Wipe mit eigenem Ton; "Kein Ton" bleibt still.
+        K.Set("comfort", "bossSndKill", "hupe")
+        now = now + 5
+        BM.EncounterStart(77, "Probe", 1) now = now + 10
+        BM.EncounterEnd(77, "Probe", 1, 5, 1)
+        assert(played[6] == FA.SOUND_PATH .. "hupe.ogg@SFX", "Siegton fehlt: " .. tostring(played[6]))
+        now = now + 5
+        BM.EncounterStart(77, "Probe", 1) now = now + 10
+        BM.EncounterEnd(77, "Probe", 1, 5, 0)
+        assert(#played == 6, "Wipe mit 'Kein Ton' nicht still")
+        -- Ein verschwundener eigener Ton faellt auf die Voreinstellung zurueck.
+        K.Set("comfort", "bossSndPull", "eigen_weg")
+        now = now + 5
+        assert(BM.Sound("Pull") == "ready", "verschwundener Ton nicht ersetzt")
+        -- Probekampf: alle Anlaesse der Reihe nach, auch wenn "Wo" nicht passt.
+        _G.IsInInstance = function() return false, "none" end
+        local before = #played
+        now = now + 10
+        BM.Demo()
+        for _ = 1, 4 do now = now + 2 BM.Tick() end   -- Pull
+        for _ = 1, 4 do now = now + 2 BM.Tick() end   -- Faehigkeit, Warnung
+        for _ = 1, 3 do now = now + 2 BM.Tick() end   -- Sieg
+        assert(#played - before >= 3, "Probekampf spielt zu wenig: " .. (#played - before))
+        assert(not BM.timers.demoPull and not BM.timers.demoSkill and not BM.timers.demoEnd, "Probe bleibt stehen")
+        -- Auswahl: "Kein Ton" vorn, Memes dabei.
+        local items = FA.Items(true)
+        assert(items[1].value == "none", "Kein Ton fehlt vorn")
+        local memes = 0
+        for _, it in ipairs(items) do if tostring(it.value):find("^meme_") then memes = memes + 1 end end
+        assert(memes == 4, "Memes in der Auswahl: " .. memes)
+    end)
+    K.IsActive, _G.GetTime, _G.IsInGroup, _G.IsInInstance = oActive, oTime, oGroup, oInst
+    _G.PlaySoundFile, _G.PlaySound = oPSF, oPS
+    for k, v in pairs(saved) do K.Set("comfort", k, v) end
+    Check(ok, "Bosskämpfe: Ton je Anlass, Kanal, Wo, Hauptschalter, Vorwarnung, Probekampf" .. (ok and "" or (": " .. tostring(err))))
+end
+
 -- Sterbezeit an der Plakette (1.8.0.0, ui/timetodie.lua)
 do
     local TD = WeintCodex.UITimeToDie
