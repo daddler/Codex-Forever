@@ -682,6 +682,15 @@ Check("Buffzeiten", function(add)
     for _, line in ipairs(BT.StatusLines()) do add("", "   " .. line) end
 end)
 
+-- Bosskaempfe (1.10.0.0, ui/bossmod.lua): was das Spiel schickte.
+Check("Bosskämpfe", function(add)
+    local BM = WeintCodex.UIBossMod
+    if not BM then add(SC.OPEN, "Bosskämpfe nicht geladen.") return end
+    local s = BM.stats
+    -- Zeitleiste kam, aber nie mit offener Dauer: dann gibt es keine Leisten.
+    add((s.timeline > 0 and s.secret >= s.timeline) and SC.BAD or (s.encounters > 0 and SC.OK or SC.OPEN), BM.StatusLine())
+end)
+
 -- Sterbezeit an der Plakette (1.8.0.0, ui/timetodie.lua)
 Check("Sterbezeit", function(add)
     local TD = WeintCodex.UITimeToDie

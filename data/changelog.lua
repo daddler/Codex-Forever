@@ -22,6 +22,15 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.10.0.0",
+        date    = "02.11.2026",
+        notes   = {
+            "|cff7C6CFFPull- und Pausentimer|r – /pull 10 startet den Countdown für die ganze Gruppe, /break 5 eine Pause von fünf Minuten, 0 bricht ab. Startet jemand mit BigWigs oder DBM einen Pull, siehst du die Leiste auch.",
+            "|cff7C6CFFKampftimer mit Bestzeit|r – wie lange der Bosskampf läuft, und am Ende „besiegt in 3:12“ mit deiner Bestzeit für diesen Boss.",
+            "|cff7C6CFFFähigkeiten des Bosses als Leisten|r – was das Spiel im Kampf ankündigt, läuft als Leiste herunter; Warnungen auf Wunsch groß in der Mitte. Eigene Taktiken gibt es nicht – für Forever kennt sie niemand. Alles unter Komfort → Bosskämpfe.",
+        },
+    },
+    {
         version = "1.9.1.0",
         date    = "01.11.2026",
         notes   = {

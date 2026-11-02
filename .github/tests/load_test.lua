@@ -19007,10 +19007,10 @@ do
         end
         local order = table.concat(keys, ",")
         local pal = WeintCodex.UIPaladinBuffs.IsPaladin()
-        assert(order == "automatik,anzeigen,rausda,automark,klickzauber,makros," .. (pal and "segen," or "") .. "ringe,pvp,karte,questhilfe,sammeln,glitzern,selten,flugspiele,auktion,fluestern,danke,gespraeche",
+        assert(order == "automatik,anzeigen,rausda,automark,klickzauber,makros," .. (pal and "segen," or "") .. "ringe,pvp,boss,karte,questhilfe,sammeln,glitzern,selten,flugspiele,auktion,fluestern,danke,gespraeche",
             "Reihenfolge: " .. order)
         local d = pal and 0 or -1
-        assert(O.PageIndex("comfort", "gespraeche") == 19 + d and O.PageIndex("comfort", "fluestern") == 17 + d, "Index nach Sortieren")
+        assert(O.PageIndex("comfort", "gespraeche") == 20 + d and O.PageIndex("comfort", "fluestern") == 18 + d, "Index nach Sortieren")
         for _, h in ipairs(WL.HELPERS) do
             local mod = K.Module(h.module)
             assert(mod and mod.group ~= "ui" or h.module == "groupframes", h.label .. ": haengt an einem Modul der Oberflaeche")
@@ -22769,6 +22769,58 @@ do
     Check(store.names[9999] == nil and store.names[2771] == nil, "Auktionsnamen: nur mit Preis, nichts geraten")
     AP.Prune(store, 300 + AP.KEEP_DAYS + 1)
     Check(store.names[2770] == nil, "Auktionsnamen: fallen mit dem Preis heraus")
+end
+
+-- Bosskaempfe (1.10.0.0, ui/bossmod.lua)
+do
+    local BM = WeintCodex.UIBossMod
+    local oActive, oTime, oSecret, oGroup = K.IsActive, _G.GetTime, _G.issecretvalue, _G.IsInGroup
+    local ok, err = pcall(function()
+        local now = 100
+        _G.GetTime = function() return now end
+        K.IsActive = function() return true end
+        _G.IsInGroup = function() return false end
+        assert(K.Get("comfort", "bossWarnings") == false and K.Get("comfort", "bossPull") == true, "Voreinstellungen")
+        assert(K.Layout("bossbars") and K.Layout("bosswarn"), "Plaetze im Layout")
+        -- Andere Bossmods: nur gelesen.
+        assert(BM.Heard("BigWigs", "P^Pull^10", "Lena-Realm") == "pull" and BM.timers.pull, "BigWigs-Pull nicht gehoert")
+        assert(BM.timers.pull.label == "Pull (Lena)", "Name fehlt: " .. tostring(BM.timers.pull.label))
+        assert(BM.Heard("D5", "Ole-Realm\t1\tBT\t300", "Ole-Realm") == "break" and BM.timers["break"], "DBM-Pause nicht gehoert")
+        assert(BM.Heard("BigWigs", "V^Something^1", "x") == nil, "fremde Nachricht als Timer gelesen")
+        BM.Stop("pull") BM.Stop("break")
+        -- Pull ohne Gruppe: nur die eigene Leiste.
+        assert(BM.Pull(5) and BM.timers.pull and BM.timers.pull.ends == now + 5, "Pull ohne Gruppe")
+        assert(BM.Pull(0) and not BM.timers.pull, "Pull 0 bricht nicht ab")
+        assert(not BM.Pull(99), "Pull ueber 60 s angenommen")
+        -- Kampf und Bestzeit.
+        local sd = WeintCodex.SavedData
+        sd.bossTimes = nil
+        BM.EncounterStart(1234, "Testboss", 1)
+        assert(BM.timers.fight and BM.timers.fight.ends == nil, "Kampftimer zaehlt nicht hoch")
+        now = now + 192
+        assert(BM.EncounterEnd(1234, "Testboss", 1, 5, 1) == "kill" and sd.bossTimes["1234:1"] == 192, "Bestzeit nicht gemerkt")
+        BM.EncounterStart(1234, "Testboss", 1) now = now + 200
+        BM.EncounterEnd(1234, "Testboss", 1, 5, 1)
+        assert(sd.bossTimes["1234:1"] == 192, "langsamerer Kill ueberschrieb die Bestzeit")
+        BM.EncounterStart(1234, "Testboss", 1) now = now + 30
+        assert(BM.EncounterEnd(1234, "Testboss", 1, 5, 0) == "wipe" and sd.bossTimes["1234:1"] == 192, "Wipe als Kill")
+        -- Zeitleiste: offene Dauer -> Leiste, geheime -> keine, gezaehlt.
+        assert(BM.TimelineAdded({ id = 7, duration = 12, spellName = "Feueratem", iconFileID = 1 }) and BM.timers.tl7, "Zeitleiste ohne Leiste")
+        BM.TimelineRemoved(7)
+        assert(not BM.timers.tl7, "Leiste nicht entfernt")
+        local secretDur = {}
+        _G.issecretvalue = function(v) return v == secretDur end
+        local before = BM.stats.secret
+        assert(BM.TimelineAdded({ id = 8, duration = secretDur, spellName = "x" }) == nil and not BM.timers.tl8, "geheime Dauer geraten")
+        assert(BM.stats.secret == before + 1, "geheime Dauer nicht gezaehlt")
+        -- Warnungen nur, wenn eingeschaltet (ab Werk aus).
+        assert(BM.Warning({ text = "Lauf!" }) == nil, "Warnung trotz aus")
+        assert(BM.Format(5.25) == "5.2" or BM.Format(5.25) == "5.3", "Format unter 10 s")
+        assert(BM.Format(83) == "1:23", "Format Minuten")
+        assert(BM.StatusLine():find("Kämpfe", 1, true), "Statuszeile")
+    end)
+    K.IsActive, _G.GetTime, _G.issecretvalue, _G.IsInGroup = oActive, oTime, oSecret, oGroup
+    Check(ok, "Bosskämpfe: Pull/Pause, BigWigs/DBM hören, Kampftimer und Bestzeit, Zeitleiste ohne geratene Zeit" .. (ok and "" or (": " .. tostring(err))))
 end
 
 -- Sterbezeit an der Plakette (1.8.0.0, ui/timetodie.lua)

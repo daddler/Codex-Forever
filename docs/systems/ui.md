@@ -2308,6 +2308,35 @@ Fassung des Clients eine Antwort nicht stillschweigend überholt.
 | Talentfenster | kein `PlayerTalentFrame`/`TalentFrame`/`ClassTalentFrame` und kein `Blizzard_TalentUI` – die Talente stehen im `PlayerSpellsFrame` (`ui/talents.lua`) | 04.10.2026, 1.60.1 (70205) |
 | PvP-Fenster | kein eigenes `PVPFrame`/`HonorFrame` – PvP ist ein Reiter des Charakterfensters (`ui/pvp.lua`) | 04.10.2026, 1.60.1 (70205) |
 
+## Bosskämpfe *(1.10.0.0, `ui/bossmod.lua`)*
+
+Wunsch „sowas wie BigWigs“. Verhalten nach BigWigs, **kein Code** (All
+Rights Reserved). BigWigs bringt für Forever kein Bossmodul mit
+(`currentExpansion.zones = {}` für Forever im Lader) – auf modernen Clients
+lebt es von den Ereignissen des Spiels; genau die nutzt WeintCodex.
+
+- **Pull/Pause:** `/pull N` → `C_PartyInfo.DoCountdown` (das Spiel zeigt
+  ihn allen; ohne Gruppe oder bei Fehlschlag nur die eigene Leiste),
+  `/pull 0` bricht ab. `/break N` (Minuten) nur lokal. Die Befehle nur,
+  wenn `hash_SlashCmdList` sie nicht schon kennt; immer `/wcpull`,
+  `/wcbreak`. Leiste auch bei `START_PLAYER_COUNTDOWN` anderer.
+- **Zuhören:** `CHAT_MSG_ADDON` mit `BigWigs` (`P^Pull^N`, `P^Break^N`)
+  und `D5` (`PT\tN`, `BT\tN`). **Nie senden.** Schalter `bossListen`.
+- **Kampf:** `ENCOUNTER_START`/`END`, hochzählende Leiste, Ergebnis im
+  Chat, Bestzeit je `Encounter:Schwierigkeit` in `SavedData.bossTimes`
+  (Sekunden). Kill/Wipe-Zählung bleibt bei `modules/encounter_tracking.lua`.
+- **Zeitleiste:** `ENCOUNTER_TIMELINE_EVENT_ADDED(info)` → Leiste nur mit
+  offenem `info.id` und `info.duration`; Name und Symbol roh an Text und
+  Bild. Geheim → keine Leiste, `BM.stats.secret`. `…_REMOVED(id)` entfernt.
+- **Warnungen:** `ENCOUNTER_WARNING(info)` → `info.text` oder
+  `info.spellName` groß in der Mitte, ab Werk aus (das Spiel zeigt eigene).
+- **Nicht gemessen:** ob Forever Zeitleiste und Warnungen schickt und
+  welche Felder `info` trägt (aus dem Verhalten von BigWigs abgeleitet).
+  `/wcui prüfen` → „Bosskämpfe“ zählt, was ankam.
+- Leisten: höchstens `BM.ROWS` (8), feste Zeilen, Takt 0,1 s nur bei
+  sichtbarer Leiste, Sortierung in eine feste Liste. Plätze `bossbars`,
+  `bosswarn`.
+
 ## Sterbezeit und „Reichen meine DoTs?“ *(1.8.0.0, `ui/timetodie.lua`)*
 
 Optional (Plaketten → Texte → Sterbezeit, ab Werk aus), Text rechts neben

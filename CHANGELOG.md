@@ -9,7 +9,18 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
-## [1.9.1.0] – 2026-11-01
+## [1.10.0.0] – 2026-11-02
+
+### Neu
+- Bosskämpfe (`ui/bossmod.lua`, Komfortseite „Bosskämpfe“ unter Kampf & Gruppe; Wunsch „sowas wie BigWigs“, Verhalten nach BigWigs v427.8, eigener Code – BigWigs ist „All Rights Reserved“ und bringt für Forever kein Bossmodul mit):
+  - `/pull N` über `C_PartyInfo.DoCountdown` (die Gruppe sieht den Countdown des Spiels), `/break N` Minuten lokal; nur wenn die Befehle frei sind, sonst `/wcpull`/`/wcbreak`. Leiste auch bei `START_PLAYER_COUNTDOWN` anderer.
+  - Pull und Pause von BigWigs (`BigWigs`, `P^Pull^N`) und DBM (`D5`, `PT`/`BT`) nur gehört, nie gesendet (`bossListen`).
+  - Kampftimer `ENCOUNTER_START`/`END`, „besiegt in …“ mit Bestzeit je Boss und Schwierigkeit (`SavedData.bossTimes`), „Wipe nach …“.
+  - Leisten aus `ENCOUNTER_TIMELINE_EVENT_ADDED/REMOVED` nur mit offener Dauer (geheim → keine Leiste, gezählt), Warnungen aus `ENCOUNTER_WARNING` groß in der Mitte (ab Werk aus), Ton auf Wunsch.
+  - `/wcui prüfen` → „Bosskämpfe“: Kämpfe, Zeitleiste (davon ohne offene Dauer), Warnungen, Countdowns, gehörte Timer. Ob Forever Zeitleiste und Warnungen schickt, ist nicht gemessen.
+- Keine Taktiken je Boss: für keinen Kampf in Forever gibt es eine Quelle.
+
+ – 2026-11-01
 
 ### Behoben
 - `local a, b = f and f()` kappt in Lua auf einen Wert – `b` war immer nil (statische Prüfung mit luacheck):
