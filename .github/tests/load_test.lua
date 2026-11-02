@@ -869,10 +869,13 @@ do
     -- Zeilen (bis 6.102 brach die des Komforts mit 17 Reitern um).
     Check(wrapped == nil, "keine Reiterleiste bricht um (" .. tostring(wrapped) .. ")")
     local cv = UO.Views("comfort")
-    Check(cv and #cv == 4 and UO.Locate("comfort", UO.PageIndex("comfort", "sammeln")) == "komfort_welt"
+    Check(cv and #cv == 5 and UO.Locate("comfort", UO.PageIndex("comfort", "sammeln")) == "komfort_welt"
         and UO.Locate("comfort", UO.PageIndex("comfort", "danke")) == "komfort_handel"
-        and UO.Locate("comfort", UO.PageIndex("comfort", "automark")) == "komfort_kampf",
-        "Komfort in vier Themen, Seiten finden ihr Thema")
+        and UO.Locate("comfort", UO.PageIndex("comfort", "automark")) == "komfort_kampf"
+        and UO.Locate("comfort", UO.PageIndex("comfort", "pvp")) == "komfort_kampf"
+        and UO.Locate("comfort", UO.PageIndex("comfort", "boss")) == "komfort_boss"
+        and UO.Locate("comfort", UO.PageIndex("comfort", "boss_bosses")) == "komfort_boss",
+        "Komfort in fünf Themen (seit 1.10.9.0 Bosskämpfe eigen), Seiten finden ihr Thema")
 end
 
 -- 6.21.0.0 (Beta-Test: "unter den Punkten erklaert, allerdings mit 3
@@ -16504,11 +16507,13 @@ do
     Check(ok, "Minikarte: DielFrame als Tageszeit, Addon-Knoepfe voll deckend; Chat-Reiter oben" .. (ok and "" or (": " .. tostring(err))))
 end
 
--- Die Seitenleiste des Einstellungsfensters traegt jetzt zwoelf Eintraege.
--- Sie rollt nie - also muss sie passen, mit Luft fuer einen weiteren.
-Check((UO._sidebarUsed or 9999) + 40 <= UO.HEIGHT,
+-- Die Seitenleiste des Einstellungsfensters rollt nie - also muss sie passen.
+-- Bis 1.10.8.0 mit Luft fuer einen weiteren Eintrag; seit 1.10.9.0 ist sie
+-- VOLL (Entscheidung des Besitzers: Bosskaempfe als eigene Rubrik). Ein
+-- weiterer Eintrag muss einen alten ersetzen oder mit ihm zusammengehen.
+Check((UO._sidebarUsed or 9999) <= UO.HEIGHT,
     "Seitenleiste des Einstellungsfensters: " .. tostring(UO._sidebarUsed)
-    .. " von " .. tostring(UO.HEIGHT) .. " px, Luft fuer einen weiteren Eintrag")
+    .. " von " .. tostring(UO.HEIGHT) .. " px – passt (voll seit 1.10.9.0)")
 
 -- Und die Seite im Hauptfenster, die hierher fuehrt.
 do
@@ -19037,10 +19042,10 @@ do
         end
         local order = table.concat(keys, ",")
         local pal = WeintCodex.UIPaladinBuffs.IsPaladin()
-        assert(order == "automatik,anzeigen,rausda,automark,klickzauber,makros," .. (pal and "segen," or "") .. "ringe,pvp,boss,karte,questhilfe,sammeln,glitzern,selten,flugspiele,auktion,fluestern,danke,gespraeche",
+        assert(order == "automatik,anzeigen,rausda,automark,klickzauber,makros," .. (pal and "segen," or "") .. "ringe,pvp,boss,boss_bars,boss_sounds,boss_bosses,karte,questhilfe,sammeln,glitzern,selten,flugspiele,auktion,fluestern,danke,gespraeche",
             "Reihenfolge: " .. order)
         local d = pal and 0 or -1
-        assert(O.PageIndex("comfort", "gespraeche") == 20 + d and O.PageIndex("comfort", "fluestern") == 18 + d, "Index nach Sortieren")
+        assert(O.PageIndex("comfort", "gespraeche") == 23 + d and O.PageIndex("comfort", "fluestern") == 21 + d, "Index nach Sortieren")
         for _, h in ipairs(WL.HELPERS) do
             local mod = K.Module(h.module)
             assert(mod and mod.group ~= "ui" or h.module == "groupframes", h.label .. ": haengt an einem Modul der Oberflaeche")
@@ -23325,6 +23330,148 @@ do
     WeintCodex.SavedData.bossLearn = nil
     if WeintCodex.UIBossMod.frame then WeintCodex.UIBossMod.ApplyLook() end
     Check(ok, "Bosskämpfe: Zeiten aus eigenen Kämpfen (erster Einsatz, kürzester Abstand, nur der Boss), Zeitleiste bleibt im Kampf" .. (ok and "" or (": " .. tostring(err))))
+end
+
+-- Bosskaempfe: je Boss einstellen, Leben/Energie als Ausloeser, Sofortzauber (1.10.9.0)
+do
+    local BM = WeintCodex.UIBossMod
+    local names = { "GetTime", "UnitExists", "UnitAffectingCombat", "UnitName", "UnitIsDead", "UnitCastingInfo",
+        "UnitHealth", "UnitHealthMax", "UnitPower", "UnitPowerMax", "GetInstanceInfo", "C_Spell" }
+    local old = {}
+    for _, n in ipairs(names) do old[n] = _G[n] end
+    local oActive = K.IsActive
+    local saved = {}
+    for k in pairs(BM.DEFAULTS) do saved[k] = K.Get("comfort", k) end
+    local ok, err = pcall(function()
+        local now = 40000
+        local hp, pw = 100, 0
+        _G.GetTime = function() return now end
+        K.IsActive = function() return true end
+        for k, v in pairs(BM.DEFAULTS) do K.Set("comfort", k, v) end
+        for k in pairs(BM.timers) do BM.timers[k] = nil end
+        BM.fight = nil
+        WeintCodex.SavedData.bossLearn = nil
+        local boss = { exists = true, combat = true, dead = false }
+        _G.UnitExists = function(u) return u == "boss1" and boss.exists end
+        _G.UnitAffectingCombat = function(u) return u == "boss1" and boss.combat end
+        _G.UnitName = function(u) return u == "boss1" and "Gyth" or "Jemand" end
+        _G.UnitIsDead = function(u) return u == "boss1" and boss.dead end
+        _G.UnitHealth = function() return hp end
+        _G.UnitHealthMax = function() return 100 end
+        _G.UnitPower = function() return pw end
+        _G.UnitPowerMax = function() return 100 end
+        _G.GetInstanceInfo = function() return "Untere Schwarzfelsspitze", "party" end
+        _G.C_Spell = setmetatable({ GetSpellName = function(id) return ({ [11] = "Feueratem", [12] = "Wutanfall" })[id] end,
+            GetSpellTexture = function() return 1 end }, { __index = old.C_Spell })
+        local function cast(spell, h, p)
+            hp, pw = h, p
+            _G.UnitCastingInfo = function() return spell, "", 1, now * 1000, (now + 1) * 1000, false, 1, false end
+            BM.CastStart("boss1", false)
+            BM.CastStop("boss1")
+        end
+        -- Zwei Kaempfe: Feueratem bei ~50 % Leben (einmal je Kampf), Flammen
+        -- immer bei voller Energie, Schlag nach Zeit.
+        for pull = 1, 2 do
+            boss.dead = false
+            hp, pw = 100, 0
+            BM.Engage()
+            assert(BM.fight.instance == "Untere Schwarzfelsspitze", "Instanz nicht gemerkt")
+            now = now + 6 cast("Schlag", 90, 10)
+            now = now + 10 cast("Schlag", 75, 40)
+            now = now + 5 cast("Flammen", 70, 100)
+            now = now + 10 cast("Feueratem", pull == 1 and 50 or 49, 20)
+            now = now + 10 cast("Flammen", 40, 100)
+            boss.dead = true
+            BM.EngageEnd()
+        end
+        local st = WeintCodex.SavedData.bossLearn["n:Gyth"]
+        assert(st._inst == "Untere Schwarzfelsspitze" and st._name == "Gyth" and st._pulls == 2, "Boss ohne Instanz/Name/Kaempfe")
+        assert(st.Feueratem.maxPull == 1 and st.Schlag.maxPull == 2, "Anzahl je Kampf")
+        local m, at = BM.Suggest(st.Feueratem)
+        assert(m == "hp" and at == 50, "Vorschlag Leben: " .. tostring(m) .. " " .. tostring(at))
+        assert(BM.Suggest(st.Flammen) == "power", "Vorschlag Energie")
+        assert(BM.Suggest(st.Schlag) == "timer", "Vorschlag Zeit")
+        assert(BM.Measured(st.Feueratem, st):find("Leben beim Wirken 49–50 %", 1, true), "Messung ohne Leben: " .. BM.Measured(st.Feueratem, st))
+        -- Dritter Kampf: Leben-Schwelle kuendigt 5 % vorher an, Energie ab 90 %.
+        boss.dead = false
+        hp, pw = 100, 0
+        BM.Engage()
+        assert(BM.timers["nxSchlag"] and not BM.timers["nxFeueratem"] and not BM.timers["nxFlammen"], "Ausloeser beim Pull falsch")
+        hp = 60 BM.CheckWatches()
+        assert(not BM.timers["nxFeueratem"], "Leben-Ankuendigung zu frueh")
+        hp = 54 BM.CheckWatches()
+        local t = BM.timers["nxFeueratem"]
+        assert(t and t.label == "~ Feueratem (50 %)" and t.forceEmph, "Leben-Ankuendigung fehlt")
+        hp = 53 BM.timers["nxFeueratem"] = nil BM.CheckWatches()
+        assert(not BM.timers["nxFeueratem"], "Leben-Ankuendigung doppelt")
+        pw = 92 BM.CheckWatches()
+        assert(BM.timers["nxFlammen"] and BM.timers["nxFlammen"].label == "~ Flammen (Energie voll)", "Energie-Ankuendigung fehlt")
+        cast("Flammen", 50, 100)
+        assert(not BM.timers["nxFlammen"], "Ankuendigung bleibt nach dem Wirken")
+        pw = 30 BM.CheckWatches()
+        pw = 95 BM.CheckWatches()
+        assert(BM.timers["nxFlammen"], "Energie wird nicht neu scharf")
+        BM.Finish(nil)
+        -- Verdecktes Leben: keine Ankuendigung, nie geraten.
+        local secret = {}
+        local oSec = _G.issecretvalue
+        _G.issecretvalue = function(v) return v == secret end
+        _G.UnitHealth = function() return secret end
+        assert(BM.BossVitals() == nil, "verdecktes Leben geraten")
+        _G.issecretvalue = oSec
+        _G.UnitHealth = function() return hp end
+        -- Eigene Einstellungen gelten vor der Messung.
+        st.Schlag.edit = { mode = "timer", first = 3, gap = 20, sound = "hupe" }
+        st.Feueratem.edit = { mode = "off" }
+        boss.dead = false hp = 100
+        BM.Engage()
+        assert(BM.timers["nxSchlag"] and math.abs(BM.timers["nxSchlag"].ends - now - 3) < 0.01 and BM.timers["nxSchlag"].sound == "hupe", "eigener erster Einsatz/Ton gilt nicht")
+        assert(#BM.watch == 1 and BM.watch[1].spell == "Flammen", "Aus gilt nicht")
+        now = now + 3 cast("Schlag", 90, 0)
+        assert(math.abs(BM.timers["nxSchlag"].ends - now - 20) < 0.01, "eigener Abstand gilt nicht")
+        -- Sofortzauber: zaehlen; das Ende einer gezaehlten Leiste nicht doppelt.
+        local n0 = st.Schlag.n
+        _G.UnitCastingInfo = function() return "Schlag", "", 1, now * 1000, (now + 1) * 1000, false, 1, false end
+        BM.CastStart("boss1", false)
+        _G.C_Spell.GetSpellName = function() return "Schlag" end
+        BM.CastSucceeded("boss1", 99)
+        assert(st.Schlag.n == n0 + 1, "Ende einer Leiste doppelt gezaehlt")
+        now = now + 30
+        _G.C_Spell.GetSpellName = function() return "Wutanfall" end
+        BM.CastSucceeded("boss1", 12)
+        assert(st.Wutanfall and st.Wutanfall.n == 1, "Sofortzauber nicht gezaehlt")
+        BM.Finish(nil)
+        -- Seite "Bosse": Instanz -> Boss -> Faehigkeit, Eingaben landen in edit.
+        BM.sel.inst, BM.sel.boss, BM.sel.spell = nil, nil, nil
+        BM.FixSelection()
+        assert(BM.sel.inst == "Untere Schwarzfelsspitze" and BM.sel.boss == "n:Gyth" and BM.sel.spell, "Auswahl nicht vorbelegt")
+        local specs = {}
+        local fakeB = { Section = function() end, Note = function() end, Advanced = function() end, EndAdvanced = function() end,
+            Row = function(_, a, b) specs[#specs + 1] = a specs[#specs + 1] = b end }
+        BM.sel.spell = "Feueratem"
+        BM.BuildBosses(fakeB)
+        local byLabel = {}
+        for _, sp in ipairs(specs) do if sp and sp.label then byLabel[sp.label] = sp end end
+        assert(byLabel["Instanz"] and byLabel["Boss"] and byLabel["Fähigkeit"] and byLabel["Ankündigen"], "Seite ohne Auswahl")
+        byLabel["Ankündigen"].set("hp")
+        byLabel["Bei Leben des Bosses (%)"].set("35,5")
+        byLabel["Erster Einsatz nach dem Pull (s)"].set("")
+        assert(st.Feueratem.edit.mode == "hp" and st.Feueratem.edit.hp == 35.5 and st.Feueratem.edit.first == nil, "Eingabe nicht uebernommen")
+        assert(byLabel["Bei Leben des Bosses (%)"].get() == "35,5", "Anzeige der Eingabe: " .. tostring(byLabel["Bei Leben des Bosses (%)"].get()))
+        byLabel["Ankündigen"].set("auto")
+        assert(st.Feueratem.edit.mode == nil, "auto nicht zurueck")
+        byLabel["Diese Fähigkeit"].onClick()
+        assert(st.Feueratem.edit == nil, "Zuruecksetzen geht nicht")
+        byLabel["Diesen Boss"].onClick()
+        assert(WeintCodex.SavedData.bossLearn["n:Gyth"] == nil and BM.sel.boss == nil, "Boss loeschen geht nicht")
+    end)
+    for _, n in ipairs(names) do _G[n] = old[n] end
+    K.IsActive = oActive
+    for k, v in pairs(saved) do K.Set("comfort", k, v) end
+    for k in pairs(WeintCodex.UIBossMod.timers) do WeintCodex.UIBossMod.timers[k] = nil end
+    WeintCodex.UIBossMod.fight = nil
+    WeintCodex.SavedData.bossLearn = nil
+    Check(ok, "Bosskämpfe: je Boss einstellen (Instanz/Boss/Fähigkeit), Vorschlag Leben/Energie/Zeit, Schwellen, Sofortzauber, verdeckt = nie geraten" .. (ok and "" or (": " .. tostring(err))))
 end
 
 -- Sterbezeit an der Plakette (1.8.0.0, ui/timetodie.lua)

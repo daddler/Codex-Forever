@@ -2389,6 +2389,16 @@ lebt es von den Ereignissen des Spiels; genau die nutzt WeintCodex.
   (`SavedData.bossLearn`), `BM.LearnStart` sagt zum Pull voraus, jede
   Vorhersage ist eine Leiste „~ Zauber“ (`nx…`, `t.learned`). Zeitleiste
   bleibt während `BM.fight` stehen (Hinweis, solange nichts kommt).
+- **Eigene Rubrik und je Boss einstellen (1.10.9.0, Wunsch):** Thema
+  `komfort_boss` mit vier Reitern (`boss`, `boss_bars`, `boss_sounds`,
+  `boss_bosses`); die Seitenleiste des Einstellungsfensters ist damit voll
+  – ein weiterer Eintrag muss einen alten ersetzen oder mit ihm
+  zusammengehen. „Bosse“: Instanz → Boss → Fähigkeit, `rec.edit` gilt vor
+  der Messung (`BM.Effective`), Auslöser Zeit/Leben/Energie/aus. Leben
+  und Energie nur offen (`BM.BossVitals`; 12.x verdeckt sie womöglich im
+  Kampf – dann bleibt nur Zeit), Vorschlag `BM.Suggest` aus den Messungen,
+  nie automatisch festgelegt. Sofortzauber über
+  `UNIT_SPELLCAST_SUCCEEDED`.
 - **„Gleich dran“ (BigWigs: „hervorheben“):** eine Leiste mit Dauer, deren
   Rest unter `bossEmphSecs` fällt, wechselt an den zweiten Anker – 1,5×
   so hoch, 1,25× so breit, rot (Statusfarbe). Höchstens 4; Kampftimer

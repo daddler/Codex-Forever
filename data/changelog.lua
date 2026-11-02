@@ -22,6 +22,16 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.10.9.0",
+        date    = "02.11.2026",
+        notes   = {
+            "|cff7C6CFFBosskämpfe haben eine eigene Rubrik|r – links im Einstellungsfenster, mit vier Reitern: Allgemein, Leisten, Töne und Bosse.",
+            "|cff7C6CFFJe Boss einstellen, wann seine Fähigkeiten kommen|r – unter „Bosse“ Instanz, Boss und Fähigkeit wählen: nach Zeit, bei einem Lebensstand des Bosses, bei voller Energie oder Mana – oder gar nicht. Mit eigenem Ton je Fähigkeit.",
+            "|cff7C6CFFDie Messung macht einen Vorschlag|r – kam eine Fähigkeit in jedem Kampf einmal bei etwa demselben Leben, schlägt WeintCodex diese Schwelle vor; kam sie immer bei voller Energie, das. Festlegen tust du.",
+            "|cff7C6CFFAuch Sofortzauber zählen|r – Fähigkeiten ohne Zauberleiste werden mitgemessen, wo das Spiel sie meldet.",
+        },
+    },
+    {
         version = "1.10.8.0",
         date    = "02.11.2026",
         notes   = {

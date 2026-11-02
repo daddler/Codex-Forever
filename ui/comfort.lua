@@ -575,8 +575,12 @@ K.Module(KEY).pageOrder = QoL.PAGE_ORDER
 QoL.THEMES = {
     { key = "komfort_alltag", title = "Alltag", upTo = 10,
       description = "Was WeintCodex dir abnimmt: reparieren, Schrott verkaufen, Beute, Hinweise auf dem Bildschirm." },
-    { key = "komfort_kampf", title = "Kampf & Gruppe", upTo = 20,
-      description = "Hilfen in Kampf und Gruppe: Warnungen, Markieren, Klickzauber, Makros, Ringe – und für Paladine die Segen." },
+    { key = "komfort_kampf", title = "Kampf & Gruppe", upTo = 16,
+      description = "Hilfen in Kampf und Gruppe: Warnungen, Markieren, Klickzauber, Makros, Ringe, PvP – und für Paladine die Segen." },
+    -- 1.10.9.0 (Wunsch): Bosskaempfe als eigene Rubrik, vier Reiter
+    -- (ui/bossmod.lua, Raenge 16 bis 16.3).
+    { key = "komfort_boss", title = "Bosskämpfe", upTo = 20,
+      description = "Timer und Warnungen im Bosskampf: Pull und Pause, Leisten und Zeitleiste, Töne je Anlass – und je Boss, wann seine Fähigkeiten kommen." },
     { key = "komfort_welt", title = "Welt & Karte", upTo = 30,
       description = "Unterwegs: Karte, Quests, Sammeln, seltene Gegner und die Flugspiele." },
     { key = "komfort_handel", title = "Handel & Gespräche", upTo = math.huge,

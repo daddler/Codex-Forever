@@ -9,6 +9,15 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.10.9.0] – 2026-11-02
+
+### Neu
+- Bosskämpfe als eigene Rubrik im Einstellungsfenster (`QoL.THEMES` `komfort_boss`, Ränge 16–16.3; „Kampf & Gruppe“ jetzt bis 16): Reiter Allgemein (`boss`), Leisten (`boss_bars`, das Aussehen auch als Einstellungen, nicht nur im Einrichten-Fenster), Töne (`boss_sounds`), Bosse (`boss_bosses`). Die Seitenleiste ist damit **voll** (654 von 680 px, Entscheidung des Besitzers); `load_test.lua` verlangt keine Luft für einen weiteren Eintrag mehr.
+- Seite „Bosse“: Instanz → Boss → Fähigkeit aus `SavedData.bossLearn` (`_inst` aus `GetInstanceInfo`, `_name`, `_pulls`); je Fähigkeit `rec.edit = { mode = timer|hp|power|off, first, gap, hp, sound }` vor der Messung (`BM.Effective`), leer = gemessen, „Auf Messung zurücksetzen“, Boss löschen.
+- Messung je Wirken: Leben und Energie des Bosses in % (`BM.BossVitals`, nur offene Werte, sonst nil – nie geraten), je 6 Werte, `maxPull`. Vorschlag `BM.Suggest`: jedes Mal ≥ 95 % Energie → Energie; höchstens einmal je Kampf bei Leben innerhalb 6 % → Leben (Schwelle = höchster Wert); sonst Zeit.
+- Schwellen im Kampf (`BM.watch`, `BM.CheckWatches` im 0,1-s-Takt): Leben 5 % vor der Schwelle, Energie ab 90 % (neu scharf unter 50 %) → Leiste „~ Fähigkeit (50 %)“ am Platz „gleich dran“ und Vorwarnton (eigener Ton je Fähigkeit über `BM.Sound(event, force, key)`).
+- Sofortzauber über `UNIT_SPELLCAST_SUCCEEDED` (`BM.CastSucceeded`); das Ende einer schon gezählten Zauberleiste zählt nicht doppelt (15-s-Fenster). Höchstens 30 Fähigkeiten je Boss.
+
 ## [1.10.8.0] – 2026-11-02
 
 ### Neu
