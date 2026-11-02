@@ -22,9 +22,12 @@
 
 WeintCodex_ChangelogData = {
     {
-        version = "1.10.5.0",
+        version = "1.10.6.0",
         date    = "02.11.2026",
         notes   = {
+            "|cff7C6CFFBosskämpfe auch in alten Dungeons|r – was ein Boss gerade wirkt, steht als Leiste mit Restzeit da (Gold heißt: unterbrechbar), seine Emotes auf Wunsch groß in der Mitte. Der Kampftimer erkennt Bosse jetzt auch an den Bossrahmen.",
+            "|cff7C6CFFZeitleiste des Spiels vollständiger|r – Fähigkeiten halten an, wenn das Spiel sie pausiert, verschwinden, wenn es sie abbricht, und kommen nach einem Neuladen mitten im Kampf zurück.",
+            "|cff7C6CFF17 neue Töne aus dem Spiel|r – die Warntöne der Bosskämpfe (niedrig, mittel, kritisch), Glocke, PvP-Flagge und bekannte Stimmen wie Illidan oder Yogg-Saron. Kennt dein Spiel einen davon nicht, sagt es die Probe.",
             "|cff7C6CFFNoch ein Meme|r – „Alarm“ steht in der Auswahl der Töne, für „Raus da!“ und die Bosskämpfe.",
         },
     },

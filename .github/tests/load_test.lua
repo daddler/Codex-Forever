@@ -2363,7 +2363,7 @@ do
     local ok, err = pcall(function()
         assert(#FA.ORDER >= 18, "zu wenige Toene")
         assert(FA.DEFAULTS.fireSound == "raus" and FA.ORDER[1] == "raus", "eigener Alarm nicht vorn")
-        local seen, files = {}, 0
+        local seen, files, fids = {}, 0, 0
         for _, k in ipairs(FA.ORDER) do
             local s = FA.SOUNDS[k]
             assert(s and s.text, "Ton ohne Namen: " .. k)
@@ -2372,6 +2372,12 @@ do
                 local fh = io.open(ROOT .. "/media/sounds/" .. s.file, "rb")
                 assert(fh, "Datei fehlt: " .. s.file)
                 fh:close()
+            elseif s.fid then
+                -- 1.10.6.0: Datei des Spiels ueber ihre Nummer, nichts ausgeliefert.
+                assert(type(s.fid) == "number" and s.fid > 0 and not s.file and not s.kit, "Spieldatei unvollstaendig: " .. k)
+                assert(not seen["f" .. s.fid], "Spieldatei doppelt: " .. k)
+                seen["f" .. s.fid] = true
+                fids = fids + 1
             else
                 assert(type(s.kit) == "string" and type(s.id) == "number", "Ton unvollstaendig: " .. k)
                 assert(not seen[s.id], "Ton doppelt: " .. k)
@@ -2379,6 +2385,7 @@ do
             end
         end
         assert(files == 14, "eigene Alarme (9 gerechnete + 5 Memes): " .. files)
+        assert(fids == 17, "Dateien des Spiels: " .. fids)
         local n = 0
         for _ in pairs(FA.SOUNDS) do n = n + 1 end
         assert(n == #FA.ORDER, "Ton fehlt in der Auswahl")
@@ -2400,6 +2407,21 @@ do
         _G.PlaySoundFile, _G.PlaySound = oldPSF, oldPS
         assert(played[1] == "file:" .. FA.SOUND_PATH .. "tief.ogg", "Datei nicht gespielt: " .. tostring(played[1]))
         assert(played[2] and played[2]:find("^kit:"), "Ton des Spiels nicht gespielt")
+        -- 1.10.6.0: Datei des Spiels per Nummer; fehlt sie, sagt es nur die Probe.
+        local said = {}
+        local oPrint = _G.print
+        _G.PlaySoundFile = function(f) played[#played + 1] = f return false end
+        _G.print = function(m) said[#said + 1] = m end
+        local _, got = FA.PlayKey("warn_crit")
+        assert(played[#played] == 7670697 and got == false, "Spieldatei nicht per Nummer gespielt")
+        WeintCodex.UIKit.Set("comfort", "fireSound", "warn_crit")
+        FA.Play()
+        assert(#said == 0, "Alarm meldet fehlenden Ton im Chat")
+        FA.PlayProbe()
+        assert(#said == 1 and said[1]:find("nicht ab", 1, true), "Probe sagt nicht, dass der Ton fehlt")
+        WeintCodex.UIKit.Set("comfort", "fireSound", "raus")
+        _G.print = oPrint
+        _G.PlaySoundFile, _G.PlaySound = oldPSF, oldPS
     end)
     Check(ok, "Raus da: eigene Alarme als Datei plus Toene des Spiels, alle waehlbar" .. (ok and "" or (": " .. tostring(err))))
 end
@@ -22932,6 +22954,123 @@ do
     _G.PlaySoundFile, _G.PlaySound = oPSF, oPS
     for k, v in pairs(saved) do K.Set("comfort", k, v) end
     Check(ok, "Bosskämpfe: Ton je Anlass, Kanal, Wo, Hauptschalter, Vorwarnung, Probekampf" .. (ok and "" or (": " .. tostring(err))))
+end
+
+-- Bosskaempfe: was DBM liest, auch ohne Zeitleiste (1.10.6.0)
+do
+    local BM = WeintCodex.UIBossMod
+    local names = { "GetTime", "C_EncounterTimeline", "UnitExists", "UnitAffectingCombat", "UnitName", "UnitIsDead",
+        "UnitCastingInfo", "UnitChannelInfo", "UnitIsUnit", "UnitCanAttack", "IsInInstance", "UnitClassification" }
+    local old = {}
+    for _, n in ipairs(names) do old[n] = _G[n] end
+    local oActive = K.IsActive
+    local saved = {}
+    for k in pairs(BM.DEFAULTS) do saved[k] = K.Get("comfort", k) end
+    local ok, err = pcall(function()
+        local now = 9000
+        _G.GetTime = function() return now end
+        K.IsActive = function() return true end
+        for k, v in pairs(BM.DEFAULTS) do K.Set("comfort", k, v) end
+        for k in pairs(BM.timers) do BM.timers[k] = nil end
+        BM.fight = nil
+        -- Zeitleiste: Restzeit vor Dauer, Pause, weiter, Abbruch.
+        local state, remain = { [5] = 0 }, { [5] = 20 }
+        _G.C_EncounterTimeline = {
+            GetEventState = function(id) return state[id] end,
+            GetEventTimeRemaining = function(id) return remain[id] end,
+            HasActiveEvents = function() return true end,
+            GetEventList = function() return { 5, 6 } end,
+            GetEventInfo = function(id) return { id = id, duration = 30, spellName = "F" .. id } end,
+        }
+        assert(BM.TimelineAdded({ id = 5, duration = 30, spellName = "Atem" }, 12) and BM.timers.tl5.ends == now + 12, "Restzeit nicht vor der Dauer")
+        state[5] = 1
+        assert(BM.TimelineState(5) == "pause" and BM.timers.tl5.hold, "Pause nicht gehalten")
+        now = now + 30 BM.Tick()
+        assert(BM.timers.tl5 and BM.timers.tl5.hold and math.abs(BM.timers.tl5.hold - 12) < 0.01, "angehaltene Leiste laeuft ab")
+        state[5], remain[5] = 0, 10
+        assert(BM.TimelineState(5) == "resume" and BM.timers.tl5.ends == now + 10, "Weiter nicht mit der Restzeit des Spiels")
+        state[5] = 3
+        assert(BM.TimelineState(5) == "stop" and not BM.timers.tl5, "Abbruch entfernt die Leiste nicht")
+        -- Nachholen nach /reload.
+        state[5], state[6], remain[5], remain[6] = 0, 0, 8, 9
+        assert(BM.CatchUp() == 2 and BM.timers.tl5 and BM.timers.tl6, "Nachholen fehlt")
+        for k in pairs(BM.timers) do BM.timers[k] = nil end
+        _G.C_EncounterTimeline = nil
+        -- Kampf ueber die Bossrahmen (ohne ENCOUNTER_START).
+        local boss = { exists = true, combat = true, dead = false }
+        _G.UnitExists = function(u) if u == "boss1" then return boss.exists end return u == "target" end
+        _G.UnitAffectingCombat = function(u) return u == "boss1" and boss.combat end
+        _G.UnitName = function(u) if u == "boss1" then return "Kriegsherr" end return "Ziel" end
+        _G.UnitIsDead = function(u) return u == "boss1" and boss.dead end
+        assert(BM.Engage() and BM.fight and BM.fight.src == "engage" and BM.timers.fight, "Bossrahmen startet keinen Kampf")
+        assert(BM.Engage() == nil, "Kampf doppelt gestartet")
+        WeintCodex.SavedData.bossTimes = {}
+        now = now + 95
+        boss.dead = true
+        assert(BM.EngageEnd() == "kill" and WeintCodex.SavedData.bossTimes["n:Kriegsherr"] == 95, "Sieg ueber Bossrahmen ohne Bestzeit")
+        boss.dead = false
+        BM.Engage() now = now + 20
+        assert(BM.EngageEnd() == "wipe", "lebender Boss ist kein Wipe")
+        BM.Engage() now = now + 20 boss.exists = false
+        assert(BM.EngageEnd() == nil and not BM.fight, "ohne Bossrahmen geraten statt unbekannt")
+        boss.exists = true
+        BM.Engage() BM.BossKill() boss.exists = false
+        assert(BM.EngageEnd() == "kill", "BOSS_KILL zaehlt nicht")
+        boss.exists = true
+        -- ENCOUNTER_START nach dem Bossrahmen behaelt die Startzeit.
+        BM.Engage()
+        local t0 = BM.fight.start
+        now = now + 3
+        BM.EncounterStart(42, "Kriegsherr", 1)
+        assert(BM.fight.src == "encounter" and BM.fight.start == t0, "Startzeit verloren")
+        BM.EncounterEnd(42, "Kriegsherr", 1, 5, 1)
+        -- Zauber: Bossrahmen mit Dauer des Clients; unterbrechbar = Gold.
+        _G.UnitCastingInfo = function(u) return "Feuerball", "", 1, (now - 1) * 1000, (now + 2) * 1000, false, 7, false end
+        _G.UnitChannelInfo = function(u) return "Strahl", "", 1, now * 1000, (now + 4) * 1000, false, true end
+        assert(BM.CastStart("boss1", false) and BM.timers.castboss1, "Zauber des Bosses ohne Leiste")
+        assert(BM.timers.castboss1.ends == now + 2 and BM.timers.castboss1.color == "gold", "Zauber: Zeit/Farbe falsch")
+        assert(BM.timers.castboss1.label == "Kriegsherr: Feuerball", "Zauber: Name " .. tostring(BM.timers.castboss1.label))
+        assert(BM.CastStop("boss1") and not BM.timers.castboss1, "Zauber nicht beendet")
+        assert(BM.CastStart("boss2", true) and BM.timers.castboss2.color == "blue", "kanalisiert, nicht unterbrechbar")
+        BM.CastStop("boss2")
+        -- Verdeckte Zeiten: keine Leiste, gezaehlt.
+        local secret = {}
+        local oSec = _G.issecretvalue
+        _G.issecretvalue = function(v) return v == secret end
+        _G.UnitCastingInfo = function() return "x", "", 1, secret, secret end
+        local before = BM.stats.castSecret
+        assert(BM.CastStart("boss1", false) == nil and BM.stats.castSecret == before + 1, "verdeckter Zauber geraten")
+        _G.issecretvalue = oSec
+        _G.UnitCastingInfo = function(u) return "Feuerball", "", 1, now * 1000, (now + 2) * 1000, false, 7, false end
+        -- Ziel: nur Elite, feindlich, in einer Instanz, und nicht der Boss selbst.
+        _G.UnitIsUnit = function() return false end
+        _G.UnitCanAttack = function() return true end
+        _G.UnitClassification = function() return "elite" end
+        _G.IsInInstance = function() return false, "none" end
+        assert(not BM.CastUnit("target"), "Ziel draussen gezaehlt")
+        _G.IsInInstance = function() return true, "party" end
+        assert(BM.CastUnit("target"), "Elite-Ziel im Dungeon nicht gezaehlt")
+        _G.UnitClassification = function() return "normal" end
+        assert(not BM.CastUnit("target"), "normales Ziel gezaehlt")
+        _G.UnitClassification = function() return "elite" end
+        _G.UnitIsUnit = function() return true end
+        assert(not BM.CastUnit("target"), "Ziel = Boss doppelt")
+        assert(not BM.CastUnit("party1"), "Gruppe gezaehlt")
+        K.Set("comfort", "bossCasts", false)
+        assert(BM.CastStart("boss1", false) == nil, "Zauber trotz aus")
+        -- Emotes: %s mit dem Namen, Farbcodes weg; Anzeige nur, wenn an.
+        assert(BM.Emote("%s wird wuetend!", "Kriegsherr") == nil, "Emote angezeigt, obwohl aus")
+        K.Set("comfort", "bossWarnings", true)
+        assert(BM.Emote("|cffff0000%s|r wird wuetend!", "Kriegsherr"), "Emote nicht angezeigt")
+        assert(BM.frame.warn.text:GetText() == "Kriegsherr wird wuetend!", "Emote-Text: " .. tostring(BM.frame.warn.text:GetText()))
+        assert(BM.StatusLine():find("Emotes", 1, true) and BM.StatusLine():find("Bossrahmen", 1, true), "Statuszeile ohne Neues")
+    end)
+    for _, n in ipairs(names) do _G[n] = old[n] end
+    K.IsActive = oActive
+    for k, v in pairs(saved) do K.Set("comfort", k, v) end
+    for k in pairs(WeintCodex.UIBossMod.timers) do WeintCodex.UIBossMod.timers[k] = nil end
+    WeintCodex.UIBossMod.fight = nil
+    Check(ok, "Bosskämpfe: Zeitleiste mit Restzeit/Pause/Abbruch/Nachholen, Kampf über Bossrahmen, Zauber der Bosse, Emotes" .. (ok and "" or (": " .. tostring(err))))
 end
 
 -- Bosskaempfe: Leisten einstellen wie BigWigs/DBM (1.10.4.0)

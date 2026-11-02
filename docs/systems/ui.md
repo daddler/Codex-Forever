@@ -2357,6 +2357,21 @@ lebt es von den Ereignissen des Spiels; genau die nutzt WeintCodex.
   Änderung sofort über `BM.ApplyLook()`. Nie im Kampf; Kampfbeginn
   beendet es. Werte aus dem Spielstand werden auf ihre Grenzen gezogen
   (`BM.Look`).
+- **Was DBM liest, auch ohne Zeitleiste (1.10.6.0):** Zeitleiste mit
+  Restzeit (zweiter Wert von `…_ADDED`), Zustand über
+  `C_EncounterTimeline.GetEventState` (0 läuft, 1 pausiert → `t.hold`,
+  2/3 → weg), `BM.CatchUp` bei `ENCOUNTER_START`. Dauer ist bei DBM offen
+  (es rechnet damit), Name/Symbol/Farbe geheim. Wo keine Zeitleiste kommt
+  (MoP Classic zum Testen, alte Dungeons): Zauber von `boss1`–`5` aus
+  `UnitCastingInfo`/`UnitChannelInfo` (`BM.CastStart`, ohne Bossrahmen
+  das Ziel, wenn feindliche Elite in einer Instanz), Emotes
+  (`RAID_BOSS_EMOTE`/`WHISPER`, `BM.Emote`), Kampf über Bossrahmen
+  (`BM.Engage` bei `INSTANCE_ENCOUNTER_ENGAGE_UNIT` und Kampfbeginn,
+  `BM.EngageEnd` beim Verlassen: Sieg nur mit `BOSS_KILL` oder totem
+  Boss, Wipe mit lebendem, sonst unbekannt – „Kampf vorbei“, keine
+  Bestzeit). Die Tondateien von DBM sind nicht übernommen (Lizenz); die
+  Töne des Spiels aus seiner Auswahl laufen über ihre Dateinummer
+  (`FA.SOUNDS[*].fid`).
 - **„Gleich dran“ (BigWigs: „hervorheben“):** eine Leiste mit Dauer, deren
   Rest unter `bossEmphSecs` fällt, wechselt an den zweiten Anker – 1,5×
   so hoch, 1,25× so breit, rot (Statusfarbe). Höchstens 4; Kampftimer

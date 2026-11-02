@@ -75,6 +75,31 @@ FA.SOUNDS = {
     meme_rose = { file = "meme_rose.ogg", len = 5.39, text = "Meme: „Aua, hat mich gebissen, die Rose!“" },
     meme_hallo = { file = "meme_hallo.ogg", len = 3.3, text = "Meme: „Hallo, was machen Sachen?“" },
     meme_alarm = { file = "meme_alarm.ogg", len = 4.0, text = "Meme: Alarm" },
+    -- 1.10.6.0 (Wunsch: "die Toene von DBM nutzen"): Dateien DES SPIELS ueber
+    -- ihre Nummer - WeintCodex liefert keine davon aus. Welche Nummern das
+    -- sind, steht oeffentlich in den Dateilisten des Clients; die Auswahl
+    -- folgt der von DBM (nur Betreuer). Die Dateien von DBM selbst sind
+    -- "All Rights Reserved" bzw. nur fuer DBM freigegeben und bleiben draussen.
+    -- Ob ein Client die Datei hat, sagt erst PlaySoundFile (willPlay) - die
+    -- Warntoene 767xxxx gibt es nur in Clients ab 12.x, die Stimmen je nach
+    -- Fassung; fehlt eine, bleibt es still und die Probe sagt es.
+    warn_low   = { fid = 7670699, text = "Warnton des Spiels: niedrig" },
+    warn_mid   = { fid = 7670701, text = "Warnton des Spiels: mittel" },
+    warn_crit  = { fid = 7670697, text = "Warnton des Spiels: kritisch" },
+    nebell     = { fid = 566558, text = "Glocke der Nachtelfen" },
+    pvpflag    = { fid = 569200, text = "PvP-Flagge" },
+    vo_illidan = { fid = 552503, text = "Stimme: Illidan – nicht vorbereitet" },
+    vo_illidan2 = { fid = 1412178, text = "Stimme: Illidan – nicht vorbereitet (neu)" },
+    vo_kj      = { fid = 553193, text = "Stimme: Kil'jaeden – Zerstörung" },
+    vo_algalon = { fid = 543587, text = "Stimme: Algalon – Vorsicht" },
+    vo_wolf    = { fid = 552035, text = "Stimme: Großer böser Wolf – lauf" },
+    vo_loatheb = { fid = 554236, text = "Stimme: Loatheb – ich sehe dich" },
+    vo_horseman = { fid = 551703, text = "Stimme: Kopfloser Reiter – Lachen" },
+    vo_kazrogal = { fid = 553050, text = "Stimme: Kaz'rogal – markiert" },
+    vo_malande = { fid = 553566, text = "Stimme: Lady Malande – fliehen" },
+    vo_milhouse = { fid = 555337, text = "Stimme: Milhouse" },
+    vo_voidreaver = { fid = 563787, text = "Stimme: Leerhäscher – markiert" },
+    vo_yogg    = { fid = 564859, text = "Stimme: Yogg-Saron – Lachen" },
     raid    = { kit = "RAID_WARNING", id = 8959, text = "Schlachtzugswarnung" },
     ready   = { kit = "READY_CHECK", id = 8960, text = "Bereitschaftscheck" },
     alarm   = { kit = "ALARM_CLOCK_WARNING_3", id = 12889, text = "Wecker" },
@@ -85,7 +110,7 @@ FA.SOUNDS = {
     queue   = { kit = "PVP_THROUGH_QUEUE", id = 8459, text = "Warteschlange" },
     toast   = { kit = "UI_BNET_TOAST", id = 18019, text = "Battle.net-Hinweis" },
 }
-FA.ORDER = { "raus", "achtung", "fehler", "trill", "hoch", "tief", "dreifach", "hupe", "sirene", "meme_raus", "meme_fahr", "meme_rose", "meme_hallo", "meme_alarm", "raid", "boss", "ready", "alarm", "alarm2", "whisper", "invite", "queue", "toast" }
+FA.ORDER = { "raus", "achtung", "fehler", "trill", "hoch", "tief", "dreifach", "hupe", "sirene", "meme_raus", "meme_fahr", "meme_rose", "meme_hallo", "meme_alarm", "warn_low", "warn_mid", "warn_crit", "nebell", "pvpflag", "vo_illidan", "vo_illidan2", "vo_kj", "vo_algalon", "vo_wolf", "vo_loatheb", "vo_horseman", "vo_kazrogal", "vo_malande", "vo_milhouse", "vo_voidreaver", "vo_yogg", "raid", "boss", "ready", "alarm", "alarm2", "whisper", "invite", "queue", "toast" }
 
 -- 6.146.0.0 (Wunsch: eigene Toene ueber die Companion): eigene Dateien des
 -- Spielers. Die Companion schreibt sie in ein eigenes Addon WeintCodex_Sounds
@@ -117,7 +142,7 @@ end
 -- Der volle Pfad einer Datei-Eintragung (eigene oder mitgelieferte).
 function FA.FileOf(s)
     if type(s) ~= "table" then return nil end
-    return s.path or (s.file and FA.SOUND_PATH .. s.file) or nil
+    return s.path or (s.file and FA.SOUND_PATH .. s.file) or s.fid or nil
 end
 
 local stats = { checks = 0, plain = 0, secret = 0, none = 0, alarms = 0 }
@@ -141,21 +166,42 @@ function FA.PlayKey(key, channel)
     if type(s) ~= "table" then return nil end
     channel = channel or "Master"
     local path = FA.FileOf(s)
+    local ok, will
     if path then
-        if _G.PlaySoundFile then pcall(_G.PlaySoundFile, path, channel) end
+        if _G.PlaySoundFile then ok, will = pcall(_G.PlaySoundFile, path, channel) end
     else
         local kit = _G.SOUNDKIT and _G.SOUNDKIT[s.kit] or s.id
-        if _G.PlaySound and kit then pcall(_G.PlaySound, kit, channel) end
+        if _G.PlaySound and kit then ok, will = pcall(_G.PlaySound, kit, channel) end
     end
-    return tonumber(s.len) or 0
+    -- Zweiter Wert: false = der Client hat den Ton nicht (oder Ton aus),
+    -- nil = er sagt es nicht.
+    local played = nil
+    if ok and K.Plain(will) == false then played = false elseif ok and K.Plain(will) then played = true end
+    return tonumber(s.len) or 0, played
 end
 
-function FA.Play()
+-- Probe auf einer Einstellungsseite: spielen und sagen, wenn der Client den
+-- Ton nicht kennt - statt Stille ohne Grund.
+function FA.Preview(key, channel)
+    local len, played = FA.PlayKey(key, channel)
+    if played == false and FA.SOUNDS[key] then
+        print(WeintCodex.ColorText("accent", "[WeintCodex]") .. " „" .. FA.SOUNDS[key].text
+            .. "“ spielt dein Spiel nicht ab – diese Fassung hat den Ton nicht, oder die Lautstärke dafür ist aus.")
+    end
+    return len, played
+end
+
+local function Chosen()
     FA.MergeCustom()
     local key = K.Get(KEY, "fireSound")
     if not FA.SOUNDS[key] then key = "raus" end
-    FA.PlayKey(key, "Master")
+    return key
 end
+-- Der Alarm selbst: still, wenn der Client den Ton nicht hat (keine
+-- Chatzeile je Treffer).
+function FA.Play() return FA.PlayKey(Chosen(), "Master") end
+-- Der Knopf "Ton abspielen": sagt es, wenn nichts kommt.
+function FA.PlayProbe() return FA.Preview(Chosen(), "Master") end
 
 -- Die Auswahl fuer eine Liste der Toene (Einstellungsseiten).
 function FA.Items(withNone)
@@ -461,7 +507,7 @@ local function Build(B)
     B:Row({ type = "toggle", label = "Warnton, wenn du in etwas stehst", key = "fireAlarm",
             description = "Höchstens einmal je Sekunde." },
           { type = "dropdown", label = "Ton", key = "fireSound", items = items, disabled = off })
-    B:Row({ type = "button", label = "Probe", text = "Ton abspielen", onClick = FA.Play },
+    B:Row({ type = "button", label = "Probe", text = "Ton abspielen", onClick = FA.PlayProbe },
           { type = "dropdown", label = "Wo", key = "fireWhere", disabled = off, items = {
                 { value = "all",      text = "Überall" },
                 { value = "group",    text = "Nur in einer Gruppe" },

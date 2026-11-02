@@ -9,9 +9,12 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
-## [1.10.5.0] – 2026-11-02
+## [1.10.6.0] – 2026-11-02
 
 ### Neu
+- Bosskämpfe nach dem Verhalten von DBM (eigener Code, DBM ist „All Rights Reserved“): Zeitleiste mit Restzeit als zweitem Wert von `ENCOUNTER_TIMELINE_EVENT_ADDED`, `ENCOUNTER_TIMELINE_EVENT_STATE_CHANGED` (0 läuft, 1 pausiert → Leiste hält, 2/3 → weg; weiter mit `GetEventTimeRemaining`), Nachholen über `HasActiveEvents`/`GetEventList`/`GetEventInfo` bei `ENCOUNTER_START` (`BM.CatchUp`).
+- Ohne Zeitleiste (Classic-Clients, alte Dungeons): Zauber von `boss1`–`boss5` als Leisten aus `UnitCastingInfo`/`UnitChannelInfo` (ohne Bossrahmen das Ziel, wenn feindlicher Elitegegner in einer Instanz; Gold = unterbrechbar; verdeckte Zeiten → keine Leiste, gezählt), Schalter `bossCasts`, Ton `bossSndCast`; `RAID_BOSS_EMOTE`/`RAID_BOSS_WHISPER` wie Warnungen; Kampf über `INSTANCE_ENCOUNTER_ENGAGE_UNIT`/Kampfbeginn mit Bossrahmen, Ende beim Verlassen des Kampfes – Sieg nur mit `BOSS_KILL` oder totem Boss, Wipe mit lebendem, sonst „Kampf vorbei“ ohne Bestzeit (unbekannt ≠ Wipe); Bestzeit ohne Encounter-ID unter `n:<Name>`.
+- 17 Töne des Spiels über ihre Dateinummer (`fid`): Warntöne 7670697/7670699/7670701, Glocke, PvP-Flagge, zwölf Stimmen – Auswahl wie bei DBM, keine Datei ausgeliefert. `FA.PlayKey` gibt zurück, ob der Client spielt (`willPlay`); `FA.Preview` sagt es bei der Probe, der Alarm selbst bleibt still (`FA.Play`/`FA.PlayProbe`). Die Tondateien von DBM sind nicht übernommen: Stimmen nur mit Erlaubnis für DBM, VPVEM „All Rights Reserved“, Blizzard-Clips mit Erlaubnis für DBM.
 - Fünftes Meme `meme_alarm` („Alarm“), 14,00–18,00 s der gelieferten mp3, vom Besitzer festgelegt; `len = 4.0`, in `FA.ORDER` nach `meme_hallo`; nur Tonspur (Titelbild der mp3 nicht übernommen).
 
 ## [1.10.4.0] – 2026-11-02

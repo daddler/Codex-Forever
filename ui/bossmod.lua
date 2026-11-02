@@ -62,6 +62,8 @@ BM.DEFAULTS = {
     bossSndWarn  = "none",
     bossSndKill  = "none",
     bossSndWipe  = "none",
+    bossSndCast  = "none",  -- 1.10.6.0: ein Boss beginnt zu zaubern
+    bossCasts    = true,    -- 1.10.6.0: Zauber der Bosse als Leisten
     bossSoonSecs = 3,       -- Vorwarnung: so viele Sekunden vor der Faehigkeit
     bossWhere    = "all",   -- all | group | instance (wie bei "Raus da!")
     bossChannel  = "Master",
@@ -80,11 +82,12 @@ BM.DEFAULTS = {
 }
 
 -- Die Anlaesse, in der Reihenfolge der Seite.
-BM.SOUND_EVENTS = { "Pull", "Break", "Soon", "Warn", "Kill", "Wipe" }
+BM.SOUND_EVENTS = { "Pull", "Break", "Soon", "Cast", "Warn", "Kill", "Wipe" }
 
 BM.MAX_ROWS, BM.EMPH_ROWS, BM.GAP = 10, 4, 3
 BM.EMPH_SCALE = 1.5
-BM.stats = { timeline = 0, secret = 0, warnings = 0, encounters = 0, countdowns = 0, heard = 0 }
+BM.stats = { timeline = 0, secret = 0, warnings = 0, encounters = 0, countdowns = 0, heard = 0,
+    casts = 0, castSecret = 0, emotes = 0, engaged = 0 }
 
 local function Plain(v) return K.Plain(v) end
 local function Now() return (_G.GetTime and Plain(_G.GetTime())) or 0 end
@@ -149,6 +152,7 @@ function BM.Start(key, label, duration, icon, color)
     local t = timers[key] or {}
     t.key, t.label, t.icon, t.color = key, label, icon, color
     t.onEnd, t.soon, t.warned, t.demo, t.emph, t.forceEmph = nil, nil, nil, nil, nil, nil
+    t.hold, t.total = nil, nil
     t.start = Now()
     t.ends = duration and (t.start + duration) or nil
     timers[key] = t
@@ -274,6 +278,16 @@ local function TickRow(r)
     if not t.ends then
         r.bar:SetValue(1)
         r.time:SetText(BM.Format(tNow - t.start))
+        return
+    end
+    -- Angehalten (Zeitleiste des Spiels, Zustand "pausiert"): die Restzeit
+    -- steht, die Leiste laeuft nicht ab.
+    if t.hold then
+        t.ends = tNow + t.hold
+        local total = t.total or t.hold
+        local frac = total > 0 and t.hold / total or 0
+        r.bar:SetValue(tFill and (1 - frac) or frac)
+        r.time:SetText(BM.Format(t.hold))
         return
     end
     local left = t.ends - tNow
@@ -690,31 +704,41 @@ BM.fight = nil
 function BM.EncounterStart(id, name, difficulty)
     BM.stats.encounters = BM.stats.encounters + 1
     id, name, difficulty = Plain(id), Plain(name), Plain(difficulty)
-    BM.fight = { id = id, name = type(name) == "string" and name or nil, diff = difficulty, start = Now() }
-    if Opt("bossFight") then BM.Start("fight", BM.fight.name or "Bosskampf", nil, nil, "textMuted") end
+    local old = BM.fight
+    -- Schon ueber die Bossrahmen erkannt: dieselbe Startzeit behalten.
+    local start = (old and old.src == "engage" and Now() - old.start < 15) and old.start or Now()
+    BM.fight = { id = id, name = type(name) == "string" and name or (old and old.name), diff = difficulty, start = start, src = "encounter" }
+    if Opt("bossFight") then BM.Start("fight", BM.fight.name or "Bosskampf", nil, nil, "textMuted").start = start end
     BM.Stop("pull")
+    BM.CatchUp()
 end
 
-function BM.EncounterEnd(id, name, difficulty, size, success)
+-- Ende eines Kampfes: result = "kill" | "wipe" | nil (unbekannt - weder
+-- Sieg noch Wipe, und keine Bestzeit).
+function BM.Finish(result)
     local f = BM.fight
     BM.fight = nil
     BM.Stop("fight")
-    for k in pairs(timers) do if type(k) == "string" and k:find("^tl") then timers[k] = nil end end
+    for k in pairs(timers) do
+        if type(k) == "string" and (k:find("^tl") or k:find("^cast")) then timers[k] = nil end
+    end
     BM.Refresh()
     if not f then return nil end
     local secs = Now() - f.start
-    local won = Plain(success)
-    won = won == 1 or won == true
-    if not Opt("bossFight") then return nil end
-    local label = f.name or (type(Plain(name)) == "string" and Plain(name)) or "Boss"
-    if not won then
+    if not Opt("bossFight") then return result end
+    local label = f.name or "Boss"
+    if result == "wipe" then
         BM.Sound("Wipe")
         Say(label .. ": Wipe nach " .. BM.Format(secs) .. ".")
         return "wipe"
+    elseif result ~= "kill" then
+        Say(label .. ": Kampf vorbei nach " .. BM.Format(secs) .. ".")
+        return nil
     end
     local text = label .. " besiegt in " .. BM.Format(secs)
     local times = BM.Times()
-    local key = type(f.id) == "number" and (f.id .. ":" .. tostring(f.diff or 0)) or nil
+    local key = (type(f.id) == "number" and (f.id .. ":" .. tostring(f.diff or 0)))
+        or (type(f.name) == "string" and ("n:" .. f.name)) or nil
     if times and key then
         local best = times[key]
         if type(best) == "number" then
@@ -727,17 +751,78 @@ function BM.EncounterEnd(id, name, difficulty, size, success)
     return "kill"
 end
 
+function BM.EncounterEnd(id, name, difficulty, size, success)
+    local f = BM.fight
+    if f and not f.name then
+        local n = Plain(name)
+        if type(n) == "string" then f.name = n end
+    end
+    local won = Plain(success)
+    won = won == 1 or won == true
+    return BM.Finish(won and "kill" or "wipe")
+end
+
+-- Ohne ENCOUNTER_START (alte Dungeons, Classic-Clients): ein Boss in den
+-- Bossrahmen des Spiels, der kaempft, ist ein Bosskampf. So macht es DBM
+-- auch (INSTANCE_ENCOUNTER_ENGAGE_UNIT).
+function BM.BossUnit(i)
+    local u = "boss" .. i
+    if _G.UnitExists and K.Bool(_G.UnitExists(u), false) then return u end
+    return nil
+end
+function BM.Engage()
+    if BM.fight then return nil end
+    for i = 1, 5 do
+        local u = BM.BossUnit(i)
+        if u and _G.UnitAffectingCombat and K.Bool(_G.UnitAffectingCombat(u), false) then
+            local n = _G.UnitName and Plain(_G.UnitName(u))
+            BM.stats.engaged = BM.stats.engaged + 1
+            BM.fight = { name = type(n) == "string" and n or nil, start = Now(), src = "engage" }
+            if Opt("bossFight") then BM.Start("fight", BM.fight.name or "Bosskampf", nil, nil, "textMuted") end
+            BM.Stop("pull")
+            return true
+        end
+    end
+    return nil
+end
+-- Ende ohne ENCOUNTER_END: beim Verlassen des Kampfes. Sieg nur, wenn das
+-- Spiel es sagt (BOSS_KILL) oder ein Boss tot ist; lebt einer, Wipe; sonst
+-- unbekannt.
+function BM.EngageEnd()
+    local f = BM.fight
+    if not f or f.src ~= "engage" then return nil end
+    if f.killed then return BM.Finish("kill") end
+    local alive, dead = false, false
+    for i = 1, 5 do
+        local u = BM.BossUnit(i)
+        if u then
+            if _G.UnitIsDead and K.Bool(_G.UnitIsDead(u), false) then dead = true else alive = true end
+        end
+    end
+    if dead and not alive then return BM.Finish("kill") end
+    if alive then return BM.Finish("wipe") end
+    return BM.Finish(nil)
+end
+function BM.BossKill()
+    if BM.fight then BM.fight.killed = true end
+end
+
 --------------------------------------------------
 -- Zeitleiste und Warnungen des Spiels
 --------------------------------------------------
 
 -- Die Zeitleiste meldet je Faehigkeit eine Tabelle; gelesen wird nur, was
 -- offen ist. Name und Symbol gehen roh an Text und Bild (das darf geheim).
-function BM.TimelineAdded(info)
+-- 1.10.6.0 nach dem Verhalten von DBM: zweiter Wert ist die Restzeit, die
+-- gilt vor der Dauer; ein pausiertes Ereignis steht still. Zustaende (laut
+-- Client): 0 laeuft, 1 pausiert, 2 fertig, 3 abgebrochen.
+function BM.TimelineAdded(info, remaining)
     if type(info) ~= "table" then return nil end
     BM.stats.timeline = BM.stats.timeline + 1
     if not Opt("bossTimeline") then return nil end
-    local id, dur = Plain(info.id), Plain(info.duration)
+    local id = Plain(info.id)
+    local dur = Plain(remaining)
+    if type(dur) ~= "number" or dur <= 0 then dur = Plain(info.duration) end
     if type(id) ~= "number" or type(dur) ~= "number" or dur <= 0 then
         BM.stats.secret = BM.stats.secret + 1
         return nil
@@ -746,12 +831,147 @@ function BM.TimelineAdded(info)
     if type(name) == "nil" then name = "Fähigkeit" end
     local t = BM.Start("tl" .. id, name, dur, info.iconFileID, "blue")
     t.soon = true
+    if BM.EventState(id) == 1 then t.hold, t.total = dur, dur end
     return true
+end
+
+function BM.EventState(id)
+    local ET = _G.C_EncounterTimeline
+    if not (ET and ET.GetEventState) then return nil end
+    local ok, st = pcall(ET.GetEventState, id)
+    st = ok and Plain(st) or nil
+    return type(st) == "number" and st or nil
+end
+
+function BM.TimelineState(id)
+    id = Plain(id)
+    if type(id) ~= "number" then return nil end
+    local t = timers["tl" .. id]
+    local st = BM.EventState(id)
+    if not t or not st then return nil end
+    if st == 2 or st == 3 then BM.Stop("tl" .. id) return "stop" end
+    if st == 1 and not t.hold then
+        local left = (t.ends or Now()) - Now()
+        t.hold, t.total = math.max(0, left), (t.ends or Now()) - t.start
+        BM.Refresh()
+        return "pause"
+    end
+    if st == 0 and t.hold then
+        local ET = _G.C_EncounterTimeline
+        local ok, rem = false, nil
+        if ET and ET.GetEventTimeRemaining then ok, rem = pcall(ET.GetEventTimeRemaining, id) end
+        rem = ok and Plain(rem) or nil
+        local left = type(rem) == "number" and rem or t.hold
+        local total = t.total or left
+        t.hold, t.total = nil, nil
+        t.ends = Now() + left
+        t.start = t.ends - total
+        BM.Refresh()
+        return "resume"
+    end
+    return nil
+end
+
+-- Nach /reload mitten im Kampf: was die Zeitleiste schon hat, nachholen.
+function BM.CatchUp()
+    local ET = _G.C_EncounterTimeline
+    if not (ET and ET.HasActiveEvents and ET.GetEventList and ET.GetEventInfo) then return 0 end
+    local ok, has = pcall(ET.HasActiveEvents)
+    if not ok or not K.Bool(has, false) then return 0 end
+    local okL, list = pcall(ET.GetEventList)
+    if not okL or type(list) ~= "table" then return 0 end
+    local n = 0
+    for _, id in ipairs(list) do
+        local okI, info = pcall(ET.GetEventInfo, id)
+        local rem
+        if ET.GetEventTimeRemaining then
+            local okR, r = pcall(ET.GetEventTimeRemaining, id)
+            rem = okR and r or nil
+        end
+        if okI and BM.TimelineAdded(info, rem) then n = n + 1 end
+    end
+    return n
 end
 
 function BM.TimelineRemoved(id)
     id = Plain(id)
     if type(id) == "number" then BM.Stop("tl" .. id) end
+end
+
+--------------------------------------------------
+-- Zauber der Bosse (1.10.6.0) - was der Client selbst sagt: Name und
+-- Dauer des Zaubers. Gibt es auch, wo keine Zeitleiste kommt (Classic,
+-- alte Dungeons). Bossrahmen boss1-5; ohne Bossrahmen das Ziel, wenn es
+-- ein feindlicher Elitegegner in einer Instanz ist. Gold = unterbrechbar.
+--------------------------------------------------
+
+function BM.CastUnit(unit)
+    if type(unit) ~= "string" then return false end
+    if unit:match("^boss[1-5]$") then return true end
+    if unit ~= "target" then return false end
+    if not _G.UnitExists or not K.Bool(_G.UnitExists("target"), false) then return false end
+    for i = 1, 5 do
+        local u = BM.BossUnit(i)
+        if u and _G.UnitIsUnit and K.Bool(_G.UnitIsUnit("target", u), false) then return false end
+    end
+    if not (_G.UnitCanAttack and K.Bool(_G.UnitCanAttack("player", "target"), false)) then return false end
+    if not _G.IsInInstance then return false end
+    local _, kind = _G.IsInInstance()
+    kind = Plain(kind)
+    if kind ~= "party" and kind ~= "raid" then return false end
+    local c = _G.UnitClassification and Plain(_G.UnitClassification("target"))
+    return c == "worldboss" or c == "elite" or c == "rareelite"
+end
+
+function BM.CastStart(unit, channel)
+    if not Opt("bossCasts") or not BM.CastUnit(unit) then return nil end
+    local fn = channel and _G.UnitChannelInfo or _G.UnitCastingInfo
+    if not fn then return nil end
+    local name, _, icon, startMS, endMS, a6, a7, a8 = fn(unit)
+    BM.stats.casts = BM.stats.casts + 1
+    startMS, endMS = Plain(startMS), Plain(endMS)
+    if type(name) == "nil" or type(startMS) ~= "number" or type(endMS) ~= "number" or endMS <= startMS then
+        BM.stats.castSecret = BM.stats.castSecret + 1
+        return nil
+    end
+    -- Kanalisiert: 7. Wert, sonst der 8.: "nicht unterbrechbar".
+    local locked = Plain(channel and a7 or a8)
+    local left = endMS / 1000 - Now()
+    if left <= 0 then return nil end
+    local who = _G.UnitName and Plain(_G.UnitName(unit))
+    local plainName = Plain(name)
+    local label = name
+    if type(who) == "string" and type(plainName) == "string" then label = who .. ": " .. plainName end
+    local t = BM.Start("cast" .. unit, label, left, Plain(icon), locked == true and "blue" or "gold")
+    t.start = startMS / 1000
+    BM.Sound("Cast")
+    return true
+end
+
+function BM.CastStop(unit)
+    if type(unit) == "string" and timers["cast" .. unit] then BM.Stop("cast" .. unit) return true end
+    return nil
+end
+
+-- Emotes und Fluestern der Bosse (RAID_BOSS_EMOTE/WHISPER) - der Text des
+-- Spiels, "%s" mit dem Namen gefuellt, wo er offen ist.
+function BM.Emote(text, who)
+    BM.stats.emotes = BM.stats.emotes + 1
+    if type(text) == "nil" then return nil end
+    local plain = Plain(text)
+    if type(plain) == "string" then
+        plain = plain:gsub("|T.-|t", ""):gsub("|c%x%x%x%x%x%x%x%x", ""):gsub("|r", "")
+        if plain:find("%s", 1, true) then
+            local n = Plain(who)
+            local ok, out = pcall(string.format, plain, type(n) == "string" and n or "")
+            if ok then plain = out end
+        end
+        text = plain
+    end
+    BM.Sound("Warn")
+    if not Opt("bossWarnings") then return nil end
+    BM.Warn(text)
+    return true
 end
 
 -- Der Ton kommt auch ohne die grosse Anzeige - beides ist einzeln
@@ -799,7 +1019,11 @@ end
 local ev = CreateFrame("Frame")
 for _, e in ipairs({ "START_PLAYER_COUNTDOWN", "CANCEL_PLAYER_COUNTDOWN", "CHAT_MSG_ADDON",
         "ENCOUNTER_START", "ENCOUNTER_END", "ENCOUNTER_TIMELINE_EVENT_ADDED",
-        "ENCOUNTER_TIMELINE_EVENT_REMOVED", "ENCOUNTER_WARNING", "PLAYER_LOGIN", "PLAYER_REGEN_DISABLED" }) do
+        "ENCOUNTER_TIMELINE_EVENT_REMOVED", "ENCOUNTER_WARNING", "PLAYER_LOGIN", "PLAYER_REGEN_DISABLED",
+        "ENCOUNTER_TIMELINE_EVENT_STATE_CHANGED", "INSTANCE_ENCOUNTER_ENGAGE_UNIT", "BOSS_KILL",
+        "PLAYER_REGEN_ENABLED", "RAID_BOSS_EMOTE", "RAID_BOSS_WHISPER", "PLAYER_TARGET_CHANGED",
+        "UNIT_SPELLCAST_START", "UNIT_SPELLCAST_STOP", "UNIT_SPELLCAST_FAILED", "UNIT_SPELLCAST_INTERRUPTED",
+        "UNIT_SPELLCAST_CHANNEL_START", "UNIT_SPELLCAST_CHANNEL_STOP" }) do
     pcall(ev.RegisterEvent, ev, e)
 end
 ev:SetScript("OnEvent", function(_, event, a1, a2, a3, a4, a5)
@@ -811,6 +1035,8 @@ ev:SetScript("OnEvent", function(_, event, a1, a2, a3, a4, a5)
     end
     if event == "PLAYER_REGEN_DISABLED" then
         if setupOn then BM.Setup(false) end
+        -- Bossrahmen, die schon vor dem Kampf da waren: jetzt kaempft er.
+        if K.IsActive(KEY) then BM.Engage() end
         return
     end
     if not K.IsActive(KEY) then return end
@@ -828,7 +1054,26 @@ ev:SetScript("OnEvent", function(_, event, a1, a2, a3, a4, a5)
     elseif event == "ENCOUNTER_END" then
         BM.EncounterEnd(a1, a2, a3, a4, a5)
     elseif event == "ENCOUNTER_TIMELINE_EVENT_ADDED" then
-        BM.TimelineAdded(a1)
+        BM.TimelineAdded(a1, a2)
+    elseif event == "ENCOUNTER_TIMELINE_EVENT_STATE_CHANGED" then
+        BM.TimelineState(a1)
+    elseif event == "INSTANCE_ENCOUNTER_ENGAGE_UNIT" then
+        BM.Engage()
+    elseif event == "BOSS_KILL" then
+        BM.BossKill()
+    elseif event == "PLAYER_REGEN_ENABLED" then
+        BM.EngageEnd()
+    elseif event == "RAID_BOSS_EMOTE" or event == "RAID_BOSS_WHISPER" then
+        BM.Emote(a1, a2)
+    elseif event == "PLAYER_TARGET_CHANGED" then
+        BM.CastStop("target")
+    elseif event == "UNIT_SPELLCAST_START" then
+        BM.CastStart(a1, false)
+    elseif event == "UNIT_SPELLCAST_CHANNEL_START" then
+        BM.CastStart(a1, true)
+    elseif event == "UNIT_SPELLCAST_STOP" or event == "UNIT_SPELLCAST_FAILED"
+        or event == "UNIT_SPELLCAST_INTERRUPTED" or event == "UNIT_SPELLCAST_CHANNEL_STOP" then
+        BM.CastStop(a1)
     elseif event == "ENCOUNTER_TIMELINE_EVENT_REMOVED" then
         BM.TimelineRemoved(a1)
     elseif event == "ENCOUNTER_WARNING" then
@@ -861,8 +1106,8 @@ BM.RegisterSlash()
 -- Fuer /wcui prüfen.
 function BM.StatusLine()
     local s = BM.stats
-    return string.format("Bosskämpfe: %d Kämpfe, %d Fähigkeiten aus der Zeitleiste (%d ohne offene Dauer), %d Warnungen, %d Countdowns, %d Timer anderer Bossmods",
-        s.encounters, s.timeline, s.secret, s.warnings, s.countdowns, s.heard)
+    return string.format("Bosskämpfe: %d Kämpfe (+%d über Bossrahmen), %d Fähigkeiten aus der Zeitleiste (%d ohne offene Dauer), %d Zauber von Bossen (%d verdeckt), %d Warnungen, %d Emotes, %d Countdowns, %d Timer anderer Bossmods",
+        s.encounters, s.engaged, s.timeline, s.secret, s.casts, s.castSecret, s.warnings, s.emotes, s.countdowns, s.heard)
 end
 
 --------------------------------------------------
@@ -881,7 +1126,7 @@ local function BuildPage(B)
                  tooltip = description,
                  set = function(v)
                      K.Set(KEY, key, v)
-                     if v ~= "none" and FA then FA.PlayKey(v, K.Get(KEY, "bossChannel") or "Master") end
+                     if v ~= "none" and FA then FA.Preview(v, K.Get(KEY, "bossChannel") or "Master") end
                  end }
     end
     B:Section("Töne", "Für jeden Anlass ein eigener Ton – oder „Kein Ton“. Eine Auswahl spielt ihn einmal vor; dabei sind auch die Memes und deine eigenen Töne aus der Companion. Ein langer Ton wird nicht vom nächsten unterbrochen.")
@@ -904,13 +1149,17 @@ local function BuildPage(B)
     B:Section("Kampf", "Wie lange der Bosskampf läuft, und am Ende „besiegt in 3:12“ mit deiner Bestzeit für diesen Boss – oder „Wipe nach …“.")
     B:Row({ type = "toggle", label = "Kampftimer und Bestzeit", key = "bossFight" },
           Sound("Kill", "Ton, wenn der Boss fällt"))
-    B:Section("Was das Spiel meldet", "Fähigkeiten des Bosses als Leisten und Warnungen, so wie das Spiel sie ankündigt. Eigene Taktiken gibt es nicht – für Forever kennt sie niemand. Ob Forever das in jedem Kampf schickt, zeigt /wcui prüfen.")
-    B:Row({ type = "toggle", label = "Fähigkeiten als Leisten", key = "bossTimeline" },
-          Sound("Soon", "Ton kurz vor einer Fähigkeit", "Wenn die Leiste einer Fähigkeit fast abgelaufen ist – wie früh, steht unten in den Feineinstellungen."))
+    B:Section("Was das Spiel meldet", "Nur, was das Spiel selbst sagt – eigene Taktiken gibt es nicht. Die Zeitleiste der Fähigkeiten kommt nur bei Kämpfen, für die das Spiel eine hat; in alten Dungeons und auf Classic-Servern bleiben die Zauber, die ein Boss gerade wirkt, und seine Emotes. Was ankam, zeigt /wcui prüfen.")
+    B:Row({ type = "toggle", label = "Fähigkeiten als Leisten", key = "bossTimeline",
+            description = "Aus der Zeitleiste des Spiels – mit Pausen, wie das Spiel sie meldet." },
+          { type = "toggle", label = "Zauber der Bosse als Leisten", key = "bossCasts",
+            description = "Was ein Boss gerade wirkt, mit Restzeit. Ohne Bossrahmen auch dein Ziel, wenn es ein Elitegegner in einer Instanz ist. Gold heißt: unterbrechbar." })
     B:Row({ type = "toggle", label = "Warnungen groß in der Mitte", key = "bossWarnings",
-            description = "Das Spiel zeigt eigene Warnungen; das hier ist eine zweite, größere Anzeige." },
-          Sound("Warn", "Ton bei einer Warnung des Spiels", "Kommt auch ohne die große Anzeige. Das Spiel hat oft schon einen eigenen Ton dafür."))
+            description = "Warnungen und Emotes der Bosse – das Spiel zeigt sie auch selbst; das hier ist eine zweite, größere Anzeige." },
+          Sound("Warn", "Ton bei Warnung oder Emote", "Kommt auch ohne die große Anzeige. Das Spiel hat oft schon einen eigenen Ton dafür."))
     B:Advanced()
+    B:Row(Sound("Soon", "Ton kurz vor einer Fähigkeit", "Wenn die Leiste einer Fähigkeit aus der Zeitleiste fast abgelaufen ist."),
+          Sound("Cast", "Ton, wenn ein Boss zu zaubern beginnt", "Bei jedem Zauber mit Leiste – bei Bossen, die viel wirken, oft."))
     B:Row({ type = "dropdown", label = "Vorwarnung vor einer Fähigkeit", key = "bossSoonSecs", disabled = soundOff, items = {
                 { value = 2, text = "2 Sekunden vorher" },
                 { value = 3, text = "3 Sekunden vorher" },
