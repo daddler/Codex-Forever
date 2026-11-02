@@ -9,6 +9,14 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.10.11.0] – 2026-11-02
+
+### Geändert
+- Seite „Bosse“: vorbelegt mit der aktuellen Instanz (`GetInstanceInfo`, „(hier)“), sonst der zuletzt besuchten; darin der zuletzt gekämpfte Boss (`_last`). Instanzen nach „zuletzt besucht“, Bosse in der Reihenfolge des Kompendiums (`_codex`). Statt der Auswahlliste für Fähigkeiten eine Tabelle (`BM.CreateSpellList`, 8 Zeilen je Seite, blättern statt rollen): Haken = ankündigen (`BM.ToggleSpell`), „Kommt“ (`BM.HowText`), „×“ gesehen; Klick wählt. Darunter nur die Felder des Auslösers (Leben: Schwelle; Zeit: zuerst/alle mit der Messung im Feldnamen). Löschen und Lernen an/aus unter Feineinstellungen.
+
+### Behoben
+- Vorschlag „bei voller Energie/Mana“ für Bosse, deren Mana immer voll ist (Schattenjägerin Vosh'gajin, 19× Verhexung bei ≥ 97 %). `BM.Suggest(rec, st)` schlägt Energie nur vor, wenn sie im Kampf auch unter 50 % fiel (`st._pwMin`, tiefster Stand je Kampf aus `BM.BossVitals`). Ältere Messungen ohne diesen Wert bekommen den Vorschlag nicht mehr.
+
 ## [1.10.10.0] – 2026-11-02
 
 ### Behoben

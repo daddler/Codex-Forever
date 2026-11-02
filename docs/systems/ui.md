@@ -2399,6 +2399,11 @@ lebt es von den Ereignissen des Spiels; genau die nutzt WeintCodex.
   Kampf – dann bleibt nur Zeit), Vorschlag `BM.Suggest` aus den Messungen,
   nie automatisch festgelegt. Sofortzauber über
   `UNIT_SPELLCAST_SUCCEEDED`.
+- **Seite „Bosse“ (1.10.11.0):** vorbelegt mit der aktuellen Instanz,
+  sonst der zuletzt besuchten, und dem zuletzt gekämpften Boss; Tabelle
+  aller Fähigkeiten (Haken = ankündigen, blättern statt rollen), darunter
+  nur die Felder des Auslösers. Vorschlag „Energie“ nur, wenn die Energie
+  im Kampf auch unter 50 % fiel (`_pwMin`).
 - **War das ein Boss? (1.10.10.0):** alte Dungeons melden oft weder
   `ENCOUNTER_START` noch Bossrahmen. `BM.CodexBoss` vergleicht mit dem
   Kompendium: NPC-Nummer aus dem GUID gegen `data/boss_npcs.lua`

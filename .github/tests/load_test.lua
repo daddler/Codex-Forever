@@ -23387,10 +23387,13 @@ do
         local st = WeintCodex.SavedData.bossLearn["n:Gyth"]
         assert(st._inst == "Untere Schwarzfelsspitze" and st._name == "Gyth" and st._pulls == 2, "Boss ohne Instanz/Name/Kaempfe")
         assert(st.Feueratem.maxPull == 1 and st.Schlag.maxPull == 2, "Anzahl je Kampf")
-        local m, at = BM.Suggest(st.Feueratem)
+        local m, at = BM.Suggest(st.Feueratem, st)
         assert(m == "hp" and at == 50, "Vorschlag Leben: " .. tostring(m) .. " " .. tostring(at))
-        assert(BM.Suggest(st.Flammen) == "power", "Vorschlag Energie")
-        assert(BM.Suggest(st.Schlag) == "timer", "Vorschlag Zeit")
+        assert(st._pwMin and st._pwMin < 50, "tiefster Energiestand nicht gemerkt")
+        assert(BM.Suggest(st.Flammen, st) == "power", "Vorschlag Energie")
+        assert(BM.Suggest(st.Schlag, st) == "timer", "Vorschlag Zeit")
+        -- 1.10.11.0: Mana immer voll (Vosh'gajin) ist kein Ausloeser.
+        assert(BM.Suggest(st.Flammen, { _pwMin = 97 }) == "timer", "immer volles Mana als Ausloeser vorgeschlagen")
         assert(BM.Measured(st.Feueratem, st):find("Leben beim Wirken 49–50 %", 1, true), "Messung ohne Leben: " .. BM.Measured(st.Feueratem, st))
         -- Dritter Kampf: Leben-Schwelle kuendigt 5 % vorher an, Energie ab 90 %.
         boss.dead = false
@@ -23445,23 +23448,43 @@ do
         BM.sel.inst, BM.sel.boss, BM.sel.spell = nil, nil, nil
         BM.FixSelection()
         assert(BM.sel.inst == "Untere Schwarzfelsspitze" and BM.sel.boss == "n:Gyth" and BM.sel.spell, "Auswahl nicht vorbelegt")
-        local specs = {}
-        local fakeB = { Section = function() end, Note = function() end, Advanced = function() end, EndAdvanced = function() end,
-            Row = function(_, a, b) specs[#specs + 1] = a specs[#specs + 1] = b end }
-        BM.sel.spell = "Feueratem"
-        BM.BuildBosses(fakeB)
-        local byLabel = {}
-        for _, sp in ipairs(specs) do if sp and sp.label then byLabel[sp.label] = sp end end
-        assert(byLabel["Instanz"] and byLabel["Boss"] and byLabel["Fähigkeit"] and byLabel["Ankündigen"], "Seite ohne Auswahl")
+        local function Build(spell)
+            local specs = {}
+            local fakeB = { Section = function() end, Note = function() end, Advanced = function() end, EndAdvanced = function() end,
+                Row = function(_, a, b) specs[#specs + 1] = a specs[#specs + 1] = b end }
+            BM.sel.spell = spell
+            BM.BuildBosses(fakeB)
+            local byLabel = {}
+            for _, sp in ipairs(specs) do
+                if sp and sp.label then byLabel[(sp.label:gsub(" – leer:.*$", ""))] = sp end
+                if sp and sp.type == "custom" then byLabel._list = sp end
+            end
+            return byLabel
+        end
+        local byLabel = Build("Feueratem")
+        assert(byLabel["Instanz"] and byLabel["Boss"] and byLabel._list and byLabel["Ankündigen"], "Seite ohne Auswahl/Tabelle")
+        -- Tabelle: alle Faehigkeiten, Haken schaltet "nicht ankuendigen".
+        local list = byLabel._list.create(CreateFrame("Frame"), 600)
+        local shown = 0
+        for _, r in ipairs(list.rows) do if r:IsShown() then shown = shown + 1 end end
+        assert(shown == #BM.SpellItems() and shown >= 4, "Tabelle zeigt " .. shown .. " von " .. #BM.SpellItems())
+        assert(BM.ToggleSpell("Schlag") == false and st.Schlag.edit.mode == "off", "Haken weg schaltet nicht ab")
+        assert(BM.HowText(st.Schlag, st) == "nicht angekündigt – eingestellt", "Tabellentext: " .. BM.HowText(st.Schlag, st))
+        assert(BM.ToggleSpell("Schlag") == true and BM.Effective(st.Schlag, st) == "timer", "Haken wieder an")
+        -- Leben-Faehigkeit: Feld fuer die Schwelle.
         byLabel["Ankündigen"].set("hp")
+        byLabel = Build("Feueratem")
         byLabel["Bei Leben des Bosses (%)"].set("35,5")
-        byLabel["Erster Einsatz nach dem Pull (s)"].set("")
-        assert(st.Feueratem.edit.mode == "hp" and st.Feueratem.edit.hp == 35.5 and st.Feueratem.edit.first == nil, "Eingabe nicht uebernommen")
+        assert(st.Feueratem.edit.mode == "hp" and st.Feueratem.edit.hp == 35.5, "Eingabe nicht uebernommen")
         assert(byLabel["Bei Leben des Bosses (%)"].get() == "35,5", "Anzeige der Eingabe: " .. tostring(byLabel["Bei Leben des Bosses (%)"].get()))
         byLabel["Ankündigen"].set("auto")
         assert(st.Feueratem.edit.mode == nil, "auto nicht zurueck")
         byLabel["Diese Fähigkeit"].onClick()
         assert(st.Feueratem.edit == nil, "Zuruecksetzen geht nicht")
+        -- Zeit-Faehigkeit: Felder fuer erst/alle.
+        byLabel = Build("Schlag")
+        byLabel["Zuerst nach dem Pull (s)"].set("4")
+        assert(st.Schlag.edit and st.Schlag.edit.first == 4, "Zeit-Eingabe fehlt")
         byLabel["Diesen Boss"].onClick()
         assert(WeintCodex.SavedData.bossLearn["n:Gyth"] == nil and BM.sel.boss == nil, "Boss loeschen geht nicht")
     end)
@@ -23531,6 +23554,16 @@ do
         assert(BM.sel.inst == "Untere Schwarzfelsspitze" and BM.sel.boss == "c:lower_blackrock_spire/highlord_omokk", "Omokk fehlt unter Bosse")
         local items = BM.BossItems()
         assert(items[1] and items[1].text == "Hochlord Omokk", "Name unter Bosse: " .. tostring(items[1] and items[1].text))
+        -- 1.10.11.0: die Instanz, in der du bist, zuerst - auch wenn eine andere
+        -- juenger ist; dort der zuletzt gekaempfte Boss.
+        WeintCodex.SavedData.bossLearn["n:Anderer"] = { _inst = "Stratholme", _name = "Anderer", _last = 9e9 }
+        local insts = BM.InstItems()
+        assert(insts[1].value == "Untere Schwarzfelsspitze" and insts[1].text:find("(hier)", 1, true), "aktuelle Instanz nicht zuerst")
+        assert(insts[2].value == "Stratholme", "Reihenfolge der Instanzen")
+        BM.sel.inst, BM.sel.boss = nil, nil
+        BM.FixSelection()
+        assert(BM.sel.inst == "Untere Schwarzfelsspitze", "nicht in der aktuellen Instanz gelandet")
+        WeintCodex.SavedData.bossLearn["n:Anderer"] = nil
         -- ENCOUNTER_START nach dem Abgleich: derselbe Schluessel, dieselbe Startzeit.
         mob.name, mob.guid = "Hochlord Omokk", "Creature-0-1-229-1-9196-0000ABCD"
         BM.CodexScan()

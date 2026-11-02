@@ -22,6 +22,15 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.10.11.0",
+        date    = "02.11.2026",
+        notes   = {
+            "|cff7C6CFFBosse einstellen geht schneller|r – die Seite öffnet in der Instanz, in der du gerade bist, beim zuletzt gekämpften Boss. Instanzen stehen nach „zuletzt besucht“, Bosse in der Reihenfolge des Dungeons.",
+            "|cff7C6CFFAlle Fähigkeiten eines Bosses auf einen Blick|r – als Tabelle: wie sie kommt, wie oft gesehen, und ein Haken zum Abschalten. Ein Klick auf die Zeile zeigt darunter nur die Felder, die zu ihrem Auslöser passen.",
+            "|cff7C6CFFKein falscher Energie-Vorschlag mehr|r – Bosse, deren Mana nie sinkt, bekommen „bei voller Energie“ nicht mehr vorgeschlagen.",
+        },
+    },
+    {
         version = "1.10.10.0",
         date    = "02.11.2026",
         notes   = {

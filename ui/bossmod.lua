@@ -1359,6 +1359,10 @@ function BM.BossVitals()
         local p, m = Plain(_G.UnitPower(unit)), Plain(_G.UnitPowerMax(unit))
         if type(p) == "number" and type(m) == "number" and m > 0 then pw = p / m * 100 end
     end
+    -- Tiefster Stand im Kampf: volle Energie beim Wirken sagt nur etwas,
+    -- wenn sie zwischendurch auch leer war (1.10.11.0, Vosh'gajin: immer
+    -- volles Mana, 19 Verhexungen - kein Ausloeser).
+    if pw and f and (not f.pwMin or pw < f.pwMin) then f.pwMin = pw end
     if not hp then BM.stats.vitalsHidden = (BM.stats.vitalsHidden or 0) + 1 end
     return hp, pw
 end
@@ -1379,6 +1383,7 @@ function BM.LearnStore(create)
         if type(f.name) == "string" then st._name = f.name end
         if type(f.instance) == "string" then st._inst = f.instance end
         if type(f.codex) == "table" then st._codex = f.codex.dungeon .. "/" .. f.codex.boss end
+        if _G.time then st._last = _G.time() end
     end
     return sd.bossLearn and sd.bossLearn[key]
 end
@@ -1393,10 +1398,11 @@ end
 --   power: jedes Mal bei (fast) voller Energie/Mana
 --   hp:    hoechstens einmal je Kampf, immer bei etwa demselben Leben
 --   timer: sonst
-function BM.Suggest(rec)
+function BM.Suggest(rec, st)
     if type(rec) ~= "table" then return "timer" end
     local pw, hp = rec.pw, rec.hp
-    if type(pw) == "table" and #pw >= 2 then
+    local drains = type(st) == "table" and type(st._pwMin) == "number" and st._pwMin < 50
+    if drains and type(pw) == "table" and #pw >= 2 then
         local all = true
         for _, v in ipairs(pw) do if v < 95 then all = false break end end
         if all then return "power" end
@@ -1410,10 +1416,10 @@ function BM.Suggest(rec)
 end
 
 -- Was gilt: Festgelegtes vor Gemessenem.
-function BM.Effective(rec)
+function BM.Effective(rec, st)
     local e = type(rec) == "table" and type(rec.edit) == "table" and rec.edit or nil
     local mode = e and e.mode or "auto"
-    local sugMode, sugHp = BM.Suggest(rec)
+    local sugMode, sugHp = BM.Suggest(rec, st)
     if mode == "auto" then mode = sugMode end
     local hp = e and e.hp or sugHp
     if mode == "hp" and not hp then mode = "timer" end
@@ -1464,7 +1470,7 @@ function BM.LearnCast(unit, spell, icon)
     local hp, pw = BM.BossVitals()
     if hp then rec.hp = rec.hp or {} Keep(rec.hp, hp) end
     if pw then rec.pw = rec.pw or {} Keep(rec.pw, pw) end
-    local mode, _, gap, _, sound = BM.Effective(rec)
+    local mode, _, gap, _, sound = BM.Effective(rec, store)
     if mode == "timer" then
         Predict(spell, gap, rec.icon, sound)
     else
@@ -1490,7 +1496,7 @@ function BM.LearnStart()
     local n = 0
     for spell, rec in pairs(store) do
         if type(rec) == "table" and type(spell) == "string" and spell:sub(1, 1) ~= "_" then
-            local mode, first, _, hp, sound = BM.Effective(rec)
+            local mode, first, _, hp, sound = BM.Effective(rec, store)
             if mode == "timer" and first then
                 Predict(spell, first - (Now() - BM.fight.start), rec.icon, sound)
                 n = n + 1
@@ -1509,6 +1515,8 @@ function BM.LearnEnd()
     local store = BM.LearnStore(false)
     if not store then return end
     store._pulls = (store._pulls or 0) + 1
+    local f = BM.fight
+    if f.pwMin and (not store._pwMin or f.pwMin < store._pwMin) then store._pwMin = math.floor(f.pwMin + 0.5) end
     for spell, c in pairs(seenCount) do
         local rec = store[spell]
         if type(rec) == "table" then rec.maxPull = math.max(rec.maxPull or 0, c) end
@@ -1855,6 +1863,7 @@ end
 --------------------------------------------------
 
 BM.sel = { inst = nil, boss = nil, spell = nil }
+BM.listPage = 1
 local NO_INST = "Ohne Instanz"
 
 function BM.Bosses()
@@ -1862,27 +1871,49 @@ function BM.Bosses()
     return type(sd) == "table" and type(sd.bossLearn) == "table" and sd.bossLearn or {}
 end
 local function InstOf(st) return type(st._inst) == "string" and st._inst or NO_INST end
-local function SortText(a, b) return a.text < b.text end
 
+-- Reihenfolge der Bosse wie im Kompendium ("dungeon/boss" -> Platz).
+local compOrder
+local function CompOrder(code)
+    if not compOrder then
+        compOrder = {}
+        for _, list in ipairs({ _G.WeintCodex_Dungeons or {}, _G.WeintCodex_ClassicDungeons or {} }) do
+            for _, d in ipairs(list) do
+                for i, b in ipairs(type(d.bosses) == "table" and d.bosses or {}) do
+                    compOrder[tostring(d.id) .. "/" .. tostring(b.id)] = b.order or i
+                end
+            end
+        end
+    end
+    return type(code) == "string" and compOrder[code] or nil
+end
+
+-- Instanzen: wo du gerade bist zuerst, dann zuletzt besucht zuerst.
 function BM.InstItems()
-    local seenI, out = {}, {}
+    local here = BM.InstanceName()
+    local last, out = {}, {}
     for _, st in pairs(BM.Bosses()) do
         if type(st) == "table" then
             local i = InstOf(st)
-            if not seenI[i] then seenI[i] = true out[#out + 1] = { value = i, text = i } end
+            last[i] = math.max(last[i] or 0, tonumber(st._last) or 0)
         end
     end
-    table.sort(out, SortText)
+    for i, t in pairs(last) do
+        out[#out + 1] = { value = i, text = (i == here) and (i .. " (hier)") or i, last = (i == here) and math.huge or t }
+    end
+    table.sort(out, function(a, b) if a.last ~= b.last then return a.last > b.last end return a.value < b.value end)
     return out
 end
+-- Bosse einer Instanz: in der Reihenfolge des Kompendiums, sonst nach Name.
 function BM.BossItems()
     local out = {}
     for key, st in pairs(BM.Bosses()) do
         if type(st) == "table" and InstOf(st) == BM.sel.inst then
-            out[#out + 1] = { value = key, text = type(st._name) == "string" and st._name or key }
+            out[#out + 1] = { value = key, text = type(st._name) == "string" and st._name or key,
+                              order = CompOrder(st._codex) or 999 }
         end
     end
-    table.sort(out, SortText)
+    table.sort(out, function(a, b) if a.order ~= b.order then return a.order < b.order end return a.text < b.text end)
     return out
 end
 function BM.SpellItems()
@@ -1897,15 +1928,23 @@ function BM.SpellItems()
     table.sort(out, function(a, b) if a.first ~= b.first then return a.first < b.first end return a.text < b.text end)
     return out
 end
--- Erste gueltige Wahl, wenn die bisherige nicht (mehr) passt.
+-- Vorbelegt: die Instanz, in der du bist, sonst die zuletzt besuchte; der
+-- zuletzt gekaempfte Boss darin. Eine gueltige Wahl bleibt.
 function BM.FixSelection()
-    local function pick(items, cur)
-        for _, it in ipairs(items) do if it.value == cur then return cur end end
-        return items[1] and items[1].value or nil
+    local function has(items, v) for _, it in ipairs(items) do if it.value == v then return true end end return false end
+    local insts = BM.InstItems()
+    if not has(insts, BM.sel.inst) then BM.sel.inst, BM.sel.boss, BM.sel.spell = insts[1] and insts[1].value, nil, nil end
+    local bosses = BM.BossItems()
+    if not has(bosses, BM.sel.boss) then
+        local best, bestT
+        for _, it in ipairs(bosses) do
+            local t = tonumber(BM.Bosses()[it.value]._last) or 0
+            if not bestT or t > bestT then best, bestT = it.value, t end
+        end
+        BM.sel.boss, BM.sel.spell, BM.listPage = best, nil, 1
     end
-    BM.sel.inst = pick(BM.InstItems(), BM.sel.inst)
-    BM.sel.boss = pick(BM.BossItems(), BM.sel.boss)
-    BM.sel.spell = pick(BM.SpellItems(), BM.sel.spell)
+    local spells = BM.SpellItems()
+    if not has(spells, BM.sel.spell) then BM.sel.spell = spells[1] and spells[1].value or nil end
 end
 function BM.SelRec()
     local st = BM.sel.boss and BM.Bosses()[BM.sel.boss]
@@ -1913,33 +1952,41 @@ function BM.SelRec()
     return type(rec) == "table" and rec or nil, st
 end
 
-local function Secs(v) return v and (string.format("%.1f", v):gsub("%.", ",")) .. " s" or "–" end
+local function Secs(v) return v and (string.format("%.1f", v):gsub("%.0$", ""):gsub("%.", ",")) .. " s" or "–" end
+local function IsEmpty(t) for _ in pairs(t) do return false end return true end
+local function Times(n) return (n == 1) and "1 Kampf" or (tostring(n or 0) .. " Kämpfe") end
 function BM.Measured(rec, st)
     if not rec then return "" end
     local parts = {}
-    parts[#parts + 1] = "Gemessen in " .. tostring(st and st._pulls or 0) .. " Kampf/Kämpfen, " .. tostring(rec.n or 0) .. "× gesehen"
-    parts[#parts + 1] = "erster Einsatz nach " .. Secs(rec.first)
-    if rec.gap then parts[#parts + 1] = "kürzester Abstand " .. Secs(rec.gap) end
-    if rec.maxPull then parts[#parts + 1] = "höchstens " .. rec.maxPull .. "× je Kampf" end
+    parts[#parts + 1] = "Gemessen in " .. Times(st and st._pulls or 0) .. ", " .. tostring(rec.n or 0) .. "× gesehen"
+    parts[#parts + 1] = "zuerst nach " .. Secs(rec.first)
+    if rec.gap then parts[#parts + 1] = "danach frühestens alle " .. Secs(rec.gap) end
     if type(rec.hp) == "table" and #rec.hp > 0 then
         local lo, hi = 100, 0
         for _, v in ipairs(rec.hp) do lo, hi = math.min(lo, v), math.max(hi, v) end
         parts[#parts + 1] = (lo == hi) and ("Leben beim Wirken " .. lo .. " %") or ("Leben beim Wirken " .. lo .. "–" .. hi .. " %")
     else
-        parts[#parts + 1] = "Leben des Bosses: nicht offen gemeldet"
-    end
-    if type(rec.pw) == "table" and #rec.pw > 0 then
-        local lo = 100
-        for _, v in ipairs(rec.pw) do lo = math.min(lo, v) end
-        parts[#parts + 1] = "Energie/Mana ab " .. lo .. " %"
+        parts[#parts + 1] = "Leben des Bosses nicht offen gemeldet"
     end
     return table.concat(parts, " · ") .. "."
 end
-function BM.SuggestText(rec)
-    local m, hp = BM.Suggest(rec)
+function BM.SuggestText(rec, st)
+    local m, hp = BM.Suggest(rec, st)
     if m == "power" then return "bei voller Energie/Mana" end
     if m == "hp" then return "bei " .. hp .. " % Leben" end
     return "nach Zeit"
+end
+-- Eine Zeile der Tabelle: wie die Faehigkeit gerade angekuendigt wird.
+function BM.HowText(rec, st)
+    local mode, first, gap, hp = BM.Effective(rec, st)
+    local own = type(rec.edit) == "table" and not IsEmpty(rec.edit)
+    local t
+    if mode == "off" then t = "nicht angekündigt"
+    elseif mode == "hp" then t = "bei " .. hp .. " % Leben"
+    elseif mode == "power" then t = "bei voller Energie"
+    elseif gap then t = "nach " .. Secs(first) .. ", dann alle " .. Secs(gap)
+    else t = "nach " .. Secs(first) end
+    return own and (t .. " – eingestellt") or t
 end
 
 local function Edit(rec, create)
@@ -1955,14 +2002,130 @@ end
 local function NumText(v) return v and (string.format("%.1f", v):gsub("%.0$", ""):gsub("%.", ",")) or "" end
 local function Rebuild() local O = WeintCodex.UIOptions if O and O.Rebuild then O.Rebuild() end end
 
+-- Die Tabelle aller Faehigkeiten eines Bosses: Haken = ankuendigen,
+-- Klick auf die Zeile = darunter einstellen. Feste Hoehe, Seiten statt
+-- Rollen (BM.LIST_ROWS je Seite).
+BM.LIST_ROWS, BM.LIST_ROW_H = 8, 26
+function BM.ToggleSpell(spell)
+    local st = BM.sel.boss and BM.Bosses()[BM.sel.boss]
+    local rec = type(st) == "table" and st[spell]
+    if type(rec) ~= "table" then return nil end
+    local e = Edit(rec, true)
+    if e.mode == "off" then e.mode = nil else e.mode = "off" end
+    if IsEmpty(e) then rec.edit = nil end
+    return e.mode ~= "off"
+end
+local function CreateSpellList(parent, width)
+    local H = BM.LIST_ROW_H
+    local f = CreateFrame("Frame", nil, parent)
+    f:SetSize(width, 22 + BM.LIST_ROWS * H + 34)
+    local head = K.NewText(f, 11, "OVERLAY")
+    head:SetPoint("TOPLEFT", f, "TOPLEFT", 34, -2)
+    head:SetTextColor(unpack(C.textMuted))
+    head:SetText("Fähigkeit")
+    local head2 = K.NewText(f, 11, "OVERLAY")
+    head2:SetPoint("TOPLEFT", f, "TOPLEFT", math.floor(width * 0.42), -2)
+    head2:SetTextColor(unpack(C.textMuted))
+    head2:SetText("Kommt")
+    f.rows = {}
+    for i = 1, BM.LIST_ROWS do
+        local r = CreateFrame("Button", nil, f)
+        r:SetSize(width, H - 2)
+        r:SetPoint("TOPLEFT", f, "TOPLEFT", 0, -(20 + (i - 1) * H))
+        r.bg = r:CreateTexture(nil, "BACKGROUND")
+        r.bg:SetAllPoints(r)
+        r.check = CreateFrame("Button", nil, r)
+        r.check:SetSize(16, 16)
+        r.check:SetPoint("LEFT", r, "LEFT", 8, 0)
+        r.box = r.check:CreateTexture(nil, "ARTWORK")
+        r.box:SetAllPoints(r.check)
+        r.name = K.NewText(r, 12, "OVERLAY")
+        r.name:SetPoint("LEFT", r, "LEFT", 34, 0)
+        r.name:SetWidth(math.floor(width * 0.42) - 40)
+        r.name:SetJustifyH("LEFT")
+        r.name:SetWordWrap(false)
+        r.how = K.NewText(r, 11, "OVERLAY")
+        r.how:SetPoint("LEFT", r, "LEFT", math.floor(width * 0.42), 0)
+        r.how:SetWidth(math.floor(width * 0.46))
+        r.how:SetJustifyH("LEFT")
+        r.how:SetWordWrap(false)
+        r.seen = K.NewText(r, 11, "OVERLAY")
+        r.seen:SetPoint("RIGHT", r, "RIGHT", -8, 0)
+        r.seen:SetTextColor(unpack(C.textMuted))
+        r:SetScript("OnClick", function(self)
+            if self._spell then BM.sel.spell = self._spell Rebuild() end
+        end)
+        r.check:SetScript("OnClick", function(self)
+            local spell = self:GetParent()._spell
+            if spell then BM.ToggleSpell(spell) f.Sync() end
+        end)
+        r:Hide()
+        f.rows[i] = r
+    end
+    f.prev = WeintCodex.CreateButton(f, { text = "‹ Zurück", kind = "secondary", height = 26, size = 11,
+        onClick = function() BM.listPage = math.max(1, BM.listPage - 1) f.Sync() end })
+    f.prev:SetSize(100, 26)
+    f.prev:SetPoint("BOTTOMLEFT", f, "BOTTOMLEFT", 0, 0)
+    f.next = WeintCodex.CreateButton(f, { text = "Weiter ›", kind = "secondary", height = 26, size = 11,
+        onClick = function() BM.listPage = BM.listPage + 1 f.Sync() end })
+    f.next:SetSize(100, 26)
+    f.next:SetPoint("BOTTOMRIGHT", f, "BOTTOMRIGHT", 0, 0)
+    f.pageText = K.NewText(f, 11, "OVERLAY")
+    f.pageText:SetPoint("BOTTOM", f, "BOTTOM", 0, 7)
+    f.pageText:SetTextColor(unpack(C.textMuted))
+    f.Sync = function()
+        local items = BM.SpellItems()
+        local st = BM.sel.boss and BM.Bosses()[BM.sel.boss]
+        local pages = math.max(1, math.ceil(#items / BM.LIST_ROWS))
+        -- Die gewaehlte Faehigkeit auf ihrer Seite zeigen.
+        if f._for ~= BM.sel.spell then
+            f._for = BM.sel.spell
+            for idx, it in ipairs(items) do
+                if it.value == BM.sel.spell then BM.listPage = math.ceil(idx / BM.LIST_ROWS) break end
+            end
+        end
+        BM.listPage = math.min(math.max(1, BM.listPage), pages)
+        local base = (BM.listPage - 1) * BM.LIST_ROWS
+        for i, r in ipairs(f.rows) do
+            local it = items[base + i]
+            local rec = it and type(st) == "table" and st[it.value]
+            if rec then
+                r._spell = it.value
+                local on = BM.Effective(rec, st) ~= "off"
+                local sel = it.value == BM.sel.spell
+                local bg = sel and C.surface3 or C.surface2
+                r.bg:SetColorTexture(bg[1], bg[2], bg[3], sel and 1 or 0.5)
+                local bc = on and C.accent or C.surface3
+                r.box:SetColorTexture(bc[1], bc[2], bc[3], 1)
+                r.name:SetText(it.value)
+                r.name:SetTextColor(unpack(on and C.textBright or C.textMuted))
+                r.how:SetText(BM.HowText(rec, st))
+                r.how:SetTextColor(unpack(on and C.textNormal or C.textMuted))
+                r.seen:SetText((rec.n or 0) .. "×")
+                r:Show()
+            else
+                r._spell = nil
+                r:Hide()
+            end
+        end
+        f.pageText:SetText(#items == 0 and "Noch keine Fähigkeit gesehen."
+            or string.format("%d–%d von %d", base + 1, math.min(base + BM.LIST_ROWS, #items), #items))
+        if BM.listPage > 1 then f.prev:Show() else f.prev:Hide() end
+        if BM.listPage < pages then f.next:Show() else f.next:Hide() end
+    end
+    f.Sync()
+    BM.spellList = f
+    return f
+end
+BM.CreateSpellList = CreateSpellList
+
 local function BuildBosses(B)
     BM.FixSelection()
-    B:Section("Bosse", "Nach dem ersten Kampf misst WeintCodex, wann ein Boss was gewirkt hat – mit seinem Leben und seiner Energie in dem Moment, sofern das Spiel sie offen meldet. Hier legst du je Fähigkeit fest, wann sie angekündigt wird. Was du einträgst, gilt vor der Messung; leer heißt: wie gemessen.")
-    B:Row({ type = "toggle", label = "Zeiten aus eigenen Kämpfen lernen", key = "bossLearn" },
-          { type = "button", label = "Alle Bosse", text = "Alles vergessen", onClick = function() BM.LearnForget() Rebuild() end,
-            tooltip = "Löscht alle Messungen und Einstellungen aller Bosse." })
+    B:Section("Bosse", "Nach jedem Bosskampf steht hier, wann der Boss was gewirkt hat. Haken weg = nicht ankündigen. Klick auf eine Zeile: darunter genauer einstellen.")
     if not BM.sel.boss then
-        B:Note("Noch kein Boss gemessen. Nach dem ersten Bosskampf steht er hier – sortiert nach Instanz.")
+        B:Row({ type = "toggle", label = "Zeiten aus eigenen Kämpfen lernen", key = "bossLearn" },
+              { type = "empty" })
+        B:Note("Noch kein Boss gemessen. Nach dem ersten Bosskampf steht er hier – du landest immer in der Instanz, in der du gerade bist.")
         return
     end
     B:Row({ type = "dropdown", label = "Instanz", items = BM.InstItems,
@@ -1970,23 +2133,19 @@ local function BuildBosses(B)
             set = function(v) BM.sel.inst, BM.sel.boss, BM.sel.spell = v, nil, nil Rebuild() end },
           { type = "dropdown", label = "Boss", items = BM.BossItems,
             get = function() return BM.sel.boss end,
-            set = function(v) BM.sel.boss, BM.sel.spell = v, nil Rebuild() end })
-    B:Row({ type = "dropdown", label = "Fähigkeit", items = BM.SpellItems,
-            get = function() return BM.sel.spell end,
-            set = function(v) BM.sel.spell = v Rebuild() end },
-          { type = "button", label = "Diesen Boss", text = "Messung und Einstellungen löschen",
-            onClick = function() BM.LearnForget(BM.sel.boss) BM.sel.boss, BM.sel.spell = nil, nil Rebuild() end })
+            set = function(v) BM.sel.boss, BM.sel.spell, BM.listPage = v, nil, 1 Rebuild() end })
+    B:Row({ type = "custom", height = 22 + BM.LIST_ROWS * BM.LIST_ROW_H + 34, create = CreateSpellList })
     local rec, st = BM.SelRec()
     if not rec then return end
-    B:Note(BM.Measured(rec, st))
+    B:Section(BM.sel.spell, BM.Measured(rec, st))
     B:Row({ type = "dropdown", label = "Ankündigen", items = function() return {
-                { value = "auto",  text = "Wie gemessen (" .. BM.SuggestText(rec) .. ")" },
+                { value = "auto",  text = "Wie gemessen (" .. BM.SuggestText(rec, st) .. ")" },
                 { value = "timer", text = "Nach Zeit" },
                 { value = "hp",    text = "Bei Leben des Bosses" },
                 { value = "power", text = "Bei voller Energie/Mana" },
                 { value = "off",   text = "Nicht ankündigen" } } end,
             get = function() local e = Edit(rec) return e and e.mode or "auto" end,
-            set = function(v) local e = Edit(rec, true) e.mode = (v ~= "auto") and v or nil end,
+            set = function(v) local e = Edit(rec, true) e.mode = (v ~= "auto") and v or nil Rebuild() end,
             tooltip = "Leben und Energie gehen nur, wenn das Spiel sie im Kampf offen meldet – sonst bleibt nur „nach Zeit“." },
           { type = "dropdown", label = "Eigener Ton", items = function()
                 local list = { { value = "", text = "Wie bei „Kurz vor einer Fähigkeit“" } }
@@ -1994,18 +2153,37 @@ local function BuildBosses(B)
                 return list end,
             get = function() local e = Edit(rec) return e and e.sound or "" end,
             set = function(v) local e = Edit(rec, true) e.sound = (v ~= "") and v or nil Preview(v) end })
-    B:Row({ type = "input", label = "Erster Einsatz nach dem Pull (s)",
-            get = function() local e = Edit(rec) return NumText(e and e.first) end,
-            set = function(v) local e = Edit(rec, true) e.first = Num(v) end },
-          { type = "input", label = "Danach alle (s)",
-            get = function() local e = Edit(rec) return NumText(e and e.gap) end,
-            set = function(v) local e = Edit(rec, true) e.gap = Num(v) end })
-    B:Row({ type = "input", label = "Bei Leben des Bosses (%)",
-            get = function() local e = Edit(rec) return NumText(e and e.hp) end,
-            set = function(v) local e = Edit(rec, true) local n = Num(v) e.hp = n and math.min(100, n) or nil end },
-          { type = "button", label = "Diese Fähigkeit", text = "Auf Messung zurücksetzen",
-            onClick = function() rec.edit = nil Rebuild() end })
-    B:Note("Leer gelassen gilt die Messung: erster Einsatz " .. Secs(rec.first) .. ", Abstand " .. Secs(rec.gap) .. ". Angekündigt wird mit „~“ – bei Zeit als Leiste, bei Leben 5 % vor der Schwelle, bei Energie ab 90 %.")
+    local mode = BM.Effective(rec, st)
+    if mode == "hp" then
+        B:Row({ type = "input", label = "Bei Leben des Bosses (%)",
+                get = function() local e = Edit(rec) return NumText(e and e.hp) end,
+                set = function(v) local e = Edit(rec, true) local n = Num(v) e.hp = n and math.min(100, n) or nil end },
+              { type = "button", label = "Diese Fähigkeit", text = "Auf Messung zurücksetzen",
+                onClick = function() rec.edit = nil Rebuild() end })
+    elseif mode ~= "off" and mode ~= "power" then
+        B:Row({ type = "input", label = "Zuerst nach dem Pull (s) – leer: " .. Secs(rec.first),
+                get = function() local e = Edit(rec) return NumText(e and e.first) end,
+                set = function(v) local e = Edit(rec, true) e.first = Num(v) end },
+              { type = "input", label = "Danach alle (s) – leer: " .. Secs(rec.gap),
+                get = function() local e = Edit(rec) return NumText(e and e.gap) end,
+                set = function(v) local e = Edit(rec, true) e.gap = Num(v) end })
+        B:Row({ type = "button", label = "Diese Fähigkeit", text = "Auf Messung zurücksetzen",
+                onClick = function() rec.edit = nil Rebuild() end },
+              { type = "empty" })
+    else
+        B:Row({ type = "button", label = "Diese Fähigkeit", text = "Auf Messung zurücksetzen",
+                onClick = function() rec.edit = nil Rebuild() end },
+              { type = "empty" })
+    end
+    B:Advanced()
+    B:Row({ type = "toggle", label = "Zeiten aus eigenen Kämpfen lernen", key = "bossLearn" },
+          { type = "button", label = "Diesen Boss", text = "Messung und Einstellungen löschen",
+            onClick = function() BM.LearnForget(BM.sel.boss) BM.sel.boss, BM.sel.spell = nil, nil Rebuild() end })
+    B:Row({ type = "button", label = "Alle Bosse", text = "Alles vergessen",
+            onClick = function() BM.LearnForget() BM.sel.inst, BM.sel.boss, BM.sel.spell = nil, nil, nil Rebuild() end,
+            tooltip = "Löscht alle Messungen und Einstellungen aller Bosse." },
+          { type = "empty" })
+    B:EndAdvanced()
 end
 
 BM.BuildGeneral, BM.BuildBars, BM.BuildSounds, BM.BuildBosses = BuildGeneral, BuildBars, BuildSounds, BuildBosses
