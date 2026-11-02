@@ -2382,6 +2382,13 @@ lebt es von den Ereignissen des Spiels; genau die nutzt WeintCodex.
   `bosstrack`; je Bild `BM.TrackFrame`: bis 12 Symbole (ohne Symbol ein
   Quadrat in der Farbe der Leiste) auf Höhe Restzeit/Zeitraum, Name
   rechts, nur Timer mit Dauer.
+- **Zeiten aus eigenen Kämpfen (1.10.8.0):** BigWigs/DBM tragen je Boss
+  hinterlegte Zeiten (aus Kampfaufzeichnungen, All Rights Reserved) – für
+  Forever gibt es keine. `BM.LearnCast` misst je Boss (`e<id>`/`n:<Name>`)
+  und Zauber den frühesten ersten Einsatz und den kürzesten Abstand
+  (`SavedData.bossLearn`), `BM.LearnStart` sagt zum Pull voraus, jede
+  Vorhersage ist eine Leiste „~ Zauber“ (`nx…`, `t.learned`). Zeitleiste
+  bleibt während `BM.fight` stehen (Hinweis, solange nichts kommt).
 - **„Gleich dran“ (BigWigs: „hervorheben“):** eine Leiste mit Dauer, deren
   Rest unter `bossEmphSecs` fällt, wechselt an den zweiten Anker – 1,5×
   so hoch, 1,25× so breit, rot (Statusfarbe). Höchstens 4; Kampftimer

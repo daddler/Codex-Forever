@@ -22,6 +22,16 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.10.8.0",
+        date    = "02.11.2026",
+        notes   = {
+            "|cff7C6CFFBosse lernen|r – WeintCodex merkt sich in deinen Kämpfen, wann ein Boss was wirkt. Beim nächsten Mal stehen seine Fähigkeiten vorher als Leiste und auf der Zeitleiste, mit „~“ davor: gemessen von dir, nicht vom Spiel angesagt.",
+            "|cff7C6CFFZeitleiste bleibt im Bosskampf stehen|r – statt nur kurz aufzublitzen, solange ein Zauber läuft.",
+            "|cff7C6CFFLeisten nennen den Zauber|r – „Wirbelwind“ statt eines abgeschnittenen Bossnamens.",
+            "|cff7C6CFFKein Heilerkreuz mehr über Bossen|r – und Zauber, die Heilung verringern, gelten nicht mehr als Heilung.",
+        },
+    },
+    {
         version = "1.10.7.0",
         date    = "02.11.2026",
         notes   = {

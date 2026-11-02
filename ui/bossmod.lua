@@ -64,6 +64,7 @@ BM.DEFAULTS = {
     bossSndWipe  = "none",
     bossSndCast  = "none",  -- 1.10.6.0: ein Boss beginnt zu zaubern
     bossCasts    = true,    -- 1.10.6.0: Zauber der Bosse als Leisten
+    bossLearn    = true,    -- 1.10.8.0: Zeiten aus eigenen Kaempfen lernen
     bossSoonSecs = 3,       -- Vorwarnung: so viele Sekunden vor der Faehigkeit
     bossWhere    = "all",   -- all | group | instance (wie bei "Raus da!")
     bossChannel  = "Master",
@@ -295,6 +296,13 @@ local function BuildTrack()
         lbl:SetText(tostring(sec))
         track.ticks[i] = { tex = tk, label = lbl, sec = sec }
     end
+    track.hint = K.NewText(track, 10, "OVERLAY")
+    track.hint:SetPoint("BOTTOMLEFT", track, "BOTTOMRIGHT", 8, 4)
+    track.hint:SetWidth(170)
+    track.hint:SetJustifyH("LEFT")
+    track.hint:SetTextColor(unpack(C.textMuted))
+    track.hint:SetText("Noch nichts angekündigt. Was der Boss wirkt, merkt sich WeintCodex für den nächsten Versuch.")
+    track.hint:Hide()
     track.marks = {}
     for i = 1, BM.TRACK_N do
         local m = CreateFrame("Frame", nil, track)
@@ -643,7 +651,12 @@ function BM.Refresh()
     if trackOn or track._unlock then
         local any = false
         for i = 1, #list do if list[i].ends then any = true break end end
-        if any or setupOn or track._unlock then track:Show() else track:Hide() end
+        -- 1.10.8.0: im Bosskampf bleibt sie stehen (vorher blitzte sie nur
+        -- bei einem Zauber kurz auf).
+        if any or setupOn or track._unlock or BM.fight then track:Show() else track:Hide() end
+        if track.hint then
+            if BM.fight and not any then track.hint:Show() else track.hint:Hide() end
+        end
     else
         track:Hide()
     end
@@ -961,6 +974,7 @@ function BM.EncounterStart(id, name, difficulty)
     if Opt("bossFight") then BM.Start("fight", BM.fight.name or "Bosskampf", nil, nil, "textMuted").start = start end
     BM.Stop("pull")
     BM.CatchUp()
+    if not (old and old.src == "engage") then BM.LearnStart() end
 end
 
 -- Ende eines Kampfes: result = "kill" | "wipe" | nil (unbekannt - weder
@@ -970,7 +984,7 @@ function BM.Finish(result)
     BM.fight = nil
     BM.Stop("fight")
     for k in pairs(timers) do
-        if type(k) == "string" and (k:find("^tl") or k:find("^cast")) then timers[k] = nil end
+        if type(k) == "string" and (k:find("^tl") or k:find("^cast") or k:find("^nx")) then timers[k] = nil end
     end
     BM.Refresh()
     if not f then return nil end
@@ -1030,6 +1044,7 @@ function BM.Engage()
             BM.fight = { name = type(n) == "string" and n or nil, start = Now(), src = "engage" }
             if Opt("bossFight") then BM.Start("fight", BM.fight.name or "Bosskampf", nil, nil, "textMuted") end
             BM.Stop("pull")
+            BM.LearnStart()
             return true
         end
     end
@@ -1188,14 +1203,103 @@ function BM.CastStart(unit, channel)
     local locked = Plain(channel and a7 or a8)
     local left = endMS / 1000 - Now()
     if left <= 0 then return nil end
-    local who = _G.UnitName and Plain(_G.UnitName(unit))
-    local plainName = Plain(name)
-    local label = name
-    if type(who) == "string" and type(plainName) == "string" then label = who .. ": " .. plainName end
-    local t = BM.Start("cast" .. unit, label, left, Plain(icon), locked == true and "blue" or "gold")
+    -- 1.10.8.0: der Zauber, nicht der Boss - ein langer Bossname frass
+    -- sonst den ganzen Platz ("Kriegshaeuptling Rend Schwarzf...").
+    local t = BM.Start("cast" .. unit, name, left, Plain(icon), locked == true and "blue" or "gold")
     t.start = startMS / 1000
     BM.Sound("Cast")
+    BM.LearnCast(unit, Plain(name), Plain(icon))
     return true
+end
+
+--------------------------------------------------
+-- Zeiten aus eigenen Kaempfen (1.10.8.0). BigWigs und DBM bringen je Boss
+-- hinterlegte Zeiten mit, von Hand aus Kampfaufzeichnungen - fuer Forever
+-- gibt es keine, und ihre sind "All Rights Reserved". WeintCodex misst
+-- selbst: je Boss und Zauber der frueheste erste Einsatz nach dem Pull und
+-- der kuerzeste Abstand, den der Spieler gesehen hat (SavedData.bossLearn).
+-- Daraus Leisten mit "~" - eine eigene Messung, keine Angabe des Spiels.
+-- Nur Zauber des Bosses (Bossrahmen oder derselbe Name wie der Kampf),
+-- nur offene Namen; Abstaende unter 2 s zaehlen nicht (Doppelmeldungen).
+--------------------------------------------------
+
+BM.LEARN_MIN, BM.LEARN_MAX = 2, 20   -- Mindestabstand (s), Zauber je Boss
+local seen = {}                      -- Zauber -> letzte Zeit, nur im Kampf
+
+function BM.LearnStore(create)
+    local sd = WeintCodex.SavedData
+    local f = BM.fight
+    if type(sd) ~= "table" or not f then return nil end
+    local key = (type(f.id) == "number" and ("e" .. f.id)) or (type(f.name) == "string" and ("n:" .. f.name)) or nil
+    if not key then return nil end
+    if create then
+        sd.bossLearn = sd.bossLearn or {}
+        sd.bossLearn[key] = sd.bossLearn[key] or {}
+    end
+    return sd.bossLearn and sd.bossLearn[key]
+end
+
+local function Predict(spell, secs, icon)
+    if not secs or secs <= 0 then return end
+    local t = BM.Start("nx" .. spell, "~ " .. spell, secs, icon, "textMuted")
+    t.soon, t.learned = true, true
+end
+
+function BM.LearnCast(unit, spell, icon)
+    local f = BM.fight
+    if not f or not Opt("bossLearn") or type(spell) ~= "string" or spell == "" then return nil end
+    local isBoss = type(unit) == "string" and unit:match("^boss[1-5]$")
+    if not isBoss then
+        local who = _G.UnitName and Plain(_G.UnitName(unit))
+        if type(who) ~= "string" or who ~= f.name then return nil end
+    end
+    local store = BM.LearnStore(true)
+    if not store then return nil end
+    local rec = store[spell]
+    if not rec then
+        local n = 0
+        for _ in pairs(store) do n = n + 1 end
+        if n >= BM.LEARN_MAX then return nil end
+        rec = {}
+        store[spell] = rec
+    end
+    if type(icon) == "number" then rec.icon = icon end
+    local now = Now()
+    local last = seen[spell]
+    if not last then
+        local off = math.floor((now - f.start) * 10 + 0.5) / 10
+        if off >= 0 and (not rec.first or off < rec.first) then rec.first = off end
+    else
+        local gap = math.floor((now - last) * 10 + 0.5) / 10
+        if gap >= BM.LEARN_MIN and (not rec.gap or gap < rec.gap) then rec.gap = gap end
+    end
+    seen[spell] = now
+    rec.n = (rec.n or 0) + 1
+    Predict(spell, rec.gap, rec.icon)
+    return rec
+end
+
+-- Zum Pull: was von frueheren Kaempfen gegen diesen Boss bekannt ist.
+function BM.LearnStart()
+    for k in pairs(seen) do seen[k] = nil end
+    if not Opt("bossLearn") then return 0 end
+    local store = BM.LearnStore(false)
+    if not store then return 0 end
+    local n = 0
+    for spell, rec in pairs(store) do
+        if type(rec) == "table" and rec.first then
+            Predict(spell, rec.first - (Now() - BM.fight.start), rec.icon)
+            n = n + 1
+        end
+    end
+    return n
+end
+
+function BM.LearnForget()
+    local sd = WeintCodex.SavedData
+    if type(sd) == "table" then sd.bossLearn = nil end
+    for k in pairs(timers) do if type(k) == "string" and k:find("^nx") then timers[k] = nil end end
+    BM.Refresh()
 end
 
 function BM.CastStop(unit)
@@ -1418,6 +1522,10 @@ local function BuildPage(B)
                 { value = 3, text = "3 Sekunden vorher" },
                 { value = 5, text = "5 Sekunden vorher" } } },
           Sound("Wipe", "Ton bei einem Wipe"))
+    B:Row({ type = "toggle", label = "Zeiten aus eigenen Kämpfen lernen", key = "bossLearn",
+            description = "Wann ein Boss was wirkt, gemessen in deinen Kämpfen: der früheste erste Einsatz und der kürzeste Abstand. Solche Leisten tragen ein „~“ – eine eigene Messung, keine Angabe des Spiels." },
+          { type = "button", label = "Gelerntes", text = "Alles vergessen", onClick = function() BM.LearnForget() end,
+            tooltip = "Löscht alle gemessenen Zeiten aller Bosse." })
     B:Row({ type = "dropdown", label = "Lautstärke über", key = "bossChannel", disabled = soundOff, items = {
                 { value = "Master", text = "Gesamtlautstärke" },
                 { value = "SFX",    text = "Effekte" },

@@ -9,6 +9,18 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.10.8.0] – 2026-11-02
+
+### Neu
+- Bosskämpfe: Zeiten aus eigenen Kämpfen (`bossLearn`, ab Werk an; `SavedData.bossLearn[e<Encounter>|n:<Name>][Zauber] = { first, gap, icon, n }`): frühester erster Einsatz nach dem Pull und kürzester Abstand (≥ 2 s), nur Zauber des Bosses (Bossrahmen oder Name des Kampfes), nur offene Namen, höchstens 20 je Boss. Vorhersage als Leiste `nx<Zauber>` „~ Zauber“ (`textMuted`, Vorwarnton wie die Zeitleiste) nach jedem Wirken und zum Pull (`BM.LearnStart`); „Alles vergessen“ (`BM.LearnForget`). Grund: BigWigs/DBM tragen dafür je Boss hinterlegte Zeiten (All Rights Reserved), für Forever gibt es keine.
+
+### Geändert
+- Zeitleiste bleibt im Bosskampf sichtbar, mit Hinweis, solange nichts angekündigt ist (vorher nur, solange ein Timer lief).
+- Zauber-Leisten heißen wie der Zauber, nicht „Boss: Zauber“ (langer Bossname schnitt den Zauber ab).
+
+### Behoben
+- PvP: Heilerkreuz über Kriegshäuptling Rend – `PV.IsHealSpell` nahm jede Beschreibung mit „heil“, auch „verringert die erhaltene Heilung“ (Tödlicher Stoß). Jetzt: nicht hilfreich laut `C_Spell.IsSpellHelpful` → keine Heilung; Sätze mit Verringern/Verhindern (`PV.HEAL_NOT`) zählen nicht; Bosse (`worldboss`, Stufe -1, `boss1`–`5`) nie.
+
 ## [1.10.7.0] – 2026-11-02
 
 ### Geändert

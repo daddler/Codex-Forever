@@ -22777,6 +22777,31 @@ do
         end }, { __index = oDesc })
         Check(PV.IsHealSpell(1) == true and PV.IsHealSpell(2) == false, "PvP: Heilzauber aus der Beschreibung des Clients")
         Check(PV.IsHealSpell(3) == false and PV.healSpell[3] == nil, "PvP: fehlende Beschreibung wird nicht gemerkt")
+        -- 1.10.8.0: "verringert die Heilung" ist kein Heilzauber (Toedlicher Stoss).
+        _G.C_Spell = setmetatable({ GetSpellDescription = function(id)
+            if id == 4 then return "Ein heftiger Schlag, der 120 Schaden verursacht und die erhaltene Heilung des Ziels 10 Sek. lang um 50% verringert." end
+            if id == 5 then return "Heilt das Ziel um 500." end
+            return ""
+        end, IsSpellHelpful = function(id) return id ~= 5 and false or true end }, { __index = oDesc })
+        Check(PV.IsHealSpell(4) == false, "PvP: verringerte Heilung (Toedlicher Stoss) ist kein Heilzauber")
+        _G.C_Spell.IsSpellHelpful = function() return false end
+        Check(PV.IsHealSpell(5) == false, "PvP: nicht hilfreicher Zauber ist keine Heilung")
+        -- Bosse bekommen kein Kreuz.
+        local oUC, oCls, oLvl, oIP, oCA, oUU, oIn = _G.UnitIsPlayer, _G.UnitClassification, _G.UnitLevel, _G.IsInInstance, _G.UnitCanAttack, _G.UnitIsUnit, _G.IsInInstance
+        PV.healSpell[6] = true
+        _G.UnitIsPlayer = function() return false end
+        _G.UnitCanAttack = function() return true end
+        _G.UnitClassification = function() return "elite" end
+        _G.UnitLevel = function() return -1 end
+        _G.UnitIsUnit = function() return false end
+        _G.IsInInstance = function() return true, "party" end
+        local before = 0
+        for _ in pairs(PV.healerGuids) do before = before + 1 end
+        PV.OnCast("nameplate1", 6)
+        local after = 0
+        for _ in pairs(PV.healerGuids) do after = after + 1 end
+        Check(after == before, "PvP: Bosse bekommen kein Heilerkreuz")
+        _G.UnitIsPlayer, _G.UnitClassification, _G.UnitLevel, _G.UnitCanAttack, _G.UnitIsUnit, _G.IsInInstance = oUC, oCls, oLvl, oCA, oUU, oIn
         local list = { { name = "A-Realm", short = "A", class = "PRIEST", spec = "Heilig", role = "healer" },
                        { name = "B", short = "B", class = "WARRIOR" } }
         Check(PV.FillBg(list) == true and PV.bg.rows[1]:GetAttribute("macrotext1") == "/targetexact A-Realm", "PvP: Klick nimmt per Name ins Ziel")
@@ -23029,7 +23054,7 @@ do
         _G.UnitChannelInfo = function(u) return "Strahl", "", 1, now * 1000, (now + 4) * 1000, false, true end
         assert(BM.CastStart("boss1", false) and BM.timers.castboss1, "Zauber des Bosses ohne Leiste")
         assert(BM.timers.castboss1.ends == now + 2 and BM.timers.castboss1.color == "gold", "Zauber: Zeit/Farbe falsch")
-        assert(BM.timers.castboss1.label == "Kriegsherr: Feuerball", "Zauber: Name " .. tostring(BM.timers.castboss1.label))
+        assert(BM.timers.castboss1.label == "Feuerball", "Zauber: Name " .. tostring(BM.timers.castboss1.label))
         assert(BM.CastStop("boss1") and not BM.timers.castboss1, "Zauber nicht beendet")
         assert(BM.CastStart("boss2", true) and BM.timers.castboss2.color == "blue", "kanalisiert, nicht unterbrechbar")
         BM.CastStop("boss2")
@@ -23225,6 +23250,81 @@ do
     for k in pairs(WeintCodex.UIBossMod.timers) do WeintCodex.UIBossMod.timers[k] = nil end
     if WeintCodex.UIBossMod.frame then WeintCodex.UIBossMod.ApplyLook() end
     Check(ok, "Bosskämpfe: Leisten gleiten und blenden ein, je Bild bewegt, Zahl alle 0,1 s, Zeitleiste von oben nach unten" .. (ok and "" or (": " .. tostring(err))))
+end
+
+-- Bosskaempfe: Zeiten aus eigenen Kaempfen, Zeitleiste bleibt im Kampf (1.10.8.0)
+do
+    local BM = WeintCodex.UIBossMod
+    local names = { "GetTime", "UnitExists", "UnitAffectingCombat", "UnitName", "UnitIsDead", "UnitCastingInfo" }
+    local old = {}
+    for _, n in ipairs(names) do old[n] = _G[n] end
+    local oActive = K.IsActive
+    local saved = {}
+    for k in pairs(BM.DEFAULTS) do saved[k] = K.Get("comfort", k) end
+    local ok, err = pcall(function()
+        local now = 30000
+        _G.GetTime = function() return now end
+        K.IsActive = function() return true end
+        for k, v in pairs(BM.DEFAULTS) do K.Set("comfort", k, v) end
+        for k in pairs(BM.timers) do BM.timers[k] = nil end
+        BM.fight = nil
+        WeintCodex.SavedData.bossLearn = nil
+        local boss = { exists = true, combat = true, dead = false }
+        _G.UnitExists = function(u) return u == "boss1" and boss.exists end
+        _G.UnitAffectingCombat = function(u) return u == "boss1" and boss.combat end
+        _G.UnitName = function(u) return u == "boss1" and "Rend" or "Jemand" end
+        _G.UnitIsDead = function(u) return u == "boss1" and boss.dead end
+        _G.UnitCastingInfo = function() return "Wirbelwind", "", 132369, now * 1000, (now + 2) * 1000, false, 1, false end
+        K.Set("comfort", "bossTrack", true)
+        BM.ApplyLook()
+        -- Erster Kampf: nichts bekannt; Zeitleiste steht trotzdem, mit Hinweis.
+        assert(BM.Engage(), "kein Kampf")
+        assert(BM.track:IsShown() and BM.track.hint:IsShown(), "Zeitleiste fehlt im Kampf ohne Ankuendigung")
+        now = now + 8
+        BM.CastStart("boss1", false)
+        assert(not BM.timers["nxWirbelwind"], "nach einem Mal schon eine Vorhersage")
+        BM.CastStop("boss1")
+        now = now + 15
+        BM.CastStart("boss1", false)
+        local nx = BM.timers["nxWirbelwind"]
+        assert(nx and nx.label == "~ Wirbelwind" and math.abs(nx.ends - now - 15) < 0.01, "Abstand nicht gelernt")
+        assert(not BM.track.hint:IsShown(), "Hinweis bleibt trotz Ankuendigung")
+        BM.CastStop("boss1")
+        -- Ein kuerzerer Abstand ersetzt, ein laengerer nicht.
+        now = now + 12 BM.CastStart("boss1", false) BM.CastStop("boss1")
+        now = now + 30 BM.CastStart("boss1", false) BM.CastStop("boss1")
+        local rec = WeintCodex.SavedData.bossLearn["n:Rend"].Wirbelwind
+        assert(rec.first == 8 and rec.gap == 12, "gelernt: erst " .. tostring(rec.first) .. ", Abstand " .. tostring(rec.gap))
+        -- Zauber anderer zaehlen nicht.
+        _G.UnitCastingInfo = function() return "Frostblitz", "", 1, now * 1000, (now + 2) * 1000, false, 1, false end
+        BM.LearnCast("target", "Frostblitz", 1)
+        assert(not WeintCodex.SavedData.bossLearn["n:Rend"].Frostblitz, "fremder Zauber gelernt")
+        boss.dead = true
+        BM.EngageEnd()
+        assert(not BM.timers["nxWirbelwind"], "Vorhersage bleibt nach dem Kampf")
+        assert(not BM.track:IsShown(), "Zeitleiste bleibt nach dem Kampf")
+        -- Naechster Pull: der erste Einsatz steht schon da.
+        boss.dead = false
+        BM.Engage()
+        nx = BM.timers["nxWirbelwind"]
+        assert(nx and math.abs(nx.ends - now - 8) < 0.01, "erster Einsatz beim Pull nicht vorhergesagt")
+        K.Set("comfort", "bossLearn", false)
+        boss.combat = true
+        BM.Finish(nil)
+        BM.Engage()
+        assert(not BM.timers["nxWirbelwind"], "Lernen aus, trotzdem Vorhersage")
+        BM.Finish(nil)
+        BM.LearnForget()
+        assert(WeintCodex.SavedData.bossLearn == nil, "Vergessen loescht nicht")
+    end)
+    for _, n in ipairs(names) do _G[n] = old[n] end
+    K.IsActive = oActive
+    for k, v in pairs(saved) do K.Set("comfort", k, v) end
+    for k in pairs(WeintCodex.UIBossMod.timers) do WeintCodex.UIBossMod.timers[k] = nil end
+    WeintCodex.UIBossMod.fight = nil
+    WeintCodex.SavedData.bossLearn = nil
+    if WeintCodex.UIBossMod.frame then WeintCodex.UIBossMod.ApplyLook() end
+    Check(ok, "Bosskämpfe: Zeiten aus eigenen Kämpfen (erster Einsatz, kürzester Abstand, nur der Boss), Zeitleiste bleibt im Kampf" .. (ok and "" or (": " .. tostring(err))))
 end
 
 -- Sterbezeit an der Plakette (1.8.0.0, ui/timetodie.lua)

@@ -62,6 +62,11 @@ PV.ARENA_MAX = 5
 PV.BG_ROWS = 15
 PV.ALERT_AGAIN = 120
 PV.HEAL_WORDS = { "heil", "heal" }     -- in der Beschreibung des Zaubers (de/en)
+-- 1.10.8.0 (Beta-Test: Heilerkreuz ueber Kriegshaeuptling Rend): "Toedlicher
+-- Stoss ... verringert die erhaltene Heilung" ist kein Heilzauber. Saetze,
+-- die Heilung verringern oder verhindern, zaehlen nicht.
+PV.HEAL_NOT = { "verringert", "verringern", "reduziert", "reduzier", "verhindert", "weniger heil",
+    "reduces", "reduced", "reducing", "prevent", "decrease", "less heal", "healing taken", "erhaltene heil" }
 PV.ROW_W, PV.ROW_H = 190, 26
 
 local function Plain(v) return K.Plain(v) end
@@ -136,9 +141,21 @@ function PV.IsHealSpell(spellID)
     end
     -- Ohne Beschreibung (noch nicht geladen): nicht merken, spaeter erneut.
     if type(desc) ~= "string" or desc == "" then return false end
+    -- Sagt der Client, der Zauber sei NICHT hilfreich (Schaden, Schwaechung),
+    -- ist er kein Heilzauber - egal, was in der Beschreibung steht.
+    local CS = _G.C_Spell
+    if CS and CS.IsSpellHelpful then
+        local ok, helpful = pcall(CS.IsSpellHelpful, spellID)
+        if ok and Plain(helpful) == false then PV.healSpell[spellID] = false return false end
+    end
     local low, hit = desc:lower(), false
     for _, w in ipairs(PV.HEAL_WORDS) do
         if low:find(w, 1, true) then hit = true break end
+    end
+    if hit then
+        for _, w in ipairs(PV.HEAL_NOT) do
+            if low:find(w, 1, true) then hit = false break end
+        end
     end
     PV.healSpell[spellID] = hit
     return hit
@@ -232,6 +249,13 @@ function PV.OnCast(unit, spellID)
     if InstanceKind() == "none" then return end
     if K.Bool(_G.UnitIsPlayer and _G.UnitIsPlayer(unit), true) then return end
     if not K.Bool(_G.UnitCanAttack and _G.UnitCanAttack("player", unit), false) then return end
+    -- Bosse nie: das Kreuz soll sagen "den zuerst", nicht "den Boss".
+    local c = _G.UnitClassification and Plain(_G.UnitClassification(unit))
+    local lvl = _G.UnitLevel and Plain(_G.UnitLevel(unit))
+    if c == "worldboss" or lvl == -1 then return end
+    for i = 1, 5 do
+        if _G.UnitIsUnit and K.Bool(_G.UnitIsUnit(unit, "boss" .. i), false) then return end
+    end
     local g = GuidOf(unit)
     if not g or PV.healerGuids[g] then return end
     if PV.IsHealSpell(spellID) then
