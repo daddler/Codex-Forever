@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.10.2.1",
+        date    = "02.11.2026",
+        notes   = {
+            "|cff7C6CFFDie drei Memes sind zu hören|r – „Ton abspielen“ und der Warnton blieben bei ihnen stumm.",
+        },
+    },
+    {
         version = "1.10.2.0",
         date    = "02.11.2026",
         notes   = {

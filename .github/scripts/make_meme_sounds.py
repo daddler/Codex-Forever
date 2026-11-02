@@ -59,7 +59,7 @@ def main():
         subprocess.run([ff, "-hide_banner", "-loglevel", "error", "-y",
                         "-ss", f"{start:.2f}", "-i", os.path.join(src, name),
                         "-t", f"{length:.2f}", "-af", filters, "-ac", "1", "-ar", "44100",
-                        "-c:a", "libvorbis", "-q:a", "5", "-map_metadata", "-1", target], check=True)
+                        "-map", "0:a:0", "-vn", "-c:a", "libvorbis", "-q:a", "5", "-map_metadata", "-1", target], check=True)
         print(f"{key}: {start:.2f}-{end:.2f} s -> {os.path.relpath(target, ROOT)}")
 
 

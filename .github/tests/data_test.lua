@@ -1287,6 +1287,26 @@ do
         "Reisedaten: Dreieck Menethil -> Suederstade -> Auberdine (11167) vorhanden")
 end
 
+-- Jeder Ton fuer "Raus da!": eine Ogg-Datei mit nur einer Tonspur. Eine
+-- Videospur (das Titelbild einer mp3, als Theora mitgeschrieben) laesst
+-- das Spiel die Datei stumm abspielen - so ging 1.10.2.0 hinaus.
+do
+    local FA = WeintCodex.UIFireAlarm
+    local files = 0
+    for key, s in pairs(FA and FA.SOUNDS or {}) do
+        if s.file then
+            files = files + 1
+            local f = io.open(ROOT .. "/media/sounds/" .. s.file, "rb")
+            local data = f and f:read("*a")
+            if f then f:close() end
+            Check(data and data:sub(1, 4) == "OggS", "Ton " .. key .. ": Datei " .. s.file .. " fehlt oder ist kein Ogg")
+            Check(data and not data:find("\128theora", 1, true) and data:find("\1vorbis", 1, true),
+                "Ton " .. key .. ": nur eine Vorbis-Tonspur, kein Video (" .. s.file .. ")")
+        end
+    end
+    Check(files >= 12, "Raus da!: alle mitgelieferten Toene geprueft (" .. files .. ")")
+end
+
 if failures == 0 then
     print("BESTANDEN")
     os.exit(0)
