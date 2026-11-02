@@ -2,7 +2,7 @@
 ## Title: |cff7C6CFFWeintCodex|r
 ## Notes: Raid Guide & Intelligence System — Forever Edition
 ## Author: Fabian
-## Version: 1.10.9.0
+## Version: 1.10.10.0
 ## SavedVariables: WeintCodex_SavedData, WeintCompanionDB, WeintCompanionInboxDB, WeintCodex_WhispersAccount
 ## SavedVariablesPerCharacter: WeintCodex_Whispers
 
@@ -112,6 +112,8 @@ data/classquests.lua
 data/beasts.lua
 # Beute je Boss, Ruf, PvP, Sets (erzeugt); gelesen von modules/lootbook.lua.
 data/loot.lua
+# NPC-Nummer und deutscher Name je Boss des Kompendiums (erzeugt, 1.10.10.0)
+data/boss_npcs.lua
 # Seltene Gegner (6.16.0.0, erzeugt); gelesen von ui/rares.lua.
 data/rares.lua
 # Buecher der Bibliothek (6.56.0.0, erzeugt); gelesen von modules/library.lua.

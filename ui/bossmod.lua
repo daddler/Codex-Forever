@@ -978,13 +978,14 @@ function BM.EncounterStart(id, name, difficulty)
     id, name, difficulty = Plain(id), Plain(name), Plain(difficulty)
     local old = BM.fight
     -- Schon ueber die Bossrahmen erkannt: dieselbe Startzeit behalten.
-    local start = (old and old.src == "engage" and Now() - old.start < 15) and old.start or Now()
+    local start = (old and (old.src == "engage" or old.src == "codex") and Now() - old.start < 15) and old.start or Now()
     BM.fight = { id = id, name = type(name) == "string" and name or (old and old.name), diff = difficulty, start = start, src = "encounter",
         instance = BM.InstanceName() }
+    BM.fight.codex = (old and old.codex) or BM.CodexBoss("boss1") or (BM.fight.name and BM.BossIndex()[BM.fight.name:lower()]) or nil
     if Opt("bossFight") then BM.Start("fight", BM.fight.name or "Bosskampf", nil, nil, "textMuted").start = start end
     BM.Stop("pull")
     BM.CatchUp()
-    if not (old and old.src == "engage") then BM.LearnStart() end
+    if not (old and (old.src == "engage" or old.src == "codex")) then BM.LearnStart() end
 end
 
 -- Ende eines Kampfes: result = "kill" | "wipe" | nil (unbekannt - weder
@@ -1052,7 +1053,8 @@ function BM.Engage()
         if u and _G.UnitAffectingCombat and K.Bool(_G.UnitAffectingCombat(u), false) then
             local n = _G.UnitName and Plain(_G.UnitName(u))
             BM.stats.engaged = BM.stats.engaged + 1
-            BM.fight = { name = type(n) == "string" and n or nil, start = Now(), src = "engage", instance = BM.InstanceName() }
+            BM.fight = { name = type(n) == "string" and n or nil, start = Now(), src = "engage", instance = BM.InstanceName(),
+                codex = BM.CodexBoss(u) }
             if Opt("bossFight") then BM.Start("fight", BM.fight.name or "Bosskampf", nil, nil, "textMuted") end
             BM.Stop("pull")
             BM.LearnStart()
@@ -1061,13 +1063,113 @@ function BM.Engage()
     end
     return nil
 end
+--------------------------------------------------
+-- War das ein Boss? Abgleich mit dem Dungeonkompendium (1.10.10.0,
+-- Beta-Test: "Omokk getoetet, steht nicht unter Bosse"). Alte Dungeons
+-- melden oft weder ENCOUNTER_START noch Bossrahmen. Ein Gegner gilt als
+-- Boss, wenn seine NPC-Nummer (aus dem GUID, haengt an keiner Sprache) in
+-- data/boss_npcs.lua steht - oder, ohne Nummer, sein Name der deutsche oder
+-- englische Name eines Bosses des Kompendiums ist.
+--------------------------------------------------
+
+BM.CODEX_UNITS = { "target", "focus", "mouseover", "boss1", "boss2", "boss3", "boss4", "boss5" }
+for i = 1, 40 do BM.CODEX_UNITS[#BM.CODEX_UNITS + 1] = "nameplate" .. i end
+local byName
+local function Lower(s) return type(s) == "string" and s:lower() or nil end
+function BM.BossIndex()
+    if byName then return byName end
+    byName = {}
+    for npc, e in pairs(WeintCodex.BossNpcs or {}) do
+        local entry = { dungeon = e[1], boss = e[2], de = e[3], en = e[4], npc = npc }
+        if e[3] then byName[Lower(e[3])] = entry end
+        if e[4] then byName[Lower(e[4])] = byName[Lower(e[4])] or entry end
+    end
+    -- Bosse ohne Nummer: nur ueber den englischen Namen des Kompendiums.
+    for _, list in ipairs({ _G.WeintCodex_Dungeons or {}, _G.WeintCodex_ClassicDungeons or {} }) do
+        for _, d in ipairs(list) do
+            for _, b in ipairs(type(d.bosses) == "table" and d.bosses or {}) do
+                local k = Lower(b.name)
+                if k and not byName[k] then byName[k] = { dungeon = d.id, boss = b.id, en = b.name } end
+            end
+        end
+    end
+    return byName
+end
+
+function BM.NpcOf(unit)
+    local g = _G.UnitGUID and Plain(_G.UnitGUID(unit))
+    if type(g) ~= "string" then return nil, nil end
+    local kind, npc = g:match("^(%a+)%-%d+%-%d+%-%d+%-%d+%-(%d+)")
+    if kind ~= "Creature" and kind ~= "Vehicle" then return nil, g end
+    return tonumber(npc), g
+end
+
+-- Eintrag des Kompendiums fuer eine Einheit, oder nil.
+function BM.CodexBoss(unit)
+    if type(unit) ~= "string" or not (_G.UnitExists and K.Bool(_G.UnitExists(unit), false)) then return nil end
+    local npc, guid = BM.NpcOf(unit)
+    local e = npc and WeintCodex.BossNpcs and WeintCodex.BossNpcs[npc]
+    if e then return { dungeon = e[1], boss = e[2], de = e[3], en = e[4], npc = npc }, guid end
+    local n = _G.UnitName and Lower(Plain(_G.UnitName(unit)))
+    local hit = n and BM.BossIndex()[n]
+    return hit, guid
+end
+
+-- Kampf beginnen, wenn diese Einheit ein kaempfender Boss des Kompendiums ist.
+function BM.CodexEngage(unit)
+    if BM.fight then return nil end
+    if not (_G.UnitAffectingCombat and K.Bool(_G.UnitAffectingCombat(unit), false)) then return nil end
+    if not (_G.UnitCanAttack and K.Bool(_G.UnitCanAttack("player", unit), false)) then return nil end
+    local e, guid = BM.CodexBoss(unit)
+    if not e then return nil end
+    local n = _G.UnitName and Plain(_G.UnitName(unit))
+    BM.stats.codex = (BM.stats.codex or 0) + 1
+    BM.fight = { name = type(n) == "string" and n or e.de or e.en, start = Now(), src = "codex",
+        codex = e, guid = guid, instance = BM.InstanceName() }
+    if Opt("bossFight") then BM.Start("fight", BM.fight.name, nil, nil, "textMuted") end
+    BM.Stop("pull")
+    BM.LearnStart()
+    return true
+end
+
+-- Bei Kampfbeginn: Ziel, Fokus und Plaketten durchsehen.
+function BM.CodexScan()
+    if BM.fight then return nil end
+    if BM.CodexEngage("target") or BM.CodexEngage("focus") then return true end
+    for i = 1, 40 do
+        local u = "nameplate" .. i
+        if _G.UnitExists and K.Bool(_G.UnitExists(u), false) and BM.CodexEngage(u) then return true end
+    end
+    return nil
+end
+
+-- Tod des Bosses: an seinem GUID erkannt (Ziel, Plakette, Bossrahmen).
+function BM.CodexHealth(unit)
+    local f = BM.fight
+    if not f or not f.guid or f.killed or type(unit) ~= "string" then return nil end
+    local g = _G.UnitGUID and Plain(_G.UnitGUID(unit))
+    if g ~= f.guid then return nil end
+    if _G.UnitIsDead and K.Bool(_G.UnitIsDead(unit), false) then f.killed = true return true end
+    return nil
+end
+
 -- Ende ohne ENCOUNTER_END: beim Verlassen des Kampfes. Sieg nur, wenn das
 -- Spiel es sagt (BOSS_KILL) oder ein Boss tot ist; lebt einer, Wipe; sonst
 -- unbekannt.
 function BM.EngageEnd()
     local f = BM.fight
-    if not f or f.src ~= "engage" then return nil end
+    if not f or (f.src ~= "engage" and f.src ~= "codex") then return nil end
     if f.killed then return BM.Finish("kill") end
+    if f.src == "codex" then
+        -- Der Boss selbst, wo er noch zu sehen ist: tot = Sieg, lebt = Wipe.
+        for _, u in ipairs(f.guid and BM.CODEX_UNITS or {}) do
+            if _G.UnitGUID and Plain(_G.UnitGUID(u)) == f.guid then
+                if _G.UnitIsDead and K.Bool(_G.UnitIsDead(u), false) then return BM.Finish("kill") end
+                return BM.Finish("wipe")
+            end
+        end
+        return BM.Finish(nil)
+    end
     local alive, dead = false, false
     for i = 1, 5 do
         local u = BM.BossUnit(i)
@@ -1265,7 +1367,10 @@ function BM.LearnStore(create)
     local sd = WeintCodex.SavedData
     local f = BM.fight
     if type(sd) ~= "table" or not f then return nil end
-    local key = (type(f.id) == "number" and ("e" .. f.id)) or (type(f.name) == "string" and ("n:" .. f.name)) or nil
+    -- Ein Boss des Kompendiums hat einen festen Schluessel - egal, ob der
+    -- Kampf ueber ENCOUNTER_START, Bossrahmen oder den Abgleich begann.
+    local key = (type(f.codex) == "table" and f.codex.dungeon and ("c:" .. f.codex.dungeon .. "/" .. f.codex.boss))
+        or (type(f.id) == "number" and ("e" .. f.id)) or (type(f.name) == "string" and ("n:" .. f.name)) or nil
     if not key then return nil end
     if create then
         sd.bossLearn = sd.bossLearn or {}
@@ -1273,6 +1378,7 @@ function BM.LearnStore(create)
         sd.bossLearn[key] = st
         if type(f.name) == "string" then st._name = f.name end
         if type(f.instance) == "string" then st._inst = f.instance end
+        if type(f.codex) == "table" then st._codex = f.codex.dungeon .. "/" .. f.codex.boss end
     end
     return sd.bossLearn and sd.bossLearn[key]
 end
@@ -1377,7 +1483,9 @@ function BM.LearnStart()
     for k in pairs(seenCount) do seenCount[k] = nil end
     for i = #BM.watch, 1, -1 do BM.watch[i] = nil end
     if not Opt("bossLearn") then return 0 end
-    local store = BM.LearnStore(false)
+    -- Angelegt schon zum Pull: auch ein Boss, der nichts wirkt, steht danach
+    -- unter "Bosse".
+    local store = BM.LearnStore(true)
     if not store then return 0 end
     local n = 0
     for spell, rec in pairs(store) do
@@ -1545,7 +1653,8 @@ for _, e in ipairs({ "START_PLAYER_COUNTDOWN", "CANCEL_PLAYER_COUNTDOWN", "CHAT_
         "ENCOUNTER_TIMELINE_EVENT_STATE_CHANGED", "INSTANCE_ENCOUNTER_ENGAGE_UNIT", "BOSS_KILL",
         "PLAYER_REGEN_ENABLED", "RAID_BOSS_EMOTE", "RAID_BOSS_WHISPER", "PLAYER_TARGET_CHANGED",
         "UNIT_SPELLCAST_START", "UNIT_SPELLCAST_STOP", "UNIT_SPELLCAST_FAILED", "UNIT_SPELLCAST_INTERRUPTED",
-        "UNIT_SPELLCAST_CHANNEL_START", "UNIT_SPELLCAST_CHANNEL_STOP", "UNIT_SPELLCAST_SUCCEEDED" }) do
+        "UNIT_SPELLCAST_CHANNEL_START", "UNIT_SPELLCAST_CHANNEL_STOP", "UNIT_SPELLCAST_SUCCEEDED",
+        "UNIT_THREAT_LIST_UPDATE", "NAME_PLATE_UNIT_ADDED", "UNIT_HEALTH" }) do
     pcall(ev.RegisterEvent, ev, e)
 end
 ev:SetScript("OnEvent", function(_, event, a1, a2, a3, a4, a5)
@@ -1558,7 +1667,10 @@ ev:SetScript("OnEvent", function(_, event, a1, a2, a3, a4, a5)
     if event == "PLAYER_REGEN_DISABLED" then
         if setupOn then BM.Setup(false) end
         -- Bossrahmen, die schon vor dem Kampf da waren: jetzt kaempft er.
-        if K.IsActive(KEY) then BM.Engage() end
+        -- Sonst: ein Boss des Kompendiums im Ziel oder auf einer Plakette?
+        if K.IsActive(KEY) then
+            if not BM.Engage() then BM.CodexScan() end
+        end
         return
     end
     if not K.IsActive(KEY) then return end
@@ -1589,6 +1701,11 @@ ev:SetScript("OnEvent", function(_, event, a1, a2, a3, a4, a5)
         BM.Emote(a1, a2)
     elseif event == "PLAYER_TARGET_CHANGED" then
         BM.CastStop("target")
+        if not BM.fight then BM.CodexEngage("target") end
+    elseif event == "UNIT_THREAT_LIST_UPDATE" or event == "NAME_PLATE_UNIT_ADDED" then
+        if not BM.fight then BM.CodexEngage(a1) end
+    elseif event == "UNIT_HEALTH" then
+        if BM.fight and BM.fight.src == "codex" then BM.CodexHealth(a1) end
     elseif event == "UNIT_SPELLCAST_START" then
         BM.CastStart(a1, false)
     elseif event == "UNIT_SPELLCAST_CHANNEL_START" then
@@ -1630,8 +1747,8 @@ BM.RegisterSlash()
 -- Fuer /wcui prüfen.
 function BM.StatusLine()
     local s = BM.stats
-    return string.format("Bosskämpfe: %d Kämpfe (+%d über Bossrahmen), %d Fähigkeiten aus der Zeitleiste (%d ohne offene Dauer), %d Zauber von Bossen (%d verdeckt), %d Warnungen, %d Emotes, %d Countdowns, %d Timer anderer Bossmods",
-        s.encounters, s.engaged, s.timeline, s.secret, s.casts, s.castSecret, s.warnings, s.emotes, s.countdowns, s.heard)
+    return string.format("Bosskämpfe: %d Kämpfe (+%d über Bossrahmen, +%d über das Kompendium), %d Fähigkeiten aus der Zeitleiste (%d ohne offene Dauer), %d Zauber von Bossen (%d verdeckt), %d Warnungen, %d Emotes, %d Countdowns, %d Timer anderer Bossmods",
+        s.encounters, s.engaged, s.codex or 0, s.timeline, s.secret, s.casts, s.castSecret, s.warnings, s.emotes, s.countdowns, s.heard)
 end
 
 --------------------------------------------------

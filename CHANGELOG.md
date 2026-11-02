@@ -9,6 +9,15 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.10.10.0] – 2026-11-02
+
+### Behoben
+- Bosskämpfe: Hochlord Omokk (LBRS, MoP Classic) erschien nach dem Kill nicht unter „Bosse“ – kein `ENCOUNTER_START`, keine Bossrahmen, also kein Kampf; und ein Boss wurde nur angelegt, wenn er einen Zauber wirkte.
+
+### Neu
+- Abgleich mit dem Dungeonkompendium: `data/boss_npcs.lua` (**erzeugt** von `.github/scripts/make_boss_npcs.py`) ordnet 170 Bossen des Kompendiums NPC-Nummer und deutschen Namen aus `data/loot.lua` zu – über gleiche Beute (Journal ↔ Beute), nie über Namen; mehrdeutige Nummern (Gruppen) bekommt keiner. `BM.CodexBoss`: NPC-Nummer aus dem GUID (sprachunabhängig), sonst deutscher oder englischer Name. Kampfbeginn bei `PLAYER_REGEN_DISABLED` (Ziel, Fokus, Plaketten), `UNIT_THREAT_LIST_UPDATE`, `NAME_PLATE_UNIT_ADDED`, Zielwechsel; Tod über `UNIT_HEALTH` am GUID; Ende beim Verlassen des Kampfes (tot = Sieg, lebt = Wipe, nicht zu sehen = unbekannt).
+- Schlüssel `c:<Dungeon>/<Boss>` für Bosse des Kompendiums, gleich ob der Kampf über `ENCOUNTER_START`, Bossrahmen oder den Abgleich begann; der Boss wird schon zum Pull angelegt (`BM.LearnStart` mit `create`). `data_test.lua` prüft, dass jede Nummer auf einen Boss des Kompendiums zeigt und jeder Boss höchstens eine hat.
+
 ## [1.10.9.0] – 2026-11-02
 
 ### Neu

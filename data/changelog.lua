@@ -22,6 +22,14 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.10.10.0",
+        date    = "02.11.2026",
+        notes   = {
+            "|cff7C6CFFBosse alter Dungeons werden erkannt|r – auch wenn das Spiel keinen Bosskampf meldet: WeintCodex gleicht jeden Gegner im Kampf mit den Bossen des Dungeonkompendiums ab, mit deutschem und englischem Client. Kampftimer, Bestzeit und Messung laufen dann wie bei jedem Boss.",
+            "|cff7C6CFFJeder erkannte Boss steht unter „Bosse“|r – gleich ab dem Pull, auch wenn er nichts wirkt.",
+        },
+    },
+    {
         version = "1.10.9.0",
         date    = "02.11.2026",
         notes   = {

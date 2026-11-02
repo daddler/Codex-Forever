@@ -2399,6 +2399,13 @@ lebt es von den Ereignissen des Spiels; genau die nutzt WeintCodex.
   Kampf – dann bleibt nur Zeit), Vorschlag `BM.Suggest` aus den Messungen,
   nie automatisch festgelegt. Sofortzauber über
   `UNIT_SPELLCAST_SUCCEEDED`.
+- **War das ein Boss? (1.10.10.0):** alte Dungeons melden oft weder
+  `ENCOUNTER_START` noch Bossrahmen. `BM.CodexBoss` vergleicht mit dem
+  Kompendium: NPC-Nummer aus dem GUID gegen `data/boss_npcs.lua`
+  (erzeugt aus gleicher Beute in Journal und `data/loot.lua`, kein
+  Namensvergleich), sonst deutscher/englischer Name. Schlüssel
+  `c:<Dungeon>/<Boss>`; Tod über `UNIT_HEALTH` am GUID; ohne GUID am Ende
+  „unbekannt“, nie geraten.
 - **„Gleich dran“ (BigWigs: „hervorheben“):** eine Leiste mit Dauer, deren
   Rest unter `bossEmphSecs` fällt, wechselt an den zweiten Anker – 1,5×
   so hoch, 1,25× so breit, rot (Statusfarbe). Höchstens 4; Kampftimer

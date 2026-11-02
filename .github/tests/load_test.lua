@@ -23474,6 +23474,81 @@ do
     Check(ok, "Bosskämpfe: je Boss einstellen (Instanz/Boss/Fähigkeit), Vorschlag Leben/Energie/Zeit, Schwellen, Sofortzauber, verdeckt = nie geraten" .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- Bosskaempfe: Abgleich mit dem Kompendium - Omokk ohne ENCOUNTER_START (1.10.10.0)
+do
+    local BM = WeintCodex.UIBossMod
+    local names = { "GetTime", "UnitExists", "UnitAffectingCombat", "UnitName", "UnitIsDead", "UnitGUID",
+        "UnitCanAttack", "GetInstanceInfo" }
+    local old = {}
+    for _, n in ipairs(names) do old[n] = _G[n] end
+    local oActive = K.IsActive
+    local saved = {}
+    for k in pairs(BM.DEFAULTS) do saved[k] = K.Get("comfort", k) end
+    local ok, err = pcall(function()
+        local now = 50000
+        _G.GetTime = function() return now end
+        K.IsActive = function() return true end
+        for k, v in pairs(BM.DEFAULTS) do K.Set("comfort", k, v) end
+        for k in pairs(BM.timers) do BM.timers[k] = nil end
+        BM.fight = nil
+        WeintCodex.SavedData.bossLearn = nil
+        assert(WeintCodex.BossNpcs and WeintCodex.BossNpcs[9196], "data/boss_npcs.lua nicht geladen")
+        local mob = { name = "Hochlord Omokk", guid = "Creature-0-1-229-1-9196-0000ABCD", dead = false, combat = true }
+        _G.UnitExists = function(u) return u == "target" end
+        _G.UnitAffectingCombat = function(u) return u == "target" and mob.combat end
+        _G.UnitCanAttack = function() return true end
+        _G.UnitName = function(u) return u == "target" and mob.name or nil end
+        _G.UnitGUID = function(u) return u == "target" and mob.guid or nil end
+        _G.UnitIsDead = function(u) return u == "target" and mob.dead end
+        _G.GetInstanceInfo = function() return "Untere Schwarzfelsspitze", "party" end
+        -- Deutscher Client, NPC-Nummer im GUID.
+        assert(BM.CodexScan() and BM.fight and BM.fight.src == "codex", "Omokk nicht als Boss erkannt")
+        assert(BM.fight.name == "Hochlord Omokk" and BM.fight.codex.boss == "highlord_omokk", "falscher Boss")
+        local st = WeintCodex.SavedData.bossLearn["c:lower_blackrock_spire/highlord_omokk"]
+        assert(st and st._inst == "Untere Schwarzfelsspitze" and st._name == "Hochlord Omokk", "Boss nicht gleich zum Pull angelegt")
+        now = now + 70
+        mob.dead = true
+        assert(BM.CodexHealth("target"), "Tod nicht erkannt")
+        WeintCodex.SavedData.bossTimes = {}
+        assert(BM.EngageEnd() == "kill" and WeintCodex.SavedData.bossTimes["n:Hochlord Omokk"] == 70, "kein Sieg mit Bestzeit")
+        -- Englischer Client ohne lesbaren GUID: ueber den Namen.
+        mob.dead, mob.name, mob.guid = false, "Highlord Omokk", nil
+        assert(BM.CodexScan() and BM.fight.codex.boss == "highlord_omokk", "englischer Name nicht erkannt")
+        now = now + 30
+        assert(BM.EngageEnd() == nil, "ohne GUID kein Urteil - unbekannt erwartet")
+        -- Wipe: Boss lebt beim Verlassen des Kampfes.
+        mob.name, mob.guid = "Hochlord Omokk", "Creature-0-1-229-1-9196-0000ABCD"
+        BM.CodexScan() now = now + 20
+        assert(BM.EngageEnd() == "wipe", "lebender Boss kein Wipe")
+        -- Kein Boss: Elitegegner aus der Beute, aber nicht im Kompendium.
+        mob.name, mob.guid = "Brennende Teufelswache", "Creature-0-1-229-1-10263-0000ABCE"
+        assert(not BM.CodexScan() and not BM.fight, "Nicht-Boss als Boss erkannt")
+        mob.name, mob.guid = "Felsspitzoger", "Creature-0-1-229-1-9583-0000ABCF"
+        assert(not BM.CodexScan(), "Trash als Boss erkannt")
+        -- Unter "Bosse": Instanz, Boss, auch ohne gewirkten Zauber.
+        BM.sel.inst, BM.sel.boss, BM.sel.spell = nil, nil, nil
+        BM.FixSelection()
+        assert(BM.sel.inst == "Untere Schwarzfelsspitze" and BM.sel.boss == "c:lower_blackrock_spire/highlord_omokk", "Omokk fehlt unter Bosse")
+        local items = BM.BossItems()
+        assert(items[1] and items[1].text == "Hochlord Omokk", "Name unter Bosse: " .. tostring(items[1] and items[1].text))
+        -- ENCOUNTER_START nach dem Abgleich: derselbe Schluessel, dieselbe Startzeit.
+        mob.name, mob.guid = "Hochlord Omokk", "Creature-0-1-229-1-9196-0000ABCD"
+        BM.CodexScan()
+        local t0 = BM.fight.start
+        now = now + 2
+        BM.EncounterStart(1234, "Hochlord Omokk", 1)
+        assert(BM.fight.start == t0 and BM.LearnStore(false) == st, "ENCOUNTER_START legt einen zweiten Boss an")
+        BM.Finish(nil)
+    end)
+    for _, n in ipairs(names) do _G[n] = old[n] end
+    K.IsActive = oActive
+    for k, v in pairs(saved) do K.Set("comfort", k, v) end
+    for k in pairs(WeintCodex.UIBossMod.timers) do WeintCodex.UIBossMod.timers[k] = nil end
+    WeintCodex.UIBossMod.fight = nil
+    WeintCodex.SavedData.bossLearn = nil
+    Check(ok, "Bosskämpfe: Boss über das Kompendium erkannt (NPC-Nummer, deutscher/englischer Name), kein Trash, Sieg/Wipe, steht unter Bosse" .. (ok and "" or (": " .. tostring(err))))
+end
+
 -- Sterbezeit an der Plakette (1.8.0.0, ui/timetodie.lua)
 do
     local TD = WeintCodex.UITimeToDie

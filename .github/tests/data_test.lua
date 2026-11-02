@@ -1307,6 +1307,28 @@ do
     Check(files >= 14, "Raus da!: alle mitgelieferten Toene geprueft (" .. files .. ")")
 end
 
+-- 1.10.10.0: jede NPC-Nummer zeigt auf einen Boss des Kompendiums, jede
+-- Nummer und jeder Boss hoechstens einmal.
+do
+    local known = {}
+    for _, list in ipairs({ WeintCodex_Dungeons or {}, WeintCodex_ClassicDungeons or {} }) do
+        for _, d in ipairs(list) do
+            for _, b in ipairs(d.bosses or {}) do known[d.id .. "/" .. b.id] = b.name end
+        end
+    end
+    local n, bad, twice, seenB = 0, {}, {}, {}
+    for npc, e in pairs(WeintCodex.BossNpcs or {}) do
+        n = n + 1
+        local k = tostring(e[1]) .. "/" .. tostring(e[2])
+        if known[k] ~= e[4] then bad[#bad + 1] = npc .. "=" .. k end
+        if seenB[k] then twice[#twice + 1] = k end
+        seenB[k] = true
+    end
+    Check(n >= 150, "Bossnummern: " .. n .. " Bosse mit NPC-Nummer")
+    Check(#bad == 0, "Bossnummern zeigen auf Bosse des Kompendiums" .. (#bad > 0 and (": " .. table.concat(bad, ", ")) or ""))
+    Check(#twice == 0, "Bossnummern: jeder Boss einmal" .. (#twice > 0 and (": " .. table.concat(twice, ", ")) or ""))
+end
+
 if failures == 0 then
     print("BESTANDEN")
     os.exit(0)
