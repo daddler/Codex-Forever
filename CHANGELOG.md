@@ -9,7 +9,13 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
-## [1.10.0.0] – 2026-11-02
+## [1.10.1.0] – 2026-11-02
+
+### Neu
+- „Raus da!“: drei Memes als Töne (`meme_raus` 1,75 s, `meme_fahr` 4,7 s, `meme_rose` 3,85 s; `media/sounds/meme_*.ogg`), Wunsch des Besitzers. Geschnitten mit `.github/scripts/make_meme_sounds.py` nach Lautstärke und Spektrogramm (keine Spracherkennung verfügbar): nur der Spruch, ohne Vor- und Nachlauf; mono Ogg Vorbis, Lautheit -16 LUFS. Fremde Aufnahmen, nicht gerechnet wie die übrigen Alarme.
+- `FA.Gap()`: ein Ton mit `len` wird nicht überspielt – der nächste Alarm wartet, bis er zu Ende ist (vorher höchstens ein Ton je Sekunde, ein Meme hätte sich im Feuer gestapelt).
+
+ – 2026-11-02
 
 ### Neu
 - Bosskämpfe (`ui/bossmod.lua`, Komfortseite „Bosskämpfe“ unter Kampf & Gruppe; Wunsch „sowas wie BigWigs“, Verhalten nach BigWigs v427.8, eigener Code – BigWigs ist „All Rights Reserved“ und bringt für Forever kein Bossmodul mit):

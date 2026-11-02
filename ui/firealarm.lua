@@ -41,6 +41,13 @@ FA.DEFAULTS = {
 }
 FA.TICK = 0.2        -- so oft im Kampf gefragt (s)
 FA.GAP = 1.0         -- hoechstens ein Ton je Sekunde
+-- 1.10.1.0: ein langer Ton (Memes, `len`) wird nicht ueberspielt - der
+-- naechste Alarm wartet, bis er zu Ende ist, sonst stapeln sie sich im Feuer.
+function FA.Gap()
+    local s = FA.SOUNDS[K.Get(KEY, "fireSound")]
+    local len = s and tonumber(s.len)
+    return (len and len > FA.GAP) and len or FA.GAP
+end
 -- Toene des Spiels (SOUNDKIT), Zahl als Rueckfall.
 -- 6.24.0.0 (Beta-Test: "mehr Sounds"): alles Toene des Spiels, keine
 -- eigenen Dateien. Kennt der Client einen Namen nicht, gilt die Zahl.
@@ -61,6 +68,11 @@ FA.SOUNDS = {
     dreifach = { file = "dreifach.ogg", text = "Alarm dreifach" },
     hupe     = { file = "hupe.ogg", text = "Hupe" },
     sirene   = { file = "sirene.ogg", text = "Sirene" },
+    -- 1.10.1.0 (Wunsch des Besitzers): drei Memes, geschnitten von
+    -- .github/scripts/make_meme_sounds.py - nur der Spruch, ohne Vor- und Nachlauf.
+    meme_raus = { file = "meme_raus.ogg", len = 1.75, text = "Meme: „Ich muss raus!“" },
+    meme_fahr = { file = "meme_fahr.ogg", len = 4.7, text = "Meme: „Fahr weiter!“" },
+    meme_rose = { file = "meme_rose.ogg", len = 3.85, text = "Meme: „Aua, hat mich gebissen, die Rose!“" },
     raid    = { kit = "RAID_WARNING", id = 8959, text = "Schlachtzugswarnung" },
     ready   = { kit = "READY_CHECK", id = 8960, text = "Bereitschaftscheck" },
     alarm   = { kit = "ALARM_CLOCK_WARNING_3", id = 12889, text = "Wecker" },
@@ -71,7 +83,7 @@ FA.SOUNDS = {
     queue   = { kit = "PVP_THROUGH_QUEUE", id = 8459, text = "Warteschlange" },
     toast   = { kit = "UI_BNET_TOAST", id = 18019, text = "Battle.net-Hinweis" },
 }
-FA.ORDER = { "raus", "achtung", "fehler", "trill", "hoch", "tief", "dreifach", "hupe", "sirene", "raid", "boss", "ready", "alarm", "alarm2", "whisper", "invite", "queue", "toast" }
+FA.ORDER = { "raus", "achtung", "fehler", "trill", "hoch", "tief", "dreifach", "hupe", "sirene", "meme_raus", "meme_fahr", "meme_rose", "raid", "boss", "ready", "alarm", "alarm2", "whisper", "invite", "queue", "toast" }
 
 -- 6.146.0.0 (Wunsch: eigene Toene ueber die Companion): eigene Dateien des
 -- Spielers. Die Companion schreibt sie in ein eigenes Addon WeintCodex_Sounds
@@ -165,7 +177,7 @@ function FA.Check()
     last = v
     if not grew then return false end
     local now = Now()
-    if now - lastAlarm < FA.GAP then return false end
+    if now - lastAlarm < FA.Gap() then return false end
     lastAlarm = now
     stats.alarms = stats.alarms + 1
     FA.Play()
@@ -321,7 +333,7 @@ function FA.Hit()
     if gap < (stats.minGap or math.huge) then stats.minGap = gap end
     local again = gap <= FA.OUT_WINDOW
     lastDrop = now
-    if not again or now - lastAlarm < FA.GAP then return false end
+    if not again or now - lastAlarm < FA.Gap() then return false end
     lastAlarm = now
     stats.outside = (stats.outside or 0) + 1
     stats.alarms = stats.alarms + 1

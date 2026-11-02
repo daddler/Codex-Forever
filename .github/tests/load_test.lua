@@ -2378,10 +2378,17 @@ do
                 seen[s.id] = true
             end
         end
-        assert(files == 9, "eigene Alarme: " .. files)
+        assert(files == 12, "eigene Alarme (9 gerechnete + 3 Memes): " .. files)
         local n = 0
         for _ in pairs(FA.SOUNDS) do n = n + 1 end
         assert(n == #FA.ORDER, "Ton fehlt in der Auswahl")
+        -- 1.10.1.0: lange Toene werden nicht ueberspielt.
+        local oldSound = K.Get("comfort", "fireSound")
+        K.Set("comfort", "fireSound", "meme_fahr")
+        assert(FA.Gap() == 4.7, "Meme wird ueberspielt: " .. tostring(FA.Gap()))
+        K.Set("comfort", "fireSound", "raus")
+        assert(FA.Gap() == FA.GAP, "kurzer Ton wartet zu lange")
+        K.Set("comfort", "fireSound", oldSound)
         local played, oldPSF, oldPS = {}, _G.PlaySoundFile, _G.PlaySound
         _G.PlaySoundFile = function(f) played[#played + 1] = "file:" .. f end
         _G.PlaySound = function(k) played[#played + 1] = "kit:" .. tostring(k) end

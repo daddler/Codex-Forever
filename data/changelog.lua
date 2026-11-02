@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.10.1.0",
+        date    = "02.11.2026",
+        notes   = {
+            "|cff7C6CFFDrei Memes für „Raus da!“|r – „Ich muss raus!“, „Fahr weiter!“ und „Aua, hat mich gebissen, die Rose!“ stehen jetzt in der Auswahl der Töne, zugeschnitten auf den Spruch. Ein langes Meme wird nicht mitten im Feuer neu gestartet, es läuft erst zu Ende.",
+        },
+    },
+    {
         version = "1.10.0.0",
         date    = "02.11.2026",
         notes   = {

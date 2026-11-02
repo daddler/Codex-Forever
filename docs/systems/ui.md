@@ -1884,6 +1884,12 @@ Alarme als Datei (`media/sounds/*.ogg`, gerechnet von
 `PlaySoundFile`; `FA.SOUNDS[k].file`, Standard `hoch`. Die Töne des
 Spiels (`kit`/`id`) bleiben wählbar.
 
+1.10.1.0 (Wunsch des Besitzers): drei Memes `meme_raus`, `meme_fahr`,
+`meme_rose` (`media/sounds/meme_*.ogg`, geschnitten von
+`.github/scripts/make_meme_sounds.py` – Zeiten und Begründung dort, die mp3
+liegen nicht im Repo). **Fremde Aufnahmen**, anders als die gerechneten
+Alarme. `len` je Ton: `FA.Gap()` wartet, bis ein langer Ton zu Ende ist.
+
 6.25.1.0: vier weitere nach den *Arten* von GTFO (nicht seinen Dateien):
 `raus` (Standard), `achtung`, `fehler`, `trill`. Außerhalb des Kampfes
 (`fireOutside`, ab Werk an): Lagerfeuer und Lava setzen nicht in den Kampf,
