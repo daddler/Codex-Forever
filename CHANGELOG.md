@@ -9,7 +9,10 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
-## [1.10.2.1] – 2026-11-02
+## [1.10.3.0] – 2026-11-02
+
+### Neu
+- Viertes Meme für „Raus da!“: `meme_hallo` („Hallo, was machen Sachen?“), 17,50–20,80 s der gelieferten mp3, vom Besitzer festgelegt; `len = 3.3`, in `FA.ORDER` nach `meme_rose`. `make_meme_sounds.py` nimmt optional Schlüssel, damit ein neues Meme die vorhandenen nicht neu kodiert.
 
 ### Behoben
 - `meme_raus`, `meme_fahr`, `meme_rose` blieben im Spiel stumm: die Quell-mp3s trugen ein Titelbild, das ffmpeg als Theora-Videospur mit in die `.ogg` schrieb – eine Ogg mit Videospur spielt `PlaySoundFile` nicht ab. Die Tonspur ist verlustfrei herauskopiert (`-c:a copy`, gleiche Längen), `make_meme_sounds.py` nimmt nur noch `0:a:0`. `data_test.lua` prüft jede mitgelieferte Tondatei auf genau eine Vorbis-Spur ohne Theora.

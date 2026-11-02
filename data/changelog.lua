@@ -22,9 +22,10 @@
 
 WeintCodex_ChangelogData = {
     {
-        version = "1.10.2.1",
+        version = "1.10.3.0",
         date    = "02.11.2026",
         notes   = {
+            "|cff7C6CFFNeues Meme für „Raus da!“|r – „Hallo, was machen Sachen?“ steht in der Auswahl der Töne.",
             "|cff7C6CFFDie drei Memes sind zu hören|r – „Ton abspielen“ und der Warnton blieben bei ihnen stumm.",
         },
     },

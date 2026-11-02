@@ -2378,7 +2378,7 @@ do
                 seen[s.id] = true
             end
         end
-        assert(files == 12, "eigene Alarme (9 gerechnete + 3 Memes): " .. files)
+        assert(files == 13, "eigene Alarme (9 gerechnete + 4 Memes): " .. files)
         local n = 0
         for _ in pairs(FA.SOUNDS) do n = n + 1 end
         assert(n == #FA.ORDER, "Ton fehlt in der Auswahl")

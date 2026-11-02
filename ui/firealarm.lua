@@ -73,6 +73,7 @@ FA.SOUNDS = {
     meme_raus = { file = "meme_raus.ogg", len = 1.75, text = "Meme: „Ich muss raus!“" },
     meme_fahr = { file = "meme_fahr.ogg", len = 4.7, text = "Meme: „Fahr weiter!“" },
     meme_rose = { file = "meme_rose.ogg", len = 5.39, text = "Meme: „Aua, hat mich gebissen, die Rose!“" },
+    meme_hallo = { file = "meme_hallo.ogg", len = 3.3, text = "Meme: „Hallo, was machen Sachen?“" },
     raid    = { kit = "RAID_WARNING", id = 8959, text = "Schlachtzugswarnung" },
     ready   = { kit = "READY_CHECK", id = 8960, text = "Bereitschaftscheck" },
     alarm   = { kit = "ALARM_CLOCK_WARNING_3", id = 12889, text = "Wecker" },
@@ -83,7 +84,7 @@ FA.SOUNDS = {
     queue   = { kit = "PVP_THROUGH_QUEUE", id = 8459, text = "Warteschlange" },
     toast   = { kit = "UI_BNET_TOAST", id = 18019, text = "Battle.net-Hinweis" },
 }
-FA.ORDER = { "raus", "achtung", "fehler", "trill", "hoch", "tief", "dreifach", "hupe", "sirene", "meme_raus", "meme_fahr", "meme_rose", "raid", "boss", "ready", "alarm", "alarm2", "whisper", "invite", "queue", "toast" }
+FA.ORDER = { "raus", "achtung", "fehler", "trill", "hoch", "tief", "dreifach", "hupe", "sirene", "meme_raus", "meme_fahr", "meme_rose", "meme_hallo", "raid", "boss", "ready", "alarm", "alarm2", "whisper", "invite", "queue", "toast" }
 
 -- 6.146.0.0 (Wunsch: eigene Toene ueber die Companion): eigene Dateien des
 -- Spielers. Die Companion schreibt sie in ein eigenes Addon WeintCodex_Sounds
