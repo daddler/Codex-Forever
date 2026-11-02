@@ -2404,6 +2404,10 @@ lebt es von den Ereignissen des Spiels; genau die nutzt WeintCodex.
   aller Fähigkeiten (Haken = ankündigen, blättern statt rollen), darunter
   nur die Felder des Auslösers. Vorschlag „Energie“ nur, wenn die Energie
   im Kampf auch unter 50 % fiel (`_pwMin`).
+- **Suche und Zeitstrahl (1.10.12.0):** Suchfeld über Instanz/Boss
+  (deutsch und englisch über `_codex`), Treffer schwebend; Zeitstrahl
+  mit zwei Griffen (erster Einsatz, nächster = Abstand), Raster 0,5 s,
+  `OnUpdate` nur während des Ziehens.
 - **War das ein Boss? (1.10.10.0):** alte Dungeons melden oft weder
   `ENCOUNTER_START` noch Bossrahmen. `BM.CodexBoss` vergleicht mit dem
   Kompendium: NPC-Nummer aus dem GUID gegen `data/boss_npcs.lua`

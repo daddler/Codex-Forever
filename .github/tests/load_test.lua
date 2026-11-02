@@ -23582,6 +23582,59 @@ do
     Check(ok, "Bosskämpfe: Boss über das Kompendium erkannt (NPC-Nummer, deutscher/englischer Name), kein Trash, Sieg/Wipe, steht unter Bosse" .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- Bosskaempfe: Suche und Zeitstrahl auf der Seite "Bosse" (1.10.12.0)
+do
+    local BM = WeintCodex.UIBossMod
+    local oInst = _G.GetInstanceInfo
+    local ok, err = pcall(function()
+        _G.GetInstanceInfo = function() return nil end
+        WeintCodex.SavedData.bossLearn = {
+            ["c:lower_blackrock_spire/highlord_omokk"] = { _inst = "Untere Schwarzfelsspitze", _name = "Hochlord Omokk",
+                _codex = "lower_blackrock_spire/highlord_omokk", _pulls = 2,
+                Kriegsdonner = { first = 8, gap = 12, n = 5 } },
+            ["c:stratholme/baron_rivendare"] = { _inst = "Stratholme", _name = "Baron Totenschwur",
+                _codex = "stratholme/baron_rivendare", Todesgriff = { first = 20, n = 1 } },
+        }
+        -- Suche: Instanz, deutscher Name, englischer Name des Kompendiums.
+        local hits = BM.Search("strat")
+        assert(hits[1] and hits[1].inst == "Stratholme" and not hits[1].boss, "Instanz nicht gefunden")
+        hits = BM.Search("omokk")
+        assert(#hits == 1 and hits[1].boss == "c:lower_blackrock_spire/highlord_omokk" and hits[1].text == "Hochlord Omokk – Untere Schwarzfelsspitze", "Boss nicht gefunden")
+        hits = BM.Search("HIGHLORD")
+        assert(#hits == 1 and hits[1].boss, "englischer Name nicht gefunden")
+        assert(#BM.Search("") == 0 and #BM.Search("gibtesnicht") == 0, "leere/unpassende Suche liefert etwas")
+        BM.Jump(BM.Search("totenschwur")[1])
+        assert(BM.sel.inst == "Stratholme" and BM.sel.boss == "c:stratholme/baron_rivendare", "Sprung falsch")
+        local box = BM.CreateSearch(CreateFrame("Frame"), 600)
+        assert(#box.Show_("omo") == 1 and box.list:IsShown() and box.list.rows[1]:IsShown(), "Trefferliste fehlt")
+        box.Show_("")
+        assert(not box.list:IsShown(), "Trefferliste bleibt bei leerem Feld")
+        -- Zeitstrahl: Achse, Umrechnung, Ziehen.
+        assert(BM.AxisMax(8, 12, 8, 12) == 60 and BM.AxisMax(20, 40) == 150 and BM.AxisMax(0, 900) == 600, "Achse")
+        assert(BM.XToTime(300, 600, 60) == 30 and BM.XToTime(301, 600, 60) == 30 and BM.XToTime(-5, 600, 60) == 0, "Umrechnung/Raster")
+        BM.Jump(BM.Search("omokk")[1])
+        BM.FixSelection()
+        local rec, st = BM.SelRec()
+        assert(BM.sel.spell == "Kriegsdonner", "Faehigkeit nicht gewaehlt")
+        BM.DragTo(rec, st, "first", 10)
+        assert(rec.edit.first == 10 and BM.Effective(rec, st) == "timer", "erster Griff")
+        BM.DragTo(rec, st, "next", 25.3)
+        assert(rec.edit.gap == 15.5, "naechster Griff setzt Abstand: " .. tostring(rec.edit.gap))
+        BM.DragTo(rec, st, "next", 10.5)
+        assert(rec.edit.gap == BM.TL_MIN_GAP, "Abstand unter 2 s")
+        local tl = BM.CreateTimeline(CreateFrame("Frame"), 600)
+        assert(tl:IsShown() and tl.hFirst:IsShown() and tl.hNext:IsShown(), "Griffe fehlen")
+        assert(tl.info:GetText():find("zuerst 10 s", 1, true), "Anzeige: " .. tostring(tl.info:GetText()))
+        BM.sel.boss = "c:stratholme/baron_rivendare" BM.sel.spell = "Todesgriff"
+        tl.Sync()
+        assert(not tl.hNext:IsShown() and tl.info:GetText():find("danach unbekannt", 1, true), "ohne Abstand trotzdem zweiter Griff")
+    end)
+    _G.GetInstanceInfo = oInst
+    WeintCodex.SavedData.bossLearn = nil
+    WeintCodex.UIBossMod.sel.inst, WeintCodex.UIBossMod.sel.boss, WeintCodex.UIBossMod.sel.spell = nil, nil, nil
+    Check(ok, "Bosskämpfe: Suche nach Instanz und Boss (deutsch/englisch), Zeitstrahl mit Griffen, Raster 0,5 s, Abstand ab 2 s" .. (ok and "" or (": " .. tostring(err))))
+end
+
 -- Sterbezeit an der Plakette (1.8.0.0, ui/timetodie.lua)
 do
     local TD = WeintCodex.UITimeToDie

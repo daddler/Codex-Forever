@@ -22,6 +22,14 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.10.12.0",
+        date    = "02.11.2026",
+        notes   = {
+            "|cff7C6CFFBosse suchen|r – ein Suchfeld über der Auswahl findet Instanzen und Bosse, auf Deutsch wie auf Englisch; ein Klick springt hin.",
+            "|cff7C6CFFZeitstrahl zum Ziehen|r – wann eine Fähigkeit zuerst und danach wieder kommt, stellst du mit der Maus auf einer Zeitleiste ein. Die Messung steht blass dahinter, weitere Einsätze siehst du gleich mit.",
+        },
+    },
+    {
         version = "1.10.11.0",
         date    = "02.11.2026",
         notes   = {

@@ -9,6 +9,12 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.10.12.0] – 2026-11-02
+
+### Neu
+- Seite „Bosse“: Suchfeld (`BM.CreateSearch`, `BM.Search`, `BM.Jump`) über Instanz, Bossname im Client und englischen Namen des Kompendiums, bis 8 Treffer schwebend unter dem Feld, Enter nimmt den ersten.
+- Zeitstrahl je Fähigkeit mit Auslöser „nach Zeit“ (`BM.CreateTimeline`): Achse 60–600 s (`BM.AxisMax`), Griff „erster Einsatz“ verschiebt alles, Griff „nächster Einsatz“ setzt den Abstand (`BM.DragTo`, Raster 0,5 s, Abstand ≥ 2 s), weitere Einsätze als Striche, gemessene Zeiten blass; Mauszeiger „bewegen“ über den Griffen; je Bild nur während des Ziehens.
+
 ## [1.10.11.0] – 2026-11-02
 
 ### Geändert

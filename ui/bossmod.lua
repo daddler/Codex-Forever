@@ -2119,6 +2119,315 @@ local function CreateSpellList(parent, width)
 end
 BM.CreateSpellList = CreateSpellList
 
+--------------------------------------------------
+-- Suche (1.10.12.0, Wunsch): Instanzen und Bosse, Klick springt hin.
+-- Verglichen wird ohne Gross/Klein mit Instanz, Name im Client und dem
+-- englischen Namen des Kompendiums.
+--------------------------------------------------
+
+BM.SEARCH_MAX = 8
+local enNames
+local function EnglishName(code)
+    if not enNames then
+        enNames = {}
+        for _, list in ipairs({ _G.WeintCodex_Dungeons or {}, _G.WeintCodex_ClassicDungeons or {} }) do
+            for _, d in ipairs(list) do
+                for _, b in ipairs(type(d.bosses) == "table" and d.bosses or {}) do
+                    enNames[tostring(d.id) .. "/" .. tostring(b.id)] = b.name
+                end
+            end
+        end
+    end
+    return type(code) == "string" and enNames[code] or nil
+end
+function BM.Search(text)
+    local out = {}
+    if type(text) ~= "string" then return out end
+    local q = text:lower():gsub("^%s+", ""):gsub("%s+$", "")
+    if q == "" then return out end
+    local instSeen = {}
+    for key, st in pairs(BM.Bosses()) do
+        if type(st) == "table" then
+            local inst = InstOf(st)
+            local name = type(st._name) == "string" and st._name or key
+            local en = EnglishName(st._codex)
+            if inst:lower():find(q, 1, true) and not instSeen[inst] then
+                instSeen[inst] = true
+                out[#out + 1] = { inst = inst, text = inst, sort = "0" .. inst }
+            end
+            if name:lower():find(q, 1, true) or (en and en:lower():find(q, 1, true)) then
+                out[#out + 1] = { inst = inst, boss = key, text = name .. " – " .. inst, sort = "1" .. name }
+            end
+        end
+    end
+    table.sort(out, function(a, b) return a.sort < b.sort end)
+    for i = #out, BM.SEARCH_MAX + 1, -1 do out[i] = nil end
+    return out
+end
+function BM.Jump(hit)
+    if type(hit) ~= "table" then return end
+    BM.sel.inst = hit.inst
+    BM.sel.boss, BM.sel.spell, BM.listPage = hit.boss, nil, 1
+end
+
+local function CreateSearch(parent, width)
+    local f = CreateFrame("Frame", nil, parent)
+    f:SetSize(width, 52)
+    local lbl = K.NewText(f, 13, "OVERLAY")
+    lbl:SetPoint("TOPLEFT", f, "TOPLEFT", 0, -2)
+    lbl:SetTextColor(unpack(C.textMuted))
+    lbl:SetText("Suchen – Instanz oder Boss")
+    local eb = CreateFrame("EditBox", nil, f)
+    eb:SetSize(width, 26)
+    eb:SetPoint("BOTTOMLEFT", f, "BOTTOMLEFT", 0, 2)
+    eb:SetAutoFocus(false)
+    if eb.SetTextInsets then eb:SetTextInsets(8, 8, 0, 0) end
+    K.SetFont(eb, 12)
+    local bg = eb:CreateTexture(nil, "BACKGROUND")
+    bg:SetAllPoints(eb)
+    bg:SetColorTexture(unpack(C.surface3))
+    -- Treffer schweben ueber dem, was darunter steht.
+    local list = CreateFrame("Frame", nil, f)
+    list:SetFrameStrata("DIALOG")
+    list:SetFrameLevel((f:GetFrameLevel() or 1) + 50)
+    list:SetPoint("TOPLEFT", eb, "BOTTOMLEFT", 0, -2)
+    list:SetSize(width, 10)
+    local lbg = list:CreateTexture(nil, "BACKGROUND")
+    lbg:SetAllPoints(list)
+    lbg:SetColorTexture(C.bgDark[1], C.bgDark[2], C.bgDark[3], 0.98)
+    list.rows = {}
+    for i = 1, BM.SEARCH_MAX do
+        local r = CreateFrame("Button", nil, list)
+        r:SetSize(width, 24)
+        r:SetPoint("TOPLEFT", list, "TOPLEFT", 0, -(i - 1) * 24)
+        r.hl = r:CreateTexture(nil, "BACKGROUND")
+        r.hl:SetAllPoints(r)
+        r.hl:SetColorTexture(1, 1, 1, 0)
+        r.text = K.NewText(r, 12, "OVERLAY")
+        r.text:SetPoint("LEFT", r, "LEFT", 10, 0)
+        r.text:SetWidth(width - 20)
+        r.text:SetJustifyH("LEFT")
+        r.text:SetWordWrap(false)
+        r:SetScript("OnEnter", function(self) self.hl:SetColorTexture(1, 1, 1, 0.06) end)
+        r:SetScript("OnLeave", function(self) self.hl:SetColorTexture(1, 1, 1, 0) end)
+        r:SetScript("OnClick", function(self)
+            BM.Jump(self._hit)
+            eb:SetText("")
+            eb:ClearFocus()
+            list:Hide()
+            Rebuild()
+        end)
+        r:Hide()
+        list.rows[i] = r
+    end
+    list:Hide()
+    f.list, f.edit = list, eb
+    f.Show_ = function(text)
+        local hits = BM.Search(text)
+        for i, r in ipairs(list.rows) do
+            local h = hits[i]
+            r._hit = h
+            if h then
+                r.text:SetText(h.boss and h.text or (h.text .. "  ·  Instanz"))
+                r:Show()
+            else
+                r:Hide()
+            end
+        end
+        if #hits > 0 then list:SetHeight(#hits * 24) list:Show()
+        elseif text and text ~= "" then
+            list.rows[1].text:SetText("Nichts gefunden.") list.rows[1]._hit = nil list.rows[1]:Show()
+            list:SetHeight(24) list:Show()
+        else list:Hide() end
+        return hits
+    end
+    eb:SetScript("OnTextChanged", function(self) K.MatchFont(self, 12, self:GetText()) f.Show_(self:GetText()) end)
+    eb:SetScript("OnEnterPressed", function(self)
+        local first = list.rows[1]._hit
+        if first then BM.Jump(first) self:SetText("") self:ClearFocus() list:Hide() Rebuild() end
+    end)
+    eb:SetScript("OnEscapePressed", function(self) self:SetText("") self:ClearFocus() list:Hide() end)
+    f:SetScript("OnHide", function() list:Hide() end)
+    f.Sync = function() end
+    BM.search = f
+    return f
+end
+BM.CreateSearch = CreateSearch
+
+--------------------------------------------------
+-- Zeitstrahl (1.10.12.0, Wunsch: "wie beim Toene schneiden in der
+-- Companion"): waagerecht die Kampfzeit; der erste Griff ist der erste
+-- Einsatz, der zweite der naechste (legt den Abstand fest). Ziehen rastet
+-- auf 0,5 s; die Messung steht blass dahinter. Gilt fuer "nach Zeit".
+--------------------------------------------------
+
+BM.TL_SNAP, BM.TL_MIN_GAP = 0.5, 2
+-- Laenge der Achse: genug fuer drei Einsaetze, in 30-s-Schritten, 60-600 s.
+function BM.AxisMax(first, gap, mFirst, mGap)
+    local need = math.max((first or 0) + (gap or 0) * 3, (mFirst or 0) + (mGap or 0) * 2, 60)
+    return math.max(60, math.min(600, math.ceil(need / 30) * 30))
+end
+function BM.TimeToX(t, width, axis) return math.max(0, math.min(width, t / axis * width)) end
+function BM.XToTime(x, width, axis)
+    local t = math.max(0, math.min(axis, x / width * axis))
+    return math.floor(t / BM.TL_SNAP + 0.5) * BM.TL_SNAP
+end
+-- Ein Griff an eine Zeit: "first" verschiebt alles, "next" aendert den Abstand.
+function BM.DragTo(rec, st, which, t)
+    if not rec then return nil end
+    local _, first, gap = BM.Effective(rec, st)
+    first = first or 0
+    local e = Edit(rec, true)
+    if which == "first" then
+        e.first = math.max(0, t)
+    else
+        local g = math.max(BM.TL_MIN_GAP, t - (e.first or first))
+        e.gap = math.floor(g / BM.TL_SNAP + 0.5) * BM.TL_SNAP
+    end
+    if e.mode == nil and BM.Suggest(rec, st) ~= "timer" then e.mode = "timer" end
+    return e.first or first, e.gap or gap
+end
+
+local function SetMoveCursor(on)
+    if on then
+        if _G.SetCursor then pcall(_G.SetCursor, "Interface\\CURSOR\\UI-Cursor-Move") end
+    elseif _G.ResetCursor then
+        pcall(_G.ResetCursor)
+    end
+end
+
+BM.TL_REPEATS = 12
+local function CreateTimeline(parent, width)
+    local f = CreateFrame("Frame", nil, parent)
+    local H = 96
+    f:SetSize(width, H)
+    local lbl = K.NewText(f, 13, "OVERLAY")
+    lbl:SetPoint("TOPLEFT", f, "TOPLEFT", 0, -2)
+    lbl:SetTextColor(unpack(C.textMuted))
+    lbl:SetText("Zeitstrahl – Griffe ziehen")
+    f.info = K.NewText(f, 12, "OVERLAY")
+    f.info:SetPoint("TOPRIGHT", f, "TOPRIGHT", 0, -2)
+    local track = CreateFrame("Frame", nil, f)
+    track:SetPoint("TOPLEFT", f, "TOPLEFT", 8, -30)
+    track:SetSize(width - 16, 28)
+    local tbg = track:CreateTexture(nil, "BACKGROUND")
+    tbg:SetAllPoints(track)
+    tbg:SetColorTexture(unpack(C.surface3))
+    f.track = track
+    f.ticks = {}
+    for i = 1, 21 do
+        local tk = track:CreateTexture(nil, "BORDER")
+        tk:SetSize(1, 6)
+        local c = C.border
+        tk:SetColorTexture(c[1], c[2], c[3], 1)
+        local tl = K.NewText(f, 10, "OVERLAY")
+        tl:SetTextColor(unpack(C.textMuted))
+        f.ticks[i] = { tex = tk, label = tl }
+    end
+    local function Mark(w, h, color, alpha, layer)
+        local m = track:CreateTexture(nil, layer or "ARTWORK")
+        m:SetSize(w, h)
+        local c = C[color] or C.accent
+        m:SetColorTexture(c[1], c[2], c[3], alpha or 1)
+        return m
+    end
+    f.ghost1, f.ghost2 = Mark(2, 28, "textMuted", 0.6, "BORDER"), Mark(2, 28, "textMuted", 0.6, "BORDER")
+    f.repeats = {}
+    for i = 1, BM.TL_REPEATS do f.repeats[i] = Mark(2, 16, "accent", 0.55) end
+    local function Handle(which, w)
+        local h = CreateFrame("Button", nil, track)
+        h:SetSize(w, 34)
+        h.fill = h:CreateTexture(nil, "OVERLAY")
+        h.fill:SetPoint("CENTER", h, "CENTER", 0, 0)
+        h.fill:SetSize(w - 4, 30)
+        local c = which == "first" and C.textBright or C.accent
+        h.fill:SetColorTexture(c[1], c[2], c[3], 1)
+        h._which = which
+        h:SetScript("OnEnter", function(self)
+            SetMoveCursor(true)
+            GameTooltip:SetOwner(self, "ANCHOR_TOP")
+            GameTooltip:SetText(which == "first" and "Erster Einsatz" or "Nächster Einsatz", 1, 1, 1)
+            GameTooltip:AddLine(which == "first" and "Ziehen verschiebt alle Einsätze." or "Ziehen ändert den Abstand.", 0.7, 0.7, 0.75, true)
+            GameTooltip:Show()
+        end)
+        h:SetScript("OnLeave", function() if not f._drag then SetMoveCursor(false) end GameTooltip:Hide() end)
+        h:SetScript("OnMouseDown", function(self) f._drag = self._which end)
+        h:SetScript("OnMouseUp", function()
+            if f._drag then
+                f._drag = nil
+                SetMoveCursor(false)
+                track:SetScript("OnUpdate", nil)
+                Rebuild()
+            end
+        end)
+        return h
+    end
+    f.hFirst, f.hNext = Handle("first", 12), Handle("next", 12)
+    -- Waehrend gezogen wird: je Bild die Maus lesen (keine Tabelle je Bild).
+    local function OnDrag()
+        if not f._drag then return end
+        local rec, st = BM.SelRec()
+        if not rec or not _G.GetCursorPosition then return end
+        local cx = _G.GetCursorPosition()
+        local scale = track:GetEffectiveScale() or 1
+        local left = track:GetLeft() or 0
+        BM.DragTo(rec, st, f._drag, BM.XToTime(cx / scale - left, track:GetWidth(), f._axis or 60))
+        f.Sync(true)
+    end
+    f.hFirst:HookScript("OnMouseDown", function() track:SetScript("OnUpdate", OnDrag) end)
+    f.hNext:HookScript("OnMouseDown", function() track:SetScript("OnUpdate", OnDrag) end)
+    f.Sync = function(keepAxis)
+        local rec, st = BM.SelRec()
+        local tw = track:GetWidth()
+        if not rec then f:Hide() return end
+        f:Show()
+        local _, first, gap = BM.Effective(rec, st)
+        first = first or rec.first or 0
+        if not keepAxis or not f._axis then f._axis = BM.AxisMax(first, gap, rec.first, rec.gap) end
+        local axis = f._axis
+        -- Achse: Striche alle 10 s, Zahlen alle 30 s (bei langer Achse 60 s).
+        local step = axis <= 120 and 10 or 30
+        local lab = axis <= 120 and 30 or (axis <= 300 and 60 or 120)
+        for i, tk in ipairs(f.ticks) do
+            local t = (i - 1) * step
+            if t <= axis then
+                local x = BM.TimeToX(t, tw, axis)
+                tk.tex:ClearAllPoints() tk.tex:SetPoint("BOTTOMLEFT", track, "BOTTOMLEFT", x, 0) tk.tex:Show()
+                if t % lab == 0 then
+                    tk.label:ClearAllPoints()
+                    tk.label:SetPoint("TOP", track, "BOTTOMLEFT", x + 8, -3)
+                    tk.label:SetText(t >= 60 and string.format("%d:%02d", math.floor(t / 60), t % 60) or (t .. " s"))
+                    tk.label:Show()
+                else tk.label:Hide() end
+            else
+                tk.tex:Hide() tk.label:Hide()
+            end
+        end
+        local function At(tex, t, yoff)
+            tex:ClearAllPoints()
+            tex:SetPoint("CENTER", track, "LEFT", BM.TimeToX(t, tw, axis), yoff or 0)
+        end
+        if rec.first then At(f.ghost1, rec.first) f.ghost1:Show() else f.ghost1:Hide() end
+        if rec.first and rec.gap then At(f.ghost2, rec.first + rec.gap) f.ghost2:Show() else f.ghost2:Hide() end
+        At(f.hFirst, first)
+        if gap then
+            At(f.hNext, first + gap) f.hNext:Show()
+            for i, m in ipairs(f.repeats) do
+                local t = first + gap * (i + 1)
+                if t <= axis then At(m, t) m:Show() else m:Hide() end
+            end
+        else
+            f.hNext:Hide()
+            for _, m in ipairs(f.repeats) do m:Hide() end
+        end
+        f.info:SetText(gap and ("zuerst " .. Secs(first) .. " · dann alle " .. Secs(gap)) or ("zuerst " .. Secs(first) .. " · danach unbekannt"))
+    end
+    f.Sync()
+    BM.timeline = f
+    return f
+end
+BM.CreateTimeline = CreateTimeline
+
 local function BuildBosses(B)
     BM.FixSelection()
     B:Section("Bosse", "Nach jedem Bosskampf steht hier, wann der Boss was gewirkt hat. Haken weg = nicht ankündigen. Klick auf eine Zeile: darunter genauer einstellen.")
@@ -2128,6 +2437,7 @@ local function BuildBosses(B)
         B:Note("Noch kein Boss gemessen. Nach dem ersten Bosskampf steht er hier – du landest immer in der Instanz, in der du gerade bist.")
         return
     end
+    B:Row({ type = "custom", height = 52, create = CreateSearch })
     B:Row({ type = "dropdown", label = "Instanz", items = BM.InstItems,
             get = function() return BM.sel.inst end,
             set = function(v) BM.sel.inst, BM.sel.boss, BM.sel.spell = v, nil, nil Rebuild() end },
@@ -2161,6 +2471,7 @@ local function BuildBosses(B)
               { type = "button", label = "Diese Fähigkeit", text = "Auf Messung zurücksetzen",
                 onClick = function() rec.edit = nil Rebuild() end })
     elseif mode ~= "off" and mode ~= "power" then
+        B:Row({ type = "custom", height = 96, create = CreateTimeline })
         B:Row({ type = "input", label = "Zuerst nach dem Pull (s) – leer: " .. Secs(rec.first),
                 get = function() local e = Edit(rec) return NumText(e and e.first) end,
                 set = function(v) local e = Edit(rec, true) e.first = Num(v) end },
