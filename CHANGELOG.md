@@ -9,6 +9,14 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.10.7.0] – 2026-11-02
+
+### Geändert
+- Bossleisten: Takt jedes Bild statt alle 0,1 s (das ruckelte) – Werte der Leisten und Zeitleiste je Bild, Zahlen weiter alle 0,1 s (`BM.Tick(doText)`). Eine Leiste behält ihre Zeile, solange sie am selben Anker bleibt (`t._row`, `Assign`), und gleitet an ihren neuen Platz (`BM.Animate`, `BM.SLIDE`); neue blenden ein (`BM.FADE`). Felder der Zeilen mit Unterstrich (Konvention der Attrappe).
+
+### Neu
+- Zeitleiste von oben nach unten (`bossTrack`, ab Werk aus; `bossTrackSecs` 15/30/60, `bossTrackH` 160–500), Platz `bosstrack`, bis `BM.TRACK_N` = 12 Symbole auf der Höhe ihrer Restzeit, Markierungen je Sekundenstufe; Kampftimer ohne Dauer nie. Im Einrichten-Fenster und mit eigener Fläche zum Ziehen.
+
 ## [1.10.6.0] – 2026-11-02
 
 ### Neu

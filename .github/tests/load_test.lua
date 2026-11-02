@@ -23103,11 +23103,11 @@ do
         local shown = 0
         for i = 1, BM.MAX_ROWS do if f.rows[i]:IsShown() then shown = shown + 1 end end
         assert(shown == 3, "Hauptanker zeigt " .. shown .. " statt 3")
-        assert(BM.emph.rows[1]:IsShown() and BM.emph.rows[1].timer.key == "soon", "Leiste unter 5 s nicht am zweiten Anker")
+        assert(BM.emph.rows[1]:IsShown() and BM.emph.rows[1]._timer.key == "soon", "Leiste unter 5 s nicht am zweiten Anker")
         -- Eine Leiste springt hinueber, wenn sie die Schwelle erreicht.
         now = now + 17 BM.Tick()
         local moved = false
-        for i = 1, BM.EMPH_ROWS do local r = BM.emph.rows[i] if r:IsShown() and r.timer.key == "t1" then moved = true end end
+        for i = 1, BM.EMPH_ROWS do local r = BM.emph.rows[i] if r:IsShown() and r._timer.key == "t1" then moved = true end end
         assert(moved, "Leiste springt nicht an 'gleich dran'")
         -- Aus: alles am Hauptanker.
         K.Set("comfort", "bossEmph", false) BM.Refresh()
@@ -23115,7 +23115,7 @@ do
         -- Fuellt sich statt leert sich.
         K.Set("comfort", "bossFill", "fill") BM.Refresh()
         local r1 = f.rows[1]
-        local t1 = r1.timer
+        local t1 = r1._timer
         local frac = (t1.ends - now) / (t1.ends - t1.start)
         assert(math.abs(r1.bar:GetValue() - (1 - frac)) < 0.01, "Fuellen falsch")
         for k in pairs(BM.timers) do BM.timers[k] = nil end
@@ -23151,6 +23151,80 @@ do
     for k in pairs(WeintCodex.UIBossMod.timers) do WeintCodex.UIBossMod.timers[k] = nil end
     if WeintCodex.UIBossMod.frame then WeintCodex.UIBossMod.ApplyLook() end
     Check(ok, "Bosskämpfe: Leisten einstellen – Größe, Anzahl, gleich dran, Füllen, Testleisten, Ziehen, Zurücksetzen, nie im Kampf" .. (ok and "" or (": " .. tostring(err))))
+end
+
+-- Bosskaempfe: Leisten gleiten, Zeitleiste von oben nach unten (1.10.6.0)
+do
+    local BM = WeintCodex.UIBossMod
+    local oActive, oTime = K.IsActive, _G.GetTime
+    local saved = {}
+    for k in pairs(BM.DEFAULTS) do saved[k] = K.Get("comfort", k) end
+    local ok, err = pcall(function()
+        local now = 20000
+        _G.GetTime = function() return now end
+        K.IsActive = function() return true end
+        for k, v in pairs(BM.DEFAULTS) do K.Set("comfort", k, v) end
+        for k in pairs(BM.timers) do BM.timers[k] = nil end
+        BM.ApplyLook()
+        local f = BM.Build()
+        -- Eine Leiste behaelt ihre Zeile, wenn eine kuerzere davor kommt,
+        -- und gleitet an den neuen Platz statt zu springen.
+        BM.Start("a", "A", 40, nil, "blue")
+        local ra = BM.timers.a._row
+        assert(ra and ra._slot == 1, "erste Leiste nicht auf Platz 1")
+        assert(ra._fade == 0, "neue Leiste blendet nicht ein")
+        BM.Animate(1)
+        assert(ra._fade == 1, "Einblenden endet nicht")
+        BM.Start("b", "B", 20, nil, "blue")
+        assert(BM.timers.a._row == ra and ra._slot == 2, "Leiste wechselt die Zeile statt zu gleiten")
+        local target = (2 - 1) * (f._h + BM.GAP)
+        assert(ra._cy == 0, "springt sofort an den neuen Platz")
+        BM.Animate(0.016)
+        assert(ra._cy > 0 and ra._cy < target, "gleitet nicht: " .. tostring(ra._cy))
+        for _ = 1, 60 do BM.Animate(0.016) end
+        assert(ra._cy == target, "kommt nicht an: " .. tostring(ra._cy))
+        -- Jedes Bild bewegt die Leiste, die Zahl nur alle 0,1 s.
+        local before = ra.bar:GetValue()
+        ra.time:SetText("alt")
+        now = now + 0.016
+        BM.Tick(false)
+        assert(ra.bar:GetValue() < before, "Leiste bewegt sich nicht je Bild")
+        assert(ra.time:GetText() == "alt", "Zahl wird jedes Bild neu geschrieben")
+        BM.Tick(true)
+        assert(ra.time:GetText() ~= "alt", "Zahl wird nie neu geschrieben")
+        -- Zeitleiste: aus ab Werk; an: Symbol auf der Hoehe seiner Restzeit.
+        assert(not BM.track:IsShown(), "Zeitleiste ab Werk an")
+        K.Set("comfort", "bossTrack", true)
+        K.Set("comfort", "bossTrackSecs", 30)
+        K.Set("comfort", "bossTrackH", 300)
+        BM.ApplyLook()
+        assert(BM.track:IsShown(), "Zeitleiste trotz an unsichtbar")
+        local ys = {}
+        for i, m in ipairs(BM.track.marks) do
+            m.SetPoint = function(self, _, _, _, _, y) ys[i] = y end
+        end
+        BM.Start("fight", "Kampf", nil, nil, "textMuted")
+        for k in pairs(BM.timers) do if k ~= "fight" then BM.timers[k] = nil end end
+        BM.Start("c", "C", 15, nil, "blue")
+        BM.Start("d", "D", 50, nil, "blue")
+        BM.TrackFrame(now)
+        local shown = {}
+        for i, m in ipairs(BM.track.marks) do if m._timer then shown[m._timer.key] = ys[i] end end
+        assert(shown.c and math.abs(shown.c - 150) < 0.5, "Symbol nicht auf halber Hoehe: " .. tostring(shown.c))
+        assert(shown.d == nil, "Symbol ausserhalb des Zeitraums gezeigt")
+        assert(shown.fight == nil, "Kampftimer auf der Zeitleiste")
+        now = now + 6
+        BM.TrackFrame(now)
+        for i, m in ipairs(BM.track.marks) do if m._timer and m._timer.key == "c" then shown.c = ys[i] end end
+        assert(math.abs(shown.c - 90) < 0.5, "Symbol wandert nicht nach unten: " .. tostring(shown.c))
+        K.Set("comfort", "bossTrackSecs", 99)
+        assert(BM.TrackWindow() == 30, "Unsinn als Zeitraum angenommen")
+    end)
+    K.IsActive, _G.GetTime = oActive, oTime
+    for k, v in pairs(saved) do K.Set("comfort", k, v) end
+    for k in pairs(WeintCodex.UIBossMod.timers) do WeintCodex.UIBossMod.timers[k] = nil end
+    if WeintCodex.UIBossMod.frame then WeintCodex.UIBossMod.ApplyLook() end
+    Check(ok, "Bosskämpfe: Leisten gleiten und blenden ein, je Bild bewegt, Zahl alle 0,1 s, Zeitleiste von oben nach unten" .. (ok and "" or (": " .. tostring(err))))
 end
 
 -- Sterbezeit an der Plakette (1.8.0.0, ui/timetodie.lua)

@@ -22,6 +22,14 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.10.7.0",
+        date    = "02.11.2026",
+        notes   = {
+            "|cff7C6CFFBossleisten laufen flüssig|r – sie bewegen sich jetzt in jedem Bild statt zehnmal je Sekunde, gleiten an ihren neuen Platz, wenn sich die Reihenfolge ändert, und blenden sanft ein.",
+            "|cff7C6CFFZeitleiste von oben nach unten|r – auf Wunsch neben den Leisten: jede Fähigkeit wandert als Symbol nach unten, unten ist „jetzt“. Höhe und Zeitraum (15, 30 oder 60 Sekunden) unter „Leisten einstellen“.",
+        },
+    },
+    {
         version = "1.10.6.0",
         date    = "02.11.2026",
         notes   = {

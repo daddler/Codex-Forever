@@ -79,6 +79,9 @@ BM.DEFAULTS = {
     bossEmphSecs = 5,       -- ab so vielen Sekunden Rest
     bossWarnSize = 24,      -- Schrift der grossen Warnung
     bossWarnTime = 4,       -- so lange steht sie (s)
+    bossTrack    = false,   -- 1.10.6.0: Zeitleiste von oben nach unten
+    bossTrackSecs = 30,     -- 15 | 30 | 60 s im Blick
+    bossTrackH   = 300,     -- Hoehe der Zeitleiste
 }
 
 -- Die Anlaesse, in der Reihenfolge der Seite.
@@ -186,6 +189,7 @@ local frame        -- Hauptanker mit den Leisten
 local emph         -- zweiter Anker: was gleich dran ist, groesser (wie BigWigs)
 local clock        -- Takt, unabhaengig davon, welcher Anker gerade sichtbar ist
 local setupOn = false
+local handles = {}   -- Flaechen zum Ziehen beim Einrichten (BM.Setup)
 
 local function Num(k, lo, hi)
     local v = tonumber(K.Get(KEY, k)) or BM.DEFAULTS[k]
@@ -217,21 +221,28 @@ local function NewRow(parent)
 end
 
 -- Groesse, Schrift, Symbol und Richtung aus den Einstellungen - jederzeit,
--- auch waehrend Leisten laufen.
+-- auch waehrend Leisten laufen. Die Zeilen stehen nicht fest an ihrem
+-- Platz: jede hat einen Ziel-Platz (slot) und gleitet dorthin (BM.Animate).
+local function RowY(f, slot) return (slot - 1) * (f._h + BM.GAP) end
+local function PlaceRow(r, y)
+    local f = r._owner
+    r._cy = y
+    r:ClearAllPoints()
+    if f._up then r:SetPoint("BOTTOMLEFT", f, "BOTTOMLEFT", 0, y)
+    else r:SetPoint("TOPLEFT", f, "TOPLEFT", 0, -y) end
+end
+
 local function LayRows(f, count, w, h, font)
-    local up = K.Get(KEY, "bossGrow") == "up"
     local icon = K.Get(KEY, "bossIcon")
+    f._up, f._h = K.Get(KEY, "bossGrow") == "up", h
     f:SetSize(w, count * (h + BM.GAP) - BM.GAP)
     for i, r in ipairs(f.rows) do
         r:SetSize(w, h)
-        r:ClearAllPoints()
-        local off = (i - 1) * (h + BM.GAP)
-        if up then r:SetPoint("BOTTOMLEFT", f, "BOTTOMLEFT", 0, off)
-        else r:SetPoint("TOPLEFT", f, "TOPLEFT", 0, -off) end
+        PlaceRow(r, RowY(f, r._slot or i))
         r.icon:ClearAllPoints()
         r.bar:ClearAllPoints()
         r.icon:SetSize(h, h)
-        r.noIcon = icon == "none"
+        r._noIcon = icon == "none"
         if icon == "right" then
             r.icon:SetPoint("RIGHT", r, "RIGHT", 0, 0)
             r.bar:SetPoint("TOPLEFT", r, "TOPLEFT", 0, 0)
@@ -253,6 +264,129 @@ local function LayRows(f, count, w, h, font)
     end
 end
 
+--------------------------------------------------
+-- Zeitleiste von oben nach unten (1.10.6.0, Wunsch des Besitzers): eine
+-- senkrechte Spur, oben "spaeter", unten "jetzt"; jede Leiste mit Dauer
+-- wandert als Symbol hinunter, sobald sie im Fenster (15/30/60 s) ist.
+--------------------------------------------------
+
+BM.TRACK_N = 12
+BM.TRACK_TICKS = { 5, 10, 15, 20, 30, 45, 60 }
+local track
+
+local function BuildTrack()
+    track = CreateFrame("Frame", "WeintCodexBossTrack", UIParent)
+    track:SetFrameStrata("MEDIUM")
+    track.line = track:CreateTexture(nil, "BACKGROUND")
+    track.line:SetWidth(2)
+    local lc = C.border
+    track.line:SetColorTexture(lc[1], lc[2], lc[3], 0.9)
+    track.now = track:CreateTexture(nil, "ARTWORK")
+    track.now:SetHeight(2)
+    local nc = C.textMuted
+    track.now:SetColorTexture(nc[1], nc[2], nc[3], 0.9)
+    track.ticks = {}
+    for i, sec in ipairs(BM.TRACK_TICKS) do
+        local tk = track:CreateTexture(nil, "BACKGROUND")
+        tk:SetSize(8, 1)
+        tk:SetColorTexture(lc[1], lc[2], lc[3], 0.9)
+        local lbl = K.NewText(track, 9, "OVERLAY")
+        lbl:SetTextColor(unpack(C.textFaint or C.textMuted))
+        lbl:SetText(tostring(sec))
+        track.ticks[i] = { tex = tk, label = lbl, sec = sec }
+    end
+    track.marks = {}
+    for i = 1, BM.TRACK_N do
+        local m = CreateFrame("Frame", nil, track)
+        m:SetSize(22, 22)
+        m.icon = m:CreateTexture(nil, "ARTWORK")
+        m.icon:SetAllPoints(m)
+        m.icon:SetTexCoord(0.08, 0.92, 0.08, 0.92)
+        m.label = K.NewText(m, 11, "OVERLAY")
+        m.label:SetPoint("LEFT", m, "RIGHT", 6, 0)
+        m.label:SetJustifyH("LEFT")
+        m.label:SetWordWrap(false)
+        m.label:SetWidth(170)
+        m:Hide()
+        track.marks[i] = m
+    end
+    track.WCShowForUnlock = function(self, on)
+        self._unlock = on and true or nil
+        BM.Refresh()
+    end
+    K.RegisterMover(track, "bosstrack", "Bosskämpfe: Zeitleiste", K.Layout("bosstrack"))
+    track:Hide()
+    BM.track = track
+end
+
+function BM.TrackWindow()
+    local v = tonumber(K.Get(KEY, "bossTrackSecs"))
+    return (v == 15 or v == 30 or v == 60) and v or 30
+end
+
+local function LayTrack()
+    local h = Num("bossTrackH", 160, 500)
+    local win = BM.TrackWindow()
+    track:SetSize(26, h)
+    track._h, track._win = h, win
+    track.line:ClearAllPoints()
+    track.line:SetPoint("TOP", track, "TOP", 0, 0)
+    track.line:SetPoint("BOTTOM", track, "BOTTOM", 0, 0)
+    track.now:ClearAllPoints()
+    track.now:SetPoint("BOTTOMLEFT", track, "BOTTOMLEFT", -4, 0)
+    track.now:SetPoint("BOTTOMRIGHT", track, "BOTTOMRIGHT", 4, 0)
+    for _, tk in ipairs(track.ticks) do
+        if tk.sec <= win then
+            local y = tk.sec / win * h
+            tk.tex:ClearAllPoints()
+            tk.tex:SetPoint("CENTER", track, "BOTTOM", 0, y)
+            tk.label:ClearAllPoints()
+            tk.label:SetPoint("RIGHT", track, "BOTTOMLEFT", -2, y)
+            tk.tex:Show() tk.label:Show()
+        else
+            tk.tex:Hide() tk.label:Hide()
+        end
+    end
+end
+
+-- Je Bild: Symbole an ihre Hoehe. Name und Symbol nur, wenn ein Zeichen
+-- einen anderen Timer bekommt.
+function BM.TrackFrame(now)
+    if not track or not track:IsShown() then return end
+    local h, win = track._h, track._win
+    local n = 0
+    for i = 1, #order do
+        local t = order[i]
+        if n >= BM.TRACK_N then break end
+        if t.ends and not t.noTrack then
+            local left = t.hold or (t.ends - now)
+            if left >= 0 and left <= win then
+                n = n + 1
+                local m = track.marks[n]
+                if m._timer ~= t then
+                    m._timer = t
+                    m.label:SetText(t.label)
+                    if t.icon then
+                        m.icon:SetTexture(t.icon)
+                        m.icon:SetVertexColor(1, 1, 1, 1)
+                    else
+                        m.icon:SetColorTexture(1, 1, 1, 1)
+                        local c = C[t.color or "accent"] or C.accent
+                        m.icon:SetVertexColor(c[1], c[2], c[3], 1)
+                    end
+                    m:Show()
+                end
+                m:ClearAllPoints()
+                m:SetPoint("CENTER", track, "BOTTOM", 0, left / win * h)
+            end
+        end
+    end
+    for i = n + 1, BM.TRACK_N do
+        local m = track.marks[i]
+        if m._timer then m._timer = nil m:Hide() end
+    end
+end
+
 function BM.ApplyLook()
     if not frame then return end
     local w, h, font, max = BM.Look()
@@ -261,6 +395,8 @@ function BM.ApplyLook()
     local size = Num("bossWarnSize", 16, 40)
     K.SetFont(frame.warn.text, size)
     frame.warn:SetSize(700, size + 16)
+    LayTrack()
+    for _, m in ipairs(track.marks) do m._timer = nil end
     BM.Refresh()
 end
 
@@ -269,15 +405,18 @@ local function ColorOf(name)
     return c[1], c[2], c[3]
 end
 
--- Der Takt: Werte einmal je Takt gelesen, keine Tabelle und keine
--- Funktion je Bild (CLAUDE.md, "Anything that runs repeatedly").
-local tNow, tFill, tEmphOn, tEmphSecs, tSoonSecs, tDone, tRelayout
+-- Der Takt (1.10.6.0: jedes Bild, nicht mehr zehnmal je Sekunde - das
+-- ruckelte). Leisten und Zeitleiste bewegen sich jedes Bild, die Zahl
+-- daneben wird alle 0,1 s neu geschrieben (Zeichenketten kosten). Werte
+-- einmal je Takt gelesen, keine Tabelle und keine Funktion je Bild
+-- (CLAUDE.md, "Anything that runs repeatedly").
+local tNow, tText, tFill, tEmphOn, tEmphSecs, tSoonSecs, tDone, tRelayout
 local function TickRow(r)
-    local t = r.timer
+    local t = r._timer
     if not t or not r:IsShown() then return end
     if not t.ends then
         r.bar:SetValue(1)
-        r.time:SetText(BM.Format(tNow - t.start))
+        if tText then r.time:SetText(BM.Format(tNow - t.start)) end
         return
     end
     -- Angehalten (Zeitleiste des Spiels, Zustand "pausiert"): die Restzeit
@@ -287,7 +426,7 @@ local function TickRow(r)
         local total = t.total or t.hold
         local frac = total > 0 and t.hold / total or 0
         r.bar:SetValue(tFill and (1 - frac) or frac)
-        r.time:SetText(BM.Format(t.hold))
+        if tText then r.time:SetText(BM.Format(t.hold)) end
         return
     end
     local left = t.ends - tNow
@@ -300,7 +439,7 @@ local function TickRow(r)
     local total = t.ends - t.start
     local frac = total > 0 and left / total or 0
     r.bar:SetValue(tFill and (1 - frac) or frac)
-    r.time:SetText(BM.Format(left))
+    if tText then r.time:SetText(BM.Format(left)) end
     if t.soon and not t.warned and left <= tSoonSecs then
         t.warned = true
         if not t.demo or Opt("bossSound") then BM.Sound("Soon", t.demo) end
@@ -308,9 +447,11 @@ local function TickRow(r)
     if tEmphOn and not t.emph and left <= tEmphSecs then tRelayout = true end
 end
 
-function BM.Tick()
+-- doText: Zahlen neu schreiben (ohne Angabe: ja).
+function BM.Tick(doText)
     if not frame then return end
     tNow = Now()
+    tText = doText ~= false
     tFill = K.Get(KEY, "bossFill") == "fill"
     tEmphOn = Opt("bossEmph")
     tEmphSecs = Num("bossEmphSecs", 2, 10)
@@ -318,6 +459,7 @@ function BM.Tick()
     tDone, tRelayout = nil, nil
     for i = 1, BM.MAX_ROWS do TickRow(frame.rows[i]) end
     for i = 1, BM.EMPH_ROWS do TickRow(emph.rows[i]) end
+    BM.TrackFrame(tNow)
     local done = tDone
     if done then
         timers[done.key] = nil
@@ -328,25 +470,64 @@ function BM.Tick()
     end
 end
 
-local function Fill(r, t)
-    r.timer = t
+-- Gleiten und Einblenden: je Zeile ein Stueck naeher an ihren Platz.
+BM.SLIDE, BM.FADE = 14, 6
+local function AnimateRow(r, dt)
+    if not r:IsShown() then return end
+    local f = r._owner
+    local ty = RowY(f, r._slot or 1)
+    local cy = r._cy or ty
+    if cy ~= ty then
+        local ny = cy + (ty - cy) * math.min(1, dt * BM.SLIDE)
+        if math.abs(ty - ny) < 0.5 then ny = ty end
+        PlaceRow(r, ny)
+    end
+    local a = r._fade or 1
+    if a < 1 then
+        a = math.min(1, a + dt * BM.FADE)
+        r._fade = a
+        r:SetAlpha(a)
+    end
+end
+function BM.Animate(dt)
+    if not frame then return end
+    for i = 1, BM.MAX_ROWS do AnimateRow(frame.rows[i], dt) end
+    for i = 1, BM.EMPH_ROWS do AnimateRow(emph.rows[i], dt) end
+end
+
+local function Fill(r, t, slot, fresh)
+    r._timer = t
+    t._row = r
+    r._slot = slot
     r.label:SetText(t.label)
-    if t.icon and not r.noIcon then r.icon:SetTexture(t.icon) r.icon:Show() else r.icon:Hide() end
+    if t.icon and not r._noIcon then r.icon:SetTexture(t.icon) r.icon:Show() else r.icon:Hide() end
     r.bar:SetStatusBarColor(ColorOf(t.emph and "red" or t.color))
+    if fresh then
+        -- Neu: gleich an ihrem Platz, kurz eingeblendet.
+        PlaceRow(r, RowY(r._owner, slot))
+        r._fade = 0
+        r:SetAlpha(0)
+    end
     r:Show()
 end
-local function Clear(r) r.timer = nil r:Hide() end
+local function Clear(r)
+    if r._timer and r._timer._row == r then r._timer._row = nil end
+    r._timer = nil
+    r._fade = 1
+    r:SetAlpha(1)
+    r:Hide()
+end
 
 local function Build()
     if frame then return frame end
     frame = CreateFrame("Frame", "WeintCodexBossBars", UIParent)
     frame:SetFrameStrata("MEDIUM")
     frame.rows = {}
-    for i = 1, BM.MAX_ROWS do frame.rows[i] = NewRow(frame) end
+    for i = 1, BM.MAX_ROWS do frame.rows[i] = NewRow(frame) frame.rows[i]._owner = frame end
     emph = CreateFrame("Frame", "WeintCodexBossEmph", UIParent)
     emph:SetFrameStrata("MEDIUM")
     emph.rows = {}
-    for i = 1, BM.EMPH_ROWS do emph.rows[i] = NewRow(emph) end
+    for i = 1, BM.EMPH_ROWS do emph.rows[i] = NewRow(emph) emph.rows[i]._owner = emph end
     -- Grosse Warnung in der Mitte (eigener Platz, verschiebbar).
     local warn = CreateFrame("Frame", "WeintCodexBossWarning", UIParent)
     warn:SetSize(700, 40)
@@ -354,13 +535,16 @@ local function Build()
     warn.text:SetAllPoints(warn)
     warn:Hide()
     frame.warn = warn
+    BuildTrack()
     clock = CreateFrame("Frame", nil, UIParent)
     clock._acc = 0
     clock:SetScript("OnUpdate", function(self, el)
-        self._acc = self._acc + (el or 0)
-        if self._acc < 0.1 then return end
-        self._acc = 0
-        BM.Tick()
+        el = el or 0
+        self._acc = self._acc + el
+        local text = self._acc >= 0.1
+        if text then self._acc = 0 end
+        BM.Animate(el)
+        BM.Tick(text)
     end)
     clock:Hide()
     frame.WCShowForUnlock = function(self, on)
@@ -388,6 +572,43 @@ BM.Build = Build
 
 -- Hauptanker bis "Anzahl", was gleich dran ist an den zweiten - BigWigs
 -- nennt das "hervorheben". Ohne Dauer (Kampftimer) nie hervorgehoben.
+-- Eine Leiste behaelt ihre Zeile, solange sie am selben Anker bleibt; nur
+-- ihr Platz aendert sich - und dorthin gleitet sie.
+local mainSel, emphSel = {}, {}
+local function Assign(f, sel, n, rowCount)
+    for i = 1, rowCount do f.rows[i]._keep = nil end
+    -- Erst die, die schon eine Zeile hier haben ...
+    for i = 1, n do
+        local t = sel[i]
+        local r = t._row
+        if r and r._owner == f and r._timer == t then
+            r._keep = true
+            Fill(r, t, i, false)
+        else
+            t._row = nil
+        end
+    end
+    -- ... dann die neuen in freie Zeilen.
+    for i = 1, n do
+        local t = sel[i]
+        if not t._row then
+            for j = 1, rowCount do
+                local r = f.rows[j]
+                if not r._keep then
+                    if r._timer and r._timer._row == r then r._timer._row = nil end
+                    r._keep = true
+                    Fill(r, t, i, true)
+                    break
+                end
+            end
+        end
+    end
+    for i = 1, rowCount do
+        local r = f.rows[i]
+        if not r._keep then Clear(r) end
+    end
+end
+
 function BM.Refresh()
     local f = Build()
     local list = BM.Sorted()
@@ -396,22 +617,42 @@ function BM.Refresh()
     local secs = Num("bossEmphSecs", 2, 10)
     local _, _, _, max = BM.Look()
     local mi, ei = 0, 0
+    for i = #mainSel, 1, -1 do mainSel[i] = nil end
+    for i = #emphSel, 1, -1 do emphSel[i] = nil end
     for i = 1, #list do
         local t = list[i]
-        local e = useEmph and ei < BM.EMPH_ROWS and (t.forceEmph or (t.ends and t.ends - now <= secs))
-        t.emph = e and true or nil
+        local e = useEmph and ei < BM.EMPH_ROWS and (t.forceEmph or (t.ends and not t.hold and t.ends - now <= secs))
+        if (e and true or nil) ~= t.emph then
+            -- Wechsel des Ankers: neue Zeile am anderen.
+            t.emph = e and true or nil
+            if t._row then t._row = nil end
+        end
         if e then
             ei = ei + 1
-            Fill(emph.rows[ei], t)
+            emphSel[ei] = t
         elseif mi < max then
             mi = mi + 1
-            Fill(f.rows[mi], t)
+            mainSel[mi] = t
         end
     end
-    for i = mi + 1, BM.MAX_ROWS do Clear(f.rows[i]) end
-    for i = ei + 1, BM.EMPH_ROWS do Clear(emph.rows[i]) end
+    Assign(f, mainSel, mi, BM.MAX_ROWS)
+    Assign(emph, emphSel, ei, BM.EMPH_ROWS)
     if mi > 0 or setupOn or f._unlock then f:Show() else f:Hide() end
     if ei > 0 or setupOn or emph._unlock then emph:Show() else emph:Hide() end
+    local trackOn = Opt("bossTrack")
+    if trackOn or track._unlock then
+        local any = false
+        for i = 1, #list do if list[i].ends then any = true break end end
+        if any or setupOn or track._unlock then track:Show() else track:Hide() end
+    else
+        track:Hide()
+    end
+    if setupOn then
+        -- Ziehen nur, wo etwas zu sehen ist (Zeitleiste aus: keine Flaeche).
+        for _, h in pairs(handles) do
+            if h._target and h._target:IsShown() then h:Show() else h:Hide() end
+        end
+    end
     if #list > 0 then clock:Show() BM.Tick() else clock:Hide() end
 end
 
@@ -469,7 +710,6 @@ function BM.DemoBars(on)
     BM.Refresh()
 end
 
-local handles = {}
 local function Handle(target, key, label)
     local h = handles[key]
     if not h then
@@ -498,6 +738,7 @@ local function Handle(target, key, label)
         h:SetScript("OnLeave", function() GameTooltip:Hide() end)
         handles[key] = h
     end
+    h._target = target
     h:ClearAllPoints()
     h:SetAllPoints(target)
     return h
@@ -516,7 +757,7 @@ local function BuildPanel()
     local W, COL = 560, 250
     panel = CreateFrame("Frame", "WeintCodexBossSetup", UIParent)
     panel:SetFrameStrata("DIALOG")
-    panel:SetSize(W, 420)
+    panel:SetSize(W, 500)
     panel:SetPoint("CENTER", UIParent, "CENTER", 0, -170)
     panel:SetClampedToScreen(true)
     panel:EnableMouse(true)
@@ -573,6 +814,13 @@ local function BuildPanel()
     place(WeintCodex.CreateToggle(panel, { label = "Was gleich dran ist, groß extra", width = COL,
         get = get("bossEmph"), set = apply("bossEmph") }), 2, y0 - 172)
     place(slider("bossEmphSecs", "Ab so vielen Sekunden Rest", 2, 10, 1, function(v) return v .. " s" end), 2, y0 - 214)
+    place(slider("bossTrackH", "Höhe der Zeitleiste", 160, 500, 10, px), 1, y0 - 280)
+    place(WeintCodex.CreateToggle(panel, { label = "Zeitleiste von oben nach unten", width = COL,
+        get = get("bossTrack"), set = apply("bossTrack") }), 2, y0 - 270)
+    place(dropdown("bossTrackSecs", "Zeitleiste zeigt", {
+        { value = 15, text = "die nächsten 15 Sekunden" },
+        { value = 30, text = "die nächsten 30 Sekunden" },
+        { value = 60, text = "die nächste Minute" } }), 2, y0 - 310)
     local reset = WeintCodex.CreateButton(panel, { text = "Alles zurücksetzen", kind = "secondary", height = 30, size = 11,
         tooltip = "Plätze und Aussehen der Leisten wie ab Werk.",
         onClick = function()
@@ -593,7 +841,8 @@ local function BuildPanel()
 end
 
 BM.LOOK_KEYS = { bossBarW = true, bossBarH = true, bossFont = true, bossMax = true, bossGrow = true,
-    bossIcon = true, bossFill = true, bossEmph = true, bossEmphSecs = true, bossWarnSize = true }
+    bossIcon = true, bossFill = true, bossEmph = true, bossEmphSecs = true, bossWarnSize = true,
+    bossTrack = true, bossTrackSecs = true, bossTrackH = true }
 
 local hiddenOptions
 -- Einrichten: Testleisten, ziehbare Flaechen an allen drei Plaetzen und
@@ -613,6 +862,7 @@ function BM.Setup(on)
     Handle(f, "bossbars", "Leisten – ziehen")
     Handle(emph, "bossemph", "Gleich dran – ziehen")
     Handle(f.warn, "bosswarn", "Große Warnung – ziehen")
+    Handle(track, "bosstrack", "Zeitleiste – ziehen")
     for _, h in pairs(handles) do if on then h:Show() else h:Hide() end end
     if on then
         f.warn.text:SetText("Warnung des Spiels")
@@ -1146,6 +1396,9 @@ local function BuildPage(B)
           { type = "toggle", label = "Timer von BigWigs und DBM zeigen", key = "bossListen", disabled = off("bossPull"),
             description = "Startet jemand mit diesen Addons einen Pull oder eine Pause, erscheint die Leiste auch bei dir. WeintCodex hört nur zu." })
     B:Row(Sound("Pull", "Ton, wenn der Pull endet"), Sound("Break", "Ton, wenn die Pause endet"))
+    B:Row({ type = "toggle", label = "Zeitleiste von oben nach unten", key = "bossTrack",
+            description = "Neben den Leisten: jede Fähigkeit wandert als Symbol nach unten, unten ist „jetzt“. Höhe und Zeitraum unter „Leisten einstellen“." },
+          { type = "empty" })
     B:Section("Kampf", "Wie lange der Bosskampf läuft, und am Ende „besiegt in 3:12“ mit deiner Bestzeit für diesen Boss – oder „Wipe nach …“.")
     B:Row({ type = "toggle", label = "Kampftimer und Bestzeit", key = "bossFight" },
           Sound("Kill", "Ton, wenn der Boss fällt"))

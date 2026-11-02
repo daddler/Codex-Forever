@@ -100,6 +100,8 @@ K.LAYOUT = {
     bosswarn        = { point = "CENTER",      relPoint = "CENTER", x = 0, y = 200 },
     -- 1.10.4.0: was gleich dran ist, gross ueber der Mitte (wie BigWigs).
     bossemph        = { point = "CENTER",      relPoint = "CENTER", x = 0, y = 110 },
+    -- 1.10.6.0: Zeitleiste von oben nach unten, links neben den Leisten.
+    bosstrack       = { point = "CENTER",      relPoint = "CENTER", x = -560, y = 40 },
     -- PvP (ui/pvpframes.lua, 1.6.0.0): Gegner rechts, wie das Spiel sie
     -- zeigt; Arena oben, Schlachtfeld darunter (nie beide zugleich).
     arenaframes     = { point = "RIGHT",       relPoint = "RIGHT", x = -120, y = 140 },

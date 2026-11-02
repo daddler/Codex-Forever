@@ -2372,6 +2372,16 @@ lebt es von den Ereignissen des Spiels; genau die nutzt WeintCodex.
   Bestzeit). Die Tondateien von DBM sind nicht übernommen (Lizenz); die
   Töne des Spiels aus seiner Auswahl laufen über ihre Dateinummer
   (`FA.SOUNDS[*].fid`).
+- **Flüssig (1.10.7.0):** Takt jedes Bild (`BM.clock` → `BM.Animate(dt)`,
+  `BM.Tick(doText)`), Zahlen alle 0,1 s. Eine Leiste behält ihre Zeile am
+  selben Anker (`t._row`, `Assign` in `BM.Refresh`) und gleitet an ihren
+  Platz (`_slot`, `_cy`), neue blenden ein (`_fade`). Wechsel des Ankers
+  („gleich dran“) = neue Zeile dort.
+- **Zeitleiste von oben nach unten (1.10.7.0, Wunsch):** `bossTrack`
+  (aus ab Werk), `bossTrackSecs` 15/30/60, `bossTrackH`; Platz
+  `bosstrack`; je Bild `BM.TrackFrame`: bis 12 Symbole (ohne Symbol ein
+  Quadrat in der Farbe der Leiste) auf Höhe Restzeit/Zeitraum, Name
+  rechts, nur Timer mit Dauer.
 - **„Gleich dran“ (BigWigs: „hervorheben“):** eine Leiste mit Dauer, deren
   Rest unter `bossEmphSecs` fällt, wechselt an den zweiten Anker – 1,5×
   so hoch, 1,25× so breit, rot (Statusfarbe). Höchstens 4; Kampftimer
