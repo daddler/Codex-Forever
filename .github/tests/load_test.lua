@@ -2413,7 +2413,7 @@ do
     local savedList, savedPlay = G.WeintCodex_CustomSounds, G.PlaySoundFile
     local ok, err = pcall(function()
         G.WeintCodex_CustomSounds = {
-            { key = "eigen1", file = "eigen1.ogg", text = "Mein Gong" },
+            { key = "eigen1", file = "eigen1.ogg", text = "Mein Gong", len = 5.39 },
             { key = "raus", file = "raus.ogg", text = "Kapern" },
             { key = "eigen2", file = "../boese.ogg", text = "Pfad" },
             "kein Eintrag",
@@ -2422,6 +2422,7 @@ do
         assert(FA.ORDER[1] == "eigen1", "eigener Ton nicht vorn")
         assert(FA.SOUNDS.eigen1.path == FA.CUSTOM_PATH .. "eigen1.ogg", "Pfad falsch")
         assert(FA.SOUNDS.eigen1.text == "Eigener Ton: Mein Gong", "Name fehlt")
+        assert(FA.SOUNDS.eigen1.len == 5.39, "Laenge von der Companion fehlt")
         assert(FA.SOUNDS.eigen2 == nil, "unsicherer Dateiname uebernommen")
         assert(FA.SOUNDS.raus.file == "raus.ogg", "mitgelieferter Ton ueberschrieben")
         local played

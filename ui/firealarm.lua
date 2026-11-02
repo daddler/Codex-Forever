@@ -102,7 +102,10 @@ function FA.MergeCustom()
         local key, file = type(e) == "table" and e.key, type(e) == "table" and e.file
         if type(key) == "string" and key:match("^eigen%d+$") and type(file) == "string"
             and file:match("^[%w_]+%.ogg$") and not FA.SOUNDS[key] then
-            FA.SOUNDS[key] = { path = FA.CUSTOM_PATH .. file,
+            -- 1.10.2.0: Laenge von der Companion (ab 1.4.1), damit FA.Gap
+            -- einen langen eigenen Ton nicht ueberspielt; sonst unbekannt.
+            local len = type(e.len) == "number" and e.len > 0 and e.len <= 60 and e.len or nil
+            FA.SOUNDS[key] = { path = FA.CUSTOM_PATH .. file, len = len,
                 text = "Eigener Ton: " .. (type(e.text) == "string" and e.text ~= "" and e.text or key) }
             table.insert(FA.ORDER, 1, key)
         end

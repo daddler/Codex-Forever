@@ -26,6 +26,7 @@ WeintCodex_ChangelogData = {
         date    = "02.11.2026",
         notes   = {
             "|cff7C6CFF„Aua, die Rose!“ richtig geschnitten|r – das Meme für „Raus da!“ enthält jetzt den ganzen Spruch.",
+            "|cff7C6CFFLange eigene Töne laufen zu Ende|r – ein eigener Ton aus der Companion wird bei Dauerschaden nicht mehr jede Sekunde neu gestartet, sondern spielt erst zu Ende.",
         },
     },
     {

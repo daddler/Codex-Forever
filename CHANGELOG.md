@@ -13,6 +13,7 @@ nicht zusammen.
 
 ### Geändert
 - `meme_rose` neu geschnitten: 1,94–7,33 s (5,39 s) statt 0,25–4,10 s, vom Besitzer nach Gehör festgelegt; der erste Schnitt nach dem Spektrogramm lag daneben. `len` angepasst.
+- Eigene Töne: `FA.MergeCustom` übernimmt `len` (Zahl > 0 bis 60) aus `WeintCodex_CustomSounds` – die Companion schreibt sie ab 1.4.1 (`../Companion-Forever/docs/custom-sounds-bridge.md`); `FA.Gap()` gilt damit auch für eigene Töne (Companion erlaubt jetzt 6 s).
 
  – 2026-11-02
 
