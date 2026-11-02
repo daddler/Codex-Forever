@@ -65,13 +65,25 @@ BM.DEFAULTS = {
     bossSoonSecs = 3,       -- Vorwarnung: so viele Sekunden vor der Faehigkeit
     bossWhere    = "all",   -- all | group | instance (wie bei "Raus da!")
     bossChannel  = "Master",
+    -- Aussehen der Leisten (1.10.4.0, "so wie DBM oder BigWigs").
+    bossBarW     = 240,     -- Breite
+    bossBarH     = 20,      -- Hoehe
+    bossFont     = 11,      -- Schriftgroesse
+    bossMax      = 8,       -- hoechstens so viele Leisten
+    bossGrow     = "down",  -- down | up
+    bossIcon     = "left",  -- left | right | none
+    bossFill     = "drain", -- drain (leert sich) | fill (fuellt sich)
+    bossEmph     = true,    -- was gleich dran ist, gross am zweiten Anker
+    bossEmphSecs = 5,       -- ab so vielen Sekunden Rest
+    bossWarnSize = 24,      -- Schrift der grossen Warnung
+    bossWarnTime = 4,       -- so lange steht sie (s)
 }
 
 -- Die Anlaesse, in der Reihenfolge der Seite.
 BM.SOUND_EVENTS = { "Pull", "Break", "Soon", "Warn", "Kill", "Wipe" }
 
-BM.ROWS = 8
-BM.W, BM.ROW_H = 240, 20
+BM.MAX_ROWS, BM.EMPH_ROWS, BM.GAP = 10, 4, 3
+BM.EMPH_SCALE = 1.5
 BM.stats = { timeline = 0, secret = 0, warnings = 0, encounters = 0, countdowns = 0, heard = 0 }
 
 local function Plain(v) return K.Plain(v) end
@@ -136,6 +148,7 @@ BM.timers = timers
 function BM.Start(key, label, duration, icon, color)
     local t = timers[key] or {}
     t.key, t.label, t.icon, t.color = key, label, icon, color
+    t.onEnd, t.soon, t.warned, t.demo, t.emph, t.forceEmph = nil, nil, nil, nil, nil, nil
     t.start = Now()
     t.ends = duration and (t.start + duration) or nil
     timers[key] = t
@@ -165,133 +178,227 @@ end
 -- Anzeige
 --------------------------------------------------
 
-local frame
-local function Build()
-    if frame then return frame end
-    frame = CreateFrame("Frame", "WeintCodexBossBars", UIParent)
-    frame:SetSize(BM.W, BM.ROWS * (BM.ROW_H + 3))
-    frame:SetFrameStrata("MEDIUM")
-    frame.rows = {}
-    for i = 1, BM.ROWS do
-        local r = CreateFrame("Frame", nil, frame)
-        r:SetSize(BM.W, BM.ROW_H)
-        r:SetPoint("TOPLEFT", frame, "TOPLEFT", 0, -(i - 1) * (BM.ROW_H + 3))
-        r.icon = r:CreateTexture(nil, "ARTWORK")
-        r.icon:SetSize(BM.ROW_H, BM.ROW_H)
-        r.icon:SetPoint("LEFT", r, "LEFT", 0, 0)
-        r.icon:SetTexCoord(0.08, 0.92, 0.08, 0.92)
-        r.bar = K.NewBar(r)
-        r.bar:SetPoint("TOPLEFT", r.icon, "TOPRIGHT", 3, 0)
-        r.bar:SetPoint("BOTTOMRIGHT", r, "BOTTOMRIGHT", 0, 0)
-        r.bar:SetMinMaxValues(0, 1)
-        r.bg = r.bar:CreateTexture(nil, "BACKGROUND")
-        r.bg:SetAllPoints(r.bar)
-        local bg = C.surface2 or { 0.1, 0.1, 0.1, 1 }
-        r.bg:SetColorTexture(bg[1], bg[2], bg[3], 0.8)
-        r.label = K.NewText(r.bar, 11, "OVERLAY")
-        r.label:SetPoint("LEFT", r.bar, "LEFT", 5, 0)
-        r.label:SetPoint("RIGHT", r.bar, "RIGHT", -40, 0)
-        r.label:SetJustifyH("LEFT")
-        r.label:SetWordWrap(false)
-        r.time = K.NewText(r.bar, 11, "OVERLAY")
-        r.time:SetPoint("RIGHT", r.bar, "RIGHT", -5, 0)
-        r:Hide()
-        frame.rows[i] = r
-    end
-    -- Grosse Warnung in der Mitte (eigener Platz, verschiebbar).
-    local warn = CreateFrame("Frame", "WeintCodexBossWarning", UIParent)
-    warn:SetSize(600, 40)
-    warn.text = K.NewText(warn, 24, "OVERLAY")
-    warn.text:SetAllPoints(warn)
-    warn:Hide()
-    frame.warn = warn
-    frame._acc = 0
-    frame:SetScript("OnUpdate", function(self, el)
-        self._acc = self._acc + (el or 0)
-        if self._acc < 0.1 then return end
-        self._acc = 0
-        BM.Tick()
-    end)
-    frame.WCShowForUnlock = function(self, on)
-        self._unlock = on and true or nil
-        if on then
-            BM.Start("demo1", "Pull", 8, nil, "accent")
-            BM.Start("demo2", "Fähigkeit des Bosses", 22, 136116, "blue")
-        else
-            timers.demo1, timers.demo2 = nil, nil
-        end
-        BM.Refresh()
-    end
-    warn.WCShowForUnlock = function(self, on)
-        self._unlock = on and true or nil
-        if on then self.text:SetText("Warnung des Spiels") self:Show() else self:Hide() end
-    end
-    K.RegisterMover(frame, "bossbars", "Bosskämpfe: Leisten", K.Layout("bossbars"))
-    K.RegisterMover(warn, "bosswarn", "Bosskämpfe: Warnung", K.Layout("bosswarn"))
-    frame:Hide()
-    BM.frame = frame
-    return frame
+local frame        -- Hauptanker mit den Leisten
+local emph         -- zweiter Anker: was gleich dran ist, groesser (wie BigWigs)
+local clock        -- Takt, unabhaengig davon, welcher Anker gerade sichtbar ist
+local setupOn = false
+
+local function Num(k, lo, hi)
+    local v = tonumber(K.Get(KEY, k)) or BM.DEFAULTS[k]
+    return math.max(lo, math.min(hi, v))
 end
-BM.Build = Build
+BM.Num = Num
+
+-- Breite, Hoehe, Schrift, Anzahl - immer in den erlaubten Grenzen.
+function BM.Look()
+    return Num("bossBarW", 160, 420), Num("bossBarH", 14, 32), Num("bossFont", 9, 16), Num("bossMax", 3, BM.MAX_ROWS)
+end
+
+local function NewRow(parent)
+    local r = CreateFrame("Frame", nil, parent)
+    r.icon = r:CreateTexture(nil, "ARTWORK")
+    r.icon:SetTexCoord(0.08, 0.92, 0.08, 0.92)
+    r.bar = K.NewBar(r)
+    r.bar:SetMinMaxValues(0, 1)
+    r.bg = r.bar:CreateTexture(nil, "BACKGROUND")
+    r.bg:SetAllPoints(r.bar)
+    local bg = C.surface2 or { 0.1, 0.1, 0.1, 1 }
+    r.bg:SetColorTexture(bg[1], bg[2], bg[3], 0.8)
+    r.label = K.NewText(r.bar, 11, "OVERLAY")
+    r.label:SetJustifyH("LEFT")
+    r.label:SetWordWrap(false)
+    r.time = K.NewText(r.bar, 11, "OVERLAY")
+    r:Hide()
+    return r
+end
+
+-- Groesse, Schrift, Symbol und Richtung aus den Einstellungen - jederzeit,
+-- auch waehrend Leisten laufen.
+local function LayRows(f, count, w, h, font)
+    local up = K.Get(KEY, "bossGrow") == "up"
+    local icon = K.Get(KEY, "bossIcon")
+    f:SetSize(w, count * (h + BM.GAP) - BM.GAP)
+    for i, r in ipairs(f.rows) do
+        r:SetSize(w, h)
+        r:ClearAllPoints()
+        local off = (i - 1) * (h + BM.GAP)
+        if up then r:SetPoint("BOTTOMLEFT", f, "BOTTOMLEFT", 0, off)
+        else r:SetPoint("TOPLEFT", f, "TOPLEFT", 0, -off) end
+        r.icon:ClearAllPoints()
+        r.bar:ClearAllPoints()
+        r.icon:SetSize(h, h)
+        r.noIcon = icon == "none"
+        if icon == "right" then
+            r.icon:SetPoint("RIGHT", r, "RIGHT", 0, 0)
+            r.bar:SetPoint("TOPLEFT", r, "TOPLEFT", 0, 0)
+            r.bar:SetPoint("BOTTOMRIGHT", r.icon, "BOTTOMLEFT", -3, 0)
+        elseif icon == "none" then
+            r.bar:SetAllPoints(r)
+        else
+            r.icon:SetPoint("LEFT", r, "LEFT", 0, 0)
+            r.bar:SetPoint("TOPLEFT", r.icon, "TOPRIGHT", 3, 0)
+            r.bar:SetPoint("BOTTOMRIGHT", r, "BOTTOMRIGHT", 0, 0)
+        end
+        K.SetFont(r.label, font)
+        K.SetFont(r.time, font)
+        r.label:ClearAllPoints()
+        r.label:SetPoint("LEFT", r.bar, "LEFT", 5, 0)
+        r.label:SetPoint("RIGHT", r.bar, "RIGHT", -(font * 3 + 10), 0)
+        r.time:ClearAllPoints()
+        r.time:SetPoint("RIGHT", r.bar, "RIGHT", -5, 0)
+    end
+end
+
+function BM.ApplyLook()
+    if not frame then return end
+    local w, h, font, max = BM.Look()
+    LayRows(frame, max, w, h, font)
+    LayRows(emph, BM.EMPH_ROWS, math.floor(w * 1.25 + 0.5), math.floor(h * BM.EMPH_SCALE + 0.5), math.floor(font * 1.3 + 0.5))
+    local size = Num("bossWarnSize", 16, 40)
+    K.SetFont(frame.warn.text, size)
+    frame.warn:SetSize(700, size + 16)
+    BM.Refresh()
+end
 
 local function ColorOf(name)
     local c = C[name or "accent"] or C.accent
     return c[1], c[2], c[3]
 end
 
-function BM.Tick()
-    local now = Now()
-    local list = BM.Sorted()
-    local f = frame
-    local done
-    for i = 1, BM.ROWS do
-        local r = f.rows[i]
-        local t = list[i]
-        if t then
-            if t.ends then
-                local left = t.ends - now
-                if left <= 0 then
-                    done = done or t
-                    r.bar:SetValue(0)
-                    r.time:SetText("0")
-                else
-                    local total = t.ends - t.start
-                    r.bar:SetValue(total > 0 and left / total or 0)
-                    r.time:SetText(BM.Format(left))
-                    if t.soon and not t.warned and left <= (tonumber(K.Get(KEY, "bossSoonSecs")) or 3) then
-                        t.warned = true
-                        if not t.demo or Opt("bossSound") then BM.Sound("Soon", t.demo) end
-                    end
-                end
-            else
-                r.bar:SetValue(1)
-                r.time:SetText(BM.Format(now - t.start))
-            end
-        end
+-- Der Takt: Werte einmal je Takt gelesen, keine Tabelle und keine
+-- Funktion je Bild (CLAUDE.md, "Anything that runs repeatedly").
+local tNow, tFill, tEmphOn, tEmphSecs, tSoonSecs, tDone, tRelayout
+local function TickRow(r)
+    local t = r.timer
+    if not t or not r:IsShown() then return end
+    if not t.ends then
+        r.bar:SetValue(1)
+        r.time:SetText(BM.Format(tNow - t.start))
+        return
     end
+    local left = t.ends - tNow
+    if left <= 0 then
+        tDone = tDone or t
+        r.bar:SetValue(tFill and 1 or 0)
+        r.time:SetText("0")
+        return
+    end
+    local total = t.ends - t.start
+    local frac = total > 0 and left / total or 0
+    r.bar:SetValue(tFill and (1 - frac) or frac)
+    r.time:SetText(BM.Format(left))
+    if t.soon and not t.warned and left <= tSoonSecs then
+        t.warned = true
+        if not t.demo or Opt("bossSound") then BM.Sound("Soon", t.demo) end
+    end
+    if tEmphOn and not t.emph and left <= tEmphSecs then tRelayout = true end
+end
+
+function BM.Tick()
+    if not frame then return end
+    tNow = Now()
+    tFill = K.Get(KEY, "bossFill") == "fill"
+    tEmphOn = Opt("bossEmph")
+    tEmphSecs = Num("bossEmphSecs", 2, 10)
+    tSoonSecs = tonumber(K.Get(KEY, "bossSoonSecs")) or 3
+    tDone, tRelayout = nil, nil
+    for i = 1, BM.MAX_ROWS do TickRow(frame.rows[i]) end
+    for i = 1, BM.EMPH_ROWS do TickRow(emph.rows[i]) end
+    local done = tDone
     if done then
         timers[done.key] = nil
         if done.onEnd then done.onEnd() end
         BM.Refresh()
+    elseif tRelayout then
+        BM.Refresh()
     end
 end
 
+local function Fill(r, t)
+    r.timer = t
+    r.label:SetText(t.label)
+    if t.icon and not r.noIcon then r.icon:SetTexture(t.icon) r.icon:Show() else r.icon:Hide() end
+    r.bar:SetStatusBarColor(ColorOf(t.emph and "red" or t.color))
+    r:Show()
+end
+local function Clear(r) r.timer = nil r:Hide() end
+
+local function Build()
+    if frame then return frame end
+    frame = CreateFrame("Frame", "WeintCodexBossBars", UIParent)
+    frame:SetFrameStrata("MEDIUM")
+    frame.rows = {}
+    for i = 1, BM.MAX_ROWS do frame.rows[i] = NewRow(frame) end
+    emph = CreateFrame("Frame", "WeintCodexBossEmph", UIParent)
+    emph:SetFrameStrata("MEDIUM")
+    emph.rows = {}
+    for i = 1, BM.EMPH_ROWS do emph.rows[i] = NewRow(emph) end
+    -- Grosse Warnung in der Mitte (eigener Platz, verschiebbar).
+    local warn = CreateFrame("Frame", "WeintCodexBossWarning", UIParent)
+    warn:SetSize(700, 40)
+    warn.text = K.NewText(warn, 24, "OVERLAY")
+    warn.text:SetAllPoints(warn)
+    warn:Hide()
+    frame.warn = warn
+    clock = CreateFrame("Frame", nil, UIParent)
+    clock._acc = 0
+    clock:SetScript("OnUpdate", function(self, el)
+        self._acc = self._acc + (el or 0)
+        if self._acc < 0.1 then return end
+        self._acc = 0
+        BM.Tick()
+    end)
+    clock:Hide()
+    frame.WCShowForUnlock = function(self, on)
+        self._unlock = on and true or nil
+        BM.DemoBars(on or setupOn)
+    end
+    emph.WCShowForUnlock = function(self, on)
+        self._unlock = on and true or nil
+        BM.Refresh()
+    end
+    warn.WCShowForUnlock = function(self, on)
+        self._unlock = on and true or nil
+        if on or setupOn then self.text:SetText("Warnung des Spiels") self:Show() else self:Hide() end
+    end
+    K.RegisterMover(frame, "bossbars", "Bosskämpfe: Leisten", K.Layout("bossbars"))
+    K.RegisterMover(emph, "bossemph", "Bosskämpfe: gleich dran", K.Layout("bossemph"))
+    K.RegisterMover(warn, "bosswarn", "Bosskämpfe: Warnung", K.Layout("bosswarn"))
+    frame:Hide()
+    emph:Hide()
+    BM.frame, BM.emph, BM.clock = frame, emph, clock
+    BM.ApplyLook()
+    return frame
+end
+BM.Build = Build
+
+-- Hauptanker bis "Anzahl", was gleich dran ist an den zweiten - BigWigs
+-- nennt das "hervorheben". Ohne Dauer (Kampftimer) nie hervorgehoben.
 function BM.Refresh()
     local f = Build()
     local list = BM.Sorted()
-    for i = 1, BM.ROWS do
-        local r = f.rows[i]
+    local now = Now()
+    local useEmph = Opt("bossEmph")
+    local secs = Num("bossEmphSecs", 2, 10)
+    local _, _, _, max = BM.Look()
+    local mi, ei = 0, 0
+    for i = 1, #list do
         local t = list[i]
-        if t then
-            r.label:SetText(t.label)
-            if t.icon then r.icon:SetTexture(t.icon) r.icon:Show() else r.icon:Hide() end
-            r.bar:SetStatusBarColor(ColorOf(t.color))
-            r:Show()
-        else
-            r:Hide()
+        local e = useEmph and ei < BM.EMPH_ROWS and (t.forceEmph or (t.ends and t.ends - now <= secs))
+        t.emph = e and true or nil
+        if e then
+            ei = ei + 1
+            Fill(emph.rows[ei], t)
+        elseif mi < max then
+            mi = mi + 1
+            Fill(f.rows[mi], t)
         end
     end
-    if #list > 0 then f:Show() BM.Tick() elseif not f._unlock then f:Hide() end
+    for i = mi + 1, BM.MAX_ROWS do Clear(f.rows[i]) end
+    for i = ei + 1, BM.EMPH_ROWS do Clear(emph.rows[i]) end
+    if mi > 0 or setupOn or f._unlock then f:Show() else f:Hide() end
+    if ei > 0 or setupOn or emph._unlock then emph:Show() else emph:Hide() end
+    if #list > 0 then clock:Show() BM.Tick() else clock:Hide() end
 end
 
 function BM.Warn(text, icon)
@@ -303,14 +410,211 @@ function BM.Warn(text, icon)
         w.text:SetText(text)
     end
     w:Show()
-    w.until_ = Now() + 4
+    w.until_ = Now() + Num("bossWarnTime", 2, 8)
     if not w.hider then
         w.hider = true
         w:SetScript("OnUpdate", function(self)
-            if not self._unlock and Now() > (self.until_ or 0) then self:Hide() end
+            if not self._unlock and not setupOn and Now() > (self.until_ or 0) then self:Hide() end
         end)
     end
 end
+
+--------------------------------------------------
+-- Testleisten und Einrichten (wie BigWigs/DBM: Anker zum Ziehen,
+-- Testleisten, Einstellungen direkt daneben)
+--------------------------------------------------
+
+BM.DEMO = {
+    { "demo1", "Pull", 10, nil, "accent" },
+    { "demo2", "Fähigkeit des Bosses", 24, 136116, "blue" },
+    { "demo3", "Noch eine Fähigkeit", 15, 136116, "blue" },
+    { "demo4", "Pause", 45, nil, "blue" },
+}
+local demoActive = false
+local function DemoLoop(d)
+    if not demoActive then return end
+    local t = BM.Start(d[1], d[2], d[3], d[4], d[5])
+    t.onEnd = function() DemoLoop(d) end
+end
+-- Testleisten laufen immer wieder ab - so sieht man auch, wie eine Leiste
+-- in den letzten Sekunden an den zweiten Anker springt.
+function BM.DemoBars(on)
+    on = on and true or false
+    if on == demoActive then BM.Refresh() return end
+    demoActive = on
+    for i, d in ipairs(BM.DEMO) do
+        if on then
+            DemoLoop(d)
+            -- versetzt, damit nicht alle zugleich ablaufen
+            local t = timers[d[1]]
+            if t and t.ends then t.ends = t.ends - (i - 1) * 3 end
+        else
+            timers[d[1]] = nil
+        end
+    end
+    BM.Refresh()
+end
+
+local handles = {}
+local function Handle(target, key, label)
+    local h = handles[key]
+    if not h then
+        h = CreateFrame("Button", nil, UIParent)
+        h:SetFrameStrata("DIALOG")
+        local bg = h:CreateTexture(nil, "BACKGROUND")
+        bg:SetAllPoints(h)
+        local hc = K.Highlight()
+        bg:SetColorTexture(hc[1], hc[2], hc[3], 0.25)
+        K.Border(h, 1, hc[1], hc[2], hc[3], 0.9, "ARTWORK")
+        local t = K.NewText(h, 11, "OVERLAY")
+        t:SetPoint("BOTTOM", h, "TOP", 0, 3)
+        t:SetText(label)
+        h.text = t
+        if h.RegisterForClicks then h:RegisterForClicks("RightButtonUp") end
+        K.DragToMove(h, key)
+        h:SetScript("OnClick", function(_, button)
+            if button == "RightButton" and _G.IsShiftKeyDown and _G.IsShiftKeyDown() then BM.ResetPosition(key) end
+        end)
+        h:SetScript("OnEnter", function(self)
+            GameTooltip:SetOwner(self, "ANCHOR_TOP")
+            GameTooltip:SetText(label, 1, 1, 1)
+            GameTooltip:AddLine("Ziehen verschiebt. Umschalt+Rechtsklick: zurück an den Standardplatz.", 0.7, 0.7, 0.75, true)
+            GameTooltip:Show()
+        end)
+        h:SetScript("OnLeave", function() GameTooltip:Hide() end)
+        handles[key] = h
+    end
+    h:ClearAllPoints()
+    h:SetAllPoints(target)
+    return h
+end
+BM.handles = handles
+
+function BM.ResetPosition(key)
+    local ui = K.Profile()
+    if ui and ui.positions then ui.positions[key] = nil end
+    K.ApplyPosition(key)
+end
+
+local panel
+local function BuildPanel()
+    if panel then return panel end
+    local W, COL = 560, 250
+    panel = CreateFrame("Frame", "WeintCodexBossSetup", UIParent)
+    panel:SetFrameStrata("DIALOG")
+    panel:SetSize(W, 420)
+    panel:SetPoint("CENTER", UIParent, "CENTER", 0, -170)
+    panel:SetClampedToScreen(true)
+    panel:EnableMouse(true)
+    panel:SetMovable(true)
+    panel:RegisterForDrag("LeftButton")
+    panel:SetScript("OnDragStart", function(self) self:StartMoving() end)
+    panel:SetScript("OnDragStop", function(self) self:StopMovingOrSizing() end)
+    local bg = panel:CreateTexture(nil, "BACKGROUND")
+    bg:SetAllPoints(panel)
+    bg:SetColorTexture(C.bgDark[1], C.bgDark[2], C.bgDark[3], 0.96)
+    K.Border(panel, 1, C.border[1], C.border[2], C.border[3], 1, "BORDER")
+    local title = K.NewText(panel, 15, "OVERLAY")
+    title:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -16)
+    title:SetText("Bossleisten einstellen")
+    local note = K.NewText(panel, 11, "OVERLAY")
+    note:SetPoint("TOPLEFT", title, "BOTTOMLEFT", 0, -6)
+    note:SetPoint("RIGHT", panel, "RIGHT", -20, 0)
+    note:SetJustifyH("LEFT")
+    note:SetTextColor(unpack(C.textMuted))
+    note:SetText("Zieh die farbigen Flächen an ihren Platz. Die Testleisten laufen, bis du auf „Fertig“ klickst; in den letzten Sekunden springen sie an „gleich dran“.")
+    panel.widgets = {}
+    local function apply(k) return function(v) K.Set(KEY, k, v) BM.ApplyLook() end end
+    local function get(k) return function() return K.Get(KEY, k) end end
+    local function place(w, col, y)
+        w:SetWidth(COL)
+        w:SetPoint("TOPLEFT", panel, "TOPLEFT", 20 + (col - 1) * (COL + 20), y)
+        if w.Sync then w.Sync() end
+        panel.widgets[#panel.widgets + 1] = w
+    end
+    local function slider(k, label, lo, hi, step, fmt)
+        return WeintCodex.CreateSlider(panel, { label = label, min = lo, max = hi, step = step,
+            get = get(k), set = apply(k), format = fmt })
+    end
+    local function dropdown(k, label, items)
+        return WeintCodex.CreateDropdown(panel, { label = label, items = items, width = COL, get = get(k), set = apply(k) })
+    end
+    local px = function(v) return v .. " px" end
+    local y0 = -78
+    place(slider("bossBarW", "Breite", 160, 420, 10, px), 1, y0)
+    place(slider("bossBarH", "Höhe", 14, 32, 1, px), 1, y0 - 56)
+    place(slider("bossFont", "Schrift", 9, 16, 1, px), 1, y0 - 112)
+    place(slider("bossMax", "Höchstens so viele Leisten", 3, BM.MAX_ROWS, 1), 1, y0 - 168)
+    place(slider("bossWarnSize", "Schrift der großen Warnung", 16, 40, 2, px), 1, y0 - 224)
+    place(dropdown("bossGrow", "Neue Leisten", {
+        { value = "down", text = "Nach unten anhängen" },
+        { value = "up",   text = "Nach oben anhängen" } }), 2, y0)
+    place(dropdown("bossIcon", "Symbol", {
+        { value = "left",  text = "Links" },
+        { value = "right", text = "Rechts" },
+        { value = "none",  text = "Ohne" } }), 2, y0 - 56)
+    place(dropdown("bossFill", "Leiste", {
+        { value = "drain", text = "Leert sich" },
+        { value = "fill",  text = "Füllt sich" } }), 2, y0 - 112)
+    place(WeintCodex.CreateToggle(panel, { label = "Was gleich dran ist, groß extra", width = COL,
+        get = get("bossEmph"), set = apply("bossEmph") }), 2, y0 - 172)
+    place(slider("bossEmphSecs", "Ab so vielen Sekunden Rest", 2, 10, 1, function(v) return v .. " s" end), 2, y0 - 214)
+    local reset = WeintCodex.CreateButton(panel, { text = "Alles zurücksetzen", kind = "secondary", height = 30, size = 11,
+        tooltip = "Plätze und Aussehen der Leisten wie ab Werk.",
+        onClick = function()
+            for k in pairs(BM.LOOK_KEYS) do K.Set(KEY, k, BM.DEFAULTS[k]) end
+            BM.ResetPosition("bossbars") BM.ResetPosition("bossemph") BM.ResetPosition("bosswarn")
+            for _, w in ipairs(panel.widgets) do if w.Sync then w.Sync() end end
+            BM.ApplyLook()
+        end })
+    reset:SetSize(170, 30)
+    reset:SetPoint("BOTTOMLEFT", panel, "BOTTOMLEFT", 20, 16)
+    local done = WeintCodex.CreateButton(panel, { text = "Fertig", kind = "primary", height = 30, size = 12,
+        onClick = function() BM.Setup(false) end })
+    done:SetSize(140, 30)
+    done:SetPoint("BOTTOMRIGHT", panel, "BOTTOMRIGHT", -20, 16)
+    panel:Hide()
+    BM.panel = panel
+    return panel
+end
+
+BM.LOOK_KEYS = { bossBarW = true, bossBarH = true, bossFont = true, bossMax = true, bossGrow = true,
+    bossIcon = true, bossFill = true, bossEmph = true, bossEmphSecs = true, bossWarnSize = true }
+
+local hiddenOptions
+-- Einrichten: Testleisten, ziehbare Flaechen an allen drei Plaetzen und
+-- das Fenster mit dem Aussehen. Nie im Kampf.
+function BM.Setup(on)
+    on = on and true or false
+    if on and K.InCombat() then Say("Im Kampf lassen sich die Leisten nicht einrichten.") return false end
+    if on == setupOn then return true end
+    local f = Build()
+    setupOn = on
+    local O = WeintCodex.UIOptions
+    if on and O and O.frame and O.frame:IsShown() then
+        hiddenOptions = true
+        O.frame:Hide()
+    end
+    BM.DemoBars(on or (f._unlock and true or false))
+    Handle(f, "bossbars", "Leisten – ziehen")
+    Handle(emph, "bossemph", "Gleich dran – ziehen")
+    Handle(f.warn, "bosswarn", "Große Warnung – ziehen")
+    for _, h in pairs(handles) do if on then h:Show() else h:Hide() end end
+    if on then
+        f.warn.text:SetText("Warnung des Spiels")
+        f.warn:Show()
+        BuildPanel():Show()
+        for _, w in ipairs(panel.widgets) do if w.Sync then w.Sync() end end
+    else
+        if not f.warn._unlock then f.warn:Hide() end
+        if panel then panel:Hide() end
+        if hiddenOptions and O and O.frame then O.frame:Show() end
+        hiddenOptions = nil
+    end
+    BM.Refresh()
+    return true
+end
+function BM.IsSetup() return setupOn end
 
 --------------------------------------------------
 -- Pull und Pause
@@ -495,7 +799,7 @@ end
 local ev = CreateFrame("Frame")
 for _, e in ipairs({ "START_PLAYER_COUNTDOWN", "CANCEL_PLAYER_COUNTDOWN", "CHAT_MSG_ADDON",
         "ENCOUNTER_START", "ENCOUNTER_END", "ENCOUNTER_TIMELINE_EVENT_ADDED",
-        "ENCOUNTER_TIMELINE_EVENT_REMOVED", "ENCOUNTER_WARNING", "PLAYER_LOGIN" }) do
+        "ENCOUNTER_TIMELINE_EVENT_REMOVED", "ENCOUNTER_WARNING", "PLAYER_LOGIN", "PLAYER_REGEN_DISABLED" }) do
     pcall(ev.RegisterEvent, ev, e)
 end
 ev:SetScript("OnEvent", function(_, event, a1, a2, a3, a4, a5)
@@ -503,6 +807,10 @@ ev:SetScript("OnEvent", function(_, event, a1, a2, a3, a4, a5)
         local CI = _G.C_ChatInfo
         local reg = (CI and CI.RegisterAddonMessagePrefix) or _G.RegisterAddonMessagePrefix
         if reg then pcall(reg, "BigWigs") pcall(reg, "D5") end
+        return
+    end
+    if event == "PLAYER_REGEN_DISABLED" then
+        if setupOn then BM.Setup(false) end
         return
     end
     if not K.IsActive(KEY) then return end
@@ -585,9 +893,9 @@ local function BuildPage(B)
                 { value = "instance", text = "Nur in Dungeons und Schlachtzügen" } } })
     B:Row({ type = "button", label = "Probe", text = "Probekampf abspielen", onClick = BM.Demo,
             tooltip = "Pull, Fähigkeit mit Vorwarnung, Warnung und Sieg – mit deinen Tönen, in gut 14 Sekunden. Nur bei dir." },
-          { type = "button", label = "Wo die Leisten stehen", text = "Gestaltungsmodus öffnen",
-            onClick = function() K.SetUnlocked(true) end,
-            tooltip = "Leisten und Warnung verschieben – sie zeigen sich dort mit Beispielen." })
+          { type = "button", label = "Leisten", text = "Leisten einstellen",
+            onClick = function() BM.Setup(true) end,
+            tooltip = "Testleisten laufen, du ziehst sie an ihren Platz und stellst Größe, Schrift und Richtung direkt daneben ein – wie bei BigWigs und DBM." })
     B:Section("Pull und Pause", "/pull 10 startet den Countdown des Spiels – die ganze Gruppe sieht ihn, auch ohne WeintCodex. /break 5 ist eine Pause von fünf Minuten, nur für dich. 0 bricht ab. Haben BigWigs oder DBM die Befehle schon, heißen sie /wcpull und /wcbreak.")
     B:Row({ type = "toggle", label = "Pull- und Pausenleiste", key = "bossPull" },
           { type = "toggle", label = "Timer von BigWigs und DBM zeigen", key = "bossListen", disabled = off("bossPull"),

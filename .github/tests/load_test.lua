@@ -22934,6 +22934,86 @@ do
     Check(ok, "Bosskämpfe: Ton je Anlass, Kanal, Wo, Hauptschalter, Vorwarnung, Probekampf" .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- Bosskaempfe: Leisten einstellen wie BigWigs/DBM (1.10.4.0)
+do
+    local BM = WeintCodex.UIBossMod
+    local oActive, oTime, oCombat = K.IsActive, _G.GetTime, K.InCombat
+    local saved = {}
+    for k in pairs(BM.DEFAULTS) do saved[k] = K.Get("comfort", k) end
+    local ok, err = pcall(function()
+        local now = 5000
+        _G.GetTime = function() return now end
+        K.IsActive = function() return true end
+        K.InCombat = function() return false end
+        for k, v in pairs(BM.DEFAULTS) do K.Set("comfort", k, v) end
+        for k in pairs(BM.timers) do BM.timers[k] = nil end
+        assert(K.Layout("bossemph"), "Platz 'gleich dran' fehlt im Layout")
+        for k in pairs(BM.LOOK_KEYS) do assert(BM.DEFAULTS[k] ~= nil, "Aussehen ohne Voreinstellung: " .. k) end
+        -- Grenzen: Unsinn aus dem Spielstand wird eingefangen.
+        K.Set("comfort", "bossBarW", 9999) K.Set("comfort", "bossBarH", 2) K.Set("comfort", "bossMax", "x")
+        local w, h, _, max = BM.Look()
+        assert(w == 420 and h == 14 and max == BM.DEFAULTS.bossMax, "Grenzen: " .. w .. "/" .. h .. "/" .. tostring(max))
+        K.Set("comfort", "bossBarW", 300) K.Set("comfort", "bossBarH", 24) K.Set("comfort", "bossMax", 3)
+        BM.ApplyLook()
+        local f = BM.Build()
+        assert(f:GetWidth() == 300 and f.rows[1]:GetHeight() == 24, "Groesse nicht uebernommen")
+        assert(BM.emph.rows[1]:GetHeight() == 36, "gleich dran nicht groesser: " .. tostring(BM.emph.rows[1]:GetHeight()))
+        -- Hoechstens 'bossMax' Leisten am Hauptanker, was gleich dran ist am zweiten.
+        for i = 1, 5 do BM.Start("t" .. i, "F" .. i, 20 + i, nil, "blue") end
+        BM.Start("soon", "Gleich", 4, nil, "blue")
+        local shown = 0
+        for i = 1, BM.MAX_ROWS do if f.rows[i]:IsShown() then shown = shown + 1 end end
+        assert(shown == 3, "Hauptanker zeigt " .. shown .. " statt 3")
+        assert(BM.emph.rows[1]:IsShown() and BM.emph.rows[1].timer.key == "soon", "Leiste unter 5 s nicht am zweiten Anker")
+        -- Eine Leiste springt hinueber, wenn sie die Schwelle erreicht.
+        now = now + 17 BM.Tick()
+        local moved = false
+        for i = 1, BM.EMPH_ROWS do local r = BM.emph.rows[i] if r:IsShown() and r.timer.key == "t1" then moved = true end end
+        assert(moved, "Leiste springt nicht an 'gleich dran'")
+        -- Aus: alles am Hauptanker.
+        K.Set("comfort", "bossEmph", false) BM.Refresh()
+        assert(not BM.emph.rows[1]:IsShown(), "Hervorheben aus, trotzdem am zweiten Anker")
+        -- Fuellt sich statt leert sich.
+        K.Set("comfort", "bossFill", "fill") BM.Refresh()
+        local r1 = f.rows[1]
+        local t1 = r1.timer
+        local frac = (t1.ends - now) / (t1.ends - t1.start)
+        assert(math.abs(r1.bar:GetValue() - (1 - frac)) < 0.01, "Fuellen falsch")
+        for k in pairs(BM.timers) do BM.timers[k] = nil end
+        BM.Refresh()
+        -- Einrichten: Testleisten, drei ziehbare Flaechen, Fenster; Fertig raeumt auf.
+        assert(BM.Setup(true) and BM.IsSetup(), "Einrichten startet nicht")
+        assert(BM.timers.demo1 and BM.timers.demo2, "keine Testleisten")
+        assert(BM.handles.bossbars:IsShown() and BM.handles.bossemph:IsShown() and BM.handles.bosswarn:IsShown(), "Flaechen zum Ziehen fehlen")
+        assert(BM.panel and BM.panel:IsShown(), "Fenster zum Einstellen fehlt")
+        assert(f:IsShown() and BM.emph:IsShown() and f.warn:IsShown(), "Anker beim Einrichten unsichtbar")
+        -- Testleisten laufen immer wieder.
+        now = now + 60 BM.Tick() BM.Tick() BM.Tick()
+        assert(BM.timers.demo1 and BM.timers.demo1.ends > now, "Testleiste laeuft nicht neu an")
+        -- Zuruecksetzen: Aussehen wie ab Werk.
+        K.Set("comfort", "bossBarW", 400)
+        local ui = K.Profile()
+        ui.positions.bossbars = { point = "CENTER", relPoint = "CENTER", x = 1, y = 2 }
+        BM.ResetPosition("bossbars")
+        assert(ui.positions.bossbars == nil, "Platz nicht zurueckgesetzt")
+        assert(BM.Setup(false) and not BM.IsSetup(), "Fertig beendet nicht")
+        assert(not BM.timers.demo1 and not BM.handles.bossbars:IsShown() and not BM.panel:IsShown(), "Einrichten raeumt nicht auf")
+        assert(not f.warn:IsShown(), "Probewarnung bleibt stehen")
+        -- Nie im Kampf; Kampfbeginn beendet das Einrichten.
+        K.InCombat = function() return true end
+        assert(not BM.Setup(true), "Einrichten im Kampf")
+        K.InCombat = function() return false end
+        BM.Setup(true)
+        BM.ev:GetScript("OnEvent")(BM.ev, "PLAYER_REGEN_DISABLED")
+        assert(not BM.IsSetup(), "Kampfbeginn beendet das Einrichten nicht")
+    end)
+    K.IsActive, _G.GetTime, K.InCombat = oActive, oTime, oCombat
+    for k, v in pairs(saved) do K.Set("comfort", k, v) end
+    for k in pairs(WeintCodex.UIBossMod.timers) do WeintCodex.UIBossMod.timers[k] = nil end
+    if WeintCodex.UIBossMod.frame then WeintCodex.UIBossMod.ApplyLook() end
+    Check(ok, "Bosskämpfe: Leisten einstellen – Größe, Anzahl, gleich dran, Füllen, Testleisten, Ziehen, Zurücksetzen, nie im Kampf" .. (ok and "" or (": " .. tostring(err))))
+end
+
 -- Sterbezeit an der Plakette (1.8.0.0, ui/timetodie.lua)
 do
     local TD = WeintCodex.UITimeToDie

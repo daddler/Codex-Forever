@@ -98,6 +98,8 @@ K.LAYOUT = {
     -- bei Bossmods ueblich, die Warnung ueber dem Hinweis "im Kampf".
     bossbars        = { point = "CENTER",      relPoint = "CENTER", x = -380, y = 40 },
     bosswarn        = { point = "CENTER",      relPoint = "CENTER", x = 0, y = 200 },
+    -- 1.10.4.0: was gleich dran ist, gross ueber der Mitte (wie BigWigs).
+    bossemph        = { point = "CENTER",      relPoint = "CENTER", x = 0, y = 110 },
     -- PvP (ui/pvpframes.lua, 1.6.0.0): Gegner rechts, wie das Spiel sie
     -- zeigt; Arena oben, Schlachtfeld darunter (nie beide zugleich).
     arenaframes     = { point = "RIGHT",       relPoint = "RIGHT", x = -120, y = 140 },

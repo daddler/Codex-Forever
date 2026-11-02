@@ -2339,9 +2339,28 @@ lebt es von den Ereignissen des Spiels; genau die nutzt WeintCodex.
 - **Nicht gemessen:** ob Forever Zeitleiste und Warnungen schickt und
   welche Felder `info` trägt (aus dem Verhalten von BigWigs abgeleitet).
   `/wcui prüfen` → „Bosskämpfe“ zählt, was ankam.
-- Leisten: höchstens `BM.ROWS` (8), feste Zeilen, Takt 0,1 s nur bei
-  sichtbarer Leiste, Sortierung in eine feste Liste. Plätze `bossbars`,
-  `bosswarn`.
+- Leisten: höchstens `bossMax` (3–`BM.MAX_ROWS` = 10) am Hauptanker,
+  feste Zeilen, Takt 0,1 s auf eigenem Rahmen (`BM.clock`) nur bei
+  laufenden Timern, Sortierung in eine feste Liste, Werte einmal je Takt
+  gelesen (`TickRow`, keine Tabelle/Funktion je Bild). Plätze `bossbars`,
+  `bossemph`, `bosswarn`.
+- **Leisten einstellen wie BigWigs/DBM (1.10.4.0):** Knopf „Leisten
+  einstellen“ → `BM.Setup(true)`: schließt das Einstellungsfenster (kommt
+  bei „Fertig“ zurück), Testleisten laufen in Schleife (`BM.DEMO`,
+  `BM.DemoBars`), über allen drei Plätzen eine ziehbare Fläche
+  (`K.DragToMove`, gleiche Speicherstelle wie der Gestaltungsmodus,
+  Umschalt+Rechtsklick = Standardplatz), daneben das Fenster
+  `WeintCodexBossSetup`: Breite, Höhe, Schrift, Anzahl, Schrift der
+  Warnung, Richtung (`bossGrow`), Symbol links/rechts/ohne (`bossIcon`),
+  leert/füllt sich (`bossFill`), „gleich dran“ (`bossEmph`,
+  `bossEmphSecs`), „Alles zurücksetzen“ (`BM.LOOK_KEYS` + Plätze). Jede
+  Änderung sofort über `BM.ApplyLook()`. Nie im Kampf; Kampfbeginn
+  beendet es. Werte aus dem Spielstand werden auf ihre Grenzen gezogen
+  (`BM.Look`).
+- **„Gleich dran“ (BigWigs: „hervorheben“):** eine Leiste mit Dauer, deren
+  Rest unter `bossEmphSecs` fällt, wechselt an den zweiten Anker – 1,5×
+  so hoch, 1,25× so breit, rot (Statusfarbe). Höchstens 4; Kampftimer
+  ohne Dauer nie.
 - **Töne je Anlass (1.10.3.0, Wunsch „welche Töne kann ich wann wo
   einstellen“):** `BM.SOUND_EVENTS` = Pull, Break, Soon, Warn, Kill, Wipe;
   je Anlass `bossSnd<Anlass>` = Schlüssel aus `FA.SOUNDS` (Liste von „Raus

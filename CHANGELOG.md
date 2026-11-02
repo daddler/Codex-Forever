@@ -13,6 +13,7 @@ nicht zusammen.
 
 ### Neu
 - Bosskämpfe: Ton je Anlass (`bossSndPull/Break/Soon/Warn/Kill/Wipe`, Schlüssel aus `FA.SOUNDS` oder `"none"`), Vorwarnung vor einer Fähigkeit der Zeitleiste (`bossSoonSecs` 2/3/5, einmal je Leiste), `bossWhere` wie bei „Raus da!“, `bossChannel` (Master/SFX/Dialog), Probekampf (`BM.Demo`), Knopf zum Gestaltungsmodus. Eine Auswahl spielt den Ton vor. Lange Töne werden nicht überspielt (`BM.busyUntil`).
+- Bosskämpfe: Leisten einstellen wie BigWigs/DBM – `BM.Setup` mit Testleisten in Schleife, ziehbaren Flächen über `bossbars`, `bossemph`, `bosswarn` und Fenster `WeintCodexBossSetup` (Breite, Höhe, Schrift, Anzahl, Schrift der Warnung, Richtung, Symbol, Füllen, „gleich dran“, Zurücksetzen); nie im Kampf. Zweiter Anker `bossemph`: Leisten unter `bossEmphSecs` (ab Werk 5 s) größer und rot. Takt auf eigenem Rahmen `BM.clock`.
 - `FA.PlayKey(key, channel)` und `FA.Items(withNone)` – eine Stelle zum Spielen und Auflisten der Töne für „Raus da!“ und Bosskämpfe.
 
 ### Geändert

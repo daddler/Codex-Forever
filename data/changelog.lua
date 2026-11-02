@@ -27,7 +27,9 @@ WeintCodex_ChangelogData = {
         notes   = {
             "|cff7C6CFFBosskämpfe: ein Ton für jeden Anlass|r – Pull zu Ende, Pause vorbei, kurz vor einer Fähigkeit, Warnung des Spiels, Sieg und Wipe bekommen je einen eigenen Ton oder keinen. Zur Auswahl stehen alle Töne von „Raus da!“ samt Memes und deinen eigenen.",
             "|cff7C6CFFProbekampf auf Knopfdruck|r – spielt Pull, Vorwarnung, Warnung und Sieg mit deinen Tönen einmal durch, nur bei dir.",
-            "|cff7C6CFFWo und wie laut|r – Töne überall, nur in der Gruppe oder nur in Instanzen; dazu, über welchen Lautstärkeregler des Spiels sie laufen. Ein Knopf führt direkt zum Verschieben der Leisten.",
+            "|cff7C6CFFWo und wie laut|r – Töne überall, nur in der Gruppe oder nur in Instanzen; dazu, über welchen Lautstärkeregler des Spiels sie laufen.",
+            "|cff7C6CFFLeisten einstellen wie bei BigWigs und DBM|r – Testleisten laufen, du ziehst sie an ihren Platz und stellst Breite, Höhe, Schrift, Anzahl, Richtung und Symbol direkt daneben ein.",
+            "|cff7C6CFFWas gleich dran ist, steht groß extra|r – eine Leiste springt in ihren letzten Sekunden größer und rot an einen eigenen Platz; einstellbar ab wie vielen Sekunden, oder ganz aus.",
         },
     },
     {
