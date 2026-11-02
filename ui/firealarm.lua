@@ -72,7 +72,7 @@ FA.SOUNDS = {
     -- .github/scripts/make_meme_sounds.py - nur der Spruch, ohne Vor- und Nachlauf.
     meme_raus = { file = "meme_raus.ogg", len = 1.75, text = "Meme: „Ich muss raus!“" },
     meme_fahr = { file = "meme_fahr.ogg", len = 4.7, text = "Meme: „Fahr weiter!“" },
-    meme_rose = { file = "meme_rose.ogg", len = 3.85, text = "Meme: „Aua, hat mich gebissen, die Rose!“" },
+    meme_rose = { file = "meme_rose.ogg", len = 5.39, text = "Meme: „Aua, hat mich gebissen, die Rose!“" },
     raid    = { kit = "RAID_WARNING", id = 8959, text = "Schlachtzugswarnung" },
     ready   = { kit = "READY_CHECK", id = 8960, text = "Bereitschaftscheck" },
     alarm   = { kit = "ALARM_CLOCK_WARNING_3", id = 12889, text = "Wecker" },

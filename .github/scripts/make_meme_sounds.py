@@ -14,8 +14,8 @@ Lautstaerke und Spektrogramm: Sprache erscheint dort als gestapelte,
 gebogene Obertoene, Hintergrund als Rauschen oder gleichbleibender Ton.
   * raus: Stimme 3,60-5,35 s; davor nur Hintergrund und ein Knall (1,7 s).
   * fahr: drei laute Rufe 3,70-8,40 s; davor Motorbrummen, danach Leiseres.
-  * rose: drei zusammenhaengende Phrasen 0,25-4,10 s (passend zum Titel
-    "Aua - hat mich gebissen - die Rose"); ab 5,4 s andere Sprache.
+  * rose: 1,94-7,33 s - vom Besitzer nach Gehoer festgelegt (1.10.2.0);
+    der erste Schnitt 0,25-4,10 s nach dem Spektrogramm lag daneben.
 Jeder Ton: mono, 44,1 kHz, Ogg Vorbis, Lautheit angeglichen (-16 LUFS,
 Spitze -1,5 dB), 0,02 s Ein- und 0,12 s Ausblenden gegen Knacken.
 """
@@ -31,7 +31,7 @@ OUT = os.path.join(ROOT, "media", "sounds")
 CUTS = {
     "meme_raus": ("raus.mp3", 3.60, 5.35),
     "meme_fahr": ("fahr.mp3", 3.70, 8.40),
-    "meme_rose": ("rose.mp3", 0.25, 4.10),
+    "meme_rose": ("rose.mp3", 1.94, 7.33),
 }
 
 

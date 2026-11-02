@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.10.2.0",
+        date    = "02.11.2026",
+        notes   = {
+            "|cff7C6CFF„Aua, die Rose!“ richtig geschnitten|r – das Meme für „Raus da!“ enthält jetzt den ganzen Spruch.",
+        },
+    },
+    {
         version = "1.10.1.0",
         date    = "02.11.2026",
         notes   = {

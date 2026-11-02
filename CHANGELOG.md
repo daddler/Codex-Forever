@@ -9,7 +9,12 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
-## [1.10.1.0] – 2026-11-02
+## [1.10.2.0] – 2026-11-02
+
+### Geändert
+- `meme_rose` neu geschnitten: 1,94–7,33 s (5,39 s) statt 0,25–4,10 s, vom Besitzer nach Gehör festgelegt; der erste Schnitt nach dem Spektrogramm lag daneben. `len` angepasst.
+
+ – 2026-11-02
 
 ### Neu
 - „Raus da!“: drei Memes als Töne (`meme_raus` 1,75 s, `meme_fahr` 4,7 s, `meme_rose` 3,85 s; `media/sounds/meme_*.ogg`), Wunsch des Besitzers. Geschnitten mit `.github/scripts/make_meme_sounds.py` nach Lautstärke und Spektrogramm (keine Spracherkennung verfügbar): nur der Spruch, ohne Vor- und Nachlauf; mono Ogg Vorbis, Lautheit -16 LUFS. Fremde Aufnahmen, nicht gerechnet wie die übrigen Alarme.
