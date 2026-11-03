@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.10.23.0",
+        date    = "03.11.2026",
+        notes   = {
+            "|cff7C6CFFAufgeräumte Plakettenvorschau|r – der zweite Balken links ist weg.",
+        },
+    },
+    {
         version = "1.10.22.0",
         date    = "03.11.2026",
         notes   = {

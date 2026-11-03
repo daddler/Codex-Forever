@@ -2360,9 +2360,9 @@ function NP.CreatePreview(parent)
     local p = Build(host)
     p:SetPoint("CENTER", host, "CENTER", 0, 8)
     preview = p
-    -- 1.10.22.0 (Wunsch: "alle Aenderungen direkt in der Vorschau"): links
-    -- ein Gegner, der nicht Ziel ist, rechts ein Freund - so wirken auch
-    -- Deckkraft, Farben ohne Ziel und alles unter "Freundlich".
+    -- 1.10.22.0 (Wunsch: "alle Aenderungen direkt in der Vorschau"): rechts
+    -- ein Freund - so wirkt auch alles unter "Freundlich". (Der Gegner ohne
+    -- Ziel links ist seit 1.10.23.0 wieder weg.)
     NP.previewOther = Build(host)
     NP.previewFriend = Build(host)
     NP.previewFriend._friendly = true
@@ -2417,25 +2417,9 @@ function NP.PreviewSides(p)
     local o, f = NP.previewOther, NP.previewFriend
     if not (o and f) then return end
     local gap = S.width * 0.5 + 40
-    -- Gegner ohne Ziel: Deckkraft, Farbe ausserhalb des Kampfes.
-    Layout(o)
-    o:ClearAllPoints()
-    o:SetPoint("RIGHT", p, "LEFT", -gap * 0.6, 0)
-    o:SetScale(1)
-    o.health:SetMinMaxValues(0, 100)
-    o.health:SetValue(100)
-    local c = S.darkenOOC and S.hostile or S.enemyInCombat
-    K.PaintBar(o.health, c.r, c.g, c.b)
-    PaintBg(o, c.r, c.g, c.b)
-    o.ring:SetShown(false) o.glow:SetShown(false) o.glowWide:SetShown(false)
-    for _, m in ipairs(o.marks) do m:SetShown(false) end
-    for _, slot in ipairs(SLOTS) do o.texts[slot]:Hide() end
-    if S.textTop ~= "none" then o.texts.top:SetText("Kobold-Arbeiter") o.texts.top:SetTextColor(1, 1, 1, 1) o.texts.top:Show() end
-    o.threat:Hide() o.threatBar:Hide() o.aggro:Hide() o.quest:Hide() o.raid:Hide()
-    if o.ttd then o.ttd:Hide() end
-    o.cast:ShowPreview(false)
-    o:SetAlpha((S.nonTargetAlpha or 100) / 100)
-    o:Show()
+    -- 1.10.23.0 (Beta-Test: "2 Balken in der Vorschau"): der Gegner ohne
+    -- Ziel links lag unter dem Questfortschritt und sah wie ein Fehler aus.
+    o:Hide()
     -- Freund: nur mit eingeschalteten freundlichen Plaketten.
     if not S.friendlyEnabled then f:Hide() return end
     LayoutFriendly(f)

@@ -9,6 +9,11 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.10.23.0] – 2026-11-03
+
+### Behoben
+- Plakettenvorschau: zweiter Balken links (Gegner ohne Ziel) entfernt – lag unter dem Questfortschritt und sah wie ein Fehler aus.
+
 ## [1.10.22.0] – 2026-11-03
 
 ### Neu
