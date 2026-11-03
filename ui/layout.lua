@@ -102,6 +102,8 @@ K.LAYOUT = {
     bossemph        = { point = "CENTER",      relPoint = "CENTER", x = 0, y = 110 },
     -- 1.10.6.0: Zeitleiste von oben nach unten, links neben den Leisten.
     bosstrack       = { point = "CENTER",      relPoint = "CENTER", x = -560, y = 40 },
+    -- Entfluchen (ui/dispel.lua, 1.10.24.0): Felder links ueber den Gruppenrahmen.
+    dispelbar       = { point = "TOPLEFT",     relPoint = "TOPLEFT", x = 20, y = -200 },
     -- PvP (ui/pvpframes.lua, 1.6.0.0): Gegner rechts, wie das Spiel sie
     -- zeigt; Arena oben, Schlachtfeld darunter (nie beide zugleich).
     arenaframes     = { point = "RIGHT",       relPoint = "RIGHT", x = -120, y = 140 },

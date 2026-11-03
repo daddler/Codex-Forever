@@ -969,8 +969,7 @@ function CC.BuildPage(B)
     B:Row({ type = "toggle", label = "Nur hilfreiche Zauber", key = "clickHelpfulOnly",
             description = "Heilungen, Buffs, Bannen – was man auf Verbündete wirkt." },
           { type = "empty" })
-    local DP = WeintCodex.UIDispel
-    if DP and DP.BuildSection then DP.BuildSection(B) end
+    -- Entfluchen hat seit 1.10.24.0 einen eigenen Reiter (ui/dispel.lua).
     B:Section("Wo")
     B:Row({ type = "toggle", label = "Auch Einheitenrahmen", key = "clickUnitFrames",
             description = "Spieler, Ziel, Fokus, Ziel des Ziels und Begleiter von WeintCodex – nur mit der Oberfläche." },

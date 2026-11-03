@@ -22,6 +22,14 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.10.24.0",
+        date    = "03.11.2026",
+        notes   = {
+            "|cff7C6CFFEntfluchen mit einem Klick auf ein Feld|r – kleine Felder je Gruppenmitglied leuchten in der Farbe des Debuffs (Magie, Fluch, Krankheit, Gift), ein Klick entfernt ihn. Eigener Reiter „Entfluchen“ unter Kampf & Gruppe, verschiebbar im Gestaltungsmodus.",
+            "|cff7C6CFFWas beim Entfluchen nicht klappt, sagt WeintCodex jetzt|r – kein Zauber gelernt, Taste schon belegt. Auf Namensplaketten lässt das Spiel keine Klickzauber zu.",
+        },
+    },
+    {
         version = "1.10.23.0",
         date    = "03.11.2026",
         notes   = {

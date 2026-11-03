@@ -547,6 +547,10 @@ do
     if CC and CC.BuildPage then
         m.pages[#m.pages + 1] = { key = "klickzauber", label = "Klickzauber", store = "groupframes", build = CC.BuildPage }
     end
+    local DP = WeintCodex.UIDispel
+    if DP and DP.BuildPage then
+        m.pages[#m.pages + 1] = { key = "entfluchen", label = "Entfluchen", store = "groupframes", build = DP.BuildPage }
+    end
     if MH and MH.BuildPage then
         m.pages[#m.pages + 1] = { key = "makros", label = "Makros", store = "actionbars", build = MH.BuildPage }
     end
@@ -560,7 +564,7 @@ end
 --   Handel, Gespraeche Auktionshaus, Fluestern, Gespraeche
 QoL.PAGE_ORDER = {
     automatik = 1, anzeigen = 2,
-    rausda = 10, automark = 11, klickzauber = 12, makros = 13,
+    rausda = 10, automark = 11, klickzauber = 12, entfluchen = 12.5, makros = 13,
     karte = 20, questhilfe = 20.5, sammeln = 21, glitzern = 22, selten = 23,
     auktion = 30, fluestern = 31, gespraeche = 32,
 }

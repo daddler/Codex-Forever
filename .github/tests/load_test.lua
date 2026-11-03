@@ -19042,10 +19042,10 @@ do
         end
         local order = table.concat(keys, ",")
         local pal = WeintCodex.UIPaladinBuffs.IsPaladin()
-        assert(order == "automatik,anzeigen,rausda,automark,klickzauber,makros," .. (pal and "segen," or "") .. "ringe,pvp,boss,boss_bars,boss_sounds,boss_bosses,karte,questhilfe,sammeln,glitzern,selten,flugspiele,auktion,fluestern,danke,gespraeche",
+        assert(order == "automatik,anzeigen,rausda,automark,klickzauber,entfluchen,makros," .. (pal and "segen," or "") .. "ringe,pvp,boss,boss_bars,boss_sounds,boss_bosses,karte,questhilfe,sammeln,glitzern,selten,flugspiele,auktion,fluestern,danke,gespraeche",
             "Reihenfolge: " .. order)
         local d = pal and 0 or -1
-        assert(O.PageIndex("comfort", "gespraeche") == 23 + d and O.PageIndex("comfort", "fluestern") == 21 + d, "Index nach Sortieren")
+        assert(O.PageIndex("comfort", "gespraeche") == 24 + d and O.PageIndex("comfort", "fluestern") == 22 + d, "Index nach Sortieren")
         for _, h in ipairs(WL.HELPERS) do
             local mod = K.Module(h.module)
             assert(mod and mod.group ~= "ui" or h.module == "groupframes", h.label .. ": haengt an einem Modul der Oberflaeche")
@@ -20320,6 +20320,41 @@ do
         G.C_TaxiMap, G.GetTaxiMapID, G.GetTime, G.UnitOnTaxi = oT, oM, oG, oTaxi
     end)
     Check(ok, "Flugzeit: Ziel vom Klick, Dauer gemessen vor Daten, unbekannt ehrlich, Zwischenstopps, Landen" .. (ok and "" or (": " .. tostring(err))))
+end
+
+-- 1.10.24.0: Entfluchen - Warnungen, Felder zum Anklicken.
+do
+    local ok, err = pcall(function()
+        local DP, K = WeintCodex.UIDispel, WeintCodex.UIKit
+        local oR = DP.Resolve
+        DP.Resolve = function() return {}, { "Gift", "Krankheit" }, true end
+        local pr = DP.Problems()
+        assert(#pr == 1 and pr[1]:find("Noch kein Zauber", 1, true), "fehlender Zauber nicht gemeldet")
+        DP.Resolve = function() return {}, {}, false end
+        assert(DP.Problems()[1]:find("Klasse", 1, true), "Klasse ohne Bannen nicht gemeldet")
+        DP.Resolve = function()
+            return { { label = "Gift", spell = "Gift heilen", button = 1, types = { Poison = true } } }, {}, true
+        end
+        K.Set("comfort", "enabled", true)
+        K.Set("groupframes", "dispelBar", true)
+        assert(DP.ApplyBar() == true, "Felder nicht angelegt")
+        local f = DP.BarFrame()
+        local oA = _G.C_UnitAuras
+        _G.C_UnitAuras = { GetAuraDataByIndex = function(u, i) if u == "player" and i == 1 then return { dispelName = "Poison" } end end }
+        local oE = _G.UnitExists
+        _G.UnitExists = function(u) return u == "player" end
+        DP.PaintAll()
+        local lit = false
+        for _, c in ipairs(DP.cells) do
+            if c.unit == "player" and c.sq[1].fill:IsShown() then lit = true end
+        end
+        _G.C_UnitAuras, _G.UnitExists = oA, oE
+        assert(lit, "Feld leuchtet bei Gift nicht")
+        K.Set("groupframes", "dispelBar", false)
+        DP.ApplyBar()
+        DP.Resolve = oR
+    end)
+    Check(ok, "Entfluchen: Warnungen (kein Zauber, Klasse), Felder leuchten nach Debuff-Art" .. (ok and "" or (": " .. tostring(err))))
 end
 
 -- 1.10.21.0: Danke ab Werk wieder an.

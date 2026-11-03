@@ -9,6 +9,13 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.10.24.0] – 2026-11-03
+
+### Neu
+- Entfluchen als eigener Reiter neben den Klickzaubern (`DP.BuildPage`, Rang 12.5).
+- Felder zum Anklicken wie Decursive (`DP.ApplyBar`): je Mitglied (Gruppe 5, Schlachtzug 40) ein Feld je Zauber der Klasse, leuchtet in der Farbe der Debuff-Art, die dieser Zauber entfernt; Linksklick wirkt ihn. Geschützte Knöpfe, Zauber nur außerhalb des Kampfes gesetzt, Sichtbarkeit über Statustreiber; verschiebbar (`dispelbar`). Im Kampf grau, wenn der Client die Art nur geheim nennt.
+- Warnungen in Rot auf der Seite und einmal im Chat (`DP.Problems`/`DP.Warn`): kein Zauber gelernt, Klasse ohne Bannen, Zusatztaste + Klick schon durch eigenen Klickzauber belegt. Hinweis: auf Namensplaketten gehen keine Klickzauber.
+
 ## [1.10.23.0] – 2026-11-03
 
 ### Behoben
