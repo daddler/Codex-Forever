@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.10.14.2",
+        date    = "03.11.2026",
+        notes   = {
+            "|cff7C6CFFHerunterzählen klarer|r – neu aufgenommene Zahlen, sauber voneinander getrennt.",
+        },
+    },
+    {
         version = "1.10.14.1",
         date    = "03.11.2026",
         notes   = {
