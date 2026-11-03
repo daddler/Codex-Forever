@@ -2709,7 +2709,7 @@ do
         assert(not K.WantsActive("damagemeter") and not sd.ui.asked, "vor Uebernehmen schon geschaltet")
         WL.Button("next"):Click()
         assert(WL.Step() == "alltag", "nach den Anzeigen kein Schritt Alltag: " .. WL.Step())
-        assert(c.helpers.autoRepair and c.helpers.fireAlarm and not c.helpers.msgOn and not c.helpers.thanks, "Empfohlen falsch vorgewaehlt (Danke ab 1.10.19.0 aus)")
+        assert(c.helpers.autoRepair and c.helpers.fireAlarm and not c.helpers.msgOn and c.helpers.thanks, "Empfohlen nicht vorgewaehlt (Danke bleibt an)")
         assert(not K.Get("comfort", "autoRepair"), "Helfer vor Uebernehmen geschaltet")
         WL.Button("next"):Click()
         assert(WL.Step() == "kampf" and WL.BodyText():find("Klickzauber", 1, true), "Kampf ohne Hinweis auf Klickzauber")
@@ -20322,9 +20322,8 @@ do
     Check(ok, "Flugzeit: Ziel vom Klick, Dauer gemessen vor Daten, unbekannt ehrlich, Zwischenstopps, Landen" .. (ok and "" or (": " .. tostring(err))))
 end
 
--- 1.10.19.0: Danke ab Werk aus - die folgenden Pruefungen schalten es ein.
-assert(WeintCodex.UIKit.Get("comfort", "thanks") == false, "Danke ab Werk an")
-WeintCodex.UIKit.Set("comfort", "thanks", true)
+-- 1.10.21.0: Danke ab Werk wieder an.
+assert(WeintCodex.UIKit.Get("comfort", "thanks") == true, "Danke ab Werk aus")
 -- 6.53.3.0: Danke in Instanzen schaltbar, ab Werk aus.
 do
     local G = _G

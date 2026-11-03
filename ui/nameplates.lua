@@ -1062,6 +1062,17 @@ local function Layout(p)
         p.threat:SetPoint("BOTTOMLEFT", p, "TOPLEFT", 1, 2)
         p.threat:SetJustifyH("LEFT")
     end
+    -- 1.10.21.0 (Beta-Test: "Sterbezeit liegt ueber den Pfeilen"): hinter
+    -- der Zielmarke wie die Bedrohung, steht die daneben, dann dahinter.
+    if p.ttd then
+        K.SetFont(p.ttd, S.textSize)
+        p.ttd:ClearAllPoints()
+        if S.threatText == "right" then
+            p.ttd:SetPoint("LEFT", p.threat, "RIGHT", 6, 0)
+        else
+            p.ttd:SetPoint("LEFT", p, "RIGHT", math.floor(S.height * 1.35 + 0.5) + 4 + (S.eliteFrame and NP.ELITE_EDGE or 0), 0)
+        end
+    end
     -- 6.29.21.0 (Spielerbericht: "der Questfortschritt ueberschreibt die
     -- Beschriftung"): bis dahin unten rechts an der oberen linken Ecke - die
     -- Namenszeile ist aber 20 breiter als der Balken und mittig, ein langer
@@ -2438,6 +2449,17 @@ function NP.RefreshPreview()
     p:SetScale(S.targetScale / 100)
     if S.raidMarker ~= "none" then K.ShowRaidIndex(p.raid, 8) else p.raid:Hide() end
     if S.castEnabled then p.cast:ShowPreview(true) else p.cast:ShowPreview(false) end
+    -- 1.10.21.0: Sterbezeit im Beispiel, damit man sieht, wo und wie sie steht.
+    if p.ttd then
+        if S.ttd or S.ttdDots then
+            local TD = WeintCodex.UITimeToDie
+            p.ttd:SetText((TD and TD.Format) and TD.Format(36) or "36 s")
+            if S.ttdDots then p.ttd:SetTextColor(0.3, 0.85, 0.4, 1) else p.ttd:SetTextColor(1, 1, 1, 1) end
+            p.ttd:Show()
+        else
+            p.ttd:Hide()
+        end
+    end
 end
 
 

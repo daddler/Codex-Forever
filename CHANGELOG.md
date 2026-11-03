@@ -9,6 +9,15 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.10.21.0] – 2026-11-03
+
+### Geändert
+- „Danke für Buffs“ wieder ab Werk an (Entscheidung des Besitzers, 1.10.19.0 rückgängig).
+
+### Behoben
+- Sterbezeit an der Plakette lag über den Zielmarken rechts: jetzt hinter der Zielmarke, neben der Bedrohung (`p.ttd`-Anker in der Plakettenanordnung).
+- Vorschau der Namensplaketten zeigt die Sterbezeit (grün mit „Reichen meine DoTs?“).
+
 ## [1.10.20.0] – 2026-11-03
 
 ### Behoben

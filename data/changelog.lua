@@ -22,6 +22,14 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.10.21.0",
+        date    = "03.11.2026",
+        notes   = {
+            "|cff7C6CFFDie Sterbezeit ist besser lesbar|r – sie steht jetzt hinter den Zielpfeilen statt darüber, und die Vorschau in den Einstellungen zeigt sie.",
+            "|cff7C6CFF„Danke für Buffs“ ist wieder ab Werk an|r.",
+        },
+    },
+    {
         version = "1.10.20.0",
         date    = "03.11.2026",
         notes   = {
