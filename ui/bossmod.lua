@@ -509,7 +509,7 @@ local function TickRow(r)
         t.warned = true
         if not t.demo or Opt("bossSound") then BM.Sound("Soon", t.demo, t.sound) end
     end
-    if tEmphOn and not t.emph and left <= tEmphSecs then tRelayout = true end
+    if tEmphOn and not t.emph and not t._noEmph and left <= tEmphSecs then tRelayout = true end
 end
 
 -- doText: Zahlen neu schreiben (ohne Angabe: ja).
@@ -540,7 +540,10 @@ function BM.Tick(doText)
         timers[done.key] = nil
         if done.onEnd then done.onEnd() end
         BM.Refresh()
-    elseif tRelayout then
+    elseif tRelayout and not BM._inRefresh then
+        -- 1.10.22.0 (Fehler im Spiel: "script ran too long"): sind die Plaetze
+        -- "gleich dran" voll, blieb eine Leiste unten - und jede Zeichnung
+        -- verlangte eine neue. Aus Refresh heraus nie noch einmal.
         BM.Refresh()
     end
 end
@@ -696,7 +699,10 @@ function BM.Refresh()
     for i = #emphSel, 1, -1 do emphSel[i] = nil end
     for i = 1, #list do
         local t = list[i]
-        local e = useEmph and ei < BM.EMPH_ROWS and (t.forceEmph or (t.ends and not t.hold and t.ends - now <= secs))
+        local want = useEmph and (t.forceEmph or (t.ends and not t.hold and t.ends - now <= secs))
+        local e = want and ei < BM.EMPH_ROWS
+        -- Will nach oben, aber kein Platz: nicht bei jedem Takt neu fragen.
+        t._noEmph = (want and not e) and true or nil
         if (e and true or nil) ~= t.emph then
             -- Wechsel des Ankers: neue Zeile am anderen.
             t.emph = e and true or nil
@@ -733,7 +739,15 @@ function BM.Refresh()
             if h._target and h._target:IsShown() then h:Show() else h:Hide() end
         end
     end
-    if #list > 0 then clock:Show() BM.Tick() else clock:Hide() end
+    if #list > 0 then
+        clock:Show()
+        BM._inRefresh = true
+        local ok, err = pcall(BM.Tick)
+        BM._inRefresh = nil
+        if not ok then _G.error(err, 0) end
+    else
+        clock:Hide()
+    end
 end
 
 function BM.Warn(text, icon)

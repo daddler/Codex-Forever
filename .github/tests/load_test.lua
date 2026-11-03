@@ -22868,6 +22868,13 @@ do
                 _G.C_DamageMeter = oC
             end
         end
+        -- 1.10.22.0: mehr Leisten kurz vor "jetzt" als Plaetze "gleich dran" - keine Endlosschleife.
+        do
+            K.Set("comfort", "bossEmph", true)
+            for i = 1, BM.EMPH_ROWS + 3 do BM.Start("voll" .. i, "Voll " .. i, 1 + i * 0.1) end
+            BM.Tick(true) BM.Tick(true)
+            for i = 1, BM.EMPH_ROWS + 3 do BM.Stop("voll" .. i) end
+        end
         -- 1.10.19.0: Sterbezeit mit unsinniger Restzeit zeigt nichts (Fehler im Spiel).
         assert(WeintCodex.UITimeToDie == nil or WeintCodex.UITimeToDie.Format(856244680130548) == "", "Sterbezeit-Ueberlauf")
         -- Kampf und Bestzeit.

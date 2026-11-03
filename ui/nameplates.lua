@@ -2360,11 +2360,104 @@ function NP.CreatePreview(parent)
     local p = Build(host)
     p:SetPoint("CENTER", host, "CENTER", 0, 8)
     preview = p
+    -- 1.10.22.0 (Wunsch: "alle Aenderungen direkt in der Vorschau"): links
+    -- ein Gegner, der nicht Ziel ist, rechts ein Freund - so wirken auch
+    -- Deckkraft, Farben ohne Ziel und alles unter "Freundlich".
+    NP.previewOther = Build(host)
+    NP.previewFriend = Build(host)
+    NP.previewFriend._friendly = true
     NP.RefreshPreview()
     return host, 92
 end
 
 NP.PreviewPlate = function() return preview end
+
+-- Beispiel-Symbole ueber der Plakette: Groesse, Anzahl, Ausrichtung, Zeit.
+NP.PREVIEW_ICONS = { 136207, 136118, 135813 }
+function NP.PreviewAuras(p)
+    p._pvAuras = p._pvAuras or {}
+    local list = p._pvAuras
+    local n = S.auraEnabled and math.min(#NP.PREVIEW_ICONS, S.auraMax or 3) or 0
+    local size = S.auraSize or 20
+    local y = (S.textTop ~= "none" and S.nameSize or 0) + 8
+    local align = S.auraAlign or "left"
+    local total = n * size + math.max(0, n - 1) * 2
+    for i = 1, #NP.PREVIEW_ICONS do
+        local a = list[i]
+        if not a then
+            a = CreateFrame("Frame", nil, p)
+            a.icon = a:CreateTexture(nil, "ARTWORK")
+            a.icon:SetAllPoints()
+            a.time = K.NewText(a, 9)
+            a.time:SetPoint("BOTTOM", a, "BOTTOM", 0, 1)
+            list[i] = a
+        end
+        if i <= n then
+            a:SetSize(size, size)
+            a.icon:SetTexture(NP.PREVIEW_ICONS[i])
+            a:ClearAllPoints()
+            local x = (i - 1) * (size + 2)
+            if align == "right" then
+                a:SetPoint("BOTTOMRIGHT", p, "TOPRIGHT", -x, y)
+            elseif align == "center" then
+                a:SetPoint("BOTTOMLEFT", p, "TOP", -total / 2 + x, y)
+            else
+                a:SetPoint("BOTTOMLEFT", p, "TOPLEFT", x, y)
+            end
+            a.time:SetText(S.auraTimer and tostring(4 + i * 3) or "")
+            a:Show()
+        else
+            a:Hide()
+        end
+    end
+end
+
+-- Nebenplaketten der Vorschau.
+function NP.PreviewSides(p)
+    local o, f = NP.previewOther, NP.previewFriend
+    if not (o and f) then return end
+    local gap = S.width * 0.5 + 40
+    -- Gegner ohne Ziel: Deckkraft, Farbe ausserhalb des Kampfes.
+    Layout(o)
+    o:ClearAllPoints()
+    o:SetPoint("RIGHT", p, "LEFT", -gap * 0.6, 0)
+    o:SetScale(1)
+    o.health:SetMinMaxValues(0, 100)
+    o.health:SetValue(100)
+    local c = S.darkenOOC and S.hostile or S.enemyInCombat
+    K.PaintBar(o.health, c.r, c.g, c.b)
+    PaintBg(o, c.r, c.g, c.b)
+    o.ring:SetShown(false) o.glow:SetShown(false) o.glowWide:SetShown(false)
+    for _, m in ipairs(o.marks) do m:SetShown(false) end
+    for _, slot in ipairs(SLOTS) do o.texts[slot]:Hide() end
+    if S.textTop ~= "none" then o.texts.top:SetText("Kobold-Arbeiter") o.texts.top:SetTextColor(1, 1, 1, 1) o.texts.top:Show() end
+    o.threat:Hide() o.threatBar:Hide() o.aggro:Hide() o.quest:Hide() o.raid:Hide()
+    if o.ttd then o.ttd:Hide() end
+    o.cast:ShowPreview(false)
+    o:SetAlpha((S.nonTargetAlpha or 100) / 100)
+    o:Show()
+    -- Freund: nur mit eingeschalteten freundlichen Plaketten.
+    if not S.friendlyEnabled then f:Hide() return end
+    LayoutFriendly(f)
+    f:ClearAllPoints()
+    f:SetPoint("LEFT", p, "RIGHT", gap * 0.6, 0)
+    f.health:SetMinMaxValues(0, 100)
+    f.health:SetValue(80)
+    local fr, fg, fb = C3(S.friendlyColor)
+    if S.friendlyClassColor then
+        local mc = _G.RAID_CLASS_COLORS and _G.RAID_CLASS_COLORS.PRIEST
+        if mc then fr, fg, fb = mc.r, mc.g, mc.b end
+    end
+    K.PaintBar(f.health, fr, fg, fb)
+    PaintBg(f, fr, fg, fb)
+    f.texts.top:SetText("Tamsin")
+    f.texts.top:SetTextColor(fr, fg, fb, 1)
+    f.texts.top:Show()
+    f.threat:Hide() f.threatBar:Hide() f.aggro:Hide() f.raid:Hide()
+    if f.ttd then f.ttd:Hide() end
+    f:SetAlpha(1)
+    f:Show()
+end
 
 function NP.RefreshPreview()
     local p = preview
@@ -2432,6 +2525,9 @@ function NP.RefreshPreview()
         p.aggro:Hide()
     end
     local c = S.eliteColoring and S.elite or S.enemyInCombat
+    -- Wie am Ziel im Kampf: Zielfarbe vor Bedrohungsfarbe vor Grundfarbe.
+    if S.targetColorEnabled then c = S.target
+    elseif S.threatColors and sample then c = sample end
     K.PaintBar(p.health, c.r, c.g, c.b)
     PaintBg(p, c.r, c.g, c.b)
     -- Die Vorschau zeigt die Plakette als Ziel: so sieht man, was die
@@ -2449,6 +2545,10 @@ function NP.RefreshPreview()
     p:SetScale(S.targetScale / 100)
     if S.raidMarker ~= "none" then K.ShowRaidIndex(p.raid, 8) else p.raid:Hide() end
     if S.castEnabled then p.cast:ShowPreview(true) else p.cast:ShowPreview(false) end
+    -- Questfortschritt und Symbole (Auren) im Beispiel.
+    if S.questProgress then p.quest:SetText("3/8") p.quest:Show() else p.quest:Hide() end
+    NP.PreviewAuras(p)
+    NP.PreviewSides(p)
     -- 1.10.21.0: Sterbezeit im Beispiel, damit man sieht, wo und wie sie steht.
     if p.ttd then
         if S.ttd or S.ttdDots then

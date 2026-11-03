@@ -22,6 +22,14 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.10.22.0",
+        date    = "03.11.2026",
+        notes   = {
+            "|cff7C6CFFDie Vorschau der Namensplaketten zeigt jetzt alles|r – Farben, Symbole, Questfortschritt, dazu ein Gegner, der nicht Ziel ist, und ein Freund. Jede Änderung siehst du sofort.",
+            "|cff7C6CFFKein Hänger mehr bei vielen Bossfähigkeiten gleichzeitig|r – das Spiel brach das Addon mit „script ran too long“ ab.",
+        },
+    },
+    {
         version = "1.10.21.0",
         date    = "03.11.2026",
         notes   = {

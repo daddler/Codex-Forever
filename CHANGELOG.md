@@ -9,6 +9,14 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.10.22.0] – 2026-11-03
+
+### Neu
+- Vorschau der Namensplaketten zeigt jede Einstellung: Ziel-/Bedrohungsfarbe am Balken, Questfortschritt, Beispiel-Auren (Größe, Anzahl, Ausrichtung, Zeit), links ein Gegner ohne Ziel (Deckkraft, Farbe außerhalb des Kampfes), rechts ein Freund (Farbe, Klassenfarbe, Lebensbalken, Namensgröße) – `NP.PreviewAuras`, `NP.PreviewSides`.
+
+### Behoben
+- Bosskämpfe: „script ran too long“ – waren mehr Leisten kurz vor „jetzt“ als Plätze „gleich dran“, riefen sich `Refresh` und `Tick` endlos auf (`BM._inRefresh`, `t._noEmph`).
+
 ## [1.10.21.0] – 2026-11-03
 
 ### Geändert
