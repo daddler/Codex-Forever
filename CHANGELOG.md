@@ -9,6 +9,14 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.10.18.0] – 2026-11-03
+
+### Neu
+- Ablauf wird geteilt (`ui/bossshare.lua`, Art `Q`: `1|Q|dungeon/boss|dauer|teil|teile|id:t,…`, bis 8 Teile à 14 Einträge, geprüft: Boss im Kompendium, Zeiten aufsteigend). Je Absender gespeichert (`bossShared[code]._seq`), genutzt wird der längste, nur wenn kein eigener Ablauf da ist (`BM.SeqOf`).
+
+### Behoben
+- Fähigkeiten mit Zauberleiste wurden zusätzlich über Sofort-„Erfolge“ der Aura gezählt (Glubtok: Fäuste doppelt/dreifach, Zähler zu hoch). Nach der ersten Leiste zählt nur noch die Leiste (`rec.cast`). Alte Abläufe (`v` fehlt) gelten nicht mehr (`BM.SEQ_V = 2`).
+
 ## [1.10.17.0] – 2026-11-03
 
 ### Neu

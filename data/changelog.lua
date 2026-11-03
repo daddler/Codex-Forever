@@ -22,6 +22,14 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.10.18.0",
+        date    = "03.11.2026",
+        notes   = {
+            "|cff7C6CFFDer Ablauf eines Bosskampfs wird geteilt|r – hast du einen Boss noch nie gelegt, zeigen Leisten und Zeitleiste den Ablauf, den andere mit WeintCodex gemessen haben.",
+            "|cff7C6CFFKeine doppelten Fähigkeiten mehr|r – Fähigkeiten mit Zauberleiste wurden mehrfach gezählt, die Zähler waren zu hoch. Der Ablauf wird ab dem nächsten Kampf neu aufgezeichnet.",
+        },
+    },
+    {
         version = "1.10.17.0",
         date    = "03.11.2026",
         notes   = {

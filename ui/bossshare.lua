@@ -76,6 +76,113 @@ function BS.Decode(text)
 end
 
 --------------------------------------------------
+-- 1.10.18.0 (Wunsch): auch der ABLAUF eines Kampfes - welche Faehigkeit
+-- (Zauber-Nummer) wann (Zehntel ab Pull). In Teilen zu BS.SEQ_PER
+-- Eintraegen, hoechstens BS.SEQ_PARTS Teile:
+-- "1|Q|dungeon/boss|dauer|teil|teile|id:t,id:t,..."
+--------------------------------------------------
+BS.SEQ_PER, BS.SEQ_PARTS = 14, 8   -- 14 x "123456:18000," + Kopf < 250 Zeichen
+
+function BS.EncodeSeq(code, d, ids, ts)
+    local out = {}
+    local total = math.min(BS.SEQ_PARTS, math.ceil(#ids / BS.SEQ_PER))
+    for part = 1, total do
+        local items = {}
+        for i = (part - 1) * BS.SEQ_PER + 1, math.min(#ids, part * BS.SEQ_PER) do
+            items[#items + 1] = ids[i] .. ":" .. Tenth(ts[i])
+        end
+        out[#out + 1] = table.concat({ BS.PROTO, "Q", code, tostring(math.floor(d + 0.5)), tostring(part), tostring(total), table.concat(items, ",") }, "|")
+    end
+    return out
+end
+
+function BS.DecodeSeq(text)
+    if type(text) ~= "string" or #text > 250 then return nil end
+    local proto, code, d, part, total, body = text:match("^(%d+)|Q|([%w_]+/[%w_]+)|(%d+)|(%d+)|(%d+)|([%d:,]+)$")
+    if proto ~= BS.PROTO then return nil end
+    d, part, total = tonumber(d), tonumber(part), tonumber(total)
+    if not (d and part and total) or d < 1 or d > 1800 or part < 1 or total < 1 or part > total or total > BS.SEQ_PARTS then return nil end
+    if not (BM.EnglishName and BM.EnglishName(code)) then return nil end
+    local ids, ts, last = {}, {}, -1
+    for id, t in body:gmatch("(%d+):(%d+)") do
+        id, t = tonumber(id), tonumber(t)
+        if not (id and id > 0 and t and t <= 18000 and t >= last) then return nil end
+        last = t
+        ids[#ids + 1], ts[#ts + 1] = id, t / 10
+    end
+    if #ids == 0 or #ids > BS.SEQ_PER then return nil end
+    return { code = code, d = d, part = part, total = total, ids = ids, ts = ts }
+end
+
+-- Teile sammeln (nur im Speicher); vollstaendig -> je Absender gemerkt.
+local seqParts = {}
+function BS.TakeSeq(d, sender)
+    local store = BS.Store()
+    if not store or not d or type(sender) ~= "string" then return false end
+    local k = sender .. "@" .. d.code
+    local p = seqParts[k]
+    if not p or p.d ~= d.d or p.total ~= d.total then p = { d = d.d, total = d.total, got = 0, parts = {} } seqParts[k] = p end
+    if not p.parts[d.part] then p.got = p.got + 1 end
+    p.parts[d.part] = d
+    if p.got < p.total then return false end
+    seqParts[k] = nil
+    local ids, ts = {}, {}
+    for i = 1, p.total do
+        local q = p.parts[i]
+        for j = 1, #q.ids do ids[#ids + 1], ts[#ts + 1] = q.ids[j], q.ts[j] end
+    end
+    for i = 2, #ts do if ts[i] < ts[i - 1] then return false end end
+    store[d.code] = store[d.code] or {}
+    local all = store[d.code]
+    all._seq = type(all._seq) == "table" and all._seq or {}
+    local seqs = all._seq
+    if not seqs[sender] then
+        local count, oldest, oldestT = 0, nil, nil
+        for who, v in pairs(seqs) do
+            count = count + 1
+            if not oldestT or (v.at or 0) < oldestT then oldest, oldestT = who, v.at or 0 end
+        end
+        if count >= BS.MAX_SENDERS and oldest then seqs[oldest] = nil end
+    end
+    seqs[sender] = { d = p.d, i = ids, t = ts, at = (_G.time and _G.time()) or 0 }
+    return true
+end
+
+local function SpellName(id)
+    if _G.C_Spell and _G.C_Spell.GetSpellName then
+        local ok, nm = pcall(_G.C_Spell.GetSpellName, id)
+        return ok and Plain(nm) or nil
+    elseif _G.GetSpellInfo then
+        local ok, nm = pcall(_G.GetSpellInfo, id)
+        return ok and Plain(nm) or nil
+    end
+end
+
+-- Der laengste geteilte Ablauf, mit den Namen DEINES Clients.
+function BS.SharedSeq(code, st)
+    local store = BS.Store()
+    local all = store and type(code) == "string" and store[code]
+    local seqs = type(all) == "table" and all._seq
+    if type(seqs) ~= "table" then return nil end
+    local best
+    for _, v in pairs(seqs) do
+        if type(v) == "table" and type(v.i) == "table" and type(v.t) == "table" and (not best or (v.d or 0) > (best.d or 0)) then best = v end
+    end
+    if not best then return nil end
+    local byId = {}
+    if type(st) == "table" then
+        for name, rec in pairs(st) do if type(rec) == "table" and type(name) == "string" and rec.id then byId[rec.id] = name end end
+    end
+    local s, t = {}, {}
+    for i = 1, #best.i do
+        local name = byId[best.i[i]] or SpellName(best.i[i])
+        if type(name) == "string" and name ~= "" then s[#s + 1], t[#t + 1] = name, best.t[i] end
+    end
+    if #s < (BM.SEQ_MIN or 3) then return nil end
+    return { v = BM.SEQ_V, d = best.d, s = s, t = t, shared = true }
+end
+
+--------------------------------------------------
 -- Gespeichertes von anderen
 --------------------------------------------------
 
@@ -147,7 +254,7 @@ function BS.MergeInto(st)
     local have, n = {}, 0
     for _, rec in pairs(st) do if type(rec) == "table" and rec.id then have[rec.id] = true end end
     for id in pairs(store[code]) do
-        if not have[id] then
+        if type(id) == "number" and not have[id] then
             local name
             if _G.C_Spell and _G.C_Spell.GetSpellName then
                 local ok, nm = pcall(_G.C_Spell.GetSpellName, id)
@@ -213,6 +320,22 @@ function BS.ShareBoss(key)
             if Queue(BS.Encode(code, rec.id, rec)) then n = n + 1 end
         end
     end
+    -- Der eigene Ablauf (nur gemessene, nur mit Zauber-Nummer).
+    local q = st._seq
+    if type(q) == "table" and q.v == BM.SEQ_V and type(q.s) == "table" and type(q.t) == "table" then
+        local ids, ts = {}, {}
+        for i = 1, #q.s do
+            local rec = st[q.s[i]]
+            if type(rec) == "table" and type(rec.id) == "number" and type(q.t[i]) == "number" then
+                ids[#ids + 1], ts[#ts + 1] = rec.id, q.t[i]
+            end
+        end
+        if #ids >= (BM.SEQ_MIN or 3) then
+            for _, msg in ipairs(BS.EncodeSeq(code, q.d or 0, ids, ts)) do
+                if Queue(msg) then n = n + 1 end
+            end
+        end
+    end
     return n
 end
 
@@ -269,6 +392,12 @@ function BS.OnMessage(prefix, text, dist, sender)
     if prefix ~= BS.PREFIX or not BS.On() then return nil end
     BS.stats.got = BS.stats.got + 1
     if not OK_DIST[dist] or type(sender) ~= "string" or BS.IsMe(sender) then return nil end
+    local q = BS.DecodeSeq(text)
+    if q then
+        BS.TakeSeq(q, sender)
+        BS.stats.taken = BS.stats.taken + 1
+        return true
+    end
     local d = BS.Decode(text)
     if not d then BS.stats.refused = BS.stats.refused + 1 return false end
     BS.Take(d, sender)

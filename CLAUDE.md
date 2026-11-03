@@ -82,7 +82,8 @@ allen anderen Usern geteilt werden, nur die Messdaten“, `ui/bossshare.lua`):**
 prefix `WCBM`, to guild, group and the hidden own channel `WCBossmod` (joined
 after login, removed from every chat frame), only bosses of the compendium
 (`Dungeon/Boss`) with spell ID, own first cast, shortest gap (tenths of a
-second) and times seen – never the player's own settings (`rec.edit`),
+second) and times seen, since 1.10.18.0 also the own fight sequence (`Q`:
+spell ID + tenths since pull, in parts) – never the player's own settings (`rec.edit`),
 health/power, or names; never in combat or during a boss fight; switch
 `bossShare`, on by default. Received data is validated and kept per sender
 (`SavedData.bossShared`), the median counts, own measurement and own

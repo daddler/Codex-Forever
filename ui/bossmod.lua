@@ -1622,6 +1622,10 @@ function BM.LearnCast(unit, spell, icon, spellID, casting)
     end
     if type(icon) == "number" then rec.icon = icon end
     if type(spellID) == "number" and spellID > 0 then rec.id = spellID end
+    -- 1.10.18.0 (Beta-Test Glubtok, "doppelt und dreifach"): hat die
+    -- Faehigkeit eine Zauberleiste, zaehlt nur die Leiste. Ein Sofort-
+    -- "Erfolg" gleichen Namens danach sind Treffer der Aura, kein Einsatz.
+    if casting then rec.cast = true elseif rec.cast then return rec end
     local now = Now()
     local last = seen[spell]
     -- Derselbe Zauber ueber mehrere Einheiten (boss1, target, Plakette) oder
@@ -1718,7 +1722,9 @@ function BM.LearnEnd()
     local dur = Now() - f.start
     if f._seqS and #f._seqS >= BM.SEQ_MIN then
         local old = type(store._seq) == "table" and tonumber(store._seq.d) or 0
-        if dur >= old then store._seq = { d = math.floor(dur + 0.5), s = f._seqS, t = f._seqT } end
+        local old_v = type(store._seq) == "table" and store._seq.v
+        if old_v ~= BM.SEQ_V then old = 0 end
+        if dur >= old then store._seq = { v = BM.SEQ_V, d = math.floor(dur + 0.5), s = f._seqS, t = f._seqT } end
     end
     BM.seqPlay = nil
 end
@@ -1730,9 +1736,24 @@ end
 -- den Ablauf neu aus (Verschiebung), ein ausgelassener wird uebersprungen.
 --------------------------------------------------
 BM.SEQ_MAX, BM.SEQ_MIN, BM.SEQ_AHEAD = 200, 3, 6
+-- 2 seit 1.10.18.0: aeltere Ablaeufe zaehlten Aura-Treffer mit und gelten nicht.
+BM.SEQ_V = 2
+
+-- Eigener Ablauf vor dem anderer Spieler (ui/bossshare.lua).
+function BM.SeqOf(store)
+    if type(store) ~= "table" then return nil end
+    local q = store._seq
+    if type(q) == "table" and q.v == BM.SEQ_V then return q, "own" end
+    local BS = WeintCodex.UIBossShare
+    if BS and BS.SharedSeq then
+        local sh = BS.SharedSeq(store._codex, store)
+        if sh then return sh, "shared" end
+    end
+    return nil
+end
 
 function BM.SeqStart(store)
-    local q = type(store) == "table" and store._seq
+    local q = BM.SeqOf(store)
     if type(q) ~= "table" or type(q.s) ~= "table" or type(q.t) ~= "table" or #q.s < BM.SEQ_MIN then return 0 end
     local has = {}
     for i = 1, #q.s do

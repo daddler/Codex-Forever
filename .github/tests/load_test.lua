@@ -23713,7 +23713,7 @@ do
         -- 1.10.17.0: Ablauf eines frueheren Kampfes, abwechselnde Faehigkeiten mit Zaehler.
         do
             st.Frost, st.Flamme = { icon = 1 }, { icon = 2 }
-            st._seq = { d = 80, s = { "Frost", "Frost", "Flamme", "Flamme", "Frost" }, t = { 10, 25, 40, 55, 70 } }
+            st._seq = { v = BM.SEQ_V, d = 80, s = { "Frost", "Frost", "Flamme", "Flamme", "Frost" }, t = { 10, 25, 40, 55, 70 } }
             BM.fight.start = now
             assert(BM.SeqStart(st) >= 2, "Ablauf startet nicht")
             local fr, fl = BM.timers["nxFrost"], BM.timers["nxFlamme"]
@@ -23729,6 +23729,33 @@ do
             now = fr.ends + BM.OVERDUE + 0.1 BM.Tick(true)
             fr = BM.timers["nxFrost"]
             assert(fr and fr.label == "~ Frost (3)", "ausgelassener Einsatz haengt: " .. tostring(fr and fr.label))
+            -- 1.10.18.0: Zauber mit Leiste - Sofort-"Erfolg" danach zaehlt nicht.
+            st.Frost.cast = true
+            local nF = st.Frost.n or 0
+            now = now + 5
+            BM.LearnCast("boss1", "Frost", 1, nil, false)
+            assert((st.Frost.n or 0) == nF, "Aura-Treffer als Einsatz gezaehlt")
+            -- Ablauf teilen: kodieren, pruefen, zusammensetzen, nutzen.
+            local BS = WeintCodex.UIBossShare
+            local ids, ts = {}, {}
+            for i = 1, 40 do ids[i] = (i % 2 == 0) and 111 or 222 ts[i] = i * 7.5 end
+            local msgs = BS.EncodeSeq("lower_blackrock_spire/highlord_omokk", 300, ids, ts)
+            assert(#msgs == 3, "Teile: " .. #msgs)
+            for _, m in ipairs(msgs) do assert(#m <= 250, "Teil zu lang: " .. #m) end
+            assert(BS.DecodeSeq("1|Q|lower_blackrock_spire/highlord_omokk|300|1|1|5:20,6:10") == nil, "Ablauf rueckwaerts angenommen")
+            assert(BS.DecodeSeq("1|Q|nirgends/niemand|300|1|1|5:20") == nil, "fremder Boss angenommen")
+            for i = #msgs, 1, -1 do BS.OnMessage("WCBM", msgs[i], "GUILD", "Andere-Realm") end
+            local q0 = st._seq
+            st._seq = nil
+            st.Eis, st.Glut = { id = 111 }, { id = 222 }
+            local q, from = BM.SeqOf(st)
+            assert(from == "shared" and q and #q.s == 40 and q.s[1] == "Glut" and q.s[2] == "Eis", "geteilter Ablauf fehlt")
+            st._seq = q0
+            assert(select(2, BM.SeqOf(st)) == "own", "eigener Ablauf geht nicht vor")
+            st._seq = { s = { "Frost", "Frost", "Frost" }, t = { 1, 2, 3 }, d = 9 }
+            assert(select(2, BM.SeqOf(st)) == "shared", "alter Ablauf (ohne v) gilt noch")
+            WeintCodex.SavedData.bossShared = nil
+            st.Eis, st.Glut = nil, nil
             BM.seqPlay, st._seq, st.Frost, st.Flamme = nil, nil, nil, nil
             BM.Stop("nxFrost") BM.Stop("nxFlamme")
         end

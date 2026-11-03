@@ -2424,7 +2424,11 @@ lebt es von den Ereignissen des Spiels; genau die nutzt WeintCodex.
   echten Einsatz aus (`shift`), ein ausgelassener Eintrag springt nach
   `OVERDUE` weiter (`tSeqMiss`, gegen Wiedereintritt `BM._inSeq`). Eigene
   Zeiten (zuerst/Abstand) schließen eine Fähigkeit aus dem Ablauf aus. Der
-  Ablauf wird nicht geteilt.
+  Ablauf wird seit 1.10.18.0 geteilt (`BS.EncodeSeq`/`DecodeSeq`/
+  `TakeSeq`/`SharedSeq`, Art `Q`, Zauber-Nummern); `BM.SeqOf`: eigener
+  (`v == BM.SEQ_V`) vor dem längsten geteilten. Seit 1.10.18.0 zählt bei
+  Fähigkeiten mit Zauberleiste nur die Leiste (`rec.cast`) – Sofort-
+  „Erfolge“ gleichen Namens waren Aura-Treffer.
 - **Suche und Zeitstrahl (1.10.12.0):** Suchfeld über Instanz/Boss
   (deutsch und englisch über `_codex`), Treffer schwebend; Zeitstrahl
   mit zwei Griffen (erster Einsatz, nächster = Abstand), Raster 0,5 s,
