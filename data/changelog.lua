@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.10.14.0",
+        date    = "03.11.2026",
+        notes   = {
+            "|cff7C6CFFWichtige Fähigkeiten werden laut heruntergezählt|r – „fünf, vier, drei, zwei, eins“. Unter „Bosse“ markierst du je Fähigkeit, was wichtig ist; unter „Töne“ stellst du ein: aus, nur wichtige oder alle.",
+        },
+    },
+    {
         version = "1.10.13.0",
         date    = "03.11.2026",
         notes   = {

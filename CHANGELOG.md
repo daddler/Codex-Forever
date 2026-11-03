@@ -9,6 +9,11 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.10.14.0] – 2026-11-03
+
+### Neu
+- Bosskämpfe: laut von 5 herunterzählen (`BM.Count`, `media/sounds/count_1..5.ogg`). Je Fähigkeit `edit.count` („Wichtig“, in der Tabelle mit „!“), Grundeinstellung `bossCount` = off | important (ab Werk) | all (dann auch die Zeitleiste des Spiels); jede Zahl einmal je Leiste (`t.lastCount`), neu beim Weiterrollen. Stimme vorläufig eigene Sprachausgabe mit espeak-ng (`.github/scripts/make_count_sounds.py`, `speak_espeak.py`); `data_test.lua` prüft die fünf Dateien.
+
 ## [1.10.13.0] – 2026-11-03
 
 ### Behoben
