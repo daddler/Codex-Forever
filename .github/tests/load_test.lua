@@ -23815,6 +23815,18 @@ do
         assert(run(false) == "5,4,3,2,1", "'alle' zaehlt nicht")
         K.Set("comfort", "bossCount", "off")
         assert(run(true) == "", "'aus' zaehlt")
+        -- 1.10.15.0: der Pull zaehlt laut, ausser die Zaehlung ist aus.
+        local function pull()
+            for i = #heard, 1, -1 do heard[i] = nil end
+            BM.PullBar(8)
+            for _ = 1, 100 do now = now + 0.1 BM.Tick(false) end
+            local nums = {}
+            for _, f in ipairs(heard) do local n = f:match("count_(%d)%.ogg$") if n then nums[#nums + 1] = n end end
+            return table.concat(nums, ",")
+        end
+        assert(pull() == "", "Pull zaehlt trotz 'aus'")
+        K.Set("comfort", "bossCount", "important")
+        assert(pull() == "5,4,3,2,1", "Pull zaehlt nicht laut: " .. pull())
         K.Set("comfort", "bossCount", "important")
         K.Set("comfort", "bossSound", false)
         assert(run(true) == "", "zaehlt trotz Hauptschalter aus")

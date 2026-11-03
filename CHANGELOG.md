@@ -9,6 +9,11 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.10.15.0] – 2026-11-03
+
+### Neu
+- Pull-Leiste zählt die letzten 5 s laut (`t.count` in `BM.PullBar`, für eigenen Pull, Countdown des Spiels und gehörte Pulls von BigWigs/DBM), außer `bossCount` = off.
+
 ## [1.10.14.2] – 2026-11-03
 
 ### Geändert

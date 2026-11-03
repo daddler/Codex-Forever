@@ -937,6 +937,9 @@ function BM.PullBar(secs, by)
     if not secs or secs <= 0 then BM.Stop("pull") return end
     local t = BM.Start("pull", by and ("Pull (" .. by .. ")") or "Pull", secs, nil, "accent")
     t.onEnd = function() BM.Sound("Pull") end
+    -- 1.10.15.0 (Wunsch): der Pull zaehlt die letzten 5 Sekunden laut herunter -
+    -- immer, ausser die Zaehlung ist ganz aus.
+    t.count = K.Get(KEY, "bossCount") ~= "off"
 end
 
 function BM.BreakBar(secs, by)

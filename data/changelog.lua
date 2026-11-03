@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.10.15.0",
+        date    = "03.11.2026",
+        notes   = {
+            "|cff7C6CFFDer Pull zählt laut herunter|r – „fünf, vier, drei, zwei, eins“ zu jedem Pull, auch wenn ihn jemand anderes startet. Abschalten: unter „Töne“ das Herunterzählen auf „Aus“.",
+        },
+    },
+    {
         version = "1.10.14.2",
         date    = "03.11.2026",
         notes   = {
