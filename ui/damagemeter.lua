@@ -174,6 +174,26 @@ function DM.Format(v)
     return abbr(v)
 end
 
+-- Dauer des Kampfes: was der Client sagt, wenn es plausibel ist; fuer
+-- "Aktuell" sonst die eigene Uhr ab Kampfbeginn (PLAYER_REGEN_DISABLED).
+DM.combatStart, DM.combatEnd = nil, nil
+function DM.FightSecs(session)
+    local cdm = _G.C_DamageMeter
+    if Available() and cdm.GetSessionDurationSeconds and type(session) == "string" then
+        local ok, secs = pcall(cdm.GetSessionDurationSeconds, _G.Enum.DamageMeterSessionType[session])
+        secs = ok and K.Plain(secs)
+        -- Nur eine plausible Kampfdauer: im Beta-Test stand hier
+        -- "70889:57" - der Client meldete etwas anderes als die Dauer.
+        if type(secs) == "number" and secs > 0 and secs < 6 * 3600 then return secs end
+    end
+    if session == "Current" and DM.combatStart then
+        local now = (_G.GetTime and K.Plain(_G.GetTime())) or 0
+        local secs = (DM.combatEnd or now) - DM.combatStart
+        if secs >= 0 and secs < 6 * 3600 then return secs end
+    end
+    return nil
+end
+
 local function Clock(secs)
     secs = math.floor(secs + 0.5)
     return string.format("%d:%02d", math.floor(secs / 60), secs % 60)
@@ -482,19 +502,18 @@ function Win:Refresh()
     self.session.text:SetText(self:SessionLabel())
 
     local title = mode.label
-    local cdm = _G.C_DamageMeter
-    if Opt("showTime") and Available() and cdm.GetSessionDurationSeconds and type(session) == "string" then
-        local ok, secs = pcall(cdm.GetSessionDurationSeconds, _G.Enum.DamageMeterSessionType[session])
-        secs = ok and K.Plain(secs)
-        -- Nur eine plausible Kampfdauer: im Beta-Test stand hier
-        -- "70889:57" - der Client meldete etwas anderes als die Dauer.
-        if type(secs) == "number" and secs > 0 and secs < 6 * 3600 then title = title .. "  " .. Clock(secs) end
+    if Opt("showTime") then
+        -- 1.10.20.0 (Beta-Test: "keine Kampfdauer drin"): Zeit VOR dem Namen -
+        -- hinten wurde sie bei schmalen Fenstern abgeschnitten -, und laeuft
+        -- im Kampf mit (Takt 0,5 s).
+        local secs = DM.FightSecs(session)
+        if secs then title = Clock(secs) .. "  " .. title end
     end
     local ok, sources
     if DM._test then
         -- Testmodus (ui/testmode.lua): Beispielzeilen, und die Kopfzeile
         -- sagt es - Beispielzahlen duerfen nie wie gemessene aussehen.
-        self.title:SetText(mode.label .. "  0:42  " .. WeintCodex.ColorText("textMuted", "Beispiel"))
+        self.title:SetText("0:42  " .. mode.label .. "  " .. WeintCodex.ColorText("textMuted", "Beispiel"))
         ok, sources = true, DM.TEST_SOURCES
     else
         self.title:SetText(title)
@@ -2675,10 +2694,13 @@ local function Enable()
     DM.auraEvents = auraEv
     ev:SetScript("OnEvent", K.Measured("Schadensanzeige", function(_, event)
         if event == "PLAYER_REGEN_DISABLED" then
+            DM.combatStart = (_G.GetTime and K.Plain(_G.GetTime())) or 0
+            DM.combatEnd = nil
             DM.StartHistory()
             sampleAcc = 1   -- gleich die erste Probe
             ticker:SetScript("OnUpdate", OnTick)
         elseif event == "PLAYER_REGEN_ENABLED" then
+            if DM.combatStart then DM.combatEnd = (_G.GetTime and K.Plain(_G.GetTime())) or 0 end
             ticker:SetScript("OnUpdate", nil)
             DM.Sample()
             DM.StopHistory()

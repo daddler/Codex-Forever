@@ -22855,6 +22855,20 @@ do
         assert(BM.Pull(5) and BM.timers.pull and BM.timers.pull.ends == now + 5, "Pull ohne Gruppe")
         assert(BM.Pull(0) and not BM.timers.pull, "Pull 0 bricht nicht ab")
         assert(not BM.Pull(99), "Pull ueber 60 s angenommen")
+        -- 1.10.20.0: Kampfdauer der Schadensanzeige laeuft mit, auch ohne Antwort des Clients.
+        do
+            local DMx = WeintCodex.UIDamageMeter
+            if DMx and DMx.FightSecs then
+                local oC = _G.C_DamageMeter
+                _G.C_DamageMeter = nil
+                DMx.combatStart, DMx.combatEnd = now - 83, nil
+                local fs = DMx.FightSecs("Current")
+                assert(fs and math.abs(fs - 83) < 0.01, "Kampfdauer laeuft nicht mit: " .. tostring(fs))
+                assert(DMx.FightSecs("Overall") == nil, "Gesamt mit geratener Dauer")
+                DMx.combatStart = nil
+                _G.C_DamageMeter = oC
+            end
+        end
         -- 1.10.19.0: Sterbezeit mit unsinniger Restzeit zeigt nichts (Fehler im Spiel).
         assert(WeintCodex.UITimeToDie == nil or WeintCodex.UITimeToDie.Format(856244680130548) == "", "Sterbezeit-Ueberlauf")
         -- Kampf und Bestzeit.

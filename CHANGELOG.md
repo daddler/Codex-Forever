@@ -9,6 +9,14 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.10.20.0] – 2026-11-03
+
+### Behoben
+- Schadensanzeige: Kampfdauer läuft im Kampf mit (`DM.FightSecs`: Client, sonst eigene Uhr ab `PLAYER_REGEN_DISABLED` für „Aktuell“) und steht vor dem Namen der Anzeige – hinten wurde sie abgeschnitten.
+
+### Entfernt
+- `THIRD_PARTY.md` wieder entfernt (Wunsch des Besitzers).
+
 ## [1.10.19.0] – 2026-11-03
 
 ### Geändert

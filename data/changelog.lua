@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.10.20.0",
+        date    = "03.11.2026",
+        notes   = {
+            "|cff7C6CFFDie Schadensanzeige zeigt die Kampfdauer|r – vorne in der Kopfzeile, sie läuft im Kampf sekundengenau mit.",
+        },
+    },
+    {
         version = "1.10.19.0",
         date    = "03.11.2026",
         notes   = {
