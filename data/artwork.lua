@@ -395,6 +395,11 @@ WeintCodex.Artworks = {
                 file = ART .. "city_of_dalaran/arcanic_enigma",
                 w = 512, h = 128, focusX = 0.55,
             },
+            -- 1.10.26.0: Original 1254x1254, Ausschnitt y 140, Hoehe 313.
+            mana_wraith = {
+                file = ART .. "city_of_dalaran/mana_wraith",
+                w = 512, h = 128, focusX = 0.5,
+            },
             lyn_the_ignored = {
                 file = ART .. "city_of_dalaran/lyn_the_ignored",
                 w = 512, h = 128, focusX = 0.55,

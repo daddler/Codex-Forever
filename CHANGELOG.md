@@ -9,6 +9,11 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.10.26.0] – 2026-11-03
+
+### Neu
+- Bild für Mana Wraith (City of Dalaran), eigenes Artwork des Besitzers (`media/dungeons/city_of_dalaran/mana_wraith.blp`, Ausschnitt in `make_artwork.py`).
+
 ## [1.10.25.0] – 2026-11-03
 
 ### Neu

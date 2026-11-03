@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.10.26.0",
+        date    = "03.11.2026",
+        notes   = {
+            "|cff7C6CFFMana Wraith hat ein Bild|r – damit sind in der Stadt Dalaran alle Bosse bebildert.",
+        },
+    },
+    {
         version = "1.10.25.0",
         date    = "03.11.2026",
         notes   = {

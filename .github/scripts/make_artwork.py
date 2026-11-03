@@ -146,6 +146,8 @@ JOBS = [
     ("dungeons/city_of_dalaran/unstable_sentinel", "city_of_dalaran/unstable_sentinel.png", (0, 80, 1983, 496), (512, 128)),
     ("dungeons/city_of_dalaran/mana_devourer", "city_of_dalaran/mana_devourer.png", (0, 60, 1983, 496), (512, 128)),
     ("dungeons/city_of_dalaran/arcanic_enigma", "city_of_dalaran/arcanic_enigma.png", (0, 100, 1983, 496), (512, 128)),
+    # 1.10.26.0: Original 1254x1254 (quadratisch, vom Besitzer erzeugt), Kopf und Klauen.
+    ("dungeons/city_of_dalaran/mana_wraith", "city_of_dalaran/mana_wraith.png", (0, 140, 1254, 313), (512, 128)),
     ("dungeons/city_of_dalaran/lyn_the_ignored", "city_of_dalaran/lyn_the_ignored.png", (0, 10, 1983, 496), (512, 128)),
     ("dungeons/city_of_dalaran/shade_of_the_archmage", "city_of_dalaran/shade_of_the_archmage.png", (0, 10, 1983, 496), (512, 128)),
     ("dungeons/scarlet_monastery/header", "scarlet_monastery/banner.png", (0, 0, 1983, 496)),
