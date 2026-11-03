@@ -23291,12 +23291,17 @@ do
         BM.CastStop("boss1")
         now = now + 15
         BM.CastStart("boss1", false)
-        local nx = BM.timers["nxWirbelwind"]
-        assert(nx and nx.label == "~ Wirbelwind" and math.abs(nx.ends - now - 15) < 0.01, "Abstand nicht gelernt")
-        assert(not BM.track.hint:IsShown(), "Hinweis bleibt trotz Ankuendigung")
+        -- 1.10.13.0: waehrend der Zauberleiste keine Vorhersage daneben.
+        assert(not BM.timers["nxWirbelwind"] and BM.timers.castboss1, "~ und Zauber doppelt")
+        local castAt = now
+        now = now + 2
         BM.CastStop("boss1")
+        local nx = BM.timers["nxWirbelwind"]
+        assert(nx and nx.label == "~ Wirbelwind" and math.abs(nx.ends - castAt - 15) < 0.01, "Abstand nicht gelernt / nicht ab Zauberbeginn")
+        assert(nx.gap == 15, "Vorhersage ohne Abstand")
+        assert(not BM.track.hint:IsShown(), "Hinweis bleibt trotz Ankuendigung")
         -- Ein kuerzerer Abstand ersetzt, ein laengerer nicht.
-        now = now + 12 BM.CastStart("boss1", false) BM.CastStop("boss1")
+        now = now + 10 BM.CastStart("boss1", false) BM.CastStop("boss1")
         now = now + 30 BM.CastStart("boss1", false) BM.CastStop("boss1")
         local rec = WeintCodex.SavedData.bossLearn["n:Rend"].Wirbelwind
         assert(rec.first == 8 and rec.gap == 12, "gelernt: erst " .. tostring(rec.first) .. ", Abstand " .. tostring(rec.gap))
@@ -23633,6 +23638,152 @@ do
     WeintCodex.SavedData.bossLearn = nil
     WeintCodex.UIBossMod.sel.inst, WeintCodex.UIBossMod.sel.boss, WeintCodex.UIBossMod.sel.spell = nil, nil, nil
     Check(ok, "Bosskämpfe: Suche nach Instanz und Boss (deutsch/englisch), Zeitstrahl mit Griffen, Raster 0,5 s, Abstand ab 2 s" .. (ok and "" or (": " .. tostring(err))))
+end
+
+-- Bosskaempfe 1.10.13.0: herunterzaehlen, Siege je Charakter, je Faehigkeit Toene, still teilen
+do
+    local BM, BS = WeintCodex.UIBossMod, WeintCodex.UIBossShare
+    local names = { "GetTime", "UnitExists", "UnitAffectingCombat", "UnitName", "UnitIsDead", "UnitCastingInfo",
+        "GetRealmName", "C_ChatInfo", "IsInGuild", "IsInGroup", "IsInRaid", "GetChannelName", "InCombatLockdown",
+        "C_Spell", "time", "print", "PlaySoundFile", "PlaySound" }
+    local old = {}
+    for _, n in ipairs(names) do old[n] = _G[n] end
+    local oActive = K.IsActive
+    local saved = {}
+    for k in pairs(BM.DEFAULTS) do saved[k] = K.Get("comfort", k) end
+    local oShare = K.Get("comfort", "bossShare")
+    local ok, err = pcall(function()
+        assert(BS, "ui/bossshare.lua nicht geladen")
+        local now, clock = 60000, 1800000000
+        local said, sent, played = {}, {}, {}
+        _G.GetTime = function() return now end
+        _G.time = function() return clock end
+        _G.print = function(m) said[#said + 1] = m end
+        _G.PlaySoundFile = function(f) played[#played + 1] = f end
+        _G.PlaySound = function(k) played[#played + 1] = k end
+        K.IsActive = function() return true end
+        for k, v in pairs(BM.DEFAULTS) do K.Set("comfort", k, v) end
+        K.Set("comfort", "bossShare", true)
+        for k in pairs(BM.timers) do BM.timers[k] = nil end
+        BM.fight = nil
+        WeintCodex.SavedData.bossLearn, WeintCodex.SavedData.bossShared, WeintCodex.SavedData.bossKills = nil, nil, nil
+        WeintCodex.SavedData.bossTimes = {}
+        local boss = { exists = true, combat = true, dead = false }
+        _G.UnitExists = function(u) return u == "boss1" and boss.exists end
+        _G.UnitAffectingCombat = function(u) return u == "boss1" and boss.combat end
+        _G.UnitName = function(u) if u == "player" then return "Njiah" end return u == "boss1" and "Hochlord Omokk" or nil end
+        _G.GetRealmName = function() return "Testrealm" end
+        _G.UnitIsDead = function(u) return u == "boss1" and boss.dead end
+        _G.IsInGuild = function() return true end
+        _G.IsInGroup = function() return true end
+        _G.IsInRaid = function() return false end
+        _G.GetChannelName = function(n) return n == BS.CHANNEL and 5 or 0 end
+        _G.InCombatLockdown = function() return false end
+        _G.C_ChatInfo = { SendAddonMessage = function(p, m, d, t) sent[#sent + 1] = { p, m, d, t } return 0 end }
+        _G.C_Spell = setmetatable({ GetSpellName = function(id) return ({ [15589] = "Wirbelwind", [16856] = "Tödlicher Stoß" })[id] end },
+            { __index = old.C_Spell })
+        local function cast(spell, id)
+            _G.UnitCastingInfo = function() return spell, "", 1, now * 1000, (now + 1.5) * 1000, false, 7, false, id end
+            BM.CastStart("boss1", false)
+        end
+        -- Kampf 1 (Omokk ueber den Bossrahmen, Kompendium-Schluessel).
+        BM.Engage()
+        assert(BM.FightKey(BM.fight) == "c:lower_blackrock_spire/highlord_omokk", "Schluessel: " .. tostring(BM.FightKey(BM.fight)))
+        now = now + 8 cast("Wirbelwind", 15589) now = now + 1.5 BM.CastStop("boss1")
+        now = now + 10.5 cast("Wirbelwind", 15589) now = now + 1.5 BM.CastStop("boss1")
+        local st = WeintCodex.SavedData.bossLearn["c:lower_blackrock_spire/highlord_omokk"]
+        assert(st.Wirbelwind.id == 15589 and st.Wirbelwind.gap == 12, "Zauber-Nummer/Abstand nicht gemerkt")
+        -- Herunterzaehlen: kommt der Zauber nicht, "jetzt", dann der naechste Abstand.
+        local nx = BM.timers["nxWirbelwind"]
+        assert(nx and nx.gap == 12, "Vorhersage ohne Abstand")
+        local due = nx.ends
+        now = due + 0.5 BM.Tick(true)
+        assert(BM.timers["nxWirbelwind"] == nx and nx.overAt, "Vorhersage verschwindet bei 0")
+        now = due + BM.OVERDUE + 0.1 BM.Tick(true)
+        assert(BM.timers["nxWirbelwind"] == nx and math.abs(nx.ends - (due + 12)) < 0.01 and not nx.overAt, "zaehlt den naechsten Abstand nicht herunter")
+        -- Zeitleiste: auch die folgenden Einsaetze.
+        K.Set("comfort", "bossTrack", true) K.Set("comfort", "bossTrackSecs", 60)
+        BM.ApplyLook()
+        BM.TrackFrame(now)
+        local marks = 0
+        for _, m in ipairs(BM.track.marks) do if m._timer == nx then marks = marks + 1 end end
+        assert(marks >= 4, "Zeitleiste zeigt Wirbelwind nur " .. marks .. "x in 60 s")
+        -- Sieg: Bestzeit, Sieg Nr. 1, geteilt.
+        boss.dead = true
+        BM.EngageEnd()
+        local last = said[#said]
+        assert(last:find("erste Bestzeit", 1, true) and last:find("Erster Sieg mit diesem Charakter", 1, true), "Siegmeldung: " .. last)
+        assert(WeintCodex.SavedData.bossKills["Njiah-Testrealm"]["c:lower_blackrock_spire/highlord_omokk"].k == 1, "Sieg nicht je Charakter gezaehlt")
+        -- Kampf 2: Wipe, Kampf 3: Sieg Nr. 2 mit "1 Wipe davor".
+        boss.dead = false BM.Engage() now = now + 30 BM.EngageEnd()
+        assert(said[#said]:find("1. Wipe mit diesem Charakter", 1, true), "Wipemeldung: " .. said[#said])
+        BM.Engage() now = now + 15 boss.dead = true BM.EngageEnd()
+        assert(said[#said]:find("2. Sieg mit diesem Charakter, 1 Wipe davor", 1, true) and said[#said]:find("neue Bestzeit", 1, true), "Siegmeldung 2: " .. said[#said])
+        assert(BM.BossSummary("c:lower_blackrock_spire/highlord_omokk", st):find("2 Siege, 1 Wipe mit diesem Charakter", 1, true), "Kopfzeile: " .. BM.BossSummary("c:lower_blackrock_spire/highlord_omokk", st))
+        -- Teilen: nur eigene Messung, nie die Einstellung, an Gilde/Gruppe/Kanal.
+        st.Wirbelwind.edit = { first = 99, gap = 99 }
+        for i = #BS.queue, 1, -1 do BS.queue[i] = nil end
+        assert(BS.ShareBoss("c:lower_blackrock_spire/highlord_omokk") == 1, "nicht geteilt")
+        local dists = {}
+        for _, q in ipairs(BS.queue) do if q then dists[q.dist] = q.msg end end
+        assert(dists.GUILD and dists.PARTY and dists.CHANNEL, "nicht an Gilde/Gruppe/Kanal")
+        assert(dists.GUILD == "1|S|lower_blackrock_spire/highlord_omokk|15589|80|120|" .. st.Wirbelwind.n, "Nachricht: " .. dists.GUILD)
+        st.Wirbelwind.edit = nil
+        -- Nie im Kampf, nie im Bosskampf.
+        _G.InCombatLockdown = function() return true end
+        assert(BS.SendNext(now + 100) == nil and #sent == 0, "im Kampf gesendet")
+        _G.InCombatLockdown = function() return false end
+        assert(BS.SendNext(now + 200) == true and sent[1][1] == "WCBM", "nicht gesendet")
+        local lastCh
+        for _ = 1, 10 do BS.SendNext(now + 300 + _ * 10) end
+        for _, m in ipairs(sent) do if m[3] == "CHANNEL" then lastCh = m end end
+        assert(lastCh and lastCh[4] == "5", "Kanal ohne Nummer")
+        -- Empfangen: gepruefte Daten anderer, Median, nie von mir, nie Unsinn.
+        assert(BS.OnMessage("WCBM", "1|S|lower_blackrock_spire/highlord_omokk|16856|50|200|3", "GUILD", "Lena-Testrealm"), "nicht uebernommen")
+        assert(BS.OnMessage("WCBM", "1|S|lower_blackrock_spire/highlord_omokk|16856|60|220|2", "CHANNEL", "Ole-Anderswo"), "Kanal nicht uebernommen")
+        assert(BS.OnMessage("WCBM", "1|S|lower_blackrock_spire/highlord_omokk|16856|900|9000|1", "GUILD", "Troll-Testrealm") == false, "Unsinn uebernommen")
+        assert(BS.OnMessage("WCBM", "1|S|lower_blackrock_spire/highlord_omokk|16856|10|30|1", "GUILD", "Njiah") == nil, "eigene Nachricht uebernommen")
+        assert(BS.OnMessage("WCBM", "1|S|kein_dungeon/kein_boss|16856|10|30|1", "GUILD", "Lena-Testrealm") == false, "Boss ausserhalb des Kompendiums")
+        assert(BS.OnMessage("WCBM", "1|S|lower_blackrock_spire/highlord_omokk|16856|70|240|5", "WHISPER", "Lena-Testrealm") == nil, "Fluestern angenommen")
+        local sh = BS.Shared("lower_blackrock_spire/highlord_omokk", 16856)
+        assert(sh.players == 2 and sh.first == 5.5 and sh.gap == 21 and sh.n == 5, "Median: " .. tostring(sh.first) .. "/" .. tostring(sh.gap))
+        -- Nur von anderen gesehen: steht in der Liste (Name des eigenen Clients), wird vorhergesagt.
+        BS.MergeInto(st)
+        assert(st["Tödlicher Stoß"] and st["Tödlicher Stoß"].id == 16856, "fremde Faehigkeit fehlt in der Liste")
+        local mode, first, gap = BM.Effective(st["Tödlicher Stoß"], st)
+        assert(mode == "timer" and first == 5.5 and gap == 21, "fremde Messung nicht genutzt")
+        assert(BM.Measured(st["Tödlicher Stoß"], st):find("Andere Spieler (2)", 1, true), "fremde Messung nicht gezeigt")
+        -- Eigene Messung geht vor.
+        BS.OnMessage("WCBM", "1|S|lower_blackrock_spire/highlord_omokk|15589|10|300|9", "GUILD", "Lena-Testrealm")
+        local _, f2, g2 = BM.Effective(st.Wirbelwind, st)
+        assert(f2 == 8 and g2 == 12, "fremde Messung schlaegt die eigene")
+        -- Je Faehigkeit: Ton beim Wirken und grosse Warnung.
+        boss.dead = false
+        BM.Engage()
+        st.Wirbelwind.edit = { castSound = "hupe", warn = true }
+        K.Set("comfort", "bossWarnings", false)
+        local n0 = #played
+        now = now + 50 BM.busyUntil = 0
+        cast("Wirbelwind", 15589)
+        assert(played[n0 + 1] and tostring(played[n0 + 1]):find("hupe", 1, true), "eigener Ton beim Wirken fehlt")
+        assert(BM.frame.warn:IsShown() and BM.frame.warn.text:GetText():find("Wirbelwind", 1, true), "grosse Warnung beim Wirken fehlt")
+        BM.CastStop("boss1")
+        BM.Finish(nil)
+        -- Aus: kein Senden.
+        K.Set("comfort", "bossShare", false)
+        assert(BS.ShareBoss("c:lower_blackrock_spire/highlord_omokk") == 0, "teilt trotz aus")
+        assert(BS.StatusLine():find("teilen: aus", 1, true), "Statuszeile")
+    end)
+    for _, n in ipairs(names) do _G[n] = old[n] end
+    K.IsActive = oActive
+    for k, v in pairs(saved) do K.Set("comfort", k, v) end
+    K.Set("comfort", "bossShare", oShare)
+    for k in pairs(WeintCodex.UIBossMod.timers) do WeintCodex.UIBossMod.timers[k] = nil end
+    for i = #WeintCodex.UIBossShare.queue, 1, -1 do WeintCodex.UIBossShare.queue[i] = nil end
+    WeintCodex.UIBossMod.fight = nil
+    WeintCodex.SavedData.bossLearn, WeintCodex.SavedData.bossShared, WeintCodex.SavedData.bossKills = nil, nil, nil
+    if WeintCodex.UIBossMod.frame then WeintCodex.UIBossMod.ApplyLook() end
+    Check(ok, "Bosskämpfe 1.10.13.0: kein ~ neben dem Zauber, zählt weiter herunter, Siege/Wipes je Charakter, Ton/Warnung je Fähigkeit, Messdaten still geteilt (nur Messung, Median, geprüft)" .. (ok and "" or (": " .. tostring(err))))
 end
 
 -- Sterbezeit an der Plakette (1.8.0.0, ui/timetodie.lua)

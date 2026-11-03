@@ -89,6 +89,7 @@ BM.DEFAULTS = {
 BM.SOUND_EVENTS = { "Pull", "Break", "Soon", "Cast", "Warn", "Kill", "Wipe" }
 
 BM.MAX_ROWS, BM.EMPH_ROWS, BM.GAP = 10, 4, 3
+BM.OVERDUE = 3      -- so lange steht eine gemessene Faehigkeit auf "jetzt"
 BM.EMPH_SCALE = 1.5
 BM.stats = { timeline = 0, secret = 0, warnings = 0, encounters = 0, countdowns = 0, heard = 0,
     casts = 0, castSecret = 0, emotes = 0, engaged = 0 }
@@ -158,6 +159,7 @@ function BM.Start(key, label, duration, icon, color)
     t.key, t.label, t.icon, t.color = key, label, icon, color
     t.onEnd, t.soon, t.warned, t.demo, t.emph, t.forceEmph = nil, nil, nil, nil, nil, nil
     t.hold, t.total = nil, nil
+    t.gap, t.overAt, t.soonSecs, t.learned, t.sound = nil, nil, nil, nil, nil
     t.start = Now()
     t.ends = duration and (t.start + duration) or nil
     timers[key] = t
@@ -194,6 +196,7 @@ local setupOn = false
 local handles = {}   -- Flaechen zum Ziehen beim Einrichten (BM.Setup)
 local castStarted = {}  -- Einheit -> Zaubername der laufenden Leiste (BM.CastSucceeded)
 local castStartedAt = {} -- Einheit -> Zeit des Starts
+local castSpellOf = {}   -- Einheit -> Zauber der laufenden Leiste (Vorhersage danach)
 
 local function Num(k, lo, hi)
     local v = tonumber(K.Get(KEY, k)) or BM.DEFAULTS[k]
@@ -369,13 +372,16 @@ function BM.TrackFrame(now)
     for i = 1, #order do
         local t = order[i]
         if n >= BM.TRACK_N then break end
-        if t.ends and not t.noTrack then
-            local left = t.hold or (t.ends - now)
-            if left >= 0 and left <= win then
+        -- Gemessene Faehigkeiten mit Abstand: auch die folgenden Einsaetze.
+        local k = 0
+        while t.ends and not t.noTrack and n < BM.TRACK_N do
+            local left = (t.hold or math.max(0, t.ends - now)) + k * (t.gap or 0)
+            if left > win or (k > 0 and not t.gap) then break end
+            if left >= 0 then
                 n = n + 1
                 local m = track.marks[n]
-                if m._timer ~= t then
-                    m._timer = t
+                if m._timer ~= t or m._k ~= k then
+                    m._timer, m._k = t, k
                     m.label:SetText(t.label)
                     if t.icon then
                         m.icon:SetTexture(t.icon)
@@ -389,7 +395,9 @@ function BM.TrackFrame(now)
                 end
                 m:ClearAllPoints()
                 m:SetPoint("CENTER", track, "BOTTOM", 0, left / win * h)
+                m:SetAlpha(k == 0 and 1 or 0.55)
             end
+            k = k + 1
         end
     end
     for i = n + 1, BM.TRACK_N do
@@ -442,6 +450,20 @@ local function TickRow(r)
     end
     local left = t.ends - tNow
     if left <= 0 then
+        -- 1.10.13.0 (wie ein Bossmod): eine gemessene Faehigkeit mit Abstand
+        -- verschwindet nicht - kurz "jetzt", dann zaehlt sie den naechsten
+        -- Abstand herunter, bis der Boss sie wirklich wirkt.
+        if t.learned and t.gap then
+            if not t.overAt then t.overAt = t.ends end
+            if tNow - t.overAt >= BM.OVERDUE then
+                t.start = t.overAt
+                t.ends = t.overAt + t.gap
+                t.overAt, t.warned = nil, nil
+            end
+            r.bar:SetValue(tFill and 1 or 0)
+            if tText then r.time:SetText("jetzt") end
+            return
+        end
         tDone = tDone or t
         r.bar:SetValue(tFill and 1 or 0)
         r.time:SetText("0")
@@ -451,7 +473,7 @@ local function TickRow(r)
     local frac = total > 0 and left / total or 0
     r.bar:SetValue(tFill and (1 - frac) or frac)
     if tText then r.time:SetText(BM.Format(left)) end
-    if t.soon and not t.warned and left <= tSoonSecs then
+    if t.soon and not t.warned and left <= (t.soonSecs or tSoonSecs) then
         t.warned = true
         if not t.demo or Opt("bossSound") then BM.Sound("Soon", t.demo, t.sound) end
     end
@@ -993,6 +1015,7 @@ end
 function BM.Finish(result)
     if BM.LearnEnd then BM.LearnEnd() end
     local f = BM.fight
+    local store = f and BM.LearnStore(false)
     BM.fight = nil
     BM.Stop("fight")
     for k in pairs(timers) do
@@ -1001,11 +1024,14 @@ function BM.Finish(result)
     BM.Refresh()
     if not f then return nil end
     local secs = Now() - f.start
+    BM.ShareAfter(f)
+    -- 1.10.13.0 (wie DBM): Siege und Wipes je Charakter und Boss.
+    local tally = (result == "kill" or result == "wipe") and BM.Tally(f, result) or nil
     if not Opt("bossFight") then return result end
     local label = f.name or "Boss"
     if result == "wipe" then
         BM.Sound("Wipe")
-        Say(label .. ": Wipe nach " .. BM.Format(secs) .. ".")
+        Say(label .. ": Wipe nach " .. BM.Format(secs) .. (tally and (" – " .. tally.w .. ". Wipe mit diesem Charakter") or "") .. ".")
         return "wipe"
     elseif result ~= "kill" then
         Say(label .. ": Kampf vorbei nach " .. BM.Format(secs) .. ".")
@@ -1019,12 +1045,54 @@ function BM.Finish(result)
         local best = times[key]
         if type(best) == "number" then
             text = text .. (secs < best and (" – neue Bestzeit (vorher " .. BM.Format(best) .. ")") or (" (Bestzeit " .. BM.Format(best) .. ")"))
+        else
+            text = text .. " – erste Bestzeit"
         end
         if type(best) ~= "number" or secs < best then times[key] = math.floor(secs + 0.5) end
+    end
+    if store and (not store._best or secs < store._best) then store._best = math.floor(secs + 0.5) end
+    if tally then
+        text = text .. ". " .. (tally.k == 1 and "Erster Sieg mit diesem Charakter" or (tally.k .. ". Sieg mit diesem Charakter"))
+            .. (tally.w > 0 and (", " .. tally.w .. (tally.w == 1 and " Wipe" or " Wipes") .. " davor") or "")
     end
     BM.Sound("Kill")
     Say(text .. ".")
     return "kill"
+end
+
+-- Nach jedem Kampf (Sieg, Wipe, unbekannt): die eigene Messung still teilen.
+local function ShareAfter(f)
+    local BS = WeintCodex.UIBossShare
+    local key = BM.FightKey(f)
+    if BS and BS.ShareBoss and key then BS.ShareBoss(key) end
+end
+BM.ShareAfter = ShareAfter
+
+-- Schluessel eines Kampfes: Boss des Kompendiums, sonst Encounter, sonst Name.
+function BM.FightKey(f)
+    if type(f) ~= "table" then return nil end
+    return (type(f.codex) == "table" and f.codex.dungeon and ("c:" .. f.codex.dungeon .. "/" .. f.codex.boss))
+        or (type(f.id) == "number" and ("e" .. f.id)) or (type(f.name) == "string" and ("n:" .. f.name)) or nil
+end
+
+-- Siege/Wipes je Charakter (SavedData.bossKills[Name-Realm][Boss] = { k, w }).
+function BM.Tally(f, result)
+    local sd = WeintCodex.SavedData
+    local key = BM.FightKey(f)
+    local char = K.CharKey and K.CharKey()
+    if type(sd) ~= "table" or not key or type(char) ~= "string" then return nil end
+    sd.bossKills = sd.bossKills or {}
+    sd.bossKills[char] = sd.bossKills[char] or {}
+    local t = sd.bossKills[char][key] or { k = 0, w = 0 }
+    sd.bossKills[char][key] = t
+    if result == "kill" then t.k = (t.k or 0) + 1 else t.w = (t.w or 0) + 1 end
+    return t
+end
+function BM.TallyOf(key)
+    local sd = WeintCodex.SavedData
+    local char = K.CharKey and K.CharKey()
+    local t = type(sd) == "table" and sd.bossKills and char and sd.bossKills[char] and sd.bossKills[char][key]
+    return type(t) == "table" and t or nil
 end
 
 function BM.EncounterEnd(id, name, difficulty, size, success)
@@ -1305,7 +1373,7 @@ function BM.CastStart(unit, channel)
     if not Opt("bossCasts") or not BM.CastUnit(unit) then return nil end
     local fn = channel and _G.UnitChannelInfo or _G.UnitCastingInfo
     if not fn then return nil end
-    local name, _, icon, startMS, endMS, a6, a7, a8 = fn(unit)
+    local name, _, icon, startMS, endMS, a6, a7, a8, a9 = fn(unit)
     BM.stats.casts = BM.stats.casts + 1
     startMS, endMS = Plain(startMS), Plain(endMS)
     if type(name) == "nil" or type(startMS) ~= "number" or type(endMS) ~= "number" or endMS <= startMS then
@@ -1320,9 +1388,16 @@ function BM.CastStart(unit, channel)
     -- sonst den ganzen Platz ("Kriegshaeuptling Rend Schwarzf...").
     local t = BM.Start("cast" .. unit, name, left, Plain(icon), locked == true and "blue" or "gold")
     t.start = startMS / 1000
-    BM.Sound("Cast")
     castStarted[unit], castStartedAt[unit] = Plain(name), Now()
-    BM.LearnCast(unit, Plain(name), Plain(icon))
+    castSpellOf[unit] = Plain(name)
+    local spellID = Plain(channel and a8 or a9)
+    local rec = BM.LearnCast(unit, Plain(name), Plain(icon), type(spellID) == "number" and spellID or nil, true)
+    -- Je Faehigkeit (Seite "Bosse"): eigener Ton beim Wirken, grosse Warnung.
+    local e = type(rec) == "table" and type(rec.edit) == "table" and rec.edit or nil
+    if not (e and e.mode == "off") then
+        BM.Sound("Cast", nil, e and e.castSound)
+        if e and e.warn then BM.Warn(name, Plain(icon)) end
+    end
     return true
 end
 
@@ -1373,8 +1448,7 @@ function BM.LearnStore(create)
     if type(sd) ~= "table" or not f then return nil end
     -- Ein Boss des Kompendiums hat einen festen Schluessel - egal, ob der
     -- Kampf ueber ENCOUNTER_START, Bossrahmen oder den Abgleich begann.
-    local key = (type(f.codex) == "table" and f.codex.dungeon and ("c:" .. f.codex.dungeon .. "/" .. f.codex.boss))
-        or (type(f.id) == "number" and ("e" .. f.id)) or (type(f.name) == "string" and ("n:" .. f.name)) or nil
+    local key = BM.FightKey(f)
     if not key then return nil end
     if create then
         sd.bossLearn = sd.bossLearn or {}
@@ -1423,13 +1497,38 @@ function BM.Effective(rec, st)
     if mode == "auto" then mode = sugMode end
     local hp = e and e.hp or sugHp
     if mode == "hp" and not hp then mode = "timer" end
-    return mode, (e and e.first) or rec.first, (e and e.gap) or rec.gap, hp, e and e.sound
+    -- Reihenfolge: eigene Einstellung, eigene Messung, Messung anderer (1.10.13.0).
+    local sh = BM.SharedOf(rec, st)
+    local first = (e and e.first) or rec.first or (sh and sh.first)
+    local gap = (e and e.gap) or rec.gap or (sh and sh.gap)
+    return mode, first, gap, hp, e and e.sound
 end
 
-local function Predict(spell, secs, icon, sound)
+-- Was andere Spieler fuer diese Faehigkeit gemessen haben (ui/bossshare.lua).
+function BM.SharedOf(rec, st)
+    local BS = WeintCodex.UIBossShare
+    if not (BS and BS.Shared) or type(rec) ~= "table" or type(rec.id) ~= "number" or type(st) ~= "table" then return nil end
+    return BS.Shared(st._codex, rec.id)
+end
+
+local function Predict(spell, secs, icon, sound, gap, soonSecs)
     if not secs or secs <= 0 then return end
     local t = BM.Start("nx" .. spell, "~ " .. spell, secs, icon, "textMuted")
-    t.soon, t.learned, t.sound = true, true, sound
+    t.soon, t.learned, t.sound, t.gap, t.soonSecs = true, true, sound, gap, soonSecs
+end
+BM.Predict = Predict
+
+-- 1.10.13.0 (Beta-Test: "~ und wirklicher Cast doppelt"): waehrend der Boss
+-- wirkt, steht nur die echte Zauberleiste. Die Vorhersage fuer den
+-- naechsten Einsatz wartet, bis der Zauber zu Ende ist (BM.CastStop).
+local pending = {}       -- Zauber -> { at, gap, icon, sound, soon }
+BM.pending = pending
+function BM.FlushPending(spell)
+    local p = spell and pending[spell]
+    if not p then return nil end
+    pending[spell] = nil
+    Predict(spell, p.gap - (Now() - p.at), p.icon, p.sound, p.gap, p.soon)
+    return true
 end
 
 local function Spells(store)
@@ -1438,7 +1537,7 @@ local function Spells(store)
     return n
 end
 
-function BM.LearnCast(unit, spell, icon)
+function BM.LearnCast(unit, spell, icon, spellID, casting)
     local f = BM.fight
     if not f or not Opt("bossLearn") or type(spell) ~= "string" or spell == "" or spell:sub(1, 1) == "_" then return nil end
     local isBoss = type(unit) == "string" and unit:match("^boss[1-5]$")
@@ -1455,6 +1554,7 @@ function BM.LearnCast(unit, spell, icon)
         store[spell] = rec
     end
     if type(icon) == "number" then rec.icon = icon end
+    if type(spellID) == "number" and spellID > 0 then rec.id = spellID end
     local now = Now()
     local last = seen[spell]
     if not last then
@@ -1471,8 +1571,14 @@ function BM.LearnCast(unit, spell, icon)
     if hp then rec.hp = rec.hp or {} Keep(rec.hp, hp) end
     if pw then rec.pw = rec.pw or {} Keep(rec.pw, pw) end
     local mode, _, gap, _, sound = BM.Effective(rec, store)
+    local e = type(rec.edit) == "table" and rec.edit or nil
     if mode == "timer" then
-        Predict(spell, gap, rec.icon, sound)
+        if casting then
+            BM.Stop("nx" .. spell)
+            if gap then pending[spell] = { at = now, gap = gap, icon = rec.icon, sound = sound, soon = e and e.soon } end
+        else
+            Predict(spell, gap, rec.icon, sound, gap, e and e.soon)
+        end
     else
         BM.Stop("nx" .. spell)
         for _, w in ipairs(BM.watch) do
@@ -1487,18 +1593,22 @@ end
 function BM.LearnStart()
     for k in pairs(seen) do seen[k] = nil end
     for k in pairs(seenCount) do seenCount[k] = nil end
+    for k in pairs(pending) do pending[k] = nil end
     for i = #BM.watch, 1, -1 do BM.watch[i] = nil end
     if not Opt("bossLearn") then return 0 end
     -- Angelegt schon zum Pull: auch ein Boss, der nichts wirkt, steht danach
     -- unter "Bosse".
     local store = BM.LearnStore(true)
     if not store then return 0 end
+    local BS = WeintCodex.UIBossShare
+    if BS and BS.MergeInto then BS.MergeInto(store) end
     local n = 0
     for spell, rec in pairs(store) do
         if type(rec) == "table" and type(spell) == "string" and spell:sub(1, 1) ~= "_" then
-            local mode, first, _, hp, sound = BM.Effective(rec, store)
+            local mode, first, gap, hp, sound = BM.Effective(rec, store)
+            local e = type(rec.edit) == "table" and rec.edit or nil
             if mode == "timer" and first then
-                Predict(spell, first - (Now() - BM.fight.start), rec.icon, sound)
+                Predict(spell, first - (Now() - BM.fight.start), rec.icon, sound, gap, e and e.soon)
                 n = n + 1
             elseif mode == "hp" or mode == "power" then
                 BM.watch[#BM.watch + 1] = { spell = spell, kind = mode, at = hp, icon = rec.icon, sound = sound, armed = true }
@@ -1582,12 +1692,16 @@ function BM.CastSucceeded(unit, spellID)
         local ok, i = pcall(_G.C_Spell.GetSpellTexture, spellID)
         icon = ok and Plain(i) or nil
     end
-    return BM.LearnCast(unit, name, icon)
+    return BM.LearnCast(unit, name, icon, spellID)
 end
 BM.castStarted = castStarted
 
 function BM.CastStop(unit)
-    if type(unit) == "string" and timers["cast" .. unit] then BM.Stop("cast" .. unit) return true end
+    if type(unit) ~= "string" then return nil end
+    local spell = castSpellOf[unit]
+    castSpellOf[unit] = nil
+    if spell then BM.FlushPending(spell) end
+    if timers["cast" .. unit] then BM.Stop("cast" .. unit) return true end
     return nil
 end
 
@@ -1943,6 +2057,9 @@ function BM.FixSelection()
         end
         BM.sel.boss, BM.sel.spell, BM.listPage = best, nil, 1
     end
+    local BS = WeintCodex.UIBossShare
+    local st = BM.sel.boss and BM.Bosses()[BM.sel.boss]
+    if BS and BS.MergeInto and type(st) == "table" then BS.MergeInto(st) end
     local spells = BM.SpellItems()
     if not has(spells, BM.sel.spell) then BM.sel.spell = spells[1] and spells[1].value or nil end
 end
@@ -1955,19 +2072,46 @@ end
 local function Secs(v) return v and (string.format("%.1f", v):gsub("%.0$", ""):gsub("%.", ",")) .. " s" or "–" end
 local function IsEmpty(t) for _ in pairs(t) do return false end return true end
 local function Times(n) return (n == 1) and "1 Kampf" or (tostring(n or 0) .. " Kämpfe") end
+local function Range(list, unit)
+    if type(list) ~= "table" or #list == 0 then return nil end
+    local lo, hi = 100, 0
+    for _, v in ipairs(list) do lo, hi = math.min(lo, v), math.max(hi, v) end
+    return (lo == hi) and (lo .. unit) or (lo .. "–" .. hi .. unit)
+end
+-- Alle Messdaten einer Faehigkeit (1.10.13.0: auch die anderer Spieler).
 function BM.Measured(rec, st)
     if not rec then return "" end
-    local parts = {}
-    parts[#parts + 1] = "Gemessen in " .. Times(st and st._pulls or 0) .. ", " .. tostring(rec.n or 0) .. "× gesehen"
-    parts[#parts + 1] = "zuerst nach " .. Secs(rec.first)
-    if rec.gap then parts[#parts + 1] = "danach frühestens alle " .. Secs(rec.gap) end
-    if type(rec.hp) == "table" and #rec.hp > 0 then
-        local lo, hi = 100, 0
-        for _, v in ipairs(rec.hp) do lo, hi = math.min(lo, v), math.max(hi, v) end
-        parts[#parts + 1] = (lo == hi) and ("Leben beim Wirken " .. lo .. " %") or ("Leben beim Wirken " .. lo .. "–" .. hi .. " %")
+    local lines = {}
+    if (rec.n or 0) > 0 then
+        local parts = { "Du: " .. tostring(rec.n) .. "× gesehen in " .. Times(st and st._pulls or 0) }
+        parts[#parts + 1] = "zuerst nach " .. Secs(rec.first)
+        parts[#parts + 1] = rec.gap and ("frühestens alle " .. Secs(rec.gap)) or "Abstand noch unbekannt"
+        if rec.maxPull then parts[#parts + 1] = "bis " .. rec.maxPull .. "× je Kampf" end
+        local hp, pw = Range(rec.hp, " %"), Range(rec.pw, " %")
+        parts[#parts + 1] = hp and ("Leben beim Wirken " .. hp) or "Leben nicht offen gemeldet"
+        if pw then parts[#parts + 1] = "Energie/Mana " .. pw end
+        if rec.id then parts[#parts + 1] = "Zauber " .. rec.id end
+        lines[#lines + 1] = table.concat(parts, " · ") .. "."
     else
-        parts[#parts + 1] = "Leben des Bosses nicht offen gemeldet"
+        lines[#lines + 1] = "Du hast diese Fähigkeit noch nicht gesehen."
     end
+    local sh = BM.SharedOf(rec, st)
+    if sh then
+        lines[#lines + 1] = "Andere Spieler (" .. sh.players .. "): zuerst nach " .. Secs(sh.first)
+            .. (sh.gap and (" · alle " .. Secs(sh.gap)) or "") .. " · zusammen " .. sh.n .. "× gesehen (Median)."
+    end
+    return table.concat(lines, "\n")
+end
+
+-- Kopfzeile eines Bosses: Siege/Wipes dieses Charakters, Bestzeit, Kaempfe.
+function BM.BossSummary(key, st)
+    if type(st) ~= "table" then return "" end
+    local t = BM.TallyOf(key)
+    local parts = {}
+    parts[#parts + 1] = t and ((t.k or 0) .. ((t.k or 0) == 1 and " Sieg" or " Siege") .. ", " .. (t.w or 0) .. ((t.w or 0) == 1 and " Wipe" or " Wipes") .. " mit diesem Charakter")
+        or "Mit diesem Charakter noch kein Ergebnis"
+    if st._best then parts[#parts + 1] = "Bestzeit " .. BM.Format(st._best) end
+    parts[#parts + 1] = Times(st._pulls or 0) .. " gemessen"
     return table.concat(parts, " · ") .. "."
 end
 function BM.SuggestText(rec, st)
@@ -2101,7 +2245,8 @@ local function CreateSpellList(parent, width)
                 r.name:SetTextColor(unpack(on and C.textBright or C.textMuted))
                 r.how:SetText(BM.HowText(rec, st))
                 r.how:SetTextColor(unpack(on and C.textNormal or C.textMuted))
-                r.seen:SetText((rec.n or 0) .. "×")
+                local sh = BM.SharedOf(rec, st)
+                r.seen:SetText((rec.n or 0) .. "×" .. (sh and (" · +" .. sh.players) or ""))
                 r:Show()
             else
                 r._spell = nil
@@ -2140,6 +2285,7 @@ local function EnglishName(code)
     end
     return type(code) == "string" and enNames[code] or nil
 end
+BM.EnglishName = EnglishName
 function BM.Search(text)
     local out = {}
     if type(text) ~= "string" then return out end
@@ -2444,6 +2590,7 @@ local function BuildBosses(B)
           { type = "dropdown", label = "Boss", items = BM.BossItems,
             get = function() return BM.sel.boss end,
             set = function(v) BM.sel.boss, BM.sel.spell, BM.listPage = v, nil, 1 Rebuild() end })
+    B:Note(BM.BossSummary(BM.sel.boss, BM.Bosses()[BM.sel.boss]))
     B:Row({ type = "custom", height = 22 + BM.LIST_ROWS * BM.LIST_ROW_H + 34, create = CreateSpellList })
     local rec, st = BM.SelRec()
     if not rec then return end
@@ -2457,12 +2604,31 @@ local function BuildBosses(B)
             get = function() local e = Edit(rec) return e and e.mode or "auto" end,
             set = function(v) local e = Edit(rec, true) e.mode = (v ~= "auto") and v or nil Rebuild() end,
             tooltip = "Leben und Energie gehen nur, wenn das Spiel sie im Kampf offen meldet – sonst bleibt nur „nach Zeit“." },
-          { type = "dropdown", label = "Eigener Ton", items = function()
-                local list = { { value = "", text = "Wie bei „Kurz vor einer Fähigkeit“" } }
-                for _, it in ipairs(SoundItems()) do list[#list + 1] = it end
-                return list end,
+          { type = "dropdown", label = "Vorwarnung", items = {
+                { value = 0, text = "Wie bei „Töne“ eingestellt" },
+                { value = 2, text = "2 Sekunden vorher" }, { value = 3, text = "3 Sekunden vorher" },
+                { value = 5, text = "5 Sekunden vorher" }, { value = 8, text = "8 Sekunden vorher" } },
+            get = function() local e = Edit(rec) return e and e.soon or 0 end,
+            set = function(v) local e = Edit(rec, true) e.soon = (v ~= 0) and v or nil end })
+    -- 1.10.13.0: je Faehigkeit eigene Toene und eine grosse Warnung.
+    local function SoundList(first)
+        return function()
+            local list = { { value = "", text = first } }
+            for _, it in ipairs(SoundItems()) do list[#list + 1] = it end
+            return list
+        end
+    end
+    B:Row({ type = "dropdown", label = "Ton vorher", items = SoundList("Wie bei „Kurz vor einer Fähigkeit“"),
             get = function() local e = Edit(rec) return e and e.sound or "" end,
-            set = function(v) local e = Edit(rec, true) e.sound = (v ~= "") and v or nil Preview(v) end })
+            set = function(v) local e = Edit(rec, true) e.sound = (v ~= "") and v or nil Preview(v) end },
+          { type = "dropdown", label = "Ton beim Wirken", items = SoundList("Wie bei „Wenn ein Boss zu zaubern beginnt“"),
+            get = function() local e = Edit(rec) return e and e.castSound or "" end,
+            set = function(v) local e = Edit(rec, true) e.castSound = (v ~= "") and v or nil Preview(v) end })
+    B:Row({ type = "toggle", label = "Große Warnung beim Wirken",
+            description = "Der Name der Fähigkeit groß in der Mitte, sobald der Boss sie wirkt.",
+            get = function() local e = Edit(rec) return e and e.warn and true or false end,
+            set = function(v) local e = Edit(rec, true) e.warn = v and true or nil end },
+          { type = "empty" })
     local mode = BM.Effective(rec, st)
     if mode == "hp" then
         B:Row({ type = "input", label = "Bei Leben des Bosses (%)",
@@ -2487,6 +2653,9 @@ local function BuildBosses(B)
               { type = "empty" })
     end
     B:Advanced()
+    B:Row({ type = "toggle", label = "Messdaten still mit anderen teilen", key = "bossShare",
+            description = "Nur deine Messung (erster Einsatz, Abstand, wie oft) je Boss und Fähigkeit – an Gilde, Gruppe und alle mit WeintCodex, nie im Kampf. Deine Einstellungen bleiben bei dir." },
+          { type = "empty" })
     B:Row({ type = "toggle", label = "Zeiten aus eigenen Kämpfen lernen", key = "bossLearn" },
           { type = "button", label = "Diesen Boss", text = "Messung und Einstellungen löschen",
             onClick = function() BM.LearnForget(BM.sel.boss) BM.sel.boss, BM.sel.spell = nil, nil Rebuild() end })

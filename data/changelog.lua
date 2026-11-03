@@ -22,6 +22,17 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.10.13.0",
+        date    = "03.11.2026",
+        notes   = {
+            "|cff7C6CFFKein doppelter Zauber mehr|r – während der Boss wirkt, steht nur die echte Zauberleiste; die Vorhersage für den nächsten Einsatz kommt danach.",
+            "|cff7C6CFFZählt herunter wie ein Bossmod|r – eine gemessene Fähigkeit verschwindet nicht nach dem ersten Mal: kommt sie nicht pünktlich, steht sie kurz auf „jetzt“ und zählt dann den nächsten Abstand herunter. Die Zeitleiste zeigt auch die folgenden Einsätze.",
+            "|cff7C6CFFNach dem Kill wie bei DBM|r – der wievielte Sieg mit diesem Charakter, Wipes davor, Bestzeit oder neue Bestzeit.",
+            "|cff7C6CFFJede Fähigkeit mit eigenen Tönen|r – Ton vorher, Ton beim Wirken, große Warnung und eigene Vorwarnzeit.",
+            "|cff7C6CFFMessdaten werden geteilt|r – still mit Gilde, Gruppe und allen anderen mit WeintCodex, nur Messungen, nie deine Einstellungen. Was andere gemessen haben, steht dabei und hilft, solange du einen Boss noch nicht kennst.",
+        },
+    },
+    {
         version = "1.10.12.0",
         date    = "02.11.2026",
         notes   = {

@@ -689,6 +689,8 @@ Check("Bosskämpfe", function(add)
     local s = BM.stats
     -- Zeitleiste kam, aber nie mit offener Dauer: dann gibt es keine Leisten.
     add((s.timeline > 0 and s.secret >= s.timeline) and SC.BAD or (s.encounters > 0 and SC.OK or SC.OPEN), BM.StatusLine())
+    local BS = WeintCodex.UIBossShare
+    if BS then add((BS.stats.taken > 0 or BS.stats.sent > 0) and SC.OK or SC.OPEN, BS.StatusLine()) end
 end)
 
 -- Sterbezeit an der Plakette (1.8.0.0, ui/timetodie.lua)

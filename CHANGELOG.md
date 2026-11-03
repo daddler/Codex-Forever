@@ -9,6 +9,18 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.10.13.0] – 2026-11-03
+
+### Behoben
+- „~ Fähigkeit“ und die echte Zauberleiste standen gleichzeitig da: die Vorhersage wartet jetzt auf das Ende der Leiste (`pending`, `BM.FlushPending` in `BM.CastStop`) und rechnet ab Zauberbeginn.
+- Eine gemessene Fähigkeit stand nur einmal in Leisten/Zeitleiste und verschwand bei 0 bis zum nächsten Wirken. Jetzt: `t.gap` an der Vorhersage, bei 0 `BM.OVERDUE` (3 s) „jetzt“, danach der nächste Abstand ab dem erwarteten Zeitpunkt; die Zeitleiste zeigt die folgenden Einsätze blasser.
+
+### Neu
+- Nach dem Kampf wie bei DBM: Siege/Wipes je Charakter und Boss (`SavedData.bossKills[Name-Realm][Schlüssel] = { k, w }`, `BM.Tally`), „erste Bestzeit“/„neue Bestzeit (vorher …)“, „3. Sieg mit diesem Charakter, 1 Wipe davor“; Kopfzeile je Boss auf der Seite „Bosse“ (`BM.BossSummary`, `_best`). Schlüssel über `BM.FightKey`.
+- Je Fähigkeit: Ton vorher (`edit.sound`), Ton beim Wirken (`edit.castSound`), große Warnung beim Wirken (`edit.warn`), eigene Vorwarnzeit (`edit.soon`). Zauber-Nummer je Fähigkeit (`rec.id`) aus `UnitCastingInfo`/`UnitChannelInfo`/`UNIT_SPELLCAST_SUCCEEDED`.
+- Alle Messdaten in der Ansicht: eigene (gesehen, Kämpfe, zuerst, Abstand, je Kampf, Leben, Energie, Zauber-Nummer) und die anderer Spieler (Median, Anzahl).
+- **Siebte Ausnahme** (auf Wunsch): `ui/bossshare.lua` teilt die eigene Messung still – Kennung `WCBM`, Gilde, Gruppe, versteckter Kanal `WCBossmod` (aus allen Chatfenstern entfernt); `1|S|Dungeon/Boss|Zauber|erst|abstand|n` in Zehntelsekunden, nur Bosse des Kompendiums, nie Einstellungen, nie im Kampf/Bosskampf, 1 Nachricht je 1,2 s. Empfang geprüft (Kompendium, Grenzen, nicht von dir, nur Gilde/Gruppe/Kanal), je Absender gemerkt (`SavedData.bossShared`, bis 20), Median zählt; eigene Einstellung > eigene Messung > Messung anderer. Fähigkeiten, die nur andere sahen, stehen unter dem Namen des eigenen Clients in der Liste (`BS.MergeInto`). Schalter `bossShare` (ab Werk an); `/wcui prüfen` zeigt gesendet/empfangen/verworfen.
+
 ## [1.10.12.0] – 2026-11-02
 
 ### Neu

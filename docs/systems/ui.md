@@ -2404,6 +2404,14 @@ lebt es von den Ereignissen des Spiels; genau die nutzt WeintCodex.
   aller Fähigkeiten (Haken = ankündigen, blättern statt rollen), darunter
   nur die Felder des Auslösers. Vorschlag „Energie“ nur, wenn die Energie
   im Kampf auch unter 50 % fiel (`_pwMin`).
+- **1.10.13.0:** Vorhersage erst nach der Zauberleiste (`pending`),
+  gemessene Fähigkeiten zählen weiter herunter (`t.gap`, `BM.OVERDUE`),
+  Zeitleiste mit Folgeeinsätzen; Siege/Wipes je Charakter
+  (`SavedData.bossKills`); je Fähigkeit Ton vorher/beim Wirken, große
+  Warnung, Vorwarnzeit. **Teilen** (`ui/bossshare.lua`, siebte Ausnahme
+  in CLAUDE.md): nur Messung je Boss des Kompendiums und Zauber-Nummer,
+  Gilde/Gruppe/Kanal `WCBossmod`, nie im Kampf; Empfang geprüft, je
+  Absender, Median; eigene Einstellung > eigene Messung > andere.
 - **Suche und Zeitstrahl (1.10.12.0):** Suchfeld über Instanz/Boss
   (deutsch und englisch über `_codex`), Treffer schwebend; Zeitstrahl
   mit zwei Griffen (erster Einsatz, nächster = Abstand), Raster 0,5 s,
