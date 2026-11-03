@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.10.14.1",
+        date    = "03.11.2026",
+        notes   = {
+            "|cff7C6CFFNeue Stimme beim Herunterzählen|r – „fünf, vier, drei, zwei, eins“ jetzt mit einer echten Sprecherstimme statt der Computerstimme.",
+        },
+    },
+    {
         version = "1.10.14.0",
         date    = "03.11.2026",
         notes   = {

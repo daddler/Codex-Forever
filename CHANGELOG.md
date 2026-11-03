@@ -9,6 +9,11 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.10.14.1] – 2026-11-03
+
+### Geändert
+- `media/sounds/count_1..5.ogg` aus der ElevenLabs-Aufnahme des Besitzers (eins bis zehn, die ersten fünf geschnitten) statt espeak-ng; Herkunft und Schnitt in `.github/scripts/make_count_sounds.py`.
+
 ## [1.10.14.0] – 2026-11-03
 
 ### Neu

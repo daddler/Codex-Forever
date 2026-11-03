@@ -9,6 +9,13 @@ und imageio-ffmpeg):
 
 Schreibt media/sounds/count_1.ogg ... count_5.ogg.
 
+SEIT 1.10.14.1 NICHT MEHR IN GEBRAUCH: die Zaehlung im Repo stammt aus einer
+ElevenLabs-Aufnahme des Besitzers (Stimme "René Deutschmann", eins bis zehn
+in einer Datei; geschnitten 0,02-0,49 / 0,52-1,03 / 1,03-1,55 / 1,56-2,07 /
+2,07-2,62 s, 10 ms ein-, 50 ms ausgeblendet, -16 LUFS). Die Reihenfolge ist
+aus dem Klang bestimmt (scharfes s am Ende von "eins", s vorn und hinten bei
+"sechs"), nicht gehoert. Dieses Skript bleibt als Rueckfall.
+
 HERKUNFT: eigene Sprachausgabe mit espeak-ng (Stimme "de"), erzeugt von
 .github/scripts/speak_espeak.py. Die Ausgabe eines Sprachprogramms ist kein
 Werk des Programms - die Dateien gehoeren uns. Die Stimmen von DBM sind nur
