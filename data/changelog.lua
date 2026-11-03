@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.10.25.0",
+        date    = "03.11.2026",
+        notes   = {
+            "|cff7C6CFFEigener Bannzauber beim Entfluchen|r – kann deine Klasse in Forever etwas Neues entfernen, etwa Magie, wähle den Zauber aus deinem Zauberbuch und die Art. Er bekommt ein eigenes Feld.",
+        },
+    },
+    {
         version = "1.10.24.0",
         date    = "03.11.2026",
         notes   = {

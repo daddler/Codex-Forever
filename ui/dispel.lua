@@ -54,6 +54,11 @@ DP.SPELLS = {
                 { label = "Krankheit",           ids = { 2870 },       types = { Disease = true } } },    -- Krankheit heilen
 }
 DP.BUTTONS = { 1, 2 }
+DP.TYPE_LABEL = { Magic = "Magie", Curse = "Fluch", Disease = "Krankheit", Poison = "Gift" }
+DP.TYPE_ITEMS = {
+    { value = "Magic", text = "Magie" }, { value = "Curse", text = "Fluch" },
+    { value = "Disease", text = "Krankheit" }, { value = "Poison", text = "Gift" },
+}
 
 DP.DEFAULTS = {
     clickDispel    = false,
@@ -61,6 +66,8 @@ DP.DEFAULTS = {
     dispelBar      = true,     -- 1.10.24.0: Felder zum Anklicken (wie Decursive)
     dispelBarSize  = 16,
     dispelBarGroup = false,    -- nur in einer Gruppe
+    dispelOwnSpell = "",       -- 1.10.25.0: eigener Bannzauber aus dem Zauberbuch
+    dispelOwnType  = "Magic",
 }
 
 local function Opt(k) return K.Get(KEY, k) end
@@ -94,8 +101,27 @@ function DP.Resolve(class)
     class = class or (CC._class and CC._class())
     local groups = class and DP.SPELLS[class]
     local found, missing = {}, {}
-    if not groups then return found, missing, false end
     local book = (CC.Spellbook and CC.Spellbook(false)) or {}
+    -- 1.10.25.0 (Wunsch: "auch Magie bannen"): was die Liste nicht kennt
+    -- (Forever kann Klassen neue Bannzauber geben), waehlt der Spieler
+    -- selbst - ein Zauber aus SEINEM Zauberbuch und die Art, die er entfernt.
+    local own = Opt("dispelOwnSpell")
+    local ownType = DP.TYPE_LABEL[Opt("dispelOwnType") or ""] and Opt("dispelOwnType") or "Magic"
+    local function AddOwn()
+        if type(own) ~= "string" or own == "" then return end
+        for _, f in ipairs(found) do if f.spell == own then return end end
+        for _, sp in ipairs(book) do
+            if sp.name == own then
+                found[#found + 1] = { label = DP.TYPE_LABEL[ownType], spell = own, button = #found + 1,
+                                      types = { [ownType] = true }, own = true }
+                return
+            end
+        end
+    end
+    if not groups then
+        AddOwn()
+        return found, missing, #found > 0
+    end
     for i, g in ipairs(groups) do
         local pick
         for _, id in ipairs(g.ids) do
@@ -108,6 +134,7 @@ function DP.Resolve(class)
             missing[#missing + 1] = g.label
         end
     end
+    AddOwn()
     return found, missing, true
 end
 
@@ -118,7 +145,9 @@ function DP.Bindings()
     if mod == "" then mod = "ctrl-" end    -- ohne Zusatztaste wuerde Links nicht mehr anwaehlen
     local out = {}
     for _, f in ipairs((DP.Resolve())) do
-        out[#out + 1] = { button = f.button, mod = mod, action = "spell", spell = f.spell, note = "Entfluchen" }
+        if f.button <= #DP.BUTTONS then
+            out[#out + 1] = { button = f.button, mod = mod, action = "spell", spell = f.spell, note = "Entfluchen" }
+        end
     end
     return out
 end
@@ -134,12 +163,16 @@ function DP.Summary()
     for _, b in ipairs(CC.Bindings()) do mine[b.mod .. b.button] = b end
     local parts = {}
     for _, f in ipairs(found) do
+        if f.button > #DP.BUTTONS then
+            parts[#parts + 1] = string.format("%s (%s): nur über die Felder", f.spell, f.label)
+        else
         local key = CC.KeyText({ button = f.button, mod = mod })
         local own = mine[mod .. f.button]
         if own then
             parts[#parts + 1] = string.format("%s: besetzt (%s) – %s bleibt frei", key, CC.ActionText(own), f.spell)
         else
             parts[#parts + 1] = string.format("%s: %s (%s)", key, f.spell, f.label)
+        end
         end
     end
     for _, label in ipairs(missing) do
@@ -172,7 +205,7 @@ function DP.Problems()
         local mine = {}
         for _, b in ipairs(CC.Bindings()) do mine[b.mod .. b.button] = b end
         for _, f in ipairs(found) do
-            local own = mine[mod .. f.button]
+            local own = f.button <= #DP.BUTTONS and mine[mod .. f.button]
             if own then
                 out[#out + 1] = string.format("%s ist schon mit „%s“ belegt (Klickzauber) – %s geht über diese Taste nicht. Andere Zusatztaste wählen oder die Belegung löschen.",
                     CC.KeyText({ button = f.button, mod = mod }), CC.ActionText(own), f.spell)
@@ -218,6 +251,7 @@ DP.COLORS = {
     Poison  = { 0.00, 0.60, 0.00 },
 }
 DP.MAX_RAID = 40
+DP.MAX_SQ = 3      -- bis zu zwei Zauber der Klasse und ein eigener
 local bar, cells, pendingApply = nil, {}, false
 DP.cells = cells
 
@@ -227,7 +261,7 @@ local function NewCell(parent, unit)
     local c = CreateFrame("Frame", nil, parent)
     c.unit = unit
     c.sq = {}
-    for i = 1, #DP.BUTTONS do
+    for i = 1, DP.MAX_SQ do
         local ok, b = pcall(CreateFrame, "Button", nil, c, "SecureUnitButtonTemplate")
         if not ok then b = CreateFrame("Button", nil, c) end
         b:SetAttribute("unit", unit)
@@ -376,7 +410,12 @@ end
 -- Seite "Entfluchen" (1.10.24.0: eigener Reiter neben den Klickzaubern)
 --------------------------------------------------
 function DP.BuildPage(B)
-    local problems = DP.Problems()
+    local problems, found = DP.Problems()
+    if #found > 0 then
+        local can = {}
+        for _, f in ipairs(found) do can[#can + 1] = f.label end
+        B:Note("Du kannst entfernen: " .. table.concat(can, ", ") .. ". Was deine Klasse nicht kann (z. B. Magie beim Schamanen in Classic), zeigt kein Feld – dafür ist „Eigener Bannzauber“ unten.")
+    end
     if #problems > 0 then
         B:Note(WeintCodex.ColorText("red", table.concat(problems, "\n")))
     end
@@ -387,6 +426,15 @@ function DP.BuildPage(B)
             disabled = function() return not Opt("dispelBar") end })
     B:Row({ type = "slider", label = "Größe", key = "dispelBarSize", min = 10, max = 28, step = 1, suffix = " px",
             disabled = function() return not Opt("dispelBar") end }, { type = "empty" })
+    B:Section("Eigener Bannzauber",
+        "Fehlt ein Zauber – etwa einer gegen Magie, den deine Klasse in Forever neu hat –, wähle ihn hier aus deinem Zauberbuch und sag, was er entfernt. Er bekommt ein eigenes Feld.")
+    local items = { { value = "", text = "Keiner" } }
+    for _, sp in ipairs((CC.Spellbook and CC.Spellbook(true)) or {}) do
+        if type(sp.name) == "string" then items[#items + 1] = { value = sp.name, text = sp.name } end
+    end
+    B:Row({ type = "dropdown", label = "Zauber", key = "dispelOwnSpell", items = items },
+          { type = "dropdown", label = "Entfernt", key = "dispelOwnType", items = DP.TYPE_ITEMS,
+            disabled = function() local v = Opt("dispelOwnSpell") return type(v) ~= "string" or v == "" end })
     B:Section("Zusatztaste + Klick auf einen Rahmen",
         "Legt die Zauber auf Zusatztaste + Links und Rechts – auf Gruppen- und Einheitenrahmen. Auf Namensplaketten geht das nicht: dort lässt das Spiel keine Klickzauber zu.")
     B:Row({ type = "toggle", label = "Entfluchen auf Klick", key = "clickDispel" },

@@ -9,6 +9,11 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.10.25.0] – 2026-11-03
+
+### Neu
+- Entfluchen: eigener Bannzauber aus dem Zauberbuch mit gewählter Art (`dispelOwnSpell`/`dispelOwnType`) – für Zauber, die die Classic-Liste nicht kennt (z. B. Magie). Eigenes Feld; Zusatztaste + Klick nur, solange Links/Rechts frei sind. Die Seite nennt, was die Klasse entfernen kann.
+
 ## [1.10.24.0] – 2026-11-03
 
 ### Neu

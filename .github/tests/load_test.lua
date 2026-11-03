@@ -20353,6 +20353,19 @@ do
         K.Set("groupframes", "dispelBar", false)
         DP.ApplyBar()
         DP.Resolve = oR
+        -- 1.10.25.0: eigener Bannzauber aus dem Zauberbuch, auch ohne Klassenliste.
+        local CC = WeintCodex.UIClickCast
+        local oS, oC = CC.Spellbook, CC._class
+        CC.Spellbook = function() return { { name = "Geist reinigen" } } end
+        CC._class = function() return "WARRIOR" end
+        K.Set("groupframes", "dispelOwnSpell", "Geist reinigen")
+        K.Set("groupframes", "dispelOwnType", "Magic")
+        local found, _, has = DP.Resolve()
+        assert(has and #found == 1 and found[1].types.Magic and found[1].label == "Magie", "eigener Bannzauber fehlt")
+        K.Set("groupframes", "dispelOwnSpell", "Gibt es nicht")
+        assert(#(DP.Resolve()) == 0, "Zauber ausserhalb des Zauberbuchs angeboten")
+        K.Set("groupframes", "dispelOwnSpell", nil) K.Set("groupframes", "dispelOwnType", nil)
+        CC.Spellbook, CC._class = oS, oC
     end)
     Check(ok, "Entfluchen: Warnungen (kein Zauber, Klasse), Felder leuchten nach Debuff-Art" .. (ok and "" or (": " .. tostring(err))))
 end
