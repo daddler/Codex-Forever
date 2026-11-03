@@ -9,6 +9,13 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.10.16.0] – 2026-11-03
+
+### Behoben
+- Gemessene Fähigkeiten mit kurzem Abstand (Glubtok: Frost-/Flammenfäuste) hingen auf „jetzt“ und die Zeitleiste stand still: das Weiterzählen springt jetzt immer auf den nächsten Einsatz in der Zukunft (`TickRow`).
+- Was öfter als alle 8 s kommt (`BM.SPAM_GAP`), bekommt keine Vorhersage und keine Zeitleiste mehr – Dauerfeuer ist kein Timer.
+- Derselbe Zauber über mehrere Einheiten innerhalb von `LEARN_MIN` wird nur einmal gezählt.
+
 ## [1.10.15.0] – 2026-11-03
 
 ### Neu

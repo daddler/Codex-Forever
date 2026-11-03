@@ -23439,6 +23439,7 @@ do
         assert(math.abs(BM.timers["nxSchlag"].ends - now - 20) < 0.01, "eigener Abstand gilt nicht")
         -- Sofortzauber: zaehlen; das Ende einer gezaehlten Leiste nicht doppelt.
         local n0 = st.Schlag.n
+        now = now + 5   -- 1.10.16.0: binnen LEARN_MIN gilt derselbe Zauber als einer
         _G.UnitCastingInfo = function() return "Schlag", "", 1, now * 1000, (now + 1) * 1000, false, 1, false end
         BM.CastStart("boss1", false)
         _G.C_Spell.GetSpellName = function() return "Schlag" end
@@ -23701,6 +23702,14 @@ do
         assert(BM.timers["nxWirbelwind"] == nx and nx.overAt, "Vorhersage verschwindet bei 0")
         now = due + BM.OVERDUE + 0.1 BM.Tick(true)
         assert(BM.timers["nxWirbelwind"] == nx and math.abs(nx.ends - (due + 12)) < 0.01 and not nx.overAt, "zaehlt den naechsten Abstand nicht herunter")
+        -- 1.10.16.0: Abstand kuerzer als OVERDUE - springt in die Zukunft.
+        local short = BM.Start("nxKurz", "~ Kurz", 1, nil, "textMuted")
+        short.learned, short.gap = true, 2
+        local sDue = short.ends
+        now = sDue + 0.5 BM.Tick(true) now = sDue + BM.OVERDUE + 0.1 BM.Tick(true)
+        assert(short.ends > now and not short.overAt, "kurzer Abstand haengt auf jetzt")
+        BM.Stop("nxKurz")
+        assert(BM.Predict("Faeuste", 3, nil, nil, 3) == nil and not BM.timers["nxFaeuste"], "Dauerfeuer als Timer")
         -- Zeitleiste: auch die folgenden Einsaetze.
         K.Set("comfort", "bossTrack", true) K.Set("comfort", "bossTrackSecs", 60)
         BM.ApplyLook()

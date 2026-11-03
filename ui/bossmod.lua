@@ -458,8 +458,13 @@ local function TickRow(r)
         if t.learned and t.gap then
             if not t.overAt then t.overAt = t.ends end
             if tNow - t.overAt >= BM.OVERDUE then
-                t.start = t.overAt
-                t.ends = t.overAt + t.gap
+                -- 1.10.16.0 (Beta-Test Glubtok): ein Abstand kuerzer als die
+                -- Zeit auf "jetzt" lag sofort wieder hinter uns - die Leiste
+                -- hing fest. Immer bis zum naechsten Einsatz in der Zukunft.
+                local ends = t.overAt + t.gap
+                while ends <= tNow do ends = ends + t.gap end
+                t.start = ends - t.gap
+                t.ends = ends
                 t.overAt, t.warned, t.lastCount = nil, nil, nil
             end
             r.bar:SetValue(tFill and 1 or 0)
@@ -1540,8 +1545,12 @@ function BM.Counts(important)
     return m == "important" and important and true or false
 end
 
+-- 1.10.16.0: was oefter als alle 8 s kommt (Faeuste, Treffer einer Aura),
+-- ist Dauerfeuer, kein Timer - keine Leiste, keine Zeitleiste.
+BM.SPAM_GAP = 8
 local function Predict(spell, secs, icon, sound, gap, soonSecs, important)
     if not secs or secs <= 0 then return end
+    if gap and gap < BM.SPAM_GAP then return end
     local t = BM.Start("nx" .. spell, "~ " .. spell, secs, icon, "textMuted")
     t.soon, t.learned, t.sound, t.gap, t.soonSecs = true, true, sound, gap, soonSecs
     t.count = BM.Counts(important)
@@ -1587,6 +1596,9 @@ function BM.LearnCast(unit, spell, icon, spellID, casting)
     if type(spellID) == "number" and spellID > 0 then rec.id = spellID end
     local now = Now()
     local last = seen[spell]
+    -- Derselbe Zauber ueber mehrere Einheiten (boss1, target, Plakette) oder
+    -- sein Treffer kurz danach: einmal gezaehlt.
+    if last and now - last < BM.LEARN_MIN then return rec end
     if not last then
         local off = math.floor((now - f.start) * 10 + 0.5) / 10
         if off >= 0 and (not rec.first or off < rec.first) then rec.first = off end

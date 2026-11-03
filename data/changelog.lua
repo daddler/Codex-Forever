@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.10.16.0",
+        date    = "03.11.2026",
+        notes   = {
+            "|cff7C6CFFGemessene Fähigkeiten zählen wieder herunter|r – Leisten blieben bei Bossen mit schnellen Fähigkeiten auf „jetzt“ stehen, die Zeitleiste lief nicht. Was alle paar Sekunden kommt, bekommt gar keine Leiste mehr.",
+        },
+    },
+    {
         version = "1.10.15.0",
         date    = "03.11.2026",
         notes   = {
