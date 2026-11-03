@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.10.17.0",
+        date    = "03.11.2026",
+        notes   = {
+            "|cff7C6CFFBosskämpfe laufen wie beim letzten Mal ab|r – Leisten und Zeitleiste zeigen die kommenden Fähigkeiten in ihrer Reihenfolge, mit Zähler: „Frostfäuste (2)“, dann „Flammenfäuste (3)“. Ab dem zweiten Kampf gegen einen Boss.",
+        },
+    },
+    {
         version = "1.10.16.0",
         date    = "03.11.2026",
         notes   = {

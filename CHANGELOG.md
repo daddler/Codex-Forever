@@ -9,6 +9,11 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.10.17.0] – 2026-11-03
+
+### Neu
+- Ablauf aus dem längsten eigenen Kampf (`store._seq`, `BM.SeqStart`/`SeqCast`/`SeqPlan`): Leisten und Zeitleiste zeigen die nächsten Einsätze je Fähigkeit mit Zähler („~ Frostfäuste (3)“), auch wenn sich Fähigkeiten abwechseln. Jeder echte Einsatz richtet den Ablauf neu aus, ein ausgelassener wird nach `OVERDUE` übersprungen. Eigene Zeiten (zuerst/Abstand) gehen vor. Der Ablauf wird (noch) nicht geteilt.
+
 ## [1.10.16.0] – 2026-11-03
 
 ### Behoben

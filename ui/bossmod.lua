@@ -162,6 +162,8 @@ function BM.Start(key, label, duration, icon, color)
     t.hold, t.total = nil, nil
     t.gap, t.overAt, t.soonSecs, t.learned, t.sound = nil, nil, nil, nil, nil
     t.count, t.lastCount = nil, nil
+    t.nexts, t.nextLabels, t.seqJ = nil, nil, nil
+    t._v = (t._v or 0) + 1
     t.start = Now()
     t.ends = duration and (t.start + duration) or nil
     timers[key] = t
@@ -377,14 +379,22 @@ function BM.TrackFrame(now)
         -- Gemessene Faehigkeiten mit Abstand: auch die folgenden Einsaetze.
         local k = 0
         while t.ends and not t.noTrack and n < BM.TRACK_N do
-            local left = (t.hold or math.max(0, t.ends - now)) + k * (t.gap or 0)
-            if left > win or (k > 0 and not t.gap) then break end
+            local left
+            if k > 0 and t.nexts then
+                -- 1.10.17.0: Ablauf aus einem frueheren Kampf (BM.SeqPlan).
+                local at = t.nexts[k]
+                if not at then break end
+                left = at - now
+            else
+                left = (t.hold or math.max(0, t.ends - now)) + k * (t.gap or 0)
+            end
+            if left > win or (k > 0 and not t.gap and not t.nexts) then break end
             if left >= 0 then
                 n = n + 1
                 local m = track.marks[n]
-                if m._timer ~= t or m._k ~= k then
-                    m._timer, m._k = t, k
-                    m.label:SetText(t.label)
+                if m._timer ~= t or m._k ~= k or m._v ~= t._v then
+                    m._timer, m._k, m._v = t, k, t._v
+                    m.label:SetText(k > 0 and t.nextLabels and t.nextLabels[k] or t.label)
                     if t.icon then
                         m.icon:SetTexture(t.icon)
                         m.icon:SetVertexColor(1, 1, 1, 1)
@@ -431,7 +441,7 @@ end
 -- daneben wird alle 0,1 s neu geschrieben (Zeichenketten kosten). Werte
 -- einmal je Takt gelesen, keine Tabelle und keine Funktion je Bild
 -- (CLAUDE.md, "Anything that runs repeatedly").
-local tNow, tText, tFill, tEmphOn, tEmphSecs, tSoonSecs, tDone, tRelayout
+local tNow, tText, tFill, tEmphOn, tEmphSecs, tSoonSecs, tDone, tRelayout, tSeqMiss
 local function TickRow(r)
     local t = r._timer
     if not t or not r:IsShown() then return end
@@ -455,6 +465,14 @@ local function TickRow(r)
         -- 1.10.13.0 (wie ein Bossmod): eine gemessene Faehigkeit mit Abstand
         -- verschwindet nicht - kurz "jetzt", dann zaehlt sie den naechsten
         -- Abstand herunter, bis der Boss sie wirklich wirkt.
+        if t.seqJ then
+            -- Ablauf: kam der Einsatz nicht, gilt er als ausgelassen.
+            if not t.overAt then t.overAt = t.ends end
+            if tNow - t.overAt >= BM.OVERDUE then tSeqMiss = tSeqMiss or t end
+            r.bar:SetValue(tFill and 1 or 0)
+            if tText then r.time:SetText("jetzt") end
+            return
+        end
         if t.learned and t.gap then
             if not t.overAt then t.overAt = t.ends end
             if tNow - t.overAt >= BM.OVERDUE then
@@ -503,11 +521,20 @@ function BM.Tick(doText)
     tEmphOn = Opt("bossEmph")
     tEmphSecs = Num("bossEmphSecs", 2, 10)
     tSoonSecs = tonumber(K.Get(KEY, "bossSoonSecs")) or 3
-    tDone, tRelayout = nil, nil
+    tDone, tRelayout, tSeqMiss = nil, nil, nil
     for i = 1, BM.MAX_ROWS do TickRow(frame.rows[i]) end
     for i = 1, BM.EMPH_ROWS do TickRow(emph.rows[i]) end
     BM.TrackFrame(tNow)
     if tText then BM.CheckWatches() end
+    if tSeqMiss and BM.seqPlay and not BM._inSeq then
+        local P, miss = BM.seqPlay, tSeqMiss
+        if miss.seqJ > P.pos then P.pos = miss.seqJ end
+        if timers[miss.key] == miss then timers[miss.key] = nil end
+        BM._inSeq = true
+        BM.SeqPlan()
+        BM._inSeq = nil
+        BM.Refresh()
+    end
     local done = tDone
     if done then
         timers[done.key] = nil
@@ -1566,6 +1593,7 @@ function BM.FlushPending(spell)
     local p = spell and pending[spell]
     if not p then return nil end
     pending[spell] = nil
+    if p.seq then BM.SeqPlan() return true end
     Predict(spell, p.gap - (Now() - p.at), p.icon, p.sound, p.gap, p.soon, p.count)
     return true
 end
@@ -1608,13 +1636,23 @@ function BM.LearnCast(unit, spell, icon, spellID, casting)
     end
     seen[spell] = now
     seenCount[spell] = (seenCount[spell] or 0) + 1
+    -- 1.10.17.0: Ablauf des Kampfes (welcher Zauber wann), fuer den naechsten Pull.
+    f._seqS = f._seqS or {}
+    f._seqT = f._seqT or {}
+    if #f._seqS < BM.SEQ_MAX then
+        f._seqS[#f._seqS + 1] = spell
+        f._seqT[#f._seqT + 1] = math.floor((now - f.start) * 10 + 0.5) / 10
+    end
     rec.n = (rec.n or 0) + 1
     local hp, pw = BM.BossVitals()
     if hp then rec.hp = rec.hp or {} Keep(rec.hp, hp) end
     if pw then rec.pw = rec.pw or {} Keep(rec.pw, pw) end
     local mode, _, gap, _, sound = BM.Effective(rec, store)
     local e = type(rec.edit) == "table" and rec.edit or nil
-    if mode == "timer" then
+    if mode == "timer" and BM.SeqCast(spell, now) then
+        BM.Stop("nx" .. spell)
+        if casting then pending[spell] = { seq = true } else BM.SeqPlan() end
+    elseif mode == "timer" then
         if casting then
             BM.Stop("nx" .. spell)
             if gap then pending[spell] = { at = now, gap = gap, icon = rec.icon, sound = sound, soon = e and e.soon, count = e and e.count } end
@@ -1637,6 +1675,7 @@ function BM.LearnStart()
     for k in pairs(seenCount) do seenCount[k] = nil end
     for k in pairs(pending) do pending[k] = nil end
     for i = #BM.watch, 1, -1 do BM.watch[i] = nil end
+    BM.seqPlay = nil
     if not Opt("bossLearn") then return 0 end
     -- Angelegt schon zum Pull: auch ein Boss, der nichts wirkt, steht danach
     -- unter "Bosse".
@@ -1644,12 +1683,14 @@ function BM.LearnStart()
     if not store then return 0 end
     local BS = WeintCodex.UIBossShare
     if BS and BS.MergeInto then BS.MergeInto(store) end
-    local n = 0
+    local n = BM.SeqStart(store)
     for spell, rec in pairs(store) do
         if type(rec) == "table" and type(spell) == "string" and spell:sub(1, 1) ~= "_" then
             local mode, first, gap, hp, sound = BM.Effective(rec, store)
             local e = type(rec.edit) == "table" and rec.edit or nil
-            if mode == "timer" and first then
+            if mode == "timer" and BM.seqPlay and BM.seqPlay.has[spell] then
+                -- schon im Ablauf
+            elseif mode == "timer" and first then
                 Predict(spell, first - (Now() - BM.fight.start), rec.icon, sound, gap, e and e.soon, e and e.count)
                 n = n + 1
             elseif mode == "hp" or mode == "power" then
@@ -1673,6 +1714,94 @@ function BM.LearnEnd()
         local rec = store[spell]
         if type(rec) == "table" then rec.maxPull = math.max(rec.maxPull or 0, c) end
     end
+    -- Der laengste Kampf zeigt den meisten Ablauf.
+    local dur = Now() - f.start
+    if f._seqS and #f._seqS >= BM.SEQ_MIN then
+        local old = type(store._seq) == "table" and tonumber(store._seq.d) or 0
+        if dur >= old then store._seq = { d = math.floor(dur + 0.5), s = f._seqS, t = f._seqT } end
+    end
+    BM.seqPlay = nil
+end
+
+--------------------------------------------------
+-- 1.10.17.0 (Wunsch): Ablauf eines frueheren Kampfes von oben nach unten -
+-- wechseln sich Faehigkeiten ab (Glubtok: Frost-/Flammenfaeuste), steht jede
+-- mit ihrem Zaehler da, "Frostfäuste (3)". Jeder wirkliche Einsatz richtet
+-- den Ablauf neu aus (Verschiebung), ein ausgelassener wird uebersprungen.
+--------------------------------------------------
+BM.SEQ_MAX, BM.SEQ_MIN, BM.SEQ_AHEAD = 200, 3, 6
+
+function BM.SeqStart(store)
+    local q = type(store) == "table" and store._seq
+    if type(q) ~= "table" or type(q.s) ~= "table" or type(q.t) ~= "table" or #q.s < BM.SEQ_MIN then return 0 end
+    local has = {}
+    for i = 1, #q.s do
+        local sp = q.s[i]
+        local rec = store[sp]
+        local e = type(rec) == "table" and type(rec.edit) == "table" and rec.edit or nil
+        -- Eigene Zeiten (zuerst/Abstand) gelten vor dem Ablauf.
+        if type(sp) == "string" and type(q.t[i]) == "number" and type(rec) == "table"
+            and not (e and (e.first or e.gap)) and BM.Effective(rec, store) == "timer" then
+            has[sp] = true
+        end
+    end
+    local n = 0
+    for _ in pairs(has) do n = n + 1 end
+    if n == 0 then return 0 end
+    BM.seqPlay = { s = q.s, t = q.t, shift = 0, pos = 0, has = has, store = store }
+    BM.SeqPlan()
+    return n
+end
+
+-- Ein wirklicher Einsatz: passender naechster Eintrag im Ablauf.
+function BM.SeqCast(spell, now)
+    local P, f = BM.seqPlay, BM.fight
+    if not P or not f or not P.has[spell] then return false end
+    for j = P.pos + 1, #P.s do
+        if P.s[j] == spell then
+            P.pos = j
+            P.shift = (now - f.start) - P.t[j]
+            return true
+        end
+    end
+    return false
+end
+
+-- Je Faehigkeit der naechste Eintrag als Leiste, die weiteren fuer die Zeitleiste.
+function BM.SeqPlan()
+    local P, f = BM.seqPlay, BM.fight
+    if not P or not f then return 0 end
+    local now, base = Now(), f.start + P.shift
+    local made = 0
+    for spell in pairs(P.has) do
+        local t
+        local occ = 0
+        for j = 1, P.pos do if P.s[j] == spell then occ = occ + 1 end end
+        for j = P.pos + 1, #P.s do
+            if P.s[j] == spell then
+                occ = occ + 1
+                local label = "~ " .. spell .. " (" .. occ .. ")"
+                if not t then
+                    if pending[spell] then break end
+                    local rec = P.store[spell]
+                    local e = type(rec.edit) == "table" and rec.edit or nil
+                    local _, _, _, _, sound = BM.Effective(rec, P.store)
+                    t = BM.Start("nx" .. spell, label, math.max(0.1, base + P.t[j] - now), rec.icon, "textMuted")
+                    t.soon, t.learned, t.sound, t.soonSecs = true, true, sound, e and e.soon
+                    t.count = BM.Counts(e and e.count)
+                    t.seqJ, t.nexts, t.nextLabels = j, {}, {}
+                    made = made + 1
+                elseif #t.nexts < BM.SEQ_AHEAD then
+                    t.nexts[#t.nexts + 1] = base + P.t[j]
+                    t.nextLabels[#t.nextLabels + 1] = label
+                else
+                    break
+                end
+            end
+        end
+        if not t and not pending[spell] then BM.Stop("nx" .. spell) end
+    end
+    return made
 end
 
 -- Im Takt der Zahlen (0,1 s): Schwellen pruefen. Keine Tabelle je Takt.

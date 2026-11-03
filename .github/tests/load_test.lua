@@ -23710,6 +23710,28 @@ do
         assert(short.ends > now and not short.overAt, "kurzer Abstand haengt auf jetzt")
         BM.Stop("nxKurz")
         assert(BM.Predict("Faeuste", 3, nil, nil, 3) == nil and not BM.timers["nxFaeuste"], "Dauerfeuer als Timer")
+        -- 1.10.17.0: Ablauf eines frueheren Kampfes, abwechselnde Faehigkeiten mit Zaehler.
+        do
+            st.Frost, st.Flamme = { icon = 1 }, { icon = 2 }
+            st._seq = { d = 80, s = { "Frost", "Frost", "Flamme", "Flamme", "Frost" }, t = { 10, 25, 40, 55, 70 } }
+            BM.fight.start = now
+            assert(BM.SeqStart(st) >= 2, "Ablauf startet nicht")
+            local fr, fl = BM.timers["nxFrost"], BM.timers["nxFlamme"]
+            assert(fr and fr.label == "~ Frost (1)" and math.abs(fr.ends - now - 10) < 0.01, "Frost (1): " .. tostring(fr and fr.label))
+            assert(fl and fl.label == "~ Flamme (1)" and math.abs(fl.ends - now - 40) < 0.01, "Flamme (1) fehlt")
+            assert(#fr.nexts == 2 and fr.nextLabels[2] == "~ Frost (3)", "weitere Einsaetze fehlen")
+            local s0 = BM.fight.start
+            now = s0 + 12
+            BM.LearnCast("boss1", "Frost", 1, nil, false)
+            fr = BM.timers["nxFrost"]
+            assert(fr.label == "~ Frost (2)" and math.abs(fr.ends - (s0 + 27)) < 0.01, "verschiebt nicht: " .. fr.label)
+            -- ausgelassen: nach "jetzt" der naechste Eintrag
+            now = fr.ends + BM.OVERDUE + 0.1 BM.Tick(true)
+            fr = BM.timers["nxFrost"]
+            assert(fr and fr.label == "~ Frost (3)", "ausgelassener Einsatz haengt: " .. tostring(fr and fr.label))
+            BM.seqPlay, st._seq, st.Frost, st.Flamme = nil, nil, nil, nil
+            BM.Stop("nxFrost") BM.Stop("nxFlamme")
+        end
         -- Zeitleiste: auch die folgenden Einsaetze.
         K.Set("comfort", "bossTrack", true) K.Set("comfort", "bossTrackSecs", 60)
         BM.ApplyLook()

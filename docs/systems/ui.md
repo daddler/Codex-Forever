@@ -2412,6 +2412,19 @@ lebt es von den Ereignissen des Spiels; genau die nutzt WeintCodex.
   in CLAUDE.md): nur Messung je Boss des Kompendiums und Zauber-Nummer,
   Gilde/Gruppe/Kanal `WCBossmod`, nie im Kampf; Empfang geprüft, je
   Absender, Median; eigene Einstellung > eigene Messung > andere.
+- **1.10.16.0:** Weiterzählen springt immer in die Zukunft (Abstand <
+  `OVERDUE` hing auf „jetzt“); Abstand < `BM.SPAM_GAP` (8 s) ohne
+  Vorhersage; derselbe Zauber binnen `LEARN_MIN` über mehrere Einheiten
+  zählt einmal.
+- **1.10.17.0 Ablauf:** jeder Kampf schreibt Zauber + Zeitpunkt mit
+  (`f._seqS/_seqT`, höchstens `SEQ_MAX`); der längste landet in
+  `store._seq`. Beim Pull spielt `BM.SeqStart` ihn ab: je Fähigkeit eine
+  Leiste mit Zähler „(n)“, die nächsten `SEQ_AHEAD` Einsätze als
+  `t.nexts`/`t.nextLabels` auf der Zeitleiste. `BM.SeqCast` richtet beim
+  echten Einsatz aus (`shift`), ein ausgelassener Eintrag springt nach
+  `OVERDUE` weiter (`tSeqMiss`, gegen Wiedereintritt `BM._inSeq`). Eigene
+  Zeiten (zuerst/Abstand) schließen eine Fähigkeit aus dem Ablauf aus. Der
+  Ablauf wird nicht geteilt.
 - **Suche und Zeitstrahl (1.10.12.0):** Suchfeld über Instanz/Boss
   (deutsch und englisch über `_codex`), Treffer schwebend; Zeitstrahl
   mit zwei Griffen (erster Einsatz, nächster = Abstand), Raster 0,5 s,
