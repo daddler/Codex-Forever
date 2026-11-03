@@ -23786,6 +23786,45 @@ do
     Check(ok, "Bosskämpfe 1.10.13.0: kein ~ neben dem Zauber, zählt weiter herunter, Siege/Wipes je Charakter, Ton/Warnung je Fähigkeit, Messdaten still geteilt (nur Messung, Median, geprüft)" .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- Bosskaempfe: laut von 5 herunterzaehlen (1.10.14.0)
+do
+    local BM = WeintCodex.UIBossMod
+    local oTime, oPSF, oActive, oInst = _G.GetTime, _G.PlaySoundFile, K.IsActive, _G.IsInInstance
+    local saved = {}
+    for k in pairs(BM.DEFAULTS) do saved[k] = K.Get("comfort", k) end
+    local ok, err = pcall(function()
+        local now, heard = 70000, {}
+        _G.GetTime = function() return now end
+        _G.PlaySoundFile = function(f) heard[#heard + 1] = f end
+        K.IsActive = function() return true end
+        for k, v in pairs(BM.DEFAULTS) do K.Set("comfort", k, v) end
+        for k in pairs(BM.timers) do BM.timers[k] = nil end
+        assert(K.Get("comfort", "bossCount") == "important", "ab Werk nicht 'nur wichtige'")
+        local function run(important)
+            for i = #heard, 1, -1 do heard[i] = nil end
+            BM.Predict("Wirbelwind", 7, nil, nil, 20, nil, important)
+            for _ = 1, 80 do now = now + 0.1 BM.Tick(false) end
+            local nums = {}
+            for _, f in ipairs(heard) do local n = f:match("count_(%d)%.ogg$") if n then nums[#nums + 1] = n end end
+            BM.timers.nxWirbelwind = nil
+            return table.concat(nums, ",")
+        end
+        assert(run(true) == "5,4,3,2,1", "wichtig zaehlt nicht 5..1: " .. run(true))
+        assert(run(false) == "", "unwichtig zaehlt bei 'nur wichtige'")
+        K.Set("comfort", "bossCount", "all")
+        assert(run(false) == "5,4,3,2,1", "'alle' zaehlt nicht")
+        K.Set("comfort", "bossCount", "off")
+        assert(run(true) == "", "'aus' zaehlt")
+        K.Set("comfort", "bossCount", "important")
+        K.Set("comfort", "bossSound", false)
+        assert(run(true) == "", "zaehlt trotz Hauptschalter aus")
+    end)
+    _G.GetTime, _G.PlaySoundFile, K.IsActive, _G.IsInInstance = oTime, oPSF, oActive, oInst
+    for k, v in pairs(saved) do K.Set("comfort", k, v) end
+    for k in pairs(WeintCodex.UIBossMod.timers) do WeintCodex.UIBossMod.timers[k] = nil end
+    Check(ok, "Bosskämpfe: laut von 5 herunterzählen – wichtig/alle/aus, jede Zahl einmal" .. (ok and "" or (": " .. tostring(err))))
+end
+
 -- Sterbezeit an der Plakette (1.8.0.0, ui/timetodie.lua)
 do
     local TD = WeintCodex.UITimeToDie

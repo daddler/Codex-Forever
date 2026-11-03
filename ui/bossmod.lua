@@ -64,6 +64,7 @@ BM.DEFAULTS = {
     bossSndWipe  = "none",
     bossSndCast  = "none",  -- 1.10.6.0: ein Boss beginnt zu zaubern
     bossCasts    = true,    -- 1.10.6.0: Zauber der Bosse als Leisten
+    bossCount    = "important", -- 1.10.14.0: laut von 5 herunterzaehlen: off | important | all
     bossLearn    = true,    -- 1.10.8.0: Zeiten aus eigenen Kaempfen lernen
     bossSoonSecs = 3,       -- Vorwarnung: so viele Sekunden vor der Faehigkeit
     bossWhere    = "all",   -- all | group | instance (wie bei "Raus da!")
@@ -160,6 +161,7 @@ function BM.Start(key, label, duration, icon, color)
     t.onEnd, t.soon, t.warned, t.demo, t.emph, t.forceEmph = nil, nil, nil, nil, nil, nil
     t.hold, t.total = nil, nil
     t.gap, t.overAt, t.soonSecs, t.learned, t.sound = nil, nil, nil, nil, nil
+    t.count, t.lastCount = nil, nil
     t.start = Now()
     t.ends = duration and (t.start + duration) or nil
     timers[key] = t
@@ -458,7 +460,7 @@ local function TickRow(r)
             if tNow - t.overAt >= BM.OVERDUE then
                 t.start = t.overAt
                 t.ends = t.overAt + t.gap
-                t.overAt, t.warned = nil, nil
+                t.overAt, t.warned, t.lastCount = nil, nil, nil
             end
             r.bar:SetValue(tFill and 1 or 0)
             if tText then r.time:SetText("jetzt") end
@@ -473,6 +475,13 @@ local function TickRow(r)
     local frac = total > 0 and left / total or 0
     r.bar:SetValue(tFill and (1 - frac) or frac)
     if tText then r.time:SetText(BM.Format(left)) end
+    if t.count and left <= 5.05 then
+        local n = math.ceil(left - 0.05)
+        if n >= 1 and n <= 5 and n ~= t.lastCount then
+            t.lastCount = n
+            BM.Count(n)
+        end
+    end
     if t.soon and not t.warned and left <= (t.soonSecs or tSoonSecs) then
         t.warned = true
         if not t.demo or Opt("bossSound") then BM.Sound("Soon", t.demo, t.sound) end
@@ -1277,6 +1286,7 @@ function BM.TimelineAdded(info, remaining)
     if type(name) == "nil" then name = "Fähigkeit" end
     local t = BM.Start("tl" .. id, name, dur, info.iconFileID, "blue")
     t.soon = true
+    t.count = BM.Counts(false)
     if BM.EventState(id) == 1 then t.hold, t.total = dur, dur end
     return true
 end
@@ -1511,10 +1521,27 @@ function BM.SharedOf(rec, st)
     return BS.Shared(st._codex, rec.id)
 end
 
-local function Predict(spell, secs, icon, sound, gap, soonSecs)
+-- 1.10.14.0 (Wunsch): wichtige Faehigkeiten laut von 5 herunterzaehlen.
+-- Eigene Aufnahmen (media/sounds/count_N.ogg, .github/scripts/make_count_sounds.py).
+BM.COUNT_PATH = "Interface\\AddOns\\WeintCodex\\media\\sounds\\count_"
+function BM.Count(n)
+    if not Opt("bossSound") or not BM.Here() then return nil end
+    if not _G.PlaySoundFile then return nil end
+    pcall(_G.PlaySoundFile, BM.COUNT_PATH .. n .. ".ogg", K.Get(KEY, "bossChannel") or "Master")
+    return n
+end
+-- Zaehlt diese Faehigkeit? Grundeinstellung "alle", sonst nur "wichtig" markierte.
+function BM.Counts(important)
+    local m = K.Get(KEY, "bossCount")
+    if m == "all" then return true end
+    return m == "important" and important and true or false
+end
+
+local function Predict(spell, secs, icon, sound, gap, soonSecs, important)
     if not secs or secs <= 0 then return end
     local t = BM.Start("nx" .. spell, "~ " .. spell, secs, icon, "textMuted")
     t.soon, t.learned, t.sound, t.gap, t.soonSecs = true, true, sound, gap, soonSecs
+    t.count = BM.Counts(important)
 end
 BM.Predict = Predict
 
@@ -1527,7 +1554,7 @@ function BM.FlushPending(spell)
     local p = spell and pending[spell]
     if not p then return nil end
     pending[spell] = nil
-    Predict(spell, p.gap - (Now() - p.at), p.icon, p.sound, p.gap, p.soon)
+    Predict(spell, p.gap - (Now() - p.at), p.icon, p.sound, p.gap, p.soon, p.count)
     return true
 end
 
@@ -1575,9 +1602,9 @@ function BM.LearnCast(unit, spell, icon, spellID, casting)
     if mode == "timer" then
         if casting then
             BM.Stop("nx" .. spell)
-            if gap then pending[spell] = { at = now, gap = gap, icon = rec.icon, sound = sound, soon = e and e.soon } end
+            if gap then pending[spell] = { at = now, gap = gap, icon = rec.icon, sound = sound, soon = e and e.soon, count = e and e.count } end
         else
-            Predict(spell, gap, rec.icon, sound, gap, e and e.soon)
+            Predict(spell, gap, rec.icon, sound, gap, e and e.soon, e and e.count)
         end
     else
         BM.Stop("nx" .. spell)
@@ -1608,7 +1635,7 @@ function BM.LearnStart()
             local mode, first, gap, hp, sound = BM.Effective(rec, store)
             local e = type(rec.edit) == "table" and rec.edit or nil
             if mode == "timer" and first then
-                Predict(spell, first - (Now() - BM.fight.start), rec.icon, sound, gap, e and e.soon)
+                Predict(spell, first - (Now() - BM.fight.start), rec.icon, sound, gap, e and e.soon, e and e.count)
                 n = n + 1
             elseif mode == "hp" or mode == "power" then
                 BM.watch[#BM.watch + 1] = { spell = spell, kind = mode, at = hp, icon = rec.icon, sound = sound, armed = true }
@@ -1962,6 +1989,13 @@ local function BuildSounds(B)
     B:Row(Sound("Cast", "Wenn ein Boss zu zaubern beginnt", "Bei jedem Zauber mit Leiste – bei Bossen, die viel wirken, oft."),
           Sound("Warn", "Bei Warnung oder Emote", "Kommt auch ohne die große Anzeige. Das Spiel hat oft schon einen eigenen Ton dafür."))
     B:Row(Sound("Kill", "Wenn der Boss fällt"), Sound("Wipe", "Bei einem Wipe"))
+    B:Row({ type = "dropdown", label = "Laut herunterzählen (5 … 1)", key = "bossCount", disabled = off("bossSound"), items = {
+                { value = "off",       text = "Aus" },
+                { value = "important", text = "Nur wichtige Fähigkeiten" },
+                { value = "all",       text = "Alle Fähigkeiten" } },
+            tooltip = "Wichtig markierst du je Fähigkeit unter „Bosse“.",
+            set = function(v) K.Set(KEY, "bossCount", v) if v ~= "off" then BM.Count(3) end end },
+          { type = "empty" })
     B:Row({ type = "dropdown", label = "Lautstärke über", key = "bossChannel", disabled = off("bossSound"), items = {
                 { value = "Master", text = "Gesamtlautstärke" },
                 { value = "SFX",    text = "Effekte" },
@@ -2241,7 +2275,7 @@ local function CreateSpellList(parent, width)
                 r.bg:SetColorTexture(bg[1], bg[2], bg[3], sel and 1 or 0.5)
                 local bc = on and C.accent or C.surface3
                 r.box:SetColorTexture(bc[1], bc[2], bc[3], 1)
-                r.name:SetText(it.value)
+                r.name:SetText((type(rec.edit) == "table" and rec.edit.count) and ("! " .. it.value) or it.value)
                 r.name:SetTextColor(unpack(on and C.textBright or C.textMuted))
                 r.how:SetText(BM.HowText(rec, st))
                 r.how:SetTextColor(unpack(on and C.textNormal or C.textMuted))
@@ -2628,7 +2662,10 @@ local function BuildBosses(B)
             description = "Der Name der Fähigkeit groß in der Mitte, sobald der Boss sie wirkt.",
             get = function() local e = Edit(rec) return e and e.warn and true or false end,
             set = function(v) local e = Edit(rec, true) e.warn = v and true or nil end },
-          { type = "empty" })
+          { type = "toggle", label = "Wichtig: laut von 5 herunterzählen",
+            description = "„Fünf, vier, drei, zwei, eins“ bis zur Fähigkeit – gilt, solange unter „Töne“ nicht „aus“ steht.",
+            get = function() local e = Edit(rec) return e and e.count and true or false end,
+            set = function(v) local e = Edit(rec, true) e.count = v and true or nil if v then BM.Count(5) end end })
     local mode = BM.Effective(rec, st)
     if mode == "hp" then
         B:Row({ type = "input", label = "Bei Leben des Bosses (%)",

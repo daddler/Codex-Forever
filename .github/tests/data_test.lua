@@ -1329,6 +1329,14 @@ do
     Check(#twice == 0, "Bossnummern: jeder Boss einmal" .. (#twice > 0 and (": " .. table.concat(twice, ", ")) or ""))
 end
 
+-- 1.10.14.0: gesprochene Zaehlung 1..5, je eine Ogg mit nur einer Tonspur.
+for n = 1, 5 do
+    local f = io.open(ROOT .. "/media/sounds/count_" .. n .. ".ogg", "rb")
+    local data = f and f:read("*a")
+    if f then f:close() end
+    Check(data and data:sub(1, 4) == "OggS" and not data:find("\128theora", 1, true), "Zaehlung: count_" .. n .. ".ogg vorhanden, nur Ton")
+end
+
 if failures == 0 then
     print("BESTANDEN")
     os.exit(0)
