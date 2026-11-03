@@ -1048,10 +1048,10 @@ function BM.EncounterStart(id, name, difficulty)
     BM.fight = { id = id, name = type(name) == "string" and name or (old and old.name), diff = difficulty, start = start, src = "encounter",
         instance = BM.InstanceName() }
     BM.fight.codex = (old and old.codex) or BM.CodexBoss("boss1") or (BM.fight.name and BM.BossIndex()[BM.fight.name:lower()]) or nil
-    if Opt("bossFight") then BM.Start("fight", BM.fight.name or "Bosskampf", nil, nil, "textMuted").start = start end
     BM.Stop("pull")
     BM.CatchUp()
     if not (old and (old.src == "engage" or old.src == "codex")) then BM.LearnStart() end
+    BM.Refresh()
 end
 
 -- Ende eines Kampfes: result = "kill" | "wipe" | nil (unbekannt - weder
@@ -1167,9 +1167,10 @@ function BM.Engage()
             BM.stats.engaged = BM.stats.engaged + 1
             BM.fight = { name = type(n) == "string" and n or nil, start = Now(), src = "engage", instance = BM.InstanceName(),
                 codex = BM.CodexBoss(u) }
-            if Opt("bossFight") then BM.Start("fight", BM.fight.name or "Bosskampf", nil, nil, "textMuted") end
-            BM.Stop("pull")
+                    BM.Stop("pull")
             BM.LearnStart()
+    BM.Refresh()
+            BM.Refresh()
             return true
         end
     end
@@ -1238,7 +1239,6 @@ function BM.CodexEngage(unit)
     BM.stats.codex = (BM.stats.codex or 0) + 1
     BM.fight = { name = type(n) == "string" and n or e.de or e.en, start = Now(), src = "codex",
         codex = e, guid = guid, instance = BM.InstanceName() }
-    if Opt("bossFight") then BM.Start("fight", BM.fight.name, nil, nil, "textMuted") end
     BM.Stop("pull")
     BM.LearnStart()
     return true
@@ -2090,7 +2090,7 @@ local function BuildGeneral(B)
           { type = "toggle", label = "Timer von BigWigs und DBM zeigen", key = "bossListen", disabled = off("bossPull"),
             description = "Startet jemand mit diesen Addons einen Pull oder eine Pause, erscheint die Leiste auch bei dir. WeintCodex hört nur zu." })
     B:Section("Kampf", "Wie lange der Bosskampf läuft, und am Ende „besiegt in 3:12“ mit deiner Bestzeit für diesen Boss – oder „Wipe nach …“.")
-    B:Row({ type = "toggle", label = "Kampftimer und Bestzeit", key = "bossFight" },
+    B:Row({ type = "toggle", label = "Bestzeit und Kampfdauer im Chat", key = "bossFight" },
           { type = "button", label = "Probe", text = "Probekampf abspielen", onClick = BM.Demo,
             tooltip = "Pull, Fähigkeit mit Vorwarnung, Warnung und Sieg – mit deinen Tönen, in gut 14 Sekunden. Nur bei dir." })
     B:Section("Was das Spiel meldet", "Nur, was das Spiel selbst sagt – eigene Taktiken gibt es nicht. Die Zeitleiste der Fähigkeiten kommt nur bei Kämpfen, für die das Spiel eine hat; in alten Dungeons und auf Classic-Servern bleiben die Zauber, die ein Boss gerade wirkt, und seine Emotes. Was ankam, zeigt /wcui prüfen.")

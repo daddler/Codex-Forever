@@ -22,6 +22,14 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.10.19.0",
+        date    = "03.11.2026",
+        notes   = {
+            "|cff7C6CFFWeniger Leisten im Bosskampf|r – die mitlaufende Kampfzeit ist weg. Wie lange ein Kampf läuft, steht oben in der Schadensanzeige; Bestzeit und Wipes meldet der Chat wie bisher.",
+            "|cff7C6CFFKein Fehlerfenster mehr durch die Sterbezeit|r – bei Zielen, auf die kaum Schaden ging, kam es zu einer Fehlermeldung.",
+        },
+    },
+    {
         version = "1.10.18.0",
         date    = "03.11.2026",
         notes   = {

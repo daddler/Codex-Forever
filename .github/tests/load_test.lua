@@ -22852,11 +22852,13 @@ do
         assert(BM.Pull(5) and BM.timers.pull and BM.timers.pull.ends == now + 5, "Pull ohne Gruppe")
         assert(BM.Pull(0) and not BM.timers.pull, "Pull 0 bricht nicht ab")
         assert(not BM.Pull(99), "Pull ueber 60 s angenommen")
+        -- 1.10.19.0: Sterbezeit mit unsinniger Restzeit zeigt nichts (Fehler im Spiel).
+        assert(WeintCodex.UITimeToDie == nil or WeintCodex.UITimeToDie.Format(856244680130548) == "", "Sterbezeit-Ueberlauf")
         -- Kampf und Bestzeit.
         local sd = WeintCodex.SavedData
         sd.bossTimes = nil
         BM.EncounterStart(1234, "Testboss", 1)
-        assert(BM.timers.fight and BM.timers.fight.ends == nil, "Kampftimer zaehlt nicht hoch")
+        assert(BM.fight and not BM.timers.fight, "Kampfleiste ist wieder da (1.10.19.0: Dauer steht in der Schadensanzeige)")
         now = now + 192
         assert(BM.EncounterEnd(1234, "Testboss", 1, 5, 1) == "kill" and sd.bossTimes["1234:1"] == 192, "Bestzeit nicht gemerkt")
         BM.EncounterStart(1234, "Testboss", 1) now = now + 200
@@ -23032,7 +23034,7 @@ do
         _G.UnitAffectingCombat = function(u) return u == "boss1" and boss.combat end
         _G.UnitName = function(u) if u == "boss1" then return "Kriegsherr" end return "Ziel" end
         _G.UnitIsDead = function(u) return u == "boss1" and boss.dead end
-        assert(BM.Engage() and BM.fight and BM.fight.src == "engage" and BM.timers.fight, "Bossrahmen startet keinen Kampf")
+        assert(BM.Engage() and BM.fight and BM.fight.src == "engage", "Bossrahmen startet keinen Kampf")
         assert(BM.Engage() == nil, "Kampf doppelt gestartet")
         WeintCodex.SavedData.bossTimes = {}
         now = now + 95

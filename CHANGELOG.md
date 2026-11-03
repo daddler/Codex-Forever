@@ -9,6 +9,14 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.10.19.0] – 2026-11-03
+
+### Geändert
+- Keine mitlaufende Kampfleiste mehr unter den Bossleisten (`BM.Start("fight")` entfernt); die Kampfdauer steht in der Kopfzeile der Schadensanzeige (`showTime`). `bossFight` steuert nur noch Bestzeit und Meldung im Chat.
+
+### Behoben
+- Sterbezeit an der Plakette: „integer overflow“ bei unsinnig großer Restzeit (`TD.Format`, ab 1 h nichts).
+
 ## [1.10.18.0] – 2026-11-03
 
 ### Neu

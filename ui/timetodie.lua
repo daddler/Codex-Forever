@@ -192,7 +192,11 @@ local function Hex(c)
         math.floor(c[2] * 255 + 0.5), math.floor(c[3] * 255 + 0.5))
 end
 
+TD.MAX_SECS = 3600
 function TD.Format(sec)
+    -- 1.10.19.0 (Fehler im Spiel: "integer overflow ... 14270744668842"):
+    -- unsinnige Restzeit (kaum Schaden gemessen) zeigt nichts.
+    if type(sec) ~= "number" or sec ~= sec or sec < 0 or sec >= TD.MAX_SECS then return "" end
     sec = math.floor(sec + 0.5)
     if sec >= 60 then return string.format("%d:%02d", math.floor(sec / 60), sec % 60) end
     return string.format("%d s", sec)
