@@ -953,6 +953,7 @@ function WL.ReadyText()
     return table.concat(WL.Summary(), "\n")
         .. "\n\nNach „Übernehmen“ " .. (choice.ui and "richtet WeintCodex sein Layout ein; danach einmal neu laden."
             or "gilt das meiste sofort; Anzeigen kommen nach dem Neuladen.")
+        .. "\n\nStill geteilt mit anderen WeintCodex-Spielern werden nur Messwerte – Bosszeiten, Auktionspreise, Fundorte, Abfahrtszeiten –, nie deine Einstellungen. Abschalten auf der jeweiligen Seite."
         .. "\n\nÄndern kannst du alles jederzeit mit /wcui."
 end
 

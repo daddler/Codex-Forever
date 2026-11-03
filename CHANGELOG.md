@@ -14,6 +14,10 @@ nicht zusammen.
 ### Geändert
 - Keine mitlaufende Kampfleiste mehr unter den Bossleisten (`BM.Start("fight")` entfernt); die Kampfdauer steht in der Kopfzeile der Schadensanzeige (`showTime`). `bossFight` steuert nur noch Bestzeit und Meldung im Chat.
 
+- „Danke für Buffs“ ab Werk aus (`thanks = false`): automatisches Flüstern an Fremde wird schnell als Spam gemeldet.
+- Willkommens-Assistent, Schritt „Bereit“: ein Satz, dass nur Messwerte still geteilt werden.
+- `THIRD_PARTY.md`: Herkunft und Lizenzstand aller übernommenen Daten und Medien, offene Punkte benannt.
+
 ### Behoben
 - Sterbezeit an der Plakette: „integer overflow“ bei unsinnig großer Restzeit (`TD.Format`, ab 1 h nichts).
 

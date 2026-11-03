@@ -968,7 +968,9 @@ end
 
 local mod = K.Module(KEY)
 if mod then
-    if mod.defaults.thanks == nil then mod.defaults.thanks = true end
+    -- 1.10.19.0: ab Werk aus - automatisches Fluestern an Fremde wird
+    -- schnell als Spam gemeldet; wer es will, schaltet es ein.
+    if mod.defaults.thanks == nil then mod.defaults.thanks = false end
     if mod.defaults.thanksGuild == nil then mod.defaults.thanksGuild = false end
     if mod.defaults.thanksInstance == nil then mod.defaults.thanksInstance = false end
     if mod.defaults.thanksAlways == nil then mod.defaults.thanksAlways = false end

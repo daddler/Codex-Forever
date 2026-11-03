@@ -26,6 +26,7 @@ WeintCodex_ChangelogData = {
         date    = "03.11.2026",
         notes   = {
             "|cff7C6CFFWeniger Leisten im Bosskampf|r – die mitlaufende Kampfzeit ist weg. Wie lange ein Kampf läuft, steht oben in der Schadensanzeige; Bestzeit und Wipes meldet der Chat wie bisher.",
+            "|cff7C6CFF„Danke für Buffs“ ist ab Werk aus|r – wer Fremden weiter automatisch danken will, schaltet es unter Komfort wieder ein. Wer es schon eingeschaltet hatte, behält es.",
             "|cff7C6CFFKein Fehlerfenster mehr durch die Sterbezeit|r – bei Zielen, auf die kaum Schaden ging, kam es zu einer Fehlermeldung.",
         },
     },
