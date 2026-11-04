@@ -162,12 +162,36 @@ function QH.SetFocus(id)
     QH.PaintBar()
 end
 
+-- Hat der Charakter den Beruf (Fertigkeit-ID wie im Spiel) auf Stufe min?
+-- Nur ja, wenn der Client es sagt.
+function QH.HasSkill(line, min)
+    local PRO = WeintCodex.Professions
+    local P = WeintCodex.ProfessionData
+    if not (PRO and PRO.Skills and P and P.PROFS) then return false end
+    local key
+    for _, p in ipairs(P.PROFS) do if p.line == line then key = p.key break end end
+    if not key then return false end
+    local ok, skills = pcall(PRO.Skills)
+    local s = ok and type(skills) == "table" and skills[key] or nil
+    return type(s) == "table" and type(s.rank) == "number" and s.rank >= (min or 0)
+end
+
 -- "avail", "low" oder nil: kann ich die Quest annehmen?
 function QH.Offer(id, q, me)
     if not (me.level and me.race and me.class) then return nil end
     if log[id] then return nil end
     if (q[3] or 0) > me.level then return nil end
     if not Bit(q[4], me.race) or not Bit(q[5], me.class) then return nil end
+    -- 1.0.0.3 (Bericht zum Start: "viele Quests auf der Minikarte, die noch
+    -- nicht angenommen werden koennen"): wie Questie auch Hoechststufe,
+    -- Beruf, Ruf und Zauber. Was der Client nicht beantworten kann (Ruf,
+    -- Zauber), gilt nicht als annehmbar - unbekannt ist kein "!".
+    if (q[18] or 0) > 0 and me.level > q[18] then return nil end
+    if q[20] and q[20] ~= "" then return nil end
+    if (q[16] or 0) > 0 and not QH.HasSkill(q[16], q[17] or 0) then return nil end
+    for _, n in ipairs(q[19] or {}) do
+        if QH.Done(n) == true or log[n] then return nil end
+    end
     local done = QH.Done(id)
     if done ~= false then return nil end
     for _, p in ipairs(q[13] or {}) do
@@ -300,6 +324,11 @@ function QH.Parse(raw)
     local q = { fields[1] }
     for i = 2, 5 do q[i] = tonumber(fields[i]) or 0 end
     for i = 6, 15 do q[i] = List(fields[i]) end
+    -- 1.0.0.3: Beruf (Fertigkeit-ID, ab), hoechstens Stufe, Folgequest, Sperren.
+    for i = 16, 18 do q[i] = tonumber(fields[i]) or 0 end
+    q[19] = List(fields[19])
+    q[20] = fields[20] or ""
+    for i = 16, 20 do fields[i] = nil end
     return q
 end
 function QH.Quest(id) return QH.Parse(Data().q[id]) end

@@ -1417,6 +1417,14 @@ do
         assert(QH.Offer(5, d.q[5], me) == nil, "Quest im Log angeboten")
         -- 6.61.4.0: Vorquest nur im Log genuegt nicht (Waldweberei).
         assert(QH.Offer(6, d.q[6], me) == nil, "Folgequest, solange die Vorquest erst im Log steht")
+        -- 1.0.0.3: Hoechststufe, Ruf/Zauber, Beruf, Folgequest erledigt.
+        local function Q(extra) return QH.Parse("X\t6\t1\t0\t0\t10\t\t10\t\t\t\t\t\t\t\t" .. extra) end
+        assert(QH.Offer(901, Q("0\t0\t0\t\t"), me) == "avail", "Grundquest nicht angeboten")
+        assert(QH.Offer(902, Q("0\t0\t5\t\t"), me) == nil, "ueber der Hoechststufe angeboten")
+        assert(QH.Offer(903, Q("0\t0\t0\t\tr"), me) == nil, "Rufquest ohne Ruf angeboten")
+        assert(QH.Offer(904, Q("185\t50\t0\t\t"), me) == nil, "Berufsquest ohne Beruf angeboten")
+        done[905] = true
+        assert(QH.Offer(906, Q("0\t0\t0\t905\t"), me) == nil, "Folgequest erledigt, Quest trotzdem angeboten")
         do
             local QA = WeintCodex.UIQuestArrow
             local oS, got = QA.SetCustom, nil

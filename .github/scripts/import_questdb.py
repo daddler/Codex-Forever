@@ -9,7 +9,13 @@ Karten des Spiels (uiMapID, 0..1). Kein Code, keine Questtexte - nur Namen
 (deutsch, wo vorhanden). Herkunft im Spiel: `community`.
 
 Aufruf:
-    python3 -I .github/scripts/import_questdb.py <Pfad zum Ordner QuestieDB>
+    python3 -I .github/scripts/import_questdb.py <Pfad zum Ordner QuestieDB> [Ordner Questie]
+
+1.0.0.3: mit dem Ordner des Addons Questie faellt weg, was Questie auf
+Forever sperrt (Database/Corrections/QuestieQuestBlacklist.lua, ausgewertet
+von questie_blacklist.lua) - ausser Quests der Feste (data/questevents.lua,
+die schaltet der Kalender). Dazu je Quest: Beruf (ID, Stufe), Hoechststufe,
+Folgequest, Ruf/Zauber noetig.
 
 Braucht das Paket cbor2. Die Datenbank wird nur gelesen, nie ausgefuehrt.
 """
@@ -173,13 +179,24 @@ def num(v):
 
 
 def main():
-    if len(sys.argv) != 2:
+    if len(sys.argv) not in (2, 3):
         raise SystemExit(__doc__)
     folder = sys.argv[1]
+    blocked = set()
+    if len(sys.argv) == 3:
+        import subprocess
+        bl = os.path.join(sys.argv[2], "Database", "Corrections", "QuestieQuestBlacklist.lua")
+        out = subprocess.run(["lua5.1", os.path.join(ROOT, ".github", "scripts", "questie_blacklist.lua"), bl],
+                             check=True, capture_output=True, text=True).stdout.strip()
+        blocked = {int(x) for x in out.split(",") if x}
+        with open(os.path.join(ROOT, "data", "questevents.lua"), encoding="utf-8") as f:
+            events = {int(x) for x in re.findall(r"\d+", " ".join(re.findall(r"quests = \{([^}]*)\}", f.read())))}
+        blocked -= events
+        print("gesperrt (Questie):", len(blocked))
     st = Store(read_meta(os.path.join(folder, "QuestieDB_Forever.toc")))
     zmap = zone_map(folder)
 
-    qids, quests = st.entity("Quest-", [2, 3, 10, 12, 13, 16])
+    qids, quests = st.entity("Quest-", [2, 3, 10, 12, 13, 16, 18, 19, 22, 28, 30])
     qde = st.german("Quest", qids)
 
     need_npc, need_obj, need_item = set(), set(), set()
@@ -222,7 +239,8 @@ def main():
         "-- Tabulator getrennt, Listen durch Komma:",
         "-- q[Quest] = Name, Stufe, ab Stufe, Rassen, Klassen, Geber-NPC, Geber-Objekt,",
         "--            Abgabe-NPC, Abgabe-Objekt, Ziel-NPC, Ziel-Objekt, Gegenstand,",
-        "--            alle vorher, eine vorher, schliesst aus",
+        "--            alle vorher, eine vorher, schliesst aus, Beruf (Fertigkeit-ID),",
+        "--            Beruf ab, hoechstens Stufe, Folgequest, Sperren (r = Ruf, z = Zauber)",
         "-- n[NPC] / o[Objekt] = Name, dann je Karte \"Karte:x,y,x,y\" durch \";\" getrennt",
         "-- i[Gegenstand] = NPCs, Objekte   (wer ihn fallen laesst)",
         "--------------------------------------------------",
@@ -235,7 +253,7 @@ def main():
     for i in sorted(quests):
         q = quests[i]
         name = text(qde.get(i) or q.get(1))
-        if not name:
+        if not name or i in blocked:
             continue
         sb, fb, ob = q.get(2), q.get(3), q.get(10)
 
@@ -250,6 +268,10 @@ def main():
                   csv(grp(sb, 0)), csv(grp(sb, 1)), csv(grp(fb, 0)), csv(grp(fb, 1)),
                   csv(targets(0)), csv(targets(1)), csv(targets(2)),
                   csv(ids(q.get(12))), csv(ids(q.get(13))), csv(ids(q.get(16)))]
+        sk = q.get(18) if isinstance(q.get(18), list) else None
+        flags = ("r" if q.get(19) else "") + ("z" if q.get(28) else "")
+        fields += [str(int(el(sk, 0) or 0)) if sk else "0", str(int(el(sk, 1) or 0)) if sk else "0",
+                   str(int(q.get(30) or 0)), csv([q.get(22)] if isinstance(q.get(22), int) and q.get(22) else ids(q.get(22))), flags]
         lines.append("        [%d] = %s," % (i, lua_str("\t".join(fields)).replace("\t", "\\t")))
         nq += 1
     lines.append("    },")
