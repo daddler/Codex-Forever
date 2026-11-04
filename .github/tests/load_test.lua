@@ -3088,6 +3088,11 @@ do
                     end
                     -- 6.30.26.0: "/run" oder "/script" in einem Makro loest die
                     -- Warnung des Spiels aus ("kann dein Konto kompromittieren").
+                    -- 1.0.0.2: MultiActionBar_Update aus Addon-Code verunreinigt
+                    -- das Neuordnen der unteren Leisten (ADDON_ACTION_BLOCKED).
+                    if code:find("MultiActionBar_Update") then
+                        marking[#marking + 1] = folder .. "/" .. name .. " (MultiActionBar_Update)"
+                    end
                     if code:find("/run%s") or code:find("/script%s") then
                         scripts[#scripts + 1] = folder .. "/" .. name
                     end

@@ -399,7 +399,12 @@ function SH.ApplyBars(list)
     if same then return true end
     local ok = pcall(set, unpack(vals))
     if not ok then return false, "vom Spiel abgelehnt" end
-    if type(_G.MultiActionBar_Update) == "function" then pcall(_G.MultiActionBar_Update) end
+    -- 1.0.0.2 (Fehlerbericht, Magier Stufe 1, Oberflaeche aus): kein
+    -- MultiActionBar_Update mehr von hier. Aus Addon-Code aufgerufen zeigt
+    -- es die Leisten unsicher an - danach blockiert das Spiel jedes eigene
+    -- Neuordnen der unteren Leisten (ADDON_ACTION_BLOCKED, SetPointBase in
+    -- UpdateBottomActionBarPositions, ausgeloest vom PetActionBar). Die
+    -- Leisten ordnet das Spiel selbst, spaetestens beim naechsten Laden.
     return true
 end
 
