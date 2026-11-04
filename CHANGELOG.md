@@ -9,6 +9,15 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.0.0.4] – 2026-11-05
+
+- Behoben: In 1.0.0.3 waren zwei Felder der Questdatenbank vertauscht
+  (Höchststufe und „Zauber nötig“) – Quests mit Wegweiser-Quests fehlten zu
+  Unrecht, die Höchststufe wirkte nicht. Dazu prüft die Questhilfe jetzt
+  wie Questie: Elternquest im Log, Wegweiser-Quests, „erst ab“/„nur bis“
+  einer anderen Quest; Ruf-Obergrenze, Berufsrang und Spezialisierung
+  gelten als nicht annehmbar.
+
 ## [1.0.0.3] – 2026-11-05
 
 - Behoben: Die Questhilfe zeigte auf Welt- und Minikarte viele Quests, die

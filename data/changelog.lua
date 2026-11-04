@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.0.0.4",
+        date    = "05.11.2026",
+        notes   = {
+            "|cff7C6CFFNoch weniger Quests auf der Karte, die du nicht annehmen kannst|r – Folgequests, die erst mit einer anderen Quest im Log gehen, Wegweiser-Quests und Quests mit Höchststufe werden jetzt richtig erkannt. Dafür erscheinen Quests wieder, die zuletzt zu Unrecht fehlten.",
+        },
+    },
+    {
         version = "1.0.0.3",
         date    = "05.11.2026",
         notes   = {
