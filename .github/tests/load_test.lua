@@ -1429,6 +1429,7 @@ do
         assert(QH.Done(1) == nil, "ohne Abfrage geraten")
         G.C_QuestLog.IsQuestFlaggedCompleted = function(id) return done[id] == true end
         K.Set("comfort", "qhOn", true)
+        K.Set("comfort", "qhLow", false)   -- 1.10.29.0: graue ab Werk an
         QH.Refresh()
         local oST = G.C_SuperTrack
         G.C_SuperTrack = nil
@@ -2722,7 +2723,7 @@ do
         assert(not K.WantsActive("damagemeter") and not sd.ui.asked, "vor Uebernehmen schon geschaltet")
         WL.Button("next"):Click()
         assert(WL.Step() == "alltag", "nach den Anzeigen kein Schritt Alltag: " .. WL.Step())
-        assert(c.helpers.autoRepair and c.helpers.fireAlarm and not c.helpers.msgOn and c.helpers.thanks, "Empfohlen nicht vorgewaehlt (Danke bleibt an)")
+        assert(c.helpers.autoRepair and c.helpers.fireAlarm and c.helpers.msgOn and c.helpers.thanks and not c.helpers.skipCinematics, "Empfohlen nicht vorgewaehlt (Danke an, Filme aus)")
         assert(not K.Get("comfort", "autoRepair"), "Helfer vor Uebernehmen geschaltet")
         WL.Button("next"):Click()
         assert(WL.Step() == "kampf" and WL.BodyText():find("Klickzauber", 1, true), "Kampf ohne Hinweis auf Klickzauber")
@@ -2742,11 +2743,11 @@ do
         WL.Button("next"):Click()
         WL.Card("help:custom"):Click()
         assert(c.shows.damagemeter and not c.helpers.fireAlarm, "Zurueckblaettern verliert die Wahl")
-        for _ = 1, 5 do WL.Button("next"):Click() end
+        for _ = 1, 6 do WL.Button("next"):Click() end
         assert(WL.Step() == "bereit", "keine Zusammenfassung: " .. WL.Step())
         local txt = WL.BodyText()
         assert(txt:find("Oberfläche: nein", 1, true) and txt:find("Schadensanzeige", 1, true)
-            and txt:find("Alltag: alles", 1, true) and txt:find("/wcui", 1, true),
+            and txt:find("Alltag:", 1, true) and txt:find("/wcui", 1, true),
             "Zusammenfassung nennt die Wahl nicht: " .. txt)
         WL.Button("apply"):Click()
         assert(WL.Step() == "fertig" and sd.ui.asked == true and not K.UIEnabled(), "Uebernehmen ohne Oberflaeche falsch")
@@ -2784,13 +2785,13 @@ do
             assert((c.helpers[h.key] and true or false) == (h.optional and WL.HelperGet(h) or not h.optional), "Empfohlen falsch: " .. h.label)
         end
         assert(setupRan == 0 and not K.UIEnabled(), "vor Uebernehmen eingerichtet")
-        assert(WL.BodyText():find("Alltag: alles", 1, true) and WL.BodyText():find("Transparent", 1, true),
+        assert(WL.BodyText():find("Alltag:", 1, true) and WL.BodyText():find("Transparent", 1, true),
             "Zusammenfassung: " .. WL.BodyText())
         WL.Button("back"):Click()
         assert(WL.Step() == "komfort", "Zurueck von der Zusammenfassung nicht zu den Helfern")
         WL.Card("help:recommended"):Click()
         WL.Button("apply"):Click()
-        assert(K.Get("comfort", "fireAlarm") and K.Get("comfort", "mapFlight") and not K.Get("comfort", "dlgOn"),
+        assert(K.Get("comfort", "fireAlarm") and K.Get("comfort", "mapFlight") and K.Get("comfort", "dlgOn") and not K.Get("comfort", "skipCinematics"),
             "Empfohlen nicht geschaltet")
         assert(K.Get("general", "look") == "transparent", "Erscheinungsbild nicht gespeichert")
         ES.HasLayout, ES.Apply = oldHas, oldApply
@@ -3267,7 +3268,7 @@ do
         for _, pg in ipairs(K.Module("comfort").pages) do if pg.key == "segen" then found = true end end
         -- 6.102.1.0: nur fuer Paladine eine Seite
         assert(found == PB.IsPaladin(), "Segen-Seite nur fuer Paladine")
-        assert(K.Get("comfort", "blessOn") == false, "Segen von Haus aus an")
+        assert(K.Get("comfort", "blessOn") == true, "Segen von Haus aus aus (1.10.29.0: an)")
         for key in pairs(PB.BLESSINGS) do
             for _, id in ipairs(PB.Chain(key)) do assert(not PB.GREATER[id], key .. ": grosser Segen in der Kette") end
         end
@@ -7966,6 +7967,7 @@ do
         assert(RA.CheckUnit("target", "target") == false and #lines == 3 and mem[79] and mem[79].dead, "Toter gemeldet")
         -- In Instanzen nur auf Wunsch.
         dead, inside = false, true
+        K.Set("comfort", "rareInstances", false)   -- 1.10.29.0: ab Werk an
         assert(RA.CheckUnit("target", "target") == false, "in der Instanz gemeldet")
         inside = false
         -- Spieler nie.
@@ -21769,6 +21771,7 @@ do
         assert(went == "berufe" and PRO.Selected() == key and PRO.selRecipe and PRO.selRecipe.spell == r.spell, "Rezept nicht vorgewaehlt: " .. tostring(went) .. " " .. tostring(PRO.Selected()) .. " " .. e.label)
         assert(First(PRO.ProfName(key), "profession"), "Beruf nicht gefunden")
         -- Taschen: nur einbezogene Charaktere (andere Fraktion bleibt weg).
+        K.Set("comfort", "invOtherFaction", false) K.Set("comfort", "invAllRealms", false)   -- 1.10.29.0: ab Werk an
         local hits = 0
         for _, x in ipairs(SR.Filter("glitzerkiesel")) do
             if x.category == "item" then
@@ -22672,6 +22675,7 @@ do
         for _, list in ipairs({ FI.SESSION, FI.LOUD, FI.BG, FI.ICON }) do
             for _, e in ipairs(list) do WeintCodex.UIProfile.ForgetCVar(e.name) end
         end
+        K.Set("comfort", "fishKeyOn", false)   -- 1.10.29.0: ab Werk an - hier wie ein frisches Einschalten
         K.Set("comfort", "fishKey", "F")
         K.Set("comfort", "fishKeyOn", true)
         FI.Apply()
@@ -22928,7 +22932,7 @@ do
         Check(not PV.bg.rows[3]:IsShown(), "PvP: leere Zeilen versteckt")
         local layout = K.Layout("arenaframes")
         Check(layout and K.Layout("bgenemies") and K.Layout("rollwatch"), "PvP: Plaetze im Layout")
-        Check(K.Get("comfort", "pvpAlert") == false, "PvP: Feindmeldung ab Werk aus")
+        Check(K.Get("comfort", "pvpAlert") == true, "PvP: Feindmeldung ab Werk an (1.10.29.0)")
     end)
     _G.C_Spell = oDesc
     Check(ok, "PvP" .. (ok and "" or (": " .. tostring(err))))
@@ -22955,7 +22959,8 @@ do
         _G.GetTime = function() return now end
         K.IsActive = function() return true end
         _G.IsInGroup = function() return false end
-        assert(K.Get("comfort", "bossWarnings") == false and K.Get("comfort", "bossPull") == true, "Voreinstellungen")
+        assert(K.Get("comfort", "bossWarnings") == true and K.Get("comfort", "bossPull") == true, "Voreinstellungen")
+        K.Set("comfort", "bossWarnings", false)   -- die Pruefungen hier erwarten sie aus
         assert(K.Layout("bossbars") and K.Layout("bosswarn"), "Plaetze im Layout")
         -- Andere Bossmods: nur gelesen.
         assert(BM.Heard("BigWigs", "P^Pull^10", "Lena-Realm") == "pull" and BM.timers.pull, "BigWigs-Pull nicht gehoert")
@@ -23227,6 +23232,7 @@ do
         K.Set("comfort", "bossCasts", false)
         assert(BM.CastStart("boss1", false) == nil, "Zauber trotz aus")
         -- Emotes: %s mit dem Namen, Farbcodes weg; Anzeige nur, wenn an.
+        K.Set("comfort", "bossWarnings", false)   -- 1.10.29.0: ab Werk an
         assert(BM.Emote("%s wird wuetend!", "Kriegsherr") == nil, "Emote angezeigt, obwohl aus")
         K.Set("comfort", "bossWarnings", true)
         assert(BM.Emote("|cffff0000%s|r wird wuetend!", "Kriegsherr"), "Emote nicht angezeigt")

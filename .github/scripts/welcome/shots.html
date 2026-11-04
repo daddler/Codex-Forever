@@ -446,6 +446,35 @@ S("rareAlert", npc(560, 200, 200, 220, "#5a3a5a") + plate(520, 160, 280, "Mor'La
   tile(120, 120, 340, 130, `<div style="position:absolute;left:0;top:0;bottom:0;width:6px;background:#c070ff"></div>` +
     brow(24, 18, "Seltener Gegner", "#c070ff") + txt(24, 44, 28, "Mor'Ladim") + txt(24, 86, 18, "Stufe 35 · Elite · in der Nähe", "color:var(--tm)")));
 
+// 1.10.29.0: Questhilfe, Angeln, Segen, PvP-Meldung, Seelensplitter, Haendler.
+S("qhOn", mapbox(150, 50, 724, 400,
+  pin(180, 120, "#f5c738", "Bauer Saldean") + pin(420, 210, "#f5c738", "") + pin(560, 120, "#9fe3ff", "Abgabe") +
+  `<div style="position:absolute;left:260px;top:260px;width:200px;height:110px;border-radius:50%;background:rgba(245,199,56,.18);border:2px dashed rgba(245,199,56,.7)"></div>` +
+  txt(290, 300, 18, "Kobolde: 3/8", "color:var(--yellow)")));
+S("fishKeyOn", `<div style="position:absolute;left:0;right:0;bottom:0;height:200px;background:linear-gradient(180deg,#1c3a52,#0d1c28)"></div>` +
+  `<div style="position:absolute;left:470px;top:330px;width:26px;height:26px;border-radius:50%;background:radial-gradient(circle,#ff6040,#a01810);box-shadow:0 0 20px rgba(255,120,80,.7)"></div>` +
+  tile(312, 70, 400, 120, txt(20, 16, 22, "Angeln auf einer Taste") +
+    `<div style="position:absolute;left:20px;top:58px;padding:8px 16px;background:#1c1c23;border:1px solid var(--acc);font-family:Mono;font-size:22px">F</div>` +
+    txt(90, 64, 18, "auswerfen · einholen · Beute", "color:var(--tm)")));
+S("blessOn", tile(262, 60, 500, 320,
+  brow(24, 18, "Segen verteilen", "#F58CBA") +
+  [["Krieger", "Macht", "#C79C6E"], ["Magier", "Weisheit", "#3FC7EB"], ["Priester", "Weisheit", "#FFFFFF"], ["Schurke", "Macht", "#FFF569"]].map((r, i) =>
+    txt(24, 60 + i * 44, 20, r[0], "color:" + r[2]) + txt(240, 60 + i * 44, 20, r[1], "color:var(--tm)")).join("") +
+  `<div style="position:absolute;left:24px;bottom:20px;padding:10px 26px;background:#F58CBA;font-family:SansB;font-size:18px;color:#0b0b0e">Buffen</div>`), "dark");
+S("pvpAlert", npc(620, 200, 160, 220, "#5a2a2a") + plate(570, 160, 260, "Grimmzahn", 100, "var(--red)", true) +
+  tile(120, 140, 360, 110, `<div style="position:absolute;left:0;top:0;bottom:0;width:6px;background:var(--red)"></div>` +
+    brow(24, 18, "Feind in der Nähe", "var(--red)") + txt(24, 48, 26, "Grimmzahn · Schurke 34")));
+S("shardLimit", tile(312, 90, 400, 280,
+  txt(20, 16, 22, "Seelensplitter") +
+  `<div style="position:absolute;left:20px;top:60px;display:flex;flex-wrap:wrap;gap:6px;width:360px">` +
+  Array.from({ length: 24 }, (_, i) => `<div style="width:30px;height:30px;background:radial-gradient(circle,#d070ff,#4a1a6a);opacity:${i < 20 ? 1 : .35}"></div>`).join("") + `</div>` +
+  txt(20, 220, 18, "Höchstens 20 – der Rest wird gelöscht", "color:var(--tm)")), "dark");
+S("vendorGrow", tile(212, 40, 600, 420,
+  brow(24, 18, "Händler", "var(--gold)") +
+  `<div style="position:absolute;left:24px;top:56px;display:grid;grid-template-columns:repeat(6,80px);gap:10px">` +
+  Array.from({ length: 24 }, () => `<div style="width:80px;height:60px;background:#1c1c23;border:1px solid var(--line)"></div>`).join("") + `</div>` +
+  `<div style="position:absolute;right:6px;bottom:6px;width:22px;height:22px;border-right:3px solid var(--gold);border-bottom:3px solid var(--gold)"></div>`, "border-color:#3a3226"), "dark");
+
 // ---------- Handel ----------
 S("ahPrices", tile(312, 80, 400, 300,
   txt(20, 18, 24, "Leinenstoff", "color:#fff") + txt(20, 54, 18, "Handwerkswaren", "color:var(--td)") +

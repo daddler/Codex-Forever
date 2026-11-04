@@ -30,9 +30,9 @@ local IV = WeintCodex.UIInventory
 
 IV.DEFAULTS = {
     invOn = true,            -- Bestand merken und im Tooltip zeigen
-    invAllRealms = false,    -- auch Charaktere anderer Realms
+    invAllRealms = true,     -- auch Charaktere anderer Realms
     invTooltip = true,       -- 6.25.0.0: Zeilen im Tooltip (getrennt vom Merken)
-    invOtherFaction = false, -- 6.79.0.0: auch Charaktere der anderen Fraktion
+    invOtherFaction = true,  -- 6.79.0.0: auch Charaktere der anderen Fraktion
 }
 IV.MAX_RESULTS = 40
 

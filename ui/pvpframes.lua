@@ -54,7 +54,7 @@ PV.DEFAULTS = {
     pvpBg       = true,
     pvpHealers  = true,
     pvpHealMobs = true,
-    pvpAlert    = false,
+    pvpAlert    = true, 
     pvpAlertCity = true,
     pvpAlertSound = true,
 }

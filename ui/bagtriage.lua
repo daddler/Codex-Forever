@@ -44,7 +44,7 @@ local BT = WeintCodex.UIBagTriage
 
 BT.DEFAULTS = {
     triageOn = true,        -- Ausmisten: Bewertung, Beute-Muenze, Leuchten
-    triageGreens = false,   -- auch Gruenes vorschlagen
+    triageGreens = true,    -- auch Gruenes vorschlagen
     triageAuction = true,   -- Auktionspreis zaehlen, wenn hoeher
     triagePopup = true,     -- Fenster "Löschen & looten" bei vollen Taschen
 }

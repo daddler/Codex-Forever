@@ -32,7 +32,7 @@ RA.DEFAULTS = {
     rareSound     = true,    -- Ton beim Auftauchen
     rareChat      = true,    -- Zeile im Chat
     rareToast     = true,    -- Hinweis oben
-    rareInstances = false,   -- auch in Dungeons und Schlachtzuegen
+    rareInstances = true,    -- auch in Dungeons und Schlachtzuegen
     rareDead      = false,   -- auch, wenn er schon tot ist
     -- 6.27.0.0 (Beta-Test: "ueber die Meldung ins Ziel nehmen ... und gleich
     -- ein Mark"): ein Klick auf den Hinweis nimmt ihn ins Ziel und markiert.

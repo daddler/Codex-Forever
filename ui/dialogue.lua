@@ -33,7 +33,7 @@ WeintCodex.UIDialogue = {}
 local DL = WeintCodex.UIDialogue
 
 DL.DEFAULTS = {
-    dlgOn    = false,    -- Gespraeche im Codex-Stil
+    dlgOn    = true,      -- Gespraeche im Codex-Stil
     dlgKeys  = true,     -- 1-9, Leertaste, Esc
     dlgType  = true,     -- Text laeuft ein
     dlgScale = 100,      -- Groesse in %

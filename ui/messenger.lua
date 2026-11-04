@@ -63,7 +63,7 @@ WeintCodex.UIMessenger = {}
 local MS = WeintCodex.UIMessenger
 
 MS.DEFAULTS = {
-    msgOn       = false,  -- der Helfer
+    msgOn       = true,   -- der Helfer
     msgCombat   = false,  -- auch im Kampf offen (sonst einklappen, danach wieder auf)
     msgOutgoing = true,   -- auch aufgehen, wenn du selbst jemandem fluesterst
     msgStamps   = true,   -- Uhrzeit vor jeder Zeile

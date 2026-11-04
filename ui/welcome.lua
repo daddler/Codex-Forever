@@ -82,7 +82,7 @@ WL.GALLERY = { "overview", "plates", "group", "windows" }
 -- kurze Weg hat VIER Schritte - Willkommen, Aussehen (vier Karten mit
 -- Vorschau), Helfer ("Empfohlen" oder "Selbst auswaehlen"), Bereit. Nur
 -- wer selbst auswaehlt, geht durch die Themen (anzeigen ... handel).
-WL.STEPS = { "start", "ui", "komfort", "anzeigen", "alltag", "kampf", "welt", "handel", "bereit" }
+WL.STEPS = { "start", "ui", "komfort", "anzeigen", "alltag", "kampf", "welt", "handel", "mehr", "bereit" }
 WL.SHORT = { "start", "ui", "komfort", "bereit" }
 -- Der Weg, wie er gerade gilt.
 function WL.Path() return WL.choice and WL.choice.custom and WL.STEPS or WL.SHORT end
@@ -92,6 +92,8 @@ WL.GROUPS = {
     { key = "kampf",  eyebrow = "Helfer · Kampf und Gruppe", title = "Im Kampf und in der Gruppe", shot = "group" },
     { key = "welt",   eyebrow = "Helfer · Welt und Karte", title = "Auf der Karte und unterwegs", shot = "mapMarks" },
     { key = "handel", eyebrow = "Helfer · Handel und Gespräche", title = "Handeln und miteinander reden", shot = "ahPrices" },
+    -- 1.10.29.0: was nur manche brauchen - Klasse, PvP, Angeln.
+    { key = "mehr",   eyebrow = "Helfer · Quests, Klasse, PvP, Angeln", title = "Quests, deine Klasse und zwischendurch", shot = "fishKeyOn" },
 }
 
 -- Die Anzeigen (Module) und Helfer (Einstellungen) zum Waehlen.
@@ -112,7 +114,8 @@ WL.HELPERS = {
       text = "Nur Qualität „Schlecht“ – nichts, was einen Wert hat." },
     { group = "alltag", module = "comfort", key = "fastLoot", label = "Schneller plündern",
       text = "Nimmt alles sofort, wenn automatisches Plündern an ist." },
-    { group = "alltag", module = "comfort", key = "skipCinematics", label = "Filmsequenzen überspringen",
+    -- 1.10.29.0: nur auf ausdruecklichen Wunsch (optional), nicht in "Empfohlen".
+    { group = "alltag", module = "comfort", key = "skipCinematics", label = "Filmsequenzen überspringen", optional = true,
       text = "Zwischensequenzen enden von selbst – das Anfangsvideo eines neuen Charakters läuft immer." },
     { group = "alltag", module = "comfort", key = "levelUpPopup", label = "Neues beim Lehrer",
       text = "Nach dem Stufenaufstieg: was du jetzt lernen kannst." },
@@ -133,7 +136,18 @@ WL.HELPERS = {
       text = "„+ Kampf“ und „− Kampf“ kurz in der Bildschirmmitte." },
     { group = "kampf", module = "comfort", key = "hideErrorsInCombat", label = "Fehlermeldungen im Kampf aus",
       text = "„Außer Reichweite“ und Co. – danach kommen sie wieder." },
+    -- 1.10.29.0: Paladin-Segen, PvP-Meldung, Seelensplitter (nur die Klasse).
+    { group = "mehr", module = "comfort", key = "blessOn", label = "Segen verteilen", class = "PALADIN",
+      text = "Segen je Klasse und Rolle, ein Knopf „Buffen“ verteilt sie." },
+    { group = "mehr", module = "comfort", key = "pvpAlert", label = "Feind in der Nähe",
+      text = "Hinweis und Ton, wenn ein feindlicher Spieler auftaucht." },
+    { group = "mehr", module = "comfort", key = "shardLimit", label = "Seelensplitter begrenzen", class = "WARLOCK",
+      text = "Höchstens 20 – was darüber hinausgeht, wird gelöscht." },
     -- Welt und Karte
+    { group = "mehr", module = "comfort", key = "qhOn", label = "Questhilfe auf der Karte",
+      text = "Questgeber, Ziele und Abgabe auf Welt- und Minikarte." },
+    { group = "mehr", module = "comfort", key = "fishKeyOn", label = "Angeln mit einer Taste",
+      text = "Auswerfen, einholen, Beute – auf einer Taste deiner Wahl." },
     { group = "welt", module = "comfort", key = "mapEntrances", label = "Instanzeingänge auf der Karte",
       text = "Ein Symbol an jedem Eingang, den der Codex kennt." },
     { group = "welt", module = "comfort", key = "mapMarks", keys = { "mapSpirit", "mapCrossings", "mapFlight", "mapTravel" },
@@ -151,9 +165,11 @@ WL.HELPERS = {
     { group = "handel", module = "comfort", key = "ahPrices", label = "Auktionspreise",
       text = "Merkt sich Preise im Auktionshaus und zeigt sie im Tooltip – und teilt sie mit der Gilde (abschaltbar)." },
     -- `optional`: aendert Gewohntes spuerbar - nicht in "Empfohlen".
-    { group = "handel", module = "comfort", key = "msgOn", label = "Flüstern als Messenger", optional = true,
+    { group = "handel", module = "comfort", key = "vendorGrow", label = "Händlerfenster groß ziehen",
+      text = "Am Griff unten rechts größer ziehen – so viele Waren, wie hineinpassen." },
+    { group = "handel", module = "comfort", key = "msgOn", label = "Flüstern als Messenger",
       text = "Jedes Gespräch in einem eigenen Fenster." },
-    { group = "handel", module = "comfort", key = "dlgOn", label = "Gespräche im Codex-Stil", optional = true,
+    { group = "handel", module = "comfort", key = "dlgOn", label = "Gespräche im Codex-Stil",
       text = "Questgeber und Händler in einem ruhigen Fenster, mit Kamera." },
     -- 6.41.8.0: flüstert Fremde an - darum hier gefragt, nicht still an.
     { group = "handel", module = "comfort", key = "thanks", label = "Danke für Buffs", optional = true,
@@ -185,7 +201,14 @@ function WL.HelperSet(h, v)
     end
 end
 
-function WL.Offered(h) return not h.dispel or WL.CanDispel() end
+function WL.Offered(h)
+    if h.class then
+        local cls
+        if _G.UnitClass then cls = select(2, _G.UnitClass("player")) end
+        if K.Plain(cls) ~= h.class then return false end
+    end
+    return not h.dispel or WL.CanDispel()
+end
 
 -- Ist diese Sitzung ein /reload? Gesetzt beim ersten PLAYER_ENTERING_WORLD
 -- (siehe unten). Steht hier oben, weil MaybeAsk sie liest.
@@ -966,7 +989,7 @@ local function StepReady()
     body:SetText(WL.ReadyText())
     body:Show()
     WL.ShowShot(choice.ui and "overview" or "helpers")
-    SetButtons({ { key = "back", text = "Zurück", onClick = function() Go(choice.custom and "handel" or "komfort") end } },
+    SetButtons({ { key = "back", text = "Zurück", onClick = function() Go(choice.custom and "mehr" or "komfort") end } },
         { { key = "apply", text = "Übernehmen", kind = "primary", onClick = function() WL.Finish() end } })
 end
 

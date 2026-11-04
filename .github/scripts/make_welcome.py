@@ -40,6 +40,8 @@ SCENES = ["overview", "plates", "group", "windows", "damage", "reminders", "arro
           "fireAlarm", "autoMark", "markHover", "clickDispel", "combatAlert", "hideErrorsInCombat",
           "mapEntrances", "mapMarks", "mapReveal", "gatherSwap", "sparkleLoot", "rareAlert",
           "ahPrices", "msgOn", "dlgOn", "thanks",
+          # 1.10.29.0: weitere Helfer im Assistenten.
+          "qhOn", "fishKeyOn", "blessOn", "pvpAlert", "shardLimit", "vendorGrow",
           "look_none", "look_schwarz", "look_transparent", "look_klassisch"]
 SRC_W, SRC_H = 1024, 512
 W, H = 512, 256

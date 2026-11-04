@@ -51,7 +51,7 @@ BM.DEFAULTS = {
     bossListen   = true,    -- Timer aus BigWigs und DBM hoeren
     bossFight    = true,    -- Kampftimer und Bestzeit
     bossTimeline = true,    -- Faehigkeiten aus der Zeitleiste des Spiels
-    bossWarnings = false,   -- Warnungen des Spiels gross in der Mitte (das Spiel zeigt eigene)
+    bossWarnings = true,    -- Warnungen des Spiels gross in der Mitte (das Spiel zeigt eigene)
     bossSound    = true,    -- Hauptschalter fuer alle Toene unten
     -- Toene je Anlass (1.10.3.0): Schluessel aus FA.SOUNDS oder "none".
     -- Ab Werk wie vorher: Pull-Ende mit Bereitschaftscheck, sonst still -

@@ -111,7 +111,7 @@ PB.TREE_ROLE = {
 -- Classic nur auf Nahkampf-Angriffskraft) Weisheit; Tank Koenige, Heiler
 -- Weisheit, Schaden wie die Klasse. Rettung nie fuer Tanks (PB.Want).
 PB.DEFAULTS = {
-    blessOn = false,
+    blessOn = true,
     blessGreater = true,
     blessRefresh = 5,                -- Minuten Restzeit, ab der neu gesegnet wird
     bless_WARRIOR = "might", bless_ROGUE = "might", bless_PALADIN = "might",

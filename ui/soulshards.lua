@@ -26,7 +26,7 @@ local K  = WeintCodex.UIKit
 local KEY = "comfort"
 
 SS.ITEM = 6265
-SS.DEFAULTS = { shardLimit = false, shardMax = 20 }
+SS.DEFAULTS = { shardLimit = true, shardMax = 20 }
 SS.blocked = false
 
 local function Plain(v) return K.Plain(v) end

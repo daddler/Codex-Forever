@@ -37,9 +37,9 @@ WeintCodex.UIQuestHelper = {}
 local QH = WeintCodex.UIQuestHelper
 
 QH.DEFAULTS = {
-    qhOn      = false,   -- Questhilfe auf der Karte
+    qhOn      = true,    -- Questhilfe auf der Karte
     qhAvail   = true,    -- neue Quests
-    qhLow     = false,   -- auch graue
+    qhLow     = true,    -- auch graue
     qhTurnin  = true,    -- Abgabe
     qhTargets = true,    -- Ziele
     -- 6.30.1.0 (Beta-Test mit Bild: "es wird immer alles angezeigt, egal

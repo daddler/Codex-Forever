@@ -283,7 +283,7 @@ if mod then
     -- muss die Seite des Haendlers neu aufbauen (MerchantFrame_Update aus
     -- Addon-Code), und alles, was der Aufbau dann schreibt, ist tainted.
     -- Wer es will, schaltet es ein - mit Hinweis.
-    if mod.defaults.vendorGrow == nil then mod.defaults.vendorGrow = false end
+    if mod.defaults.vendorGrow == nil then mod.defaults.vendorGrow = true end
     local page = mod.pages and mod.pages[1]
     if page then
         local build = page.build

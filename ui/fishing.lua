@@ -43,7 +43,7 @@ WeintCodex.UIFishing = {}
 local FI = WeintCodex.UIFishing
 
 FI.DEFAULTS = {
-    fishKeyOn   = false,
+    fishKeyOn   = true, 
     fishKey     = "",
     fishLoud    = true,     -- Platschen lauter: Effekte auf voll
     fishBg      = true,     -- Ton auch, wenn das Spiel im Hintergrund ist
