@@ -14,6 +14,8 @@ nicht zusammen.
 ### Neu
 - Neuer Rang gelernt, alter in der Leiste (`ui/rankcheck.lua`, Komfort → Anzeigen, ab Werk an): Rang aus dem Untertext des Clients gegen den höchsten Rang desselben Namens; Fenster mit „Ersetzen“ (`PickupSpell`/`PlaceAction`, nur außerhalb des Kampfes), „Verstanden – so lassen“ (je Charakter `SavedData.rankKeep`) und „Später“ (bis zum nächsten gelernten Zauber). Unbekannter Rang = still.
 
+- Auktionspreise ab Werk an (`ahPrices = true`). Alle Teilen-Schalter waren schon ab Werk an und gelten, sobald die Funktion an ist: Auktionspreise (`ahShareGuild`, `ahListenFG`), Sammel-Atlas (`gatherShare`), Abfahrtszeiten (`shareTimes`), Flugspiele (`flightGamesShare`), Berufe (`profShare`), Bosskämpfe (`bossShare`).
+
 ### Behoben
 - Sammeln: nach Tod und Wiederbeleben schaltete sich der Wechsel der Suche als „ohne Wirkung“ ab. Tod/Wiederbeleben setzen die Zähler zurück, 3 s Pause nach dem Wiederbeleben, 30 s lang kein Abschalten; war er im Tod abgeschaltet, geht er wieder an (`GT.OnLife`).
 

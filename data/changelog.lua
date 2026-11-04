@@ -26,6 +26,7 @@ WeintCodex_ChangelogData = {
         date    = "04.11.2026",
         notes   = {
             "|cff7C6CFFNeuer Rang, alter in der Leiste?|r – WeintCodex erinnert dich und ersetzt ihn auf Klick. Willst du bewusst den niedrigeren Rang behalten, reicht „Verstanden – so lassen“.",
+            "|cff7C6CFFAuktionspreise sind ab Werk an|r – Preise im Tooltip und am Auktionshaus, geteilt mit der Gilde.",
             "|cff7C6CFFKräuter- und Erzsuche nach dem Tod|r – der Wechsel läuft nach dem Wiederbeleben von selbst weiter.",
         },
     },

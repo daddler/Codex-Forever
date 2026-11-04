@@ -46,7 +46,7 @@ WeintCodex.UIAuctionPrices = {}
 local AP = WeintCodex.UIAuctionPrices
 
 AP.DEFAULTS = {
-    ahPrices  = false,   -- der Helfer: Knopf am Auktionshaus, Preise im Tooltip
+    ahPrices  = true,    -- der Helfer: Knopf am Auktionshaus, Preise im Tooltip (1.10.28.0: ab Werk an, Wunsch)
     ahStack   = true,    -- in den Taschen auch der Preis des ganzen Stapels
     ahPassive = true,    -- auch merken, was deine eigene Suche zeigt
     -- 6.18.0.0 (ui/auctionshare.lua): Preise von anderen Spielern.
