@@ -9,6 +9,11 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.10.27.0] – 2026-11-04
+
+### Behoben
+- Planer neben dem Berufsfenster kam nach dem Wegklicken (×) nicht wieder: Zurücksetzen jetzt auch über `OnShow`/`OnHide` des Fensters (`PT.HookHost`), der Planer zieht an ein später entstehendes `ProfessionsFrame` um, und „Skill-Weg“ steht dort, wo der Planer stand.
+
 ## [1.10.26.0] – 2026-11-03
 
 ### Neu

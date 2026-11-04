@@ -4861,6 +4861,17 @@ do
         PT.sideClosed = true
         PT.RefreshSide()
         assert(not PT.side:IsShown() and PT.side.open:IsShown(), "nicht einklappbar")
+        -- 1.10.27.0: Fenster schliessen und wieder oeffnen - der Planer ist wieder da.
+        local hostF = _G.ProfessionsFrame or _G.TradeSkillFrame
+        if hostF and hostF.GetScript then
+            local onHide, onShow = hostF:GetScript("OnHide"), hostF:GetScript("OnShow")
+            assert(onHide and onShow, "Berufsfenster ohne OnShow/OnHide-Haken")
+            if onHide then onHide(hostF) end
+            if onShow then onShow(hostF) end
+            assert(PT.sideClosed == false and PT.side:IsShown(), "Planer nach dem Wiederoeffnen weg")
+            PT.sideClosed = true
+            PT.RefreshSide()
+        end
         PT.sideClosed = false
         PT.OpenProfession = oldOpen
         host:Hide()

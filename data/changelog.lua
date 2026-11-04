@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.10.27.0",
+        date    = "04.11.2026",
+        notes   = {
+            "|cff7C6CFFDer Planer am Berufsfenster kommt wieder|r – weggeklickt ist er nur, bis du das Fenster schließt; beim nächsten Öffnen ist er da. Zurückholen geht sofort mit „Skill-Weg“ an seinem Platz.",
+        },
+    },
+    {
         version = "1.10.26.0",
         date    = "03.11.2026",
         notes   = {

@@ -1992,6 +1992,7 @@ local function BuildSide(host)
     f.open = WeintCodex.CreateButton(host, { kind = "ghost", text = "Skill-Weg", height = 22, size = 11, padding = 14, radius = 0,
         onClick = function() PT.sideClosed = false PT.RefreshSide() end })
     f.open:SetPoint("BOTTOMRIGHT", host, "TOPRIGHT", 0, 4)
+    f._host = host
     side = f
     PT.side = f
     return f
@@ -2069,11 +2070,39 @@ function PT.PlaceSide(f, host)
     PT.sideOffset = extra + 6
 end
 
+-- 1.10.27.0 (Beta-Test: "Planer weggeklickt, taucht nicht mehr auf"):
+-- Zuruecksetzen hing allein an TRADE_SKILL_SHOW/CLOSE. Jetzt zusaetzlich am
+-- Fenster selbst (OnShow/OnHide), und der Planer zieht mit, falls das
+-- Berufsfenster des Spiels erst spaeter entsteht (ProfessionsFrame laedt
+-- bei Bedarf) - vorher blieb er am ersten, nie gezeigten Fenster haengen.
+local hooked = {}
+function PT.HookHost(host)
+    if hooked[host] or not host.HookScript then return end
+    hooked[host] = true
+    host:HookScript("OnShow", function()
+        PT.sideClosed = false
+        PT.RefreshSide()
+    end)
+    host:HookScript("OnHide", function() PT.sideClosed = false end)
+end
+
 function PT.RefreshSide()
     local host = _G.ProfessionsFrame or _G.TradeSkillFrame
     if type(host) ~= "table" or not host.IsShown then return end
+    PT.HookHost(host)
     local f = BuildSide(host)
+    if f._host ~= host then
+        f:SetParent(host)
+        f.open:SetParent(host)
+        f.open:ClearAllPoints()
+        f.open:SetPoint("BOTTOMRIGHT", host, "TOPRIGHT", 0, 4)
+        f._host = host
+    end
     PT.PlaceSide(f, host)
+    -- Der Knopf zum Wiederoeffnen steht dort, wo der Planer stand - oben
+    -- ueber dem Fenster lag er oft unter anderen Rahmen.
+    f.open:ClearAllPoints()
+    f.open:SetPoint("TOPLEFT", host, "TOPRIGHT", PT.sideOffset or 6, 0)
     local hidden = SideHidden()
     f.open:SetShown(hidden and host:IsShown())
     if hidden or not host:IsShown() then f:Hide() return end
