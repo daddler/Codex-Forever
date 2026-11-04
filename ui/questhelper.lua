@@ -192,6 +192,11 @@ function QH.Offer(id, q, me)
     for _, n in ipairs(q[19] or {}) do
         if QH.Done(n) == true or log[n] then return nil end
     end
+    -- Wie Questie (QuestieDB.IsDoable): Elternquest muss im Log stehen,
+    -- "ab Quest" erledigt oder im Log, Brotkrumen im Log sperren.
+    for _, n in ipairs(q[21] or {}) do if not log[n] then return nil end end
+    for _, n in ipairs(q[22] or {}) do if not (log[n] or QH.Done(n) == true) then return nil end end
+    for _, n in ipairs(q[23] or {}) do if log[n] then return nil end end
     local done = QH.Done(id)
     if done ~= false then return nil end
     for _, p in ipairs(q[13] or {}) do
@@ -328,7 +333,8 @@ function QH.Parse(raw)
     for i = 16, 18 do q[i] = tonumber(fields[i]) or 0 end
     q[19] = List(fields[19])
     q[20] = fields[20] or ""
-    for i = 16, 20 do fields[i] = nil end
+    for i = 21, 23 do q[i] = List(fields[i]) end
+    for i = 16, 23 do fields[i] = nil end
     return q
 end
 function QH.Quest(id) return QH.Parse(Data().q[id]) end

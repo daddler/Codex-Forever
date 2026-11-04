@@ -1425,6 +1425,10 @@ do
         assert(QH.Offer(904, Q("185\t50\t0\t\t"), me) == nil, "Berufsquest ohne Beruf angeboten")
         done[905] = true
         assert(QH.Offer(906, Q("0\t0\t0\t905\t"), me) == nil, "Folgequest erledigt, Quest trotzdem angeboten")
+        assert(QH.Offer(907, Q("0\t0\t0\t\t\t5\t\t"), me) == "avail", "Elternquest im Log, trotzdem nicht angeboten")
+        assert(QH.Offer(908, Q("0\t0\t0\t\t\t77\t\t"), me) == nil, "Elternquest fehlt im Log, trotzdem angeboten")
+        assert(QH.Offer(909, Q("0\t0\t0\t\t\t\t\t5"), me) == nil, "Brotkrumen im Log, trotzdem angeboten")
+        assert(QH.Offer(910, Q("0\t0\t0\t\t\t\t77\t"), me) == nil, "ab Quest fehlt, trotzdem angeboten")
         do
             local QA = WeintCodex.UIQuestArrow
             local oS, got = QA.SetCustom, nil

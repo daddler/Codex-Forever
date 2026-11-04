@@ -196,7 +196,7 @@ def main():
     st = Store(read_meta(os.path.join(folder, "QuestieDB_Forever.toc")))
     zmap = zone_map(folder)
 
-    qids, quests = st.entity("Quest-", [2, 3, 10, 12, 13, 16, 18, 19, 22, 28, 30])
+    qids, quests = st.entity("Quest-", [2, 3, 10, 12, 13, 16, 18, 19, 20, 22, 25, 27, 28, 30, 31, 32, 33, 34, 35, 36])
     qde = st.german("Quest", qids)
 
     need_npc, need_obj, need_item = set(), set(), set()
@@ -240,7 +240,8 @@ def main():
         "-- q[Quest] = Name, Stufe, ab Stufe, Rassen, Klassen, Geber-NPC, Geber-Objekt,",
         "--            Abgabe-NPC, Abgabe-Objekt, Ziel-NPC, Ziel-Objekt, Gegenstand,",
         "--            alle vorher, eine vorher, schliesst aus, Beruf (Fertigkeit-ID),",
-        "--            Beruf ab, hoechstens Stufe, Folgequest, Sperren (r = Ruf, z = Zauber)",
+        "--            Beruf ab, hoechstens Stufe, weg wenn erledigt/im Log, Sperren (r = Ruf,",
+        "--            z = Zauber, b = Berufsrang), Elternquest im Log, ab Quest, weg wenn im Log",
         "-- n[NPC] / o[Objekt] = Name, dann je Karte \"Karte:x,y,x,y\" durch \";\" getrennt",
         "-- i[Gegenstand] = NPCs, Objekte   (wer ihn fallen laesst)",
         "--------------------------------------------------",
@@ -268,10 +269,20 @@ def main():
                   csv(grp(sb, 0)), csv(grp(sb, 1)), csv(grp(fb, 0)), csv(grp(fb, 1)),
                   csv(targets(0)), csv(targets(1)), csv(targets(2)),
                   csv(ids(q.get(12))), csv(ids(q.get(13))), csv(ids(q.get(16)))]
+        # Feldnummern wie QuestieDB/src/meta/questMeta.lua.
+        def one(k):
+            v = q.get(k)
+            return [v] if isinstance(v, int) and v else ids(v)
         sk = q.get(18) if isinstance(q.get(18), list) else None
-        flags = ("r" if q.get(19) else "") + ("z" if q.get(28) else "")
+        flags = (("r" if q.get(19) or q.get(20) else "") + ("z" if q.get(30) else "")
+                 + ("b" if q.get(31) or q.get(35) else ""))
         fields += [str(int(el(sk, 0) or 0)) if sk else "0", str(int(el(sk, 1) or 0)) if sk else "0",
-                   str(int(q.get(30) or 0)), csv([q.get(22)] if isinstance(q.get(22), int) and q.get(22) else ids(q.get(22))), flags]
+                   str(int(q.get(32) or 0)),
+                   csv(one(22) + one(27) + one(33)),      # erledigt/im Log -> weg
+                   flags,
+                   csv(one(25)),                          # muss im Log stehen
+                   csv(one(34)),                          # muss erledigt oder im Log sein
+                   csv(ids(q.get(28)) + one(36))]         # im Log -> weg
         lines.append("        [%d] = %s," % (i, lua_str("\t".join(fields)).replace("\t", "\\t")))
         nq += 1
     lines.append("    },")
