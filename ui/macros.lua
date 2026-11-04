@@ -46,7 +46,23 @@ MH.ICON = 134400            -- Fragezeichen: mit #showtooltip zeigt das Spiel da
 MH.KINDS = {
     { value = "cast",     text = "Einen Zauber wirken" },
     { value = "modifier", text = "Mit Zusatztaste einen zweiten Zauber" },
+    -- 1.10.30.0 (Wunsch: "auch komplexe Makros"): bis zu drei Tasten,
+    -- "erst A, sonst B", "in Verstohlenheit A, sonst B".
+    { value = "mods",     text = "Ohne Taste, Umschalt, Strg, Alt – je ein Zauber" },
+    { value = "fallback", text = "Erst A, wenn möglich – sonst B (sonst C, D)" },
+    { value = "switch",   text = "Unter einer Bedingung A, sonst B" },
     { value = "sequence", text = "Zauber nacheinander (Abfolge)" },
+}
+
+-- Bedingung fuer "switch": A, wenn sie gilt, sonst B.
+MH.SWITCH = {
+    { value = "stealth", text = "Verstohlen / getarnt",     explain = "verstohlen",           neg = "nostealth" },
+    { value = "combat",  text = "Im Kampf",                 explain = "im Kampf",             neg = "nocombat" },
+    { value = "harm",    text = "Ziel ist ein Gegner",      explain = "auf einen Gegner",     neg = "help" },
+    { value = "help",    text = "Ziel ist ein Verbündeter", explain = "auf einen Verbündeten", neg = "harm" },
+    { value = "mounted", text = "Auf dem Reittier",         explain = "auf dem Reittier",     neg = "nomounted" },
+    { value = "group",   text = "In einer Gruppe",          explain = "in einer Gruppe",      neg = "nogroup" },
+    { value = "pet",     text = "Begleiter ist da",         explain = "mit Begleiter",        neg = "nopet" },
 }
 
 -- AUF WEN. conds: die Klammern der Reihe nach - die erste, die greift,
@@ -84,6 +100,8 @@ MH.WHEN = {
     { value = "combat",    text = "Nur im Kampf",          explain = "nur im Kampf" },
     { value = "nocombat",  text = "Nur außerhalb des Kampfes", explain = "nur außerhalb des Kampfes" },
     { value = "nomounted", text = "Nicht auf dem Reittier", explain = "nicht auf dem Reittier" },
+    { value = "stealth",   text = "Nur verstohlen",         explain = "nur verstohlen" },
+    { value = "nostealth", text = "Nur nicht verstohlen",   explain = "nur, wenn du nicht verstohlen bist" },
 }
 
 MH.MODS = {
@@ -96,6 +114,10 @@ MH.RESETS = {
     { value = "target", text = "Bei neuem Ziel",                 word = "target", explain = "beginnt von vorn, wenn du ein neues Ziel wählst" },
     { value = "5",      text = "Nach 5 s ohne Tastendruck",      word = "5",      explain = "beginnt von vorn, wenn du 5 Sekunden nicht drückst" },
     { value = "combat", text = "Nach dem Kampf",                 word = "combat", explain = "beginnt nach jedem Kampf von vorn" },
+    -- 1.10.30.0: eigene Sekunden, auch zusammen mit neuem Ziel (reset=8/target).
+    { value = "secs",   text = "Nach eigenen Sekunden",          secs = true,     explain = "beginnt von vorn, wenn du so lange nicht drückst" },
+    { value = "secstarget", text = "Nach eigenen Sekunden oder neuem Ziel", secs = true, target = true,
+      explain = "beginnt von vorn nach dieser Zeit ohne Tastendruck oder bei neuem Ziel" },
     { value = "",       text = "Nie (läuft immer im Kreis)",     word = nil,      explain = "beginnt nach dem letzten Zauber wieder beim ersten" },
 }
 
@@ -112,9 +134,11 @@ end
 -- Der Entwurf (nur diese Sitzung).
 MH.draft = {
     kind = "cast", target = "target", mod = "shift", reset = "target",
-    spells = { "", "", "" }, slot = 1,
+    spells = { "", "", "", "" }, slot = 1,
     tooltip = true, startattack = false, stopcasting = false,
     when = "", stance = "", trinkets = false, petattack = false, custom = "",
+    switch = "stealth", resetSecs = "",
+    cancelAura = "", useItem = "", extraMod = "shift",
     name = "", save = "account",
 }
 local draft = MH.draft
@@ -199,11 +223,17 @@ end
 -- Liste der Erklaerungen (je Zeile), Fehlermeldung.
 function MH.Build(d)
     d = d or draft
-    local s1, s2, s3 = Trim(d.spells[1]), Trim(d.spells[2]), Trim(d.spells[3])
+    local s1, s2, s3, s4 = Trim(d.spells[1]), Trim(d.spells[2]), Trim(d.spells[3]), Trim(d.spells[4] or "")
     if s1 == "" then return nil, {}, "Wähle zuerst einen Zauber." end
     if MH.Stance(d.stance) == false then return nil, {}, "Haltung/Gestalt: nur Nummern, mehrere mit „/“ (z. B. 1/3)." end
     local t = Find(MH.TARGETS, d.target)
     local base = MH.Base(d)
+    -- Extras mit Zusatztaste: Aura abbrechen / Gegenstand benutzen. Wird eine
+    -- Aura mit der Taste abgebrochen, gilt der Rest nur OHNE Taste (nomod) -
+    -- sonst wirkte der Zauber sie gleich wieder.
+    local xm = Find(MH.MODS, d.extraMod)
+    local cancel, item = Trim(d.cancelAura), Trim(d.useItem)
+    if cancel ~= "" then base = With(base, "nomod") end
     local when = Find(MH.WHEN, d.when or "")
     local cond = ""
     if when.explain then cond = " (" .. when.explain end
@@ -222,6 +252,12 @@ function MH.Build(d)
         Line("/use 13", "benutzt dein oberes Schmuckstück (wenn es etwas kann und bereit ist)")
         Line("/use 14", "benutzt dein unteres Schmuckstück")
     end
+    if cancel ~= "" then
+        Line("/cancelaura [mod:" .. xm.value .. "] " .. cancel, string.format("mit %s: bricht %s ab – der Rest gilt nur ohne Taste", xm.text, cancel))
+    end
+    if item ~= "" then
+        Line("/use [mod:" .. xm.value .. "] " .. item, string.format("mit %s: benutzt %s", xm.text, item))
+    end
     if d.petattack then Line("/petattack", "schickt deinen Begleiter auf dein Ziel") end
     if d.startattack then
         -- 6.61.19.0 (Beta-Test: "nach Schlangengift oder Arkanem Schuss geht
@@ -230,10 +266,17 @@ function MH.Build(d)
         -- der Autoshot selbst, mit "!" - erneut gedrueckt schaltet er sich
         -- sonst wieder aus.
         local shot = MH.IsHunter() and MH.AutoShotName()
+        -- Angriff nur, wo der Zauber auch gilt: nicht verstohlen (sonst
+        -- bricht er die Verstohlenheit), nicht mit der Abbruchtaste.
+        local ac = ""
+        if d.kind == "switch" and d.switch == "stealth" then ac = "nostealth" end
+        if d.when == "stealth" then ac = "" elseif d.when == "nostealth" then ac = "nostealth" end
+        if cancel ~= "" then ac = With(ac, "nomod") end
+        local acb = ac ~= "" and (" [" .. ac .. "]") or ""
         if shot then
-            Line("/cast !" .. shot, "startet den Autoshot auf dein Ziel und schaltet ihn nie aus")
+            Line("/cast" .. (ac ~= "" and (" [" .. ac .. "]") or "") .. " !" .. shot, "startet den Autoshot auf dein Ziel und schaltet ihn nie aus")
         else
-            Line("/startattack", "beginnt den automatischen Nahkampfangriff auf dein Ziel")
+            Line("/startattack" .. acb, "beginnt den automatischen Nahkampfangriff auf dein Ziel" .. (ac:find("nostealth", 1, true) and " – nicht aus der Verstohlenheit" or ""))
         end
     end
     if d.kind == "modifier" then
@@ -242,12 +285,47 @@ function MH.Build(d)
         Line("/cast " .. Join(MH.Conditions(d.target, With("mod:" .. m.value, base)), s2) .. "; "
                 .. Join(MH.Conditions(d.target, base), s1),
             string.format("mit %s: %s, sonst %s – jeweils %s%s", m.text, s2, s1, t.explain, cond))
+    elseif d.kind == "mods" then
+        local parts, why = {}, {}
+        local keys = { { s2, "shift", "Umschalt" }, { s3, "ctrl", "Strg" }, { s4, "alt", "Alt" } }
+        for _, k in ipairs(keys) do
+            if k[1] ~= "" then
+                parts[#parts + 1] = Join(MH.Conditions(d.target, With("mod:" .. k[2], base)), k[1])
+                why[#why + 1] = k[3] .. ": " .. k[1]
+            end
+        end
+        if #parts == 0 then return nil, {}, "Trag mindestens einen Zauber für Umschalt, Strg oder Alt ein (Feld 2 bis 4)." end
+        parts[#parts + 1] = Join(MH.Conditions(d.target, base), s1)
+        Line("/cast " .. table.concat(parts, "; "),
+            string.format("ohne Taste %s, %s – jeweils %s%s", s1, table.concat(why, ", "), t.explain, cond))
+    elseif d.kind == "fallback" then
+        local list = { s1 }
+        for _, x in ipairs({ s2, s3, s4 }) do if x ~= "" then list[#list + 1] = x end end
+        if #list < 2 then return nil, {}, "„Erst A, sonst B“ braucht mindestens zwei Zauber." end
+        local cc = MH.Conditions(d.target, base)
+        for i, x in ipairs(list) do
+            Line("/cast " .. Join(cc, x), i == 1 and string.format("versucht zuerst %s %s%s", x, t.explain, cond)
+                or string.format("geht %s nicht (Abklingzeit, nicht bereit), dann %s", list[i - 1], x))
+        end
+    elseif d.kind == "switch" then
+        if s2 == "" then return nil, {}, "Trag den Zauber für „sonst“ ein (Feld 2)." end
+        local sw = Find(MH.SWITCH, d.switch)
+        Line("/cast " .. Join(MH.Conditions(d.target, With(sw.value, base)), s1) .. "; "
+                .. Join(MH.Conditions(d.target, base), s2),
+            string.format("%s: %s, sonst %s – jeweils %s%s", sw.text, s1, s2, t.explain, cond))
     elseif d.kind == "sequence" then
         local list = { s1 }
         if s2 ~= "" then list[#list + 1] = s2 end
         if s3 ~= "" then list[#list + 1] = s3 end
+        if s4 ~= "" then list[#list + 1] = s4 end
         if #list < 2 then return nil, {}, "Eine Abfolge braucht mindestens zwei Zauber." end
         local r = Find(MH.RESETS, d.reset)
+        if r.secs then
+            local n = tonumber(Trim(d.resetSecs))
+            if not n or n < 1 or n > 600 or n ~= math.floor(n) then return nil, {}, "Sekunden zum Zurücksetzen: eine ganze Zahl von 1 bis 600." end
+            r = { word = tostring(n) .. (r.target and "/target" or ""),
+                  explain = string.format("beginnt von vorn nach %d s ohne Tastendruck%s", n, r.target and " oder bei neuem Ziel" or "") }
+        end
         local cc = MH.Conditions(d.target, base)
         local head = "/castsequence " .. (cc ~= "" and (cc .. " ") or "") .. (r.word and ("reset=" .. r.word .. " ") or "")
         Line(head .. table.concat(list, ", "),
@@ -389,21 +467,39 @@ end
 
 local function Changed() K.Fire("setting", KEY, "macroDraft") end
 
+MH.FIELD_LABELS = {
+    "Zauber 1 – ohne Taste, zuerst, wenn",
+    "Zauber 2 – Umschalt, sonst, zweiter",
+    "Zauber 3 – Strg, sonst, dritter",
+    "Zauber 4 – Alt, sonst, vierter",
+}
+-- Was ein Feld bei welcher Art bedeutet.
+function MH.FieldLabel(i, kind)
+    if kind == "mods" then return ({ "Ohne Taste", "Mit Umschalt", "Mit Strg", "Mit Alt" })[i] end
+    if kind == "fallback" then return ({ "Zuerst (A)", "Sonst (B)", "Sonst (C)", "Sonst (D)" })[i] end
+    if kind == "switch" then return ({ "Wenn die Bedingung gilt", "Sonst" })[i] or ("Zauber " .. i) end
+    if kind == "modifier" then return ({ "Ohne Taste", "Mit Zusatztaste" })[i] or ("Zauber " .. i) end
+    return (i == 1) and "Zauber" or ("Zauber " .. i)
+end
+
 local function Field(i)
     return {
-        type = "input", label = (i == 1) and "Zauber" or ("Zauber " .. i),
+        -- Feste Beschriftung (die Suche der Einstellungen liest sie); was ein
+        -- Feld bei der gewaehlten Art bedeutet, sagt die Erklaerung unten.
+        type = "input", label = MH.FIELD_LABELS[i],
         get = function() return draft.spells[i] end,
         set = function(v) draft.spells[i] = v or "" Changed() end,
         disabled = function()
-            if i == 2 then return draft.kind == "cast" end
-            if i == 3 then return draft.kind ~= "sequence" end
+            local k = draft.kind
+            if i == 2 then return k == "cast" end
+            if i >= 3 then return not (k == "sequence" or k == "mods" or k == "fallback") end
             return false
         end,
     }
 end
 
 local function SlotItems()
-    return { { value = 1, text = "Zauber 1" }, { value = 2, text = "Zauber 2" }, { value = 3, text = "Zauber 3" } }
+    return { { value = 1, text = "Feld 1" }, { value = 2, text = "Feld 2" }, { value = 3, text = "Feld 3" }, { value = 4, text = "Feld 4" } }
 end
 
 -- Die Tafel: Symbole aus dem Zauberbuch; ein Klick fuellt das gewaehlte Feld.
@@ -487,13 +583,14 @@ end
 function MH.Pick(name)
     if type(name) ~= "string" or name == "" then return false end
     draft.spells[draft.slot] = name
-    local max = (draft.kind == "sequence") and 3 or (draft.kind == "modifier") and 2 or 1
+    local k = draft.kind
+    local max = (k == "sequence" or k == "mods" or k == "fallback") and 4 or (k == "modifier" or k == "switch") and 2 or 1
     if draft.slot < max then draft.slot = draft.slot + 1 end
     Changed()
     return true
 end
 
-MH.PREVIEW_H = 190
+MH.PREVIEW_H = 260
 function MH.BuildPreview(parent, width)
     local w = CreateFrame("Frame", nil, parent)
     w.bg = w:CreateTexture(nil, "BACKGROUND")
@@ -508,7 +605,9 @@ function MH.BuildPreview(parent, width)
     w.count = K.NewText(w, 11)
     w.count:SetPoint("TOPRIGHT", w, "TOPRIGHT", -10, -10)
     w.explain = K.NewText(w, 11)
-    w.explain:SetPoint("TOPLEFT", w, "TOPLEFT", 10, -86)
+    -- 1.10.30.0: unter dem Text, wie lang er auch ist (komplexe Makros haben
+    -- fuenf, sechs Zeilen - bei festen 86 lagen sie uebereinander).
+    w.explain:SetPoint("TOPLEFT", w.code, "BOTTOMLEFT", 0, -10)
     w.explain:SetWidth(width - 20)
     w.explain:SetJustifyH("LEFT")
     w.explain:SetJustifyV("TOP")
@@ -537,7 +636,7 @@ function MH.BuildPreview(parent, width)
         -- Warnung, wenn ein Name nicht im Zauberbuch steht.
         local warn
         local book = MH.Book()
-        for i = 1, 3 do
+        for i = 1, 4 do
             local s = draft.spells[i]
             if MH.Known(s, book) == false then warn = string.format("„%s“ steht nicht in deinem Zauberbuch – dann tut die Zeile nichts.", Trim(s)) break end
         end
@@ -562,11 +661,17 @@ function MH.BuildPage(B)
           { type = "dropdown", label = "Abfolge beginnt von vorn", items = MH.RESETS,
             get = function() return draft.reset end, set = function(v) draft.reset = v Changed() end,
             disabled = function() return draft.kind ~= "sequence" end })
+    B:Row({ type = "dropdown", label = "Bedingung (A, wenn sie gilt)", items = MH.SWITCH,
+            get = function() return draft.switch end, set = function(v) draft.switch = v Changed() end,
+            disabled = function() return draft.kind ~= "switch" end },
+          { type = "input", label = "Sekunden zum Zurücksetzen",
+            get = function() return draft.resetSecs end, set = function(v) draft.resetSecs = v or "" Changed() end,
+            disabled = function() return not (draft.kind == "sequence" and Find(MH.RESETS, draft.reset).secs) end })
+    -- (Bedingung und Sekunden stehen in einer Zeile: hoechstens 15 sichtbare
+    -- Einstellungen je Seite - "Klick fuellt" und "abbrechen" sind unter Erweitert.)
     B:Section("Welcher Zauber", "Feld wählen, dann einen Zauber anklicken – oder den Namen eintippen (auch Gegenstände).")
     B:Row(Field(1), Field(2))
-    B:Row(Field(3),
-          { type = "dropdown", label = "Klick füllt", items = SlotItems(),
-            get = function() return draft.slot end, set = function(v) draft.slot = v Changed() end })
+    B:Row(Field(3), Field(4))
     B:Row({ type = "custom", height = MH.PickerHeight(), create = function(parent, width)
                 return MH.BuildPicker(parent, width)
             end }, nil)
@@ -575,10 +680,14 @@ function MH.BuildPage(B)
             get = function() return draft.tooltip end, set = function(v) draft.tooltip = v and true or false Changed() end },
           { type = "toggle", label = "Angriff starten", description = "Nahkampf: /startattack. Jäger: startet den Autoshot (/cast !Automatischer Schuss).",
             get = function() return draft.startattack end, set = function(v) draft.startattack = v and true or false Changed() end })
+    B:Advanced()
+    B:Row({ type = "dropdown", label = "Speichern", items = MH.SAVE,
+            get = function() return draft.save end, set = function(v) draft.save = v Changed() end },
+          { type = "empty" })
     B:Row({ type = "toggle", label = "Laufenden Zauber abbrechen", description = "/stopcasting – zum Unterbrechen und Notfallheilen.",
             get = function() return draft.stopcasting end, set = function(v) draft.stopcasting = v and true or false Changed() end },
-          { type = "empty" })
-    B:Advanced()
+          { type = "dropdown", label = "Klick in der Tafel füllt", items = SlotItems(),
+            get = function() return draft.slot end, set = function(v) draft.slot = v Changed() end })
     B:Row({ type = "dropdown", label = "Wann", items = MH.WHEN,
             get = function() return draft.when end, set = function(v) draft.when = v or "" Changed() end },
           { type = "input", label = "Nur in Haltung/Gestalt (Nummer, z. B. 1 oder 1/3)",
@@ -589,7 +698,12 @@ function MH.BuildPage(B)
             get = function() return draft.custom end, set = function(v) draft.custom = v or "" Changed() end })
     B:Row({ type = "toggle", label = "Schmuckstücke benutzen", description = "/use 13 und /use 14 – beide Schmuckplätze, wenn sie etwas können.",
             get = function() return draft.trinkets end, set = function(v) draft.trinkets = v and true or false Changed() end },
-          { type = "empty" })
+          { type = "dropdown", label = "Zusatztaste für die Extras unten", items = MH.MODS,
+            get = function() return draft.extraMod end, set = function(v) draft.extraMod = v Changed() end })
+    B:Row({ type = "input", label = "Mit Taste: Aura abbrechen (Name, z. B. ein Buff)",
+            get = function() return draft.cancelAura end, set = function(v) draft.cancelAura = v or "" Changed() end },
+          { type = "input", label = "Mit Taste: Gegenstand benutzen (Name, z. B. ein Trank)",
+            get = function() return draft.useItem end, set = function(v) draft.useItem = v or "" Changed() end })
     B:EndAdvanced()
     B:Section("Ergebnis")
     B:Row({ type = "custom", height = MH.PREVIEW_H, create = function(parent, width)
@@ -597,8 +711,7 @@ function MH.BuildPage(B)
             end }, nil)
     B:Row({ type = "input", label = "Name (höchstens 16 Zeichen, leer = Zaubername)",
             get = function() return draft.name end, set = function(v) draft.name = v or "" Changed() end },
-          { type = "dropdown", label = "Speichern", items = MH.SAVE,
-            get = function() return draft.save end, set = function(v) draft.save = v Changed() end })
+          { type = "empty" })
     B:Row({ type = "button", label = "Ins Spiel übernehmen", text = "Makro anlegen", kind = "primary",
             onClick = function() MH.Create() Changed() end },
           { type = "button", label = "Auf eine Leiste ziehen", text = "Aufnehmen",

@@ -3515,6 +3515,27 @@ do
         x, e = Text({ spells = { string.rep("x", 260), "", "" } })
         assert(x and e and e:find("255", 1, true), "zu lang ohne Hinweis")
         -- Erklaerung je Zeile.
+        -- 1.10.30.0: komplexe Makros (Beispiele aus einer Makrosammlung).
+        do
+            local t1 = MH.Build(D({ kind = "mods", spells = { "Finsterer Stoß", "Zerhäckseln", "Ausweiden", "Finte" }, startattack = true }))
+            assert(t1 and t1:find("/startattack\n", 1, true)
+                and t1:find("/cast [mod:shift] Zerhäckseln; [mod:ctrl] Ausweiden; [mod:alt] Finte; Finsterer Stoß", 1, true), "drei Tasten: " .. tostring(t1))
+            local t2 = MH.Build(D({ kind = "fallback", spells = { "Riposte", "Finsterer Stoß", "", "" }, startattack = true }))
+            assert(t2 and t2:find("/cast Riposte\n/cast Finsterer Stoß", 1, true), "erst A, sonst B: " .. tostring(t2))
+            local t3 = MH.Build(D({ kind = "cast", spells = { "Klingenwirbel", "", "", "" }, startattack = true, cancelAura = "Klingenwirbel" }))
+            assert(t3 and t3:find("/cancelaura [mod:shift] Klingenwirbel", 1, true) and t3:find("/startattack [nomod]", 1, true)
+                and t3:find("/cast [nomod] Klingenwirbel", 1, true), "Aura abbrechen: " .. tostring(t3))
+            local t4 = MH.Build(D({ kind = "sequence", reset = "secs", resetSecs = "20", trinkets = true, spells = { "Adrenalinrausch", "Klingenwirbel", "", "" } }))
+            assert(t4 and t4:find("/use 13\n/use 14", 1, true) and t4:find("/castsequence reset=20 Adrenalinrausch, Klingenwirbel", 1, true), "reset=20: " .. tostring(t4))
+            local t5 = MH.Build(D({ kind = "switch", switch = "stealth", startattack = true, spells = { "Erdrosseln", "Finsterer Stoß", "", "" } }))
+            assert(t5 and t5:find("/cast [stealth] Erdrosseln; Finsterer Stoß", 1, true) and t5:find("/startattack [nostealth]", 1, true), "verstohlen: " .. tostring(t5))
+            local t7 = MH.Build(D({ kind = "sequence", reset = "secstarget", resetSecs = "8", spells = { "Finsterer Stoß", "Finsterer Stoß", "Zerhäckseln", "" } }))
+            assert(t7 and t7:find("reset=8/target Finsterer Stoß, Finsterer Stoß, Zerhäckseln", 1, true), "reset=8/target: " .. tostring(t7))
+            local t8 = MH.Build(D({ kind = "cast", spells = { "Zerhäckseln", "", "", "" }, useItem = "Geringer Raserei-Trank" }))
+            assert(t8 and t8:find("/use [mod:shift] Geringer Raserei-Trank\n/cast Zerhäckseln", 1, true), "Gegenstand mit Taste: " .. tostring(t8))
+            local _, _, e = MH.Build(D({ kind = "sequence", reset = "secs", resetSecs = "abc", spells = { "A", "B", "", "" } }))
+            assert(e and e:find("Sekunden", 1, true), "ungueltige Sekunden angenommen")
+        end
         local _, why = MH.Build(D({ target = "mouseoverself", spells = { "Heilen", "", "" } }))
         assert(#why == 2 and why[2]:find("Heilen", 1, true) and why[2]:find("selbst", 1, true), "keine Erklaerung")
         -- Name: hoechstens 16 Zeichen, Umlaute heil.

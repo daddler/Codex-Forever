@@ -9,6 +9,11 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.10.30.0] – 2026-11-04
+
+### Neu
+- Makro-Helfer für komplexe Makros (`ui/macros.lua`): neue Arten „Ohne Taste, Umschalt, Strg, Alt – je ein Zauber“ (`mods`), „Erst A, wenn möglich – sonst B (C, D)“ (`fallback`, mehrere `/cast`-Zeilen), „Unter einer Bedingung A, sonst B“ (`switch`: verstohlen, Kampf, Gegner/Verbündeter, Reittier, Gruppe, Begleiter); vier Zauberfelder; Abfolge mit eigenen Sekunden, auch mit neuem Ziel (`reset=8/target`); „Wann“ auch verstohlen/nicht verstohlen; Extras mit Zusatztaste: Aura abbrechen (`/cancelaura [mod:…]`, der Rest dann `[nomod]`) und Gegenstand benutzen (`/use [mod:…]`); `/startattack` folgt Verstohlenheit und Abbruchtaste. Vorschau wächst mit dem Text. „Speichern“, „Laufenden Zauber abbrechen“ und „Klick füllt“ unter Erweitert (15 sichtbare Einstellungen).
+
 ## [1.10.29.0] – 2026-11-04
 
 ### Geändert

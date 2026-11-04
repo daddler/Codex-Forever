@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.10.30.0",
+        date    = "04.11.2026",
+        notes   = {
+            "|cff7C6CFFDer Makro-Helfer baut jetzt auch komplexe Makros|r – je ein Zauber für ohne Taste, Umschalt, Strg und Alt; „erst A, sonst B“; „verstohlen A, sonst B“; Abfolgen mit eigenen Sekunden; mit Zusatztaste eine Aura abbrechen oder einen Trank benutzen. Jede Zeile bleibt erklärt.",
+        },
+    },
+    {
         version = "1.10.29.0",
         date    = "04.11.2026",
         notes   = {
