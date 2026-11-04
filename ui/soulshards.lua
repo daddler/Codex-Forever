@@ -26,7 +26,7 @@ local K  = WeintCodex.UIKit
 local KEY = "comfort"
 
 SS.ITEM = 6265
-SS.DEFAULTS = { shardLimit = true, shardMax = 20 }
+SS.DEFAULTS = { shardLimit = false, shardMax = 20 }   -- 1.10.29.0: wieder aus (loescht), stattdessen ein Hinweis
 SS.blocked = false
 
 local function Plain(v) return K.Plain(v) end
@@ -179,4 +179,23 @@ end
 
 K.Listen(function(kind, key)
     if (kind == "active" or kind == "setting") and key == KEY then SS.Check() end
+end)
+
+-- 1.10.29.0 (Wunsch): ab Werk aus, weil es loescht - aber ein Hexenmeister
+-- erfaehrt einmal je Charakter, dass es die Option gibt. Nicht, wenn er sie
+-- schon selbst eingestellt hat.
+function SS.Hint()
+    if not SS.IsWarlock() or not K.IsActive(KEY) or K.Get(KEY, "shardLimit") then return false end
+    local st = K.CharState and K.CharState()
+    if type(st) ~= "table" or st.shardHint then return false end
+    st.shardHint = true
+    print(WeintCodex.ColorText("accent", "[WeintCodex]") .. " Hexenmeister: WeintCodex kann deine Seelensplitter begrenzen – "
+        .. "alles über eine Zahl deiner Wahl wird gelöscht. Einschalten: /wcui → Alltag → Automatik → Seelensplitter.")
+    return true
+end
+local hev = CreateFrame("Frame")
+pcall(hev.RegisterEvent, hev, "PLAYER_ENTERING_WORLD")
+hev:SetScript("OnEvent", function()
+    hev:UnregisterAllEvents()
+    if _G.C_Timer and _G.C_Timer.After then _G.C_Timer.After(8, SS.Hint) else SS.Hint() end
 end)

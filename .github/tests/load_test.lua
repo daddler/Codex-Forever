@@ -20348,6 +20348,23 @@ do
     Check(ok, "Flugzeit: Ziel vom Klick, Dauer gemessen vor Daten, unbekannt ehrlich, Zwischenstopps, Landen" .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 1.10.29.0: Seelensplitter ab Werk aus, Hexenmeister bekommt einmal einen Hinweis.
+do
+    local ok, err = pcall(function()
+        local SS, K = WeintCodex.UISoulShards, WeintCodex.UIKit
+        assert(K.Get("comfort", "shardLimit") == false, "Seelensplitter loeschen ab Werk an")
+        local oC = _G.UnitClass
+        _G.UnitClass = function() return "Hexenmeister", "WARLOCK" end
+        local st = K.CharState() st.shardHint = nil
+        assert(SS.Hint() == true and SS.Hint() == false, "Hinweis nicht genau einmal")
+        _G.UnitClass = function() return "Krieger", "WARRIOR" end
+        st.shardHint = nil
+        assert(SS.Hint() == false, "Hinweis fuer Nicht-Hexenmeister")
+        _G.UnitClass = oC
+    end)
+    Check(ok, "Seelensplitter: ab Werk aus, einmal Hinweis fuer Hexenmeister" .. (ok and "" or (": " .. tostring(err))))
+end
+
 -- 1.10.28.0: neuer Rang gelernt, alter in der Leiste.
 do
     local G = _G

@@ -12,7 +12,7 @@ nicht zusammen.
 ## [1.10.29.0] – 2026-11-04
 
 ### Geändert
-- Ab Werk an (Wunsch des Besitzers): Messenger (`msgOn`), Gespräche im Codex-Stil (`dlgOn`), Questhilfe (`qhOn`, auch graue `qhLow`), Angeln mit einer Taste (`fishKeyOn`, wirkt erst mit gewählter Taste), Paladin-Segen (`blessOn`), PvP-Feindmeldung (`pvpAlert`), Seelensplitter begrenzen (`shardLimit`, 20), Händlerfenster groß ziehen (`vendorGrow`), Warnungen im Bosskampf (`bossWarnings`), seltene Gegner in Instanzen (`rareInstances`), Grünes beim Ausmisten (`triageGreens`), Bestand anderer Realms und Fraktion (`invAllRealms`, `invOtherFaction`). Aus bleiben Bildrate/Latenz und Löschbestätigung.
+- Ab Werk an (Wunsch des Besitzers): Messenger (`msgOn`), Gespräche im Codex-Stil (`dlgOn`), Questhilfe (`qhOn`, auch graue `qhLow`), Angeln mit einer Taste (`fishKeyOn`, wirkt erst mit gewählter Taste), Paladin-Segen (`blessOn`), PvP-Feindmeldung (`pvpAlert`), Händlerfenster groß ziehen (`vendorGrow`), Warnungen im Bosskampf (`bossWarnings`), seltene Gegner in Instanzen (`rareInstances`), Grünes beim Ausmisten (`triageGreens`), Bestand anderer Realms und Fraktion (`invAllRealms`, `invOtherFaction`). Aus bleiben Bildrate/Latenz, Löschbestätigung und Seelensplitter begrenzen (löscht) – ein Hexenmeister bekommt einmal je Charakter einen Hinweis im Chat (`SS.Hint`), im Assistenten ist es `optional`.
 - Willkommens-Assistent: neuer Schritt „Quests, Klasse, PvP, Angeln“ (Questhilfe, Angeln, Segen nur Paladin, Seelensplitter nur Hexenmeister, Feind in der Nähe), Händlerfenster unter Handel; Messenger und Gespräche jetzt in „Empfohlen“; „Filmsequenzen überspringen“ nur noch auf ausdrückliche Wahl (`optional`), ab Werk aus. Sechs neue Bilder (`shots.html`, `make_welcome.py`).
 
 ## [1.10.28.0] – 2026-11-04

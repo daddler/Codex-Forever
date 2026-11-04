@@ -142,7 +142,7 @@ WL.HELPERS = {
     { group = "mehr", module = "comfort", key = "pvpAlert", label = "Feind in der Nähe",
       text = "Hinweis und Ton, wenn ein feindlicher Spieler auftaucht." },
     { group = "mehr", module = "comfort", key = "shardLimit", label = "Seelensplitter begrenzen", class = "WARLOCK",
-      text = "Höchstens 20 – was darüber hinausgeht, wird gelöscht." },
+      text = "Höchstens 20 – was darüber hinausgeht, wird gelöscht.", optional = true },
     -- Welt und Karte
     { group = "mehr", module = "comfort", key = "qhOn", label = "Questhilfe auf der Karte",
       text = "Questgeber, Ziele und Abgabe auf Welt- und Minikarte." },

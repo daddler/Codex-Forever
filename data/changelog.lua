@@ -25,7 +25,7 @@ WeintCodex_ChangelogData = {
         version = "1.10.29.0",
         date    = "04.11.2026",
         notes   = {
-            "|cff7C6CFFMehr ist ab Werk an|r – Messenger, Gespräche im Codex-Stil, Questhilfe auf der Karte, Angeln mit einer Taste, Segen, Seelensplitter, Feind in der Nähe und das große Händlerfenster. Alles einzeln abschaltbar.",
+            "|cff7C6CFFMehr ist ab Werk an|r – Messenger, Gespräche im Codex-Stil, Questhilfe auf der Karte, Angeln mit einer Taste, Segen, Feind in der Nähe und das große Händlerfenster. Alles einzeln abschaltbar. Hexenmeister erfahren einmal, dass WeintCodex ihre Seelensplitter begrenzen kann.",
             "|cff7C6CFFNeuer Schritt im Willkommens-Assistenten|r – Quests, deine Klasse, PvP und Angeln. Filmsequenzen überspringst du nur noch, wenn du es dort ausdrücklich wählst.",
         },
     },
