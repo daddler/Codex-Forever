@@ -1246,6 +1246,11 @@ J.CLASSIC_LOOT = {
             { 18306, "Gloves of Shadowy Mist", "Hände, Stoff", 2 },
         },
     } end,
+    excavation_site = function() return {
+        highland_horror = {
+            { 270180, "Horrible Rootcore", "Gegenstand", nil },
+        },
+    } end,
     lower_blackrock_spire = function() return {
         gizrul = {
             { 16718, "Wildheart Spaulders", "Schulter, Leder", 3 },
@@ -1997,11 +2002,6 @@ J.CLASSIC_OTHERS = {
             { 18483, "Mana Channeling Wand", "Distanz, Zauberstab", 3 },
             { 18485, "Observer's Shield", "Schildhand, Schild", 3 },
             { 18484, "Cho'Rush's Blade", "Einhändig, Schwert", 3 },
-        } },
-    } end,
-    excavation_site = function() return {
-        { name = "Highland Horror", items = {
-            { 270180, "Horrible Rootcore", "Gegenstand", nil },
         } },
     } end,
     gnomeregan = function() return {

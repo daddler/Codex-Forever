@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.0.0.1",
+        date    = "04.11.2026",
+        notes   = {
+            "|cff7C6CFFBereit für den Start von Forever|r – Quests, Questgeber, Wege, Flugstrecken, Beute und Dungeondaten sind auf dem neuesten Stand.",
+        },
+    },
+    {
         version = "1.10.30.0",
         date    = "04.11.2026",
         notes   = {

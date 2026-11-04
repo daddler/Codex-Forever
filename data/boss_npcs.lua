@@ -4,7 +4,7 @@
 -- ERZEUGT von .github/scripts/make_boss_npcs.py - nicht von Hand aendern.
 -- Zuordnung ueber gleiche Beute (data/loot.lua <-> Journal), kein Name
 -- verglichen. B[npc] = { Dungeon, Boss, deutscher Name, englischer Name }.
--- 170 Bosse mit Nummer, 57 ohne (keine eindeutige Beute).
+-- 171 Bosse mit Nummer, 56 ohne (keine eindeutige Beute).
 --------------------------------------------------
 
 WeintCodex = WeintCodex or {}
@@ -148,6 +148,7 @@ WeintCodex.BossNpcs = {
     [643] = { "the_deadmines", "sneeds_shredder", "Sneed", "Sneed's Shredder" },
     [1716] = { "the_stockade", "bazil_thredd", "Bazil Thredd", "Bazil Thredd" },
     [1720] = { "the_stockade", "bruegal", "Bruegal Eisenfaust", "Bruegal Ironknuckle" },
+    [1663] = { "the_stockade", "dextren_ward", "Dextren Ward", "Dextren Ward" },
     [1717] = { "the_stockade", "hamhock", "Hamhock", "Hamhock" },
     [1666] = { "the_stockade", "kam_deepfury", "Kam Tiefenzorn", "Kam Deepfury" },
     [1696] = { "the_stockade", "targorr", "Targorr the Dread", "Targorr the Dread" },

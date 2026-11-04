@@ -22006,7 +22006,10 @@ do
         -- Client antwortet nicht: "lädt …", nie ein erfundener Name.
         G.C_Item = { GetItemInfo = function() return nil end, RequestLoadItemDataByID = function() end,
                      GetItemIconByID = function() return 134400 end }
+        -- Neue Sekunde: das Anfragebudget (LB.REQ_MAX je Sekunde) gilt pro Sekunde.
+        local oldTime = G.GetTime; G.GetTime = function() return (oldTime and oldTime() or 0) + 1 end
         local inf = LB.Info(5193)
+        G.GetTime = oldTime
         assert(inf.loading and inf.name == nil and LB.pending[5193], "Name ohne Client")
         -- Client antwortet: Name, Qualitaet, Platz.
         G.C_Item.GetItemInfo = function(id)

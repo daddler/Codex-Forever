@@ -9,6 +9,14 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.0.0.1] – 2026-11-04
+
+Fassung zum Start von Forever.
+
+- Datenbestände aus den aktualisierten Quellen neu erzeugt: Quests,
+  Questgeber und Objekte, Dungeondaten (Quests, Eingänge, Seltene,
+  Bücher), Wegnetz und Reisestrecken, Beute, Boss-Nummern.
+
 ## [1.10.30.0] – 2026-11-04
 
 ### Neu
