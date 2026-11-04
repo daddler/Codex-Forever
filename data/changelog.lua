@@ -27,21 +27,9 @@ WeintCodex_ChangelogData = {
         notes   = {
             "|cff7C6CFFMehr ist ab Werk an|r – Messenger, Gespräche im Codex-Stil, Questhilfe auf der Karte, Angeln mit einer Taste, Segen, Feind in der Nähe und das große Händlerfenster. Alles einzeln abschaltbar. Hexenmeister erfahren einmal, dass WeintCodex ihre Seelensplitter begrenzen kann.",
             "|cff7C6CFFNeuer Schritt im Willkommens-Assistenten|r – Quests, deine Klasse, PvP und Angeln. Filmsequenzen überspringst du nur noch, wenn du es dort ausdrücklich wählst.",
-        },
-    },
-    {
-        version = "1.10.28.0",
-        date    = "04.11.2026",
-        notes   = {
             "|cff7C6CFFNeuer Rang, alter in der Leiste?|r – WeintCodex erinnert dich und ersetzt ihn auf Klick. Willst du bewusst den niedrigeren Rang behalten, reicht „Verstanden – so lassen“.",
             "|cff7C6CFFAuktionspreise sind ab Werk an|r – Preise im Tooltip und am Auktionshaus, geteilt mit der Gilde.",
             "|cff7C6CFFKräuter- und Erzsuche nach dem Tod|r – der Wechsel läuft nach dem Wiederbeleben von selbst weiter.",
-        },
-    },
-    {
-        version = "1.10.27.0",
-        date    = "04.11.2026",
-        notes   = {
             "|cff7C6CFFDer Planer am Berufsfenster kommt wieder|r – weggeklickt ist er nur, bis du das Fenster schließt; beim nächsten Öffnen ist er da. Zurückholen geht sofort mit „Skill-Weg“ an seinem Platz.",
         },
     },
