@@ -9,6 +9,13 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.0.0.2] – 2026-11-05
+
+- Behoben: Bei neuen Charakteren meldete das Spiel „Vom Spiel blockiert“
+  (`SetPointBase`/`ClearAllPointsBase` der unteren Aktionsleisten). Das
+  Einschalten der Leisten beim ersten Einloggen ruft
+  `MultiActionBar_Update` nicht mehr aus Addon-Code auf.
+
 ## [1.0.0.1] – 2026-11-04
 
 Fassung zum Start von Forever.

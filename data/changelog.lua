@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.0.0.2",
+        date    = "05.11.2026",
+        notes   = {
+            "|cff7C6CFFKeine Meldung „Vom Spiel blockiert“ mehr bei neuen Charakteren|r – das Einschalten der Aktionsleisten beim ersten Einloggen stört das Spiel nicht mehr beim Ordnen der Leisten. Neu eingeschaltete Leisten erscheinen notfalls nach dem nächsten Neuladen.",
+        },
+    },
+    {
         version = "1.0.0.1",
         date    = "04.11.2026",
         notes   = {
