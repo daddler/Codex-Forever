@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.0.0.3",
+        date    = "05.11.2026",
+        notes   = {
+            "|cff7C6CFFKarte und Minikarte zeigen nur noch Quests, die du wirklich annehmen kannst|r – Quests, die es im Spiel nicht gibt, die einen Beruf, Ruf oder Zauber verlangen, für die du zu hoch bist oder deren Folgequest du schon erledigt hast, stehen nicht mehr da.",
+        },
+    },
+    {
         version = "1.0.0.2",
         date    = "05.11.2026",
         notes   = {

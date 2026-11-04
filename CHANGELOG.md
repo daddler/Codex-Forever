@@ -9,6 +9,13 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.0.0.3] – 2026-11-05
+
+- Behoben: Die Questhilfe zeigte auf Welt- und Minikarte viele Quests, die
+  man nicht annehmen kann. Der Bestand übernimmt jetzt die Sperrliste von
+  Questie für Forever (außer Quests der Feste) und prüft je Quest Beruf,
+  Höchststufe, Ruf/Zauber und eine schon erledigte Folgequest.
+
 ## [1.0.0.2] – 2026-11-05
 
 - Behoben: Bei neuen Charakteren meldete das Spiel „Vom Spiel blockiert“
