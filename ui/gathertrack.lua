@@ -36,6 +36,9 @@ GT.DEFAULTS = {
 GT.MIN = 15                -- globale Abklingzeit: 1,5 s
 GT.SPELLS = { herb = 2383, ore = 2580 }   -- Kraeutersuche, Mineraliensuche
 GT.BLOCK_WINDOW = 0.5
+GT.ALIVE_GRACE = 3
+GT.ALIVE_TRUST = 30
+GT.aliveAt = -math.huge
 GT.MAX_NOEFFECT = 3
 
 local stats = { swaps = 0, paused = 0, noEffect = 0, blocked = 0 }
@@ -125,6 +128,9 @@ end
 function GT.Paused()
     if _G.InCombatLockdown and K.Bool(_G.InCombatLockdown(), false) then return "Kampf" end
     if _G.UnitIsDeadOrGhost and K.Bool(_G.UnitIsDeadOrGhost("player"), false) then return "tot" end
+    -- 1.10.28.0: kurz nach dem Wiederbeleben setzt das Spiel die Suche
+    -- selbst zurueck - erst danach wieder wechseln.
+    if Now() - GT.aliveAt < GT.ALIVE_GRACE then return "wiederbelebt" end
     -- Ohne Zauber geben beide GAR NICHTS zurueck (nicht einmal nil) -
     -- type() ohne Wert bricht ab (gemessen 6.22.0.0). Erst in eine Variable.
     local cast = _G.UnitCastingInfo and _G.UnitCastingInfo("player")
@@ -136,6 +142,7 @@ end
 
 local function Stop(reason, text)
     GT.stopped = reason
+    GT.stoppedDead = (_G.UnitIsDeadOrGhost and K.Bool(_G.UnitIsDeadOrGhost("player"), false)) or nil
     K.Set(KEY, "gatherSwap", false)
     Say(text)
 end
@@ -148,6 +155,8 @@ function GT.Swap()
         else
             misses = misses + 1
             stats.noEffect = stats.noEffect + 1
+            -- Kurz nach dem Wiederbeleben ist "ohne Wirkung" das Spiel, kein Fehler.
+            if misses >= GT.MAX_NOEFFECT and Now() - GT.aliveAt < GT.ALIVE_TRUST then misses = 0 end
             if misses >= GT.MAX_NOEFFECT then
                 pending = nil
                 Stop("ohne Wirkung", "Die Suche lässt sich von WeintCodex nicht wechseln – der Wechsel ist wieder aus.")
@@ -199,13 +208,31 @@ end))
 GT.ticker = ticker
 
 local ev = CreateFrame("Frame")
+local Apply
+-- 1.10.28.0 (Beta-Test: "beim Farmen gestorben, nach dem Wiederbeleben
+-- ist die Suche aus"): der Tod schaltet die Suche des Spiels ab. Die Wache
+-- "dreimal ohne Wirkung" zaehlte das als Fehlschlag und schaltete den
+-- Wechsel ganz aus. Tod und Wiederbeleben setzen die Zaehler zurueck; nach
+-- dem Wiederbeleben stellt der naechste Takt die Suche selbst wieder an.
+function GT.OnLife(event)
+    misses, pending, acc = 0, nil, 0
+    if event ~= "PLAYER_DEAD" then GT.aliveAt = Now() end
+    if event ~= "PLAYER_DEAD" and GT.stopped == "ohne Wirkung" and GT.stoppedDead then
+        GT.stopped, GT.stoppedDead = nil, nil
+        K.Set(KEY, "gatherSwap", true)
+        Apply()
+    end
+end
+
 ev:SetScript("OnEvent", function(_, event, addon)
+    if event == "PLAYER_DEAD" or event == "PLAYER_ALIVE" or event == "PLAYER_UNGHOST" then GT.OnLife(event) return end
     if event == "ADDON_ACTION_BLOCKED" or event == "ADDON_ACTION_FORBIDDEN" then GT.OnBlocked(addon)
     elseif event == "PLAYER_LOGIN" then GT.HookMenu() end
 end)
 pcall(ev.RegisterEvent, ev, "PLAYER_LOGIN")
+for _, e in ipairs({ "PLAYER_DEAD", "PLAYER_ALIVE", "PLAYER_UNGHOST" }) do pcall(ev.RegisterEvent, ev, e) end
 
-local function Apply()
+Apply = function()
     if GT.Active() then
         GT.stopped, misses, pending, acc = nil, 0, nil, 0
         pcall(ev.RegisterEvent, ev, "ADDON_ACTION_BLOCKED")

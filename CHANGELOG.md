@@ -9,6 +9,14 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.10.28.0] – 2026-11-04
+
+### Neu
+- Neuer Rang gelernt, alter in der Leiste (`ui/rankcheck.lua`, Komfort → Anzeigen, ab Werk an): Rang aus dem Untertext des Clients gegen den höchsten Rang desselben Namens; Fenster mit „Ersetzen“ (`PickupSpell`/`PlaceAction`, nur außerhalb des Kampfes), „Verstanden – so lassen“ (je Charakter `SavedData.rankKeep`) und „Später“ (bis zum nächsten gelernten Zauber). Unbekannter Rang = still.
+
+### Behoben
+- Sammeln: nach Tod und Wiederbeleben schaltete sich der Wechsel der Suche als „ohne Wirkung“ ab. Tod/Wiederbeleben setzen die Zähler zurück, 3 s Pause nach dem Wiederbeleben, 30 s lang kein Abschalten; war er im Tod abgeschaltet, geht er wieder an (`GT.OnLife`).
+
 ## [1.10.27.0] – 2026-11-04
 
 ### Behoben

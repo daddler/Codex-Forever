@@ -1125,6 +1125,19 @@ do
         assert(not K.Get("comfort", "gatherSwap") and GT.stopped == "gesperrt", "Sperre nicht erkannt")
         local sc = table.concat(GT.StatusLines(), "\n")
         assert(sc:find("Kräutersuche: gelernt", 1, true) and sc:find("gesperrt 1", 1, true), "Bericht: " .. sc)
+        -- 1.10.28.0: Tod beim Farmen - danach geht der Wechsel von selbst weiter.
+        K.Set("comfort", "gatherSwap", true)
+        GT.Swap()
+        GT.OnLife("PLAYER_DEAD")
+        list[2].active, list[3].active = false, false
+        GT.OnLife("PLAYER_ALIVE")
+        assert(GT.Swap() == false, "gleich nach dem Wiederbeleben gewechselt")
+        now = now + GT.ALIVE_GRACE + 0.1
+        works = false
+        GT.Swap() GT.Swap() GT.Swap() GT.Swap()
+        assert(K.Get("comfort", "gatherSwap") and GT.stopped == nil, "nach dem Tod als wirkungslos abgeschaltet")
+        works = true
+        assert(GT.Swap() and (list[2].active or list[3].active), "Suche nach dem Wiederbeleben nicht wieder an")
     end)
     for i, n in ipairs(names) do G[n] = saved[i] end
     K.Set("comfort", "gatherSwap", false)
@@ -20331,6 +20344,47 @@ do
         G.C_TaxiMap, G.GetTaxiMapID, G.GetTime, G.UnitOnTaxi = oT, oM, oG, oTaxi
     end)
     Check(ok, "Flugzeit: Ziel vom Klick, Dauer gemessen vor Daten, unbekannt ehrlich, Zwischenstopps, Landen" .. (ok and "" or (": " .. tostring(err))))
+end
+
+-- 1.10.28.0: neuer Rang gelernt, alter in der Leiste.
+do
+    local G = _G
+    local names = { "GetActionInfo", "C_Spell", "GetSpellInfo", "GetSpellSubtext", "PlaceAction", "PickupSpell", "ClearCursor", "InCombatLockdown" }
+    local saved = {}
+    for i, n in ipairs(names) do saved[i] = G[n] end
+    local ok, err = pcall(function()
+        local RC, K = WeintCodex.UIRankCheck, WeintCodex.UIKit
+        local bar = { [3] = 101, [4] = 201, [5] = 301 }
+        G.GetActionInfo = function(slot) if bar[slot] then return "spell", bar[slot] end end
+        local name = { [101] = "Blitzschlag", [102] = "Blitzschlag", [201] = "Heilende Welle", [301] = "Unbekannt" }
+        local rank = { [101] = "Rang 4", [102] = "Rang 5", [201] = "Rang 2" }
+        G.C_Spell = {
+            GetSpellName = function(id) return name[id] end,
+            GetSpellSubtext = function(id) return rank[id] end,
+            GetSpellInfo = function(n) if n == "Blitzschlag" then return { spellID = 102 } elseif n == "Heilende Welle" then return { spellID = 201 } end end,
+        }
+        G.InCombatLockdown = function() return false end
+        WeintCodex.SavedData.rankKeep = nil
+        local list = RC.Scan()
+        assert(#list == 1 and list[1].slot == 3 and list[1].new == 102 and list[1].oldRank == 4, "veralteter Rang nicht erkannt")
+        assert(RC.Show(list) and RC.popup:IsShown(), "keine Erinnerung")
+        local placed = {}
+        G.C_Spell.PickupSpell = function(id) placed.id = id end
+        G.PlaceAction = function(slot) placed.slot = slot bar[slot] = placed.id end
+        G.ClearCursor = function() end
+        assert(RC.Replace() == 1 and bar[3] == 102, "Ersetzen legt den neuen Rang nicht")
+        assert(#RC.Scan() == 0, "nach dem Ersetzen weiter gemeldet")
+        bar[3] = 101
+        RC.Show(RC.Scan())
+        RC.KeepAll()
+        assert(#RC.Scan() == 0 and not RC.popup:IsShown(), "Verstanden haelt nicht")
+        rank[101] = nil
+        WeintCodex.SavedData.rankKeep = nil
+        assert(#RC.Scan() == 0, "unbekannter Rang als veraltet gemeldet")
+    end)
+    for i, n in ipairs(names) do G[n] = saved[i] end
+    WeintCodex.SavedData.rankKeep = nil
+    Check(ok, "Neuer Rang: erkannt, ersetzt, Verstanden haelt, unbekannt bleibt still" .. (ok and "" or (": " .. tostring(err))))
 end
 
 -- 1.10.24.0: Entfluchen - Warnungen, Felder zum Anklicken.

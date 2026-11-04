@@ -522,8 +522,10 @@ K.Register({
             B:Row(Row2({ type = "toggle", label = "Würfe in der Gruppe zeigen", key = "rollWatch",
                          description = "In Dungeons ein kleines Fenster: wer auf welchen Gegenstand Bedarf, Gier oder Passen gewählt hat, mit Wurf und Gewinner – so siehst du, ob jemand ein Teil braucht, ohne zu fragen." }))
             B:Section("Stufenaufstieg")
-            B:Row(Row2({ type = "toggle", label = "Neues beim Lehrer zeigen", key = "levelUpPopup",
-                         description = "Nach dem Aufstieg ein Fenster mit den Zaubern, die du jetzt lernen kannst, und was sie kosten. Ihre Zahl steht am Symbol an der Minikarte." }))
+            B:Row({ type = "toggle", label = "Neues beim Lehrer zeigen", key = "levelUpPopup",
+                    description = "Nach dem Aufstieg ein Fenster mit den Zaubern, die du jetzt lernen kannst, und was sie kosten. Ihre Zahl steht am Symbol an der Minikarte." },
+                  { type = "toggle", label = "Neuer Rang, alter in der Leiste", key = "rankCheck",
+                    description = "Erinnert, wenn in der Leiste noch ein niedrigerer Rang liegt – mit „Ersetzen“ und „Verstanden – so lassen“ für alle, die bewusst sparen." })
             B:Section("Karte")
             B:Row(Row2({ type = "toggle", label = "Koordinaten auf der Weltkarte", key = "mapCoords",
                          description = "Deine Position und die des Mauszeigers. Zeigt die Karte schon eigene Koordinaten, bleibt diese Zeile weg." }))
