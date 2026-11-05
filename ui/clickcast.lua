@@ -712,13 +712,15 @@ CC.draft = draft
 -- loest der Client richtig zu "togglemenu" auf - das Menue des Rahmens
 -- oeffnet er trotzdem nur bei einem Klick OHNE Zusatztaste. Eine solche
 -- Belegung wirkt nie; die Seite bietet sie nicht an und sagt es bei alten.
+-- 1.0.1.3: ebenso "Ziel waehlen" (gemessen: Alt+Links auf Ziel des Ziels
+-- wechselt das Ziel nicht). Zauber mit Zusatztaste wirken.
 function CC.Works(b)
-    return not (b and b.action == "menu" and (b.mod or "") ~= "")
+    return not (b and (b.action == "menu" or b.action == "target") and (b.mod or "") ~= "")
 end
-CC.MENU_NOTE = "Menü öffnet das Spiel nur ohne Zusatztaste"
+CC.MENU_NOTE = "Ziel wählen und Menü gehen im Spiel nur ohne Zusatztaste"
 
 function CC.Pick(action, spell, rank)
-    if action == "menu" and (draft.mod or "") ~= "" then
+    if (action == "menu" or action == "target") and (draft.mod or "") ~= "" then
         print(WeintCodex.ColorText("accent", "[WeintCodex]") .. " " .. CC.MENU_NOTE
             .. " – wähle bei Zusatztaste „ohne“.")
         return false
@@ -894,7 +896,7 @@ function CC.BuildPicker(parent, width)
                 local d = C.textMuted
                 tip:AddLine("Zauber " .. e.id, d[1], d[2], d[3])
             end
-            if e.action == "menu" and (draft.mod or "") ~= "" then
+            if (e.action == "menu" or e.action == "target") and (draft.mod or "") ~= "" then
                 local w = C.warning or C.textMuted
                 tip:AddLine(CC.MENU_NOTE .. " – Zusatztaste „ohne“ wählen.", w[1], w[2], w[3], true)
             else

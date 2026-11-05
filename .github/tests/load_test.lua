@@ -7086,9 +7086,15 @@ do
         picker.tiles[4]:Click()
         assert(menu == nil and f1:GetAttribute("alt-spell3") == "Göttliche Pein", "Zauber ohne Raenge fragt nach")
         WeintCodex.OpenDropMenu = oldOpen
+        -- 1.0.1.3: Ziel waehlen nur ohne Zusatztaste (mit Zusatztaste gemessen wirkungslos).
         picker.tiles[1]:Click()
-        assert(f1:GetAttribute("alt-type3") == "target" and f1:GetAttribute("alt-spell3") == nil, "Ziel waehlen nicht gelegt")
-        CC.Remove(#CC.Bindings())
+        assert(f1:GetAttribute("alt-type3") ~= "target", "Ziel waehlen mit Zusatztaste gelegt")
+        local oMod = CC.draft.mod
+        CC.draft.mod = ""
+        picker.tiles[1]:Click()
+        assert(f1:GetAttribute("type3") == "target", "Ziel waehlen nicht gelegt")
+        CC.draft.mod = oMod
+        for i = #CC.Bindings(), 1, -1 do if CC.Bindings()[i].button == 3 then CC.Remove(i) end end
         _G.C_SpellBook, _G.Enum, _G.C_Spell = oldSB, oldEnum, oldCS
         -- "Standard" der Gruppenrahmen loescht die Zauber nicht.
         K.ResetModule("groupframes")
@@ -10869,6 +10875,9 @@ do
         assert(CC.Pick("menu") == false, "Menue auf Alt+Rechts angeboten")
         assert(CC.ActionText({ button = 2, mod = "alt-", action = "menu" }):find("wirkt nicht"), "alte Belegung ohne Hinweis")
         assert(not CC.ActionText({ button = 2, mod = "", action = "menu" }):find("wirkt nicht"), "Rechts ohne Zusatztaste falsch gewarnt")
+        d.button = 1
+        assert(CC.Pick("target") == false, "Ziel waehlen auf Alt+Links angeboten")
+        assert(CC.ActionText({ button = 1, mod = "alt-", action = "target" }):find("wirkt nicht"), "Ziel mit Alt ohne Hinweis")
         d.button, d.mod = oB, oM
         local rep = CC.ClickReport()
         assert(type(rep) == "table" and #rep >= 3, "Klickbericht leer")
