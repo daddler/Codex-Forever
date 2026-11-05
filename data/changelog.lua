@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.0.3.1",
+        date    = "05.11.2026",
+        notes   = {
+            "|cff7C6CFFGespräche zeigen vor jeder Antwort ihr Symbol|r – Ruhestein für den Heimatort, Beutel für den Händler, Lehrer, Flugmeister und Co. auf einen Blick statt überall ein Pfeil.",
+        },
+    },
+    {
         version = "1.0.3.0",
         date    = "05.11.2026",
         notes   = {

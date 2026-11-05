@@ -9,6 +9,11 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.0.3.1] – 2026-11-05
+
+- Gespräche im Codex-Stil: Gesprächsoptionen zeigen das Symbol des Spiels
+  (`C_GossipInfo.GetOptions().icon`) statt „›“; ohne Symbol bleibt der Pfeil.
+
 ## [1.0.3.0] – 2026-11-05
 
 - Gestaltungsmodus: Rechtsklick/Doppelklick auf den Platzhalter einer
