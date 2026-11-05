@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.0.1.9",
+        date    = "05.11.2026",
+        notes   = {
+            "|cff7C6CFFKein „Vom Spiel blockiert“ mehr beim Klick auf den Wegpunkt der Karte|r – der Questpfeil setzt den Wegpunkt des Spiels jetzt erst, wenn die Weltkarte zu ist.",
+        },
+    },
+    {
         version = "1.0.1.8",
         date    = "05.11.2026",
         notes   = {

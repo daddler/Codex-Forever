@@ -9,6 +9,13 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.0.1.9] – 2026-11-05
+
+- Behoben: „Verboten: CopyToClipboard()“ beim Klick auf den Wegpunkt der
+  Weltkarte. Der Questpfeil setzte den Wegpunkt des Spiels auch bei offener
+  Karte – die Wegpunkt-Marke entstand dabei im Aufruf von WeintCodex. Jetzt
+  erst nach dem Schließen der Karte.
+
 ## [1.0.1.8] – 2026-11-05
 
 - Behoben: `CompanionAtLeast` verglich mit Schwellen der alten Zählung
