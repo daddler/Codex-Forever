@@ -370,7 +370,8 @@ end)
 -- beschmutzt ist, samt den letzten Ereignissen davor. Nur lesen
 -- (issecurevariable), nie schreiben; halbsekuendlich, ohne Tabelle je Takt.
 BG.TAINT_WATCH = { { "MailFrame", "selectedTab" }, { "MailFrame", "activeSubFrame" },
-                   { "BankFrame", "currentBankPage" }, { "MerchantFrame", "selectedTab" } }
+                   { "BankFrame", "currentBankPage" }, { "MerchantFrame", "selectedTab" },
+                   { "BankPanel", "selectedTabID" }, { "BankPanel", "bankType" } }
 BG.taintFirst, BG.recentEv = {}, {}
 local watchEv = CreateFrame("Frame")
 for _, e in ipairs({ "MAIL_SHOW", "MAIL_CLOSED", "BANKFRAME_OPENED", "BANKFRAME_CLOSED", "MERCHANT_SHOW",
@@ -428,7 +429,9 @@ end
 -- Sucht, was an den Taschenknoepfen und im Spiel von WeintCodex angefasst
 -- (tainted) ist - genau das macht einen Klick des Spiels zu einem Klick
 -- des Addons.
-BG.CLICK_FRAMES = { "MerchantFrame", "BankFrame", "MailFrame", "TradeFrame", "AuctionHouseFrame",
+-- 1.0.2.0: BankPanel dazu (Fehlerbericht "Verboten: PurchaseBankTab()" -
+-- die Reiter der neuen Bank liegen dort, nicht am BankFrame).
+BG.CLICK_FRAMES = { "MerchantFrame", "BankFrame", "BankPanel", "MailFrame", "TradeFrame", "AuctionHouseFrame",
                     "GuildBankFrame", "StackSplitFrame" }
 BG.CLICK_GLOBALS = { "MerchantFrame_ResetRefundItem", "MerchantFrame_SetRefundItem", "ContainerFrame_GetExtendedPriceString",
                      "MERCHANT_ITEMS_PER_PAGE", "SpellCanTargetItem", "GetCursorInfo", "CursorHasItem", "ItemLocation" }
