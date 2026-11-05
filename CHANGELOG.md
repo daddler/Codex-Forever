@@ -9,6 +9,14 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.0.1.8] – 2026-11-05
+
+- Behoben: `CompanionAtLeast` verglich mit Schwellen der alten Zählung
+  (1.7, 2.0.1). Die Forever-Companion zählt seit dem Start ab 1.0.0 – sie
+  galt als zu alt, `character` und `character_sheet` gingen nie raus. Ohne
+  verfolgte Charaktere meldete die Companion auch keine Berufe an den Bot.
+  Fassungen unter 5 gelten jetzt als 5.5.
+
 ## [1.0.1.7] – 2026-11-05
 
 - Behoben: `PRO.Skills` hielt eine Antwort von `GetProfessions` ohne einen

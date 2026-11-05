@@ -297,6 +297,17 @@ local function CompanionAtLeast(major, minor, patch)
 
     gotMajor, gotMinor = tonumber(gotMajor), tonumber(gotMinor)
 
+    -- 1.0.1.8 (Bericht: Companion zeigt keine Charaktere, Discord keine
+    -- Berufe): die Forever-Companion hat ihre Zaehlung zum Start auf 1.0.0
+    -- zurueckgesetzt - sie ist der Nachfolger von 5.5.0 und kennt jeden
+    -- Typ. Alle Schwellen hier stammen aus der alten Zaehlung (1.7, 2.0.1),
+    -- also war jede neue Companion "zu alt": character_sheet und die
+    -- Charaktermeldung gingen nie raus. Unter 5 gilt deshalb als 5.5.
+    if gotMajor < 5 then
+        gotMajor, gotMinor = 5, 5
+        if major < 5 or (major == 5 and minor <= 5) then return true end
+    end
+
     if gotMajor ~= major then return gotMajor > major end
     if gotMinor ~= minor then return gotMinor > minor end
 
@@ -309,6 +320,8 @@ local function CompanionAtLeast(major, minor, patch)
     return gotPatch >= patch
 
 end
+
+WeintCodex.Companion.AtLeast = CompanionAtLeast
 
 ----------------------------------------------------------
 -- Inbox (Bot/Companion -> Addon): Nachrichtentypen

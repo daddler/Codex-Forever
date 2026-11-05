@@ -10915,6 +10915,21 @@ do
     Check(ok, "Gestaltungsmodus: Aktionsleisten 2 bis 8 verschiebbar" .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 1.0.1.8: die Forever-Companion zaehlt ab 1.0.0 - sie kennt alle Typen.
+do
+    local ok, err = pcall(function()
+        local live = _G.WeintCodex_CompanionLive
+        _G.WeintCodex_CompanionLive = { companionVersion = "1.0.2" }
+        local A = WeintCodex.Companion.AtLeast
+        assert(A(2, 0, 1) and A(1, 7), "Companion 1.0.2 gilt als zu alt - Charaktere gehen nie raus")
+        assert(not A(6, 0), "Forever-Companion als 6.0 durchgewunken")
+        _G.WeintCodex_CompanionLive = { companionVersion = "5.4.0" }
+        assert(A(2, 0, 1) and not A(5, 5), "alte Zaehlung verglichen falsch")
+        _G.WeintCodex_CompanionLive = live
+    end)
+    Check(ok, "Companion: Fassung 1.x (Forever) kennt Charakterstand und -meldung" .. (ok and "" or (": " .. tostring(err))))
+end
+
 -- 1.0.0.5: Trennstriche der Hauptleiste (Client 1.60.1) unsichtbar.
 do
     local AB = WeintCodex.UIActionBars

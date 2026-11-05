@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.0.1.8",
+        date    = "05.11.2026",
+        notes   = {
+            "|cff7C6CFFDeine Charaktere kommen wieder in der Companion an|r – und damit auch Berufe und Fertigkeit im Discord. WeintCodex hielt die neue Companion für zu alt und schickte ihr nichts.",
+        },
+    },
+    {
         version = "1.0.1.7",
         date    = "05.11.2026",
         notes   = {
