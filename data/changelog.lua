@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.0.1.2",
+        date    = "05.11.2026",
+        notes   = {
+            "|cff7C6CFFKlickzauber: „Menü“ nur noch ohne Zusatztaste|r – das Spiel öffnet das Menü eines Rahmens nur bei einem einfachen Klick. Mit Alt, Strg oder Umschalt wird es nicht mehr angeboten, und alte Belegungen zeigen, dass sie nicht wirken.",
+        },
+    },
+    {
         version = "1.0.1.1",
         date    = "05.11.2026",
         notes   = {

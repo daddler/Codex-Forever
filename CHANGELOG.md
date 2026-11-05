@@ -9,6 +9,13 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.0.1.2] – 2026-11-05
+
+- Geändert: „Menü“ bei den Klickzaubern nur noch ohne Zusatztaste. Gemessen
+  mit `/wcui klick`: Alt/Strg+Rechts kommt als `togglemenu` an, der Client
+  öffnet das Menü aber nur ohne Zusatztaste. Alte Belegungen tragen den
+  Hinweis „wirkt nicht“.
+
 ## [1.0.1.1] – 2026-11-05
 
 - Neu: `/wcui klick` – Messung für Klickzauber: Belegung des Rahmens unter
