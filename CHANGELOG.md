@@ -9,6 +9,12 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.0.3.0] – 2026-11-05
+
+- Gestaltungsmodus: Rechtsklick/Doppelklick auf den Platzhalter einer
+  Leiste des Spiels (`gbar_*`) öffnet die Seite „Leisten“ mit dieser Leiste
+  als `editBar` (`E.BarTarget`); Chat und Minikarte ihre eigene Seite.
+
 ## [1.0.2.9] – 2026-11-05
 
 - Spielmenü: „WeintCodex UI“ zwischen „Addons“ und „Bearbeitungsmodus“ –

@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.0.3.0",
+        date    = "05.11.2026",
+        notes   = {
+            "|cff7C6CFFRechtsklick auf eine Aktionsleiste im Gestaltungsmodus führt direkt zu ihren Einstellungen|r – mit genau dieser Leiste gewählt und markiert.",
+        },
+    },
+    {
         version = "1.0.2.9",
         date    = "05.11.2026",
         notes   = {
