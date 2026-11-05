@@ -9,6 +9,13 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.0.2.1] – 2026-11-05
+
+- Behoben: Lua-Fehler `GetAutoCompletePresenceID` beim Senden. Der
+  Messenger öffnete für Battle.net-Gespräche aus dem Verlauf (nach dem
+  Neuladen ohne Ziel) eine Flüsterzeile ohne Empfänger. Jetzt keine Zeile,
+  ein Hinweis im Chat.
+
 ## [1.0.2.0] – 2026-11-05
 
 - Messung: `/wcui taschen` und der Taint-Wächter prüfen auch `BankPanel`

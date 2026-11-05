@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.0.2.1",
+        date    = "05.11.2026",
+        notes   = {
+            "|cff7C6CFFKein Chat-Fehler mehr beim Antworten auf Battle.net-Freunde nach dem Neuladen|r – ohne bekannten Empfänger öffnet WeintCodex keine leere Flüsterzeile mehr; mit der nächsten Nachricht geht das Antworten wieder.",
+        },
+    },
+    {
         version = "1.0.2.0",
         date    = "05.11.2026",
         notes   = {
