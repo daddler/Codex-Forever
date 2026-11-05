@@ -9,6 +9,12 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.0.2.3] – 2026-11-05
+
+- Erinnerungen: Buff-Essen wird auch erkannt, wenn der Tooltip den Buff
+  nicht nennt (Essen mit Wirkdauer in Minuten, `R.EAT_TIP_WORDS`); „gut
+  genährt“/„genährt“ zählen als satt. Reines Heilessen bleibt außen vor.
+
 ## [1.0.2.2] – 2026-11-05
 
 - Behoben: Lua-Fehler „secret number value, while execution tainted by

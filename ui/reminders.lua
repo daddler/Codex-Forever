@@ -1048,7 +1048,12 @@ end
 
 -- "satt" (6.27.0.1, gemeldet vom Spieler: so heisst der Essensbuff auf
 -- Forever) nur als ganzes Wort - "Sattel" ist keiner.
-R.FED_WORDS = { "wohlgenährt", "well fed", "%f[%a]satt%f[%A]", "gesättigt" }
+R.FED_WORDS = { "wohlgenährt", "well fed", "%f[%a]satt%f[%A]", "gesättigt", "gut genährt", "genährt" }
+-- 1.0.2.3 (Bericht: "es fehlen einige Erinnerungen fuer Buff-Essen"):
+-- viele Speisen nennen den Buff gar nicht beim Namen, nur "Wenn Ihr
+-- mindestens 10 Sek. lang esst, erhaltet Ihr ... fuer 15 Min." - Essen,
+-- das waehrend des Essens einen Buff mit Dauer gibt, zaehlt deshalb auch.
+R.EAT_TIP_WORDS = { "%f[%a]esst%f[%A]", "zu essen", "beim essen", "spent eating", "while eating", "eating for" }
 R.XP_WORDS = { "erfahrung", "experience" }
 R.EATING_WORDS = { "essen", "food", "trinken", "drink" }
 
@@ -1227,7 +1232,8 @@ function R.BagItemKind(id)
         local tip = TooltipText(id)
         if not tip then return nil end
         if HasWord(tip, R.XP_WORDS) then entry = { kind = "xp" }
-        elseif HasWord(tip, R.FED_WORDS) then entry = { kind = "food" } end
+        elseif HasWord(tip, R.FED_WORDS) then entry = { kind = "food" }
+        elseif HasWord(tip, R.EAT_TIP_WORDS) and HasWord(tip, R.DURATION_WORDS) then entry = { kind = "food" } end
     end
     if entry then entry.name, entry.minLevel = name, type(minLevel) == "number" and minLevel or 0 end
     bagCache[id] = entry

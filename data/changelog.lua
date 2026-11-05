@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.0.2.3",
+        date    = "05.11.2026",
+        notes   = {
+            "|cff7C6CFFDie Erinnerung an Buff-Essen kennt mehr Speisen|r – auch Essen, das seinen Buff nicht beim Namen nennt („Wenn Ihr mindestens 10 Sek. lang esst, erhaltet Ihr … für 15 Min.“), und der Buff „Gut genährt“.",
+        },
+    },
+    {
         version = "1.0.2.2",
         date    = "05.11.2026",
         notes   = {

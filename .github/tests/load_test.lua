@@ -19802,6 +19802,21 @@ do
         assert(#R.BagBuffs({}) == 0, "Erinnerung trotz Buff")
         helpful = { { name = "Essen" } }
         assert(#R.BagBuffs({}) == 0, "Erinnerung beim Essen")
+        -- 1.0.2.3: Essen, das den Buff nicht beim Namen nennt.
+        local oTI3 = G.C_TooltipInfo
+        G.C_TooltipInfo = { GetItemByID = function() return { lines = { { leftText =
+            "Benutzen: Stellt im Verlauf von 30 Sek. 552 Gesundheit wieder her. Wenn Ihr mindestens 10 Sek. lang esst, erhaltet Ihr 8 Ausdauer für 15 Min." } } } end }
+        for k in pairs(R._bagCache) do R._bagCache[k] = nil end
+        helpful = {}
+        assert(#R.BagBuffs({}) == 1, "Buff-Essen ohne Buffnamen nicht erkannt")
+        G.C_TooltipInfo = { GetItemByID = function() return { lines = { { leftText =
+            "Benutzen: Stellt im Verlauf von 18 Sek. 61 Gesundheit wieder her. Ihr müsst beim Essen sitzen bleiben." } } } end }
+        for k in pairs(R._bagCache) do R._bagCache[k] = nil end
+        assert(#R.BagBuffs({}) == 0, "Brot ohne Buff als Buff-Essen erkannt")
+        helpful = { { name = "Gut genährt" } }
+        G.C_TooltipInfo = oTI3
+        for k in pairs(R._bagCache) do R._bagCache[k] = nil end
+        assert(#R.BagBuffs({}) == 0, "Erinnerung trotz Gut genährt")
         -- 6.30.55.2 Schriftrollen: Waffe, Klasse, schon aktiv.
         K.Set("reminders", "bagFood", false)
         K.Set("reminders", "bagElixir", true)
