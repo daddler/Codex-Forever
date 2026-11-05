@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.0.1.6",
+        date    = "05.11.2026",
+        notes   = {
+            "|cff7C6CFFBerufe und ihre Fertigkeit gehen nicht mehr verloren|r – direkt nach dem Einloggen kennt das Spiel die Berufe oft noch nicht; diese leere Antwort überschreibt den gemerkten Stand nicht mehr, und kurz danach wird noch einmal nachgesehen.",
+        },
+    },
+    {
         version = "1.0.1.5",
         date    = "05.11.2026",
         notes   = {

@@ -267,8 +267,14 @@ function PRO.RememberSkills()
     if not answered then return false end
     local m = PRO.Memory()
     if not m then return false end
-    local out = {}
-    for key, s in pairs(skills) do out[key] = { rank = s.rank, max = s.max } end
+    local out, n = {}, 0
+    for key, s in pairs(skills) do out[key] = { rank = s.rank, max = s.max } n = n + 1 end
+    -- 1.0.1.6 (Bericht: "der Bot zeigt nicht, welche Berufe gelernt wurden"):
+    -- direkt nach dem Einloggen antwortet der Client oft noch ohne Berufe -
+    -- eine leere Antwort ueberschreibt einen gemerkten Stand nicht. Einen
+    -- verlernten Beruf traegt SKILL_LINES_CHANGED nach, sobald der Client
+    -- einen anderen nennt.
+    if n == 0 and type(m.skills) == "table" and next(m.skills) ~= nil then return false end
     m.skills, m.skillsAt = out, Now()
     return true
 end
@@ -1138,7 +1144,11 @@ PRO.eventCount = {}
 ev:SetScript("OnEvent", function(_, event, id)
     PRO.eventCount[event] = (PRO.eventCount[event] or 0) + 1
     if event == "PLAYER_LOGIN" or event == "SKILL_LINES_CHANGED" then pcall(PRO.RememberSkills) end
-    if event == "PLAYER_LOGIN" then return end
+    if event == "PLAYER_LOGIN" then
+        -- 1.0.1.6: noch einmal, wenn der Client die Berufe sicher kennt.
+        if _G.C_Timer and _G.C_Timer.After then _G.C_Timer.After(10, function() pcall(PRO.RememberSkills) end) end
+        return
+    end
     if event == "TRADE_SKILL_SHOW" or event == "CRAFT_SHOW" then QueueScan(0.3) return end
     if event == "NEW_RECIPE_LEARNED" then
         local m = PRO.Memory()

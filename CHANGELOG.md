@@ -9,6 +9,13 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.0.1.6] – 2026-11-05
+
+- Behoben: Die Fertigkeit je Beruf (für Companion und Discord) konnte beim
+  Einloggen durch eine leere Antwort des Clients überschrieben werden. Leer
+  überschreibt nie einen gemerkten Stand; 10 s nach dem Einloggen wird noch
+  einmal gelesen.
+
 ## [1.0.1.5] – 2026-11-05
 
 - Behoben: Im Gestaltungsmodus fehlten die Platzhalter für Aktionsleiste
