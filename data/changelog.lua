@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.0.2.0",
+        date    = "05.11.2026",
+        notes   = {
+            "|cff7C6CFFDer Taschen-Bericht schaut jetzt auch in die neue Bank|r – meldet das Spiel „Vom Spiel blockiert“ beim Öffnen der Bank, hilft /wcui taschen, die Ursache zu finden.",
+        },
+    },
+    {
         version = "1.0.1.9",
         date    = "05.11.2026",
         notes   = {

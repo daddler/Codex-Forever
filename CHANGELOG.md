@@ -9,6 +9,12 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.0.2.0] – 2026-11-05
+
+- Messung: `/wcui taschen` und der Taint-Wächter prüfen auch `BankPanel`
+  (`selectedTabID`, `bankType`). Anlass: Fehlerbericht „Verboten:
+  PurchaseBankTab()“ beim Öffnen der Bank – Ursache offen.
+
 ## [1.0.1.9] – 2026-11-05
 
 - Behoben: „Verboten: CopyToClipboard()“ beim Klick auf den Wegpunkt der
