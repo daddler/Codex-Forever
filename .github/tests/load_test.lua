@@ -1862,7 +1862,7 @@ do
         G.C_GossipInfo = {
             GetText = function() return "Seid gegrüßt." end,
             GetOptions = function() return { { name = "Zweite", gossipOptionID = 22, orderIndex = 2 },
-                                             { name = "Erste", gossipOptionID = 11, orderIndex = 1 } } end,
+                                             { name = "Erste", gossipOptionID = 11, orderIndex = 1, icon = 132052 } } end,
             GetAvailableQuests = function() return { { title = "Wölfe", questID = 501 } } end,
             GetActiveQuests = function() return { { title = "Briefe", questID = 502, isComplete = true } } end,
             SelectOption = Log("SelectOption"), SelectAvailableQuest = Log("SelectAvailableQuest"),
@@ -1947,6 +1947,8 @@ do
             and DL.list[2].kind == "available" and DL.list[3].text == "Erste" and DL.list[4].text == "Zweite",
             "Zeilen: " .. #DL.list)
         -- 6.23.2.2: abgabebereit und neu unterscheidbar.
+        -- 1.0.3.1: Symbol der Option vom Spiel, sonst das Zeichen.
+        assert(DL.list[3].icon == 132052 and DL.list[4].icon == nil, "Symbol der Gespraechsoption fehlt")
         assert(DL.list[1].status == "done" and DL.list[2].status == "new" and DL.list[3].status == nil
             and DL.LOOK.done.tag ~= DL.LOOK.open.tag and DL.LOOK.open.label ~= DL.LOOK.done.label,
             "Status der Quests nicht unterscheidbar")

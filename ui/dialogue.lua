@@ -252,6 +252,12 @@ local function Row(i)
     r.mark = K.NewText(r, 13)
     r.mark:SetPoint("LEFT", r.box, "RIGHT", 10, 0)
     r.mark:SetWidth(12)
+    -- 1.0.3.1: Symbol der Gespraechsoption (Ruhestein, Haendler, Lehrer ...)
+    -- an der Stelle des Zeichens.
+    r.markIcon = r:CreateTexture(nil, "ARTWORK")
+    r.markIcon:SetSize(16, 16)
+    r.markIcon:SetPoint("CENTER", r.mark, "CENTER", 0, 0)
+    r.markIcon:Hide()
     r.label = Serif(K.NewText(r, 15), 15)
     r.label:SetPoint("LEFT", r.mark, "RIGHT", 6, 0)
     r.tag = K.NewText(r, 11)
@@ -616,10 +622,10 @@ DL.rewards = {}          -- { { kind, index, name, tex, count }, ... }
 
 -- status: "done" (abgabebereit), "open" (laeuft noch), "new" (angeboten),
 -- nil (Antwort, oder der Client sagt es nicht - dann kein Etikett).
-local function AddLine(text, mark, kind, id, status)
+local function AddLine(text, mark, kind, id, status, icon)
     local l = DL.list
     if #l >= DL.MAX_ROWS then return end
-    l[#l + 1] = { text = text, mark = mark, kind = kind, id = id, status = status }
+    l[#l + 1] = { text = text, mark = mark, kind = kind, id = id, status = status, icon = icon }
 end
 
 local function AddItems(kind, n)
@@ -686,7 +692,13 @@ function DL.Collect(state)
         end
         local opts = gi.GetOptions() or {}
         table.sort(opts, function(a, b) return (Plain(a.orderIndex) or 0) < (Plain(b.orderIndex) or 0) end)
-        for _, o in ipairs(opts) do AddLine(Str(o.name), "›", "option", Plain(o.gossipOptionID)) end
+        -- 1.0.3.1 (Wunsch: "eigene Symbole statt Pfeile - Heimatort, Haendler
+        -- auf einen Blick"): das Symbol, das das Spiel der Option gibt.
+        for _, o in ipairs(opts) do
+            local ic = Plain(o.icon)
+            if type(ic) ~= "number" and type(ic) ~= "string" then ic = nil end
+            AddLine(Str(o.name), "›", "option", Plain(o.gossipOptionID), nil, ic)
+        end
     elseif state == "greeting" then
         c.text = Str(Call("GetGreetingText"))
         for i = 1, Num("GetNumActiveQuests") do
@@ -804,7 +816,14 @@ function DL.Draw(c)
         r.index = i
         r.num:SetText(i <= 9 and tostring(i) or "")
         r.box:SetShown(i <= 9)
-        r.mark:SetText(l.mark)
+        if l.icon then
+            r.mark:SetText("")
+            r.markIcon:SetTexture(l.icon)
+            r.markIcon:Show()
+        else
+            r.mark:SetText(l.mark)
+            r.markIcon:Hide()
+        end
         local ar, ag, ab = Accent()
         local m = C.textMuted
         local look = DL.LOOK[l.status or "none"]
