@@ -176,11 +176,18 @@ function QH.HasSkill(line, min)
     return type(s) == "table" and type(s.rank) == "number" and s.rank >= (min or 0)
 end
 
+QH.ABOVE = 10
+
 -- "avail", "low" oder nil: kann ich die Quest annehmen?
 function QH.Offer(id, q, me)
     if not (me.level and me.race and me.class) then return nil end
     if log[id] then return nil end
     if (q[3] or 0) > me.level then return nil end
+    -- 1.0.0.8 (Bericht: "in Ironforge viele Quests auf Stufe 60, ich bin 6"):
+    -- eine Quest weit ueber der eigenen Stufe, deren "ab Stufe" fehlt oder 1
+    -- ist, ist ein Loch in den Daten, kein Angebot. Wie Questie ab Werk
+    -- (hoechstens die eigene Stufe): mehr als QH.ABOVE Stufen darueber nie.
+    if (q[2] or 0) > me.level + QH.ABOVE then return nil end
     if not Bit(q[4], me.race) or not Bit(q[5], me.class) then return nil end
     -- 1.0.0.3 (Bericht zum Start: "viele Quests auf der Minikarte, die noch
     -- nicht angenommen werden koennen"): wie Questie auch Hoechststufe,

@@ -17,5 +17,11 @@ dofile(path)
 local t = mods.QuestieQuestBlacklist:Load()
 local ids = {}
 for id, v in pairs(t) do if v then ids[#ids + 1] = id end end
+-- 1.0.0.8: Questie blendet ausserdem ab Werk aus: Kriegsanstrengung von
+-- Ahn'Qiraj (showAQWarEffortQuests = false) und Invasionen ausserhalb
+-- ihrer Phase. Beide gibt es auf Forever nicht.
+for _, list in ipairs({ mods.QuestieQuestBlacklist.AQWarEffortQuests or {}, mods.QuestieQuestBlacklist.InvasionQuests or {} }) do
+    for id, v in pairs(list) do if v and not t[id] then ids[#ids + 1] = id end end
+end
 table.sort(ids)
 io.write(table.concat(ids, ","), "\n")

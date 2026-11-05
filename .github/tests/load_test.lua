@@ -1421,6 +1421,8 @@ do
         local function Q(extra) return QH.Parse("X\t6\t1\t0\t0\t10\t\t10\t\t\t\t\t\t\t\t" .. extra) end
         assert(QH.Offer(901, Q("0\t0\t0\t\t"), me) == "avail", "Grundquest nicht angeboten")
         assert(QH.Offer(902, Q("0\t0\t5\t\t"), me) == nil, "ueber der Hoechststufe angeboten")
+        -- 1.0.0.8: Stufe 60, "ab Stufe 1", Charakter Stufe 6 - nicht angeboten.
+        assert(QH.Offer(911, QH.Parse("X\t60\t1\t0\t0\t10\t\t10\t\t\t\t\t\t\t\t0\t0\t0\t\t"), me) == nil, "Quest Stufe 60 fuer Stufe 6 angeboten")
         assert(QH.Offer(903, Q("0\t0\t0\t\tr"), me) == nil, "Rufquest ohne Ruf angeboten")
         assert(QH.Offer(904, Q("185\t50\t0\t\t"), me) == nil, "Berufsquest ohne Beruf angeboten")
         done[905] = true
