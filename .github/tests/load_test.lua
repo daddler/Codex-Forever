@@ -5233,29 +5233,25 @@ do
 end
 
 -- 6.35.1.0: Eintrag "WeintCodex UI" im Spielmenue.
+-- 1.0.2.2: eigener Knopf unter dem Menue, nie AddButton (Taint im
+-- Bearbeitungsmodus).
 do
     local O = WeintCodex.UIOptions
     local ok, err = pcall(function()
-        local added
-        local gm = { InitButtons = function() end }
-        function gm:AddButton(text, fn) added = { text, fn } end
-        O._savedGM = { _G.GameMenuFrame, _G.hooksecurefunc }
-        _G.hooksecurefunc = function(obj, name, fn)
-            local orig = obj[name]
-            obj[name] = function(...) orig(...) fn(...) end
-        end
+        local gm = CreateFrame("Frame", nil, UIParent)
+        local added = false
+        function gm:AddButton() added = true end
+        local savedGM = _G.GameMenuFrame
         _G.GameMenuFrame, O.gameMenuHooked = gm, nil
         assert(O.HookGameMenu(), "Haken nicht gesetzt")
-        gm:InitButtons()
-        assert(added and added[1]:find("Weint", 1, true) and added[1]:find("Codex", 1, true)
-            and type(added[2]) == "function", "kein Eintrag im Spielmenue")
-        -- Platz direkt hinter dem Bearbeitungsmodus.
-        local edit = { layoutIndex = 4, GetText = function() return _G.HUD_EDIT_MODE_MENU or "Bearbeitungsmodus" end }
-        local mine = { layoutIndex = 9 }
-        local pool = { EnumerateActive = function() return pairs({ [edit] = true, [mine] = true }) end }
-        assert(O.PlaceGameMenuButton({ buttonPool = pool }, mine) and mine.layoutIndex == 4.5, "nicht unter dem Bearbeitungsmodus")
+        gm:Show()
+        local f = gm:GetScript("OnShow")
+        if f then f(gm) end
+        _G.GameMenuFrame = savedGM
+        assert(not added, "Knopf ueber AddButton in den Vorrat des Spielmenues gelegt")
+        local b = O.gameMenuButton
+        assert(b and b:IsShown(), "kein Eintrag unter dem Spielmenue")
     end)
-    if O._savedGM then _G.GameMenuFrame, _G.hooksecurefunc = O._savedGM[1], O._savedGM[2] O._savedGM = nil end
     Check(ok, "Spielmenue: Eintrag WeintCodex UI" .. (ok and "" or (": " .. tostring(err))))
 end
 

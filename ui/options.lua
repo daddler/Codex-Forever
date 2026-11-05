@@ -1913,27 +1913,40 @@ function O.PlaceGameMenuButton(gm, mine)
     return true
 end
 
+-- 1.0.2.2 (Lua-Fehler im Bearbeitungsmodus: "attempt to compare ... secret
+-- number value, while execution tainted by 'WeintCodex'", CompactUnitFrame):
+-- ein Knopf ueber AddButton landet im Knopf-Vorrat des Spielmenues, und
+-- der Haken auf InitButtons laeuft mitten in dessen Aufbau - danach galt
+-- der Weg ueber "Bearbeitungsmodus" als von WeintCodex, und das Spiel
+-- scheiterte an seinen eigenen geheimen Werten. Jetzt ein EIGENER Knopf
+-- unter dem Menue: nichts im Vorrat, kein Haken auf InitButtons, nur
+-- OnShow/OnHide des Menues.
 function O.HookGameMenu()
     local gm = _G.GameMenuFrame
-    if O.gameMenuHooked or type(gm) ~= "table" or type(gm.InitButtons) ~= "function" or not _G.hooksecurefunc then
-        return false
-    end
+    if O.gameMenuHooked or type(gm) ~= "table" or not gm.HookScript then return false end
     O.gameMenuHooked = true
-    _G.hooksecurefunc(gm, "InitButtons", function(self)
-        if type(self.AddButton) ~= "function" then return end
-        local ok, b = pcall(self.AddButton, self, O.GameMenuText(), function()
-            if _G.HideUIPanel then pcall(_G.HideUIPanel, self) else self:Hide() end
-            O.Show()
-        end)
-        -- Gibt AddButton den Knopf nicht zurueck: am eigenen Text erkennen.
-        if ok and type(b) ~= "table" and self.buttonPool and self.buttonPool.EnumerateActive then
-            local mine = O.GameMenuText()
-            for x in self.buttonPool:EnumerateActive() do
-                if x.GetText and x:GetText() == mine then b = x end
-            end
-        end
-        if ok then pcall(O.PlaceGameMenuButton, self, b) end
+    local b
+    local function Make()
+        if b then return b end
+        b = WeintCodex.CreateButton(UIParent, { text = O.GameMenuText(), kind = "secondary", height = 26, size = 12,
+            radius = 13, backdrop = "bgDark", onClick = function()
+                if _G.HideUIPanel then pcall(_G.HideUIPanel, gm) else gm:Hide() end
+                O.Show()
+            end })
+        b:SetWidth(180)
+        b:SetFrameStrata("DIALOG")
+        b:Hide()
+        O.gameMenuButton = b
+        return b
+    end
+    gm:HookScript("OnShow", function()
+        if K.InCombat() then return end
+        local btn = Make()
+        btn:ClearAllPoints()
+        btn:SetPoint("TOP", gm, "BOTTOM", 0, -8)
+        btn:Show()
     end)
+    gm:HookScript("OnHide", function() if b then b:Hide() end end)
     return true
 end
 O.HookGameMenu()
