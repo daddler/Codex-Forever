@@ -7655,6 +7655,18 @@ do
         end
         skills = PRO.Skills()
         assert(skills.tailoring and skills.tailoring.rank == 30, "Fertigkeitsliste nicht gelesen")
+        -- 1.0.1.7: GetProfessions ohne Beruf zaehlt nicht - die Liste fragt.
+        G.GetProfessions = function() return nil end
+        skills = PRO.Skills()
+        assert(skills.tailoring and skills.tailoring.rank == 30, "leeres GetProfessions verdeckt die Fertigkeitsliste")
+        G.GetProfessions = nil
+        -- Englischer Client.
+        G.GetSkillLineInfo = function(i)
+            if i == 1 then return "Professions", true end
+            return "First Aid", false, nil, 55, 0, 0, 150
+        end
+        skills = PRO.Skills()
+        assert(skills["first-aid"] and skills["first-aid"].rank == 55, "englischer Berufsname nicht erkannt")
         G.GetNumSkillLines, G.GetSkillLineInfo = nil, nil
         skills, answered = PRO.Skills()
         assert(not answered and next(skills) == nil, "ohne Abfrage eine Fertigkeit erfunden")

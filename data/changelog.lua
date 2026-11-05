@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.0.1.7",
+        date    = "05.11.2026",
+        notes   = {
+            "|cff7C6CFFBerufe und Fertigkeit werden jetzt zuverlässig erkannt|r – auch wenn das Spiel sie nur über die Fertigkeitsliste nennt oder auf Englisch läuft. Damit erscheinen sie in der Companion und im Discord.",
+        },
+    },
+    {
         version = "1.0.1.6",
         date    = "05.11.2026",
         notes   = {

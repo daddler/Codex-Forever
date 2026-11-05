@@ -124,7 +124,13 @@ function PRO.Skills()
     local GP, GPI = _G.GetProfessions, _G.GetProfessionInfo
     if type(GP) == "function" and type(GPI) == "function" then
         local res = { pcall(GP) }
-        if res[1] then
+        -- 1.0.1.7 (Bericht: Discord zeigt keine Berufe): antwortet
+        -- GetProfessions ohne einen einzigen Beruf (Forever direkt nach dem
+        -- Einloggen, oder der Client kennt die Funktion nur dem Namen nach),
+        -- gilt das NICHT als Antwort - dann fragt die Fertigkeitsliste.
+        local any = false
+        for i = 2, 7 do if type(Plain(res[i])) == "number" then any = true end end
+        if res[1] and any then
             answered = true
             -- Sechs Plaetze (Haupt 1, Haupt 2, Archaeologie, Angeln, Kochen,
             -- Erste Hilfe) MIT Luecken - ipairs braeche an der ersten ab.
@@ -139,7 +145,7 @@ function PRO.Skills()
             end
         end
     end
-    if not answered and type(_G.GetNumSkillLines) == "function" and type(_G.GetSkillLineInfo) == "function" then
+    if next(out) == nil and type(_G.GetNumSkillLines) == "function" and type(_G.GetSkillLineInfo) == "function" then
         local ok, n = pcall(_G.GetNumSkillLines)
         n = ok and Plain(n) or nil
         if type(n) == "number" then
@@ -160,6 +166,12 @@ function PRO.KeyByName(name)
     if type(name) ~= "string" then return nil end
     for _, p in ipairs(P and P.PROFS or {}) do
         if name == PRO.ProfName(p.key) or name == p.name then return p.key end
+    end
+    -- 1.0.1.7: englischer Client ("Tailoring", "First Aid") - der Schluessel
+    -- ist der englische Name klein und ohne Leerzeichen.
+    local flat = name:lower():gsub("%s+", "")
+    for _, p in ipairs(P and P.PROFS or {}) do
+        if flat == (p.key:gsub("%-", "")) or flat == (tostring(p.name):lower():gsub("%s+", "")) then return p.key end
     end
     return nil
 end

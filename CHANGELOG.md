@@ -9,6 +9,14 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.0.1.7] – 2026-11-05
+
+- Behoben: `PRO.Skills` hielt eine Antwort von `GetProfessions` ohne einen
+  einzigen Beruf für gültig und fragte die Fertigkeitsliste
+  (`GetSkillLineInfo`) nie – gespeichert wurde „keine Berufe“, Companion und
+  Discord zeigten keine. Jetzt fragt sie, sobald nichts erkannt ist; dazu
+  englische Berufsnamen („First Aid“).
+
 ## [1.0.1.6] – 2026-11-05
 
 - Behoben: Die Fertigkeit je Beruf (für Companion und Discord) konnte beim
