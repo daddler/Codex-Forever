@@ -10862,6 +10862,14 @@ do
         CC.ApplyTo(pf, { { button = 1, mod = "alt-", action = "target" }, { button = 2, mod = "alt-", action = "menu" } })
         assert(pf:GetAttribute("alt-type1") == "target" and pf:GetAttribute("alt-type2") == "togglemenu",
             "Alt+Links/Rechts nicht gesetzt")
+        -- 1.0.1.2: Menue mit Zusatztaste oeffnet das Spiel nie - nicht angeboten.
+        local d = CC.draft
+        local oB, oM = d.button, d.mod
+        d.button, d.mod = 2, "alt-"
+        assert(CC.Pick("menu") == false, "Menue auf Alt+Rechts angeboten")
+        assert(CC.ActionText({ button = 2, mod = "alt-", action = "menu" }):find("wirkt nicht"), "alte Belegung ohne Hinweis")
+        assert(not CC.ActionText({ button = 2, mod = "", action = "menu" }):find("wirkt nicht"), "Rechts ohne Zusatztaste falsch gewarnt")
+        d.button, d.mod = oB, oM
         local rep = CC.ClickReport()
         assert(type(rep) == "table" and #rep >= 3, "Klickbericht leer")
         CC.ApplyTo(pf, {})

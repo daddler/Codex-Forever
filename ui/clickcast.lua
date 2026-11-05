@@ -212,6 +212,7 @@ function CC.ActionText(b)
         if b.rank then return (b.spell or "?") .. " (" .. b.rank .. ")" .. note end
         return (b.spell or "?") .. note
     end
+    if not CC.Works(b) then return Short(CC.ACTIONS, b.action) .. "  –  wirkt nicht: " .. CC.MENU_NOTE end
     return Short(CC.ACTIONS, b.action)
 end
 
@@ -707,7 +708,21 @@ CC.draft = draft
 
 -- Ein Klick in der Tafel: legt Zauber (oder Ziel/Menue) auf die Taste.
 -- rank: "Rang 3" wie im Zauberbuch; nil oder "" = der hoechste.
+-- 1.0.1.2 (im Spiel gemessen, /wcui klick): Alt+Rechts und Strg+Rechts
+-- loest der Client richtig zu "togglemenu" auf - das Menue des Rahmens
+-- oeffnet er trotzdem nur bei einem Klick OHNE Zusatztaste. Eine solche
+-- Belegung wirkt nie; die Seite bietet sie nicht an und sagt es bei alten.
+function CC.Works(b)
+    return not (b and b.action == "menu" and (b.mod or "") ~= "")
+end
+CC.MENU_NOTE = "Menü öffnet das Spiel nur ohne Zusatztaste"
+
 function CC.Pick(action, spell, rank)
+    if action == "menu" and (draft.mod or "") ~= "" then
+        print(WeintCodex.ColorText("accent", "[WeintCodex]") .. " " .. CC.MENU_NOTE
+            .. " – wähle bei Zusatztaste „ohne“.")
+        return false
+    end
     local b = { button = draft.button, mod = draft.mod, action = action }
     if action == "spell" then
         if type(spell) ~= "string" or spell == "" then return false end
@@ -879,7 +894,12 @@ function CC.BuildPicker(parent, width)
                 local d = C.textMuted
                 tip:AddLine("Zauber " .. e.id, d[1], d[2], d[3])
             end
-            tip:AddLine("Klick: auf " .. CC.KeyText(draft) .. " legen", a[1], a[2], a[3])
+            if e.action == "menu" and (draft.mod or "") ~= "" then
+                local w = C.warning or C.textMuted
+                tip:AddLine(CC.MENU_NOTE .. " – Zusatztaste „ohne“ wählen.", w[1], w[2], w[3], true)
+            else
+                tip:AddLine("Klick: auf " .. CC.KeyText(draft) .. " legen", a[1], a[2], a[3])
+            end
             local ranks = e.ranks or {}
             if #ranks > 1 then
                 local d = C.textMuted
