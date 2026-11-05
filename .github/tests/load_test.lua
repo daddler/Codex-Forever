@@ -11017,6 +11017,19 @@ do
     Check(ok, "Aktionsleisten: gewaehlte Leiste beim Einstellen markiert" .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 1.0.3.0: Rechtsklick auf den Platzhalter einer Leiste fuehrt zu genau ihr.
+do
+    local E = WeintCodex.UIEditMode
+    local ok, err = pcall(function()
+        local m, i = E.BarTarget("gbar_bar3")
+        assert(m == "actionbars" and i == 3, "Leiste 3: " .. tostring(m) .. " " .. tostring(i))
+        m, i = E.BarTarget("gbar_bar7")
+        assert(m == "actionbars" and i == 7, "Leiste 7 nicht gefunden")
+        assert(E.BarTarget("uf_player") == nil, "Einheitenrahmen als Leiste")
+    end)
+    Check(ok, "Gestaltungsmodus: Rechtsklick auf eine Leiste oeffnet ihre Einstellungen" .. (ok and "" or (": " .. tostring(err))))
+end
+
 -- 1.0.0.5: Trennstriche der Hauptleiste (Client 1.60.1) unsichtbar.
 do
     local AB = WeintCodex.UIActionBars

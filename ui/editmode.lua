@@ -628,12 +628,42 @@ function E.ModuleFor(key)
     return nil
 end
 
+-- 1.0.3.0 (Wunsch: "Rechtsklick auf eine Leiste - direkt in die Optionen
+-- genau dieser Leiste"): Platzhalter der Leisten des Spiels (gbar_<key>)
+-- fuehren auf die Seite "Leisten" mit dieser Leiste gewaehlt; Chat und
+-- Minikarte auf ihre Seite.
+function E.BarTarget(key)
+    if type(key) ~= "string" or key:sub(1, 5) ~= "gbar_" then return nil end
+    local entryKey = key:sub(6)
+    local entry
+    for _, e in ipairs(K.GAME_LAYOUT or {}) do if e.key == entryKey then entry = e break end end
+    if not entry then return nil end
+    if entry.sys == "ChatFrame" then return "chat" end
+    if entry.sys == "Minimap" then return "minimap" end
+    local AB = WeintCodex.UIActionBars
+    for i, b in ipairs(AB and AB.BARS or {}) do
+        for _, name in ipairs(b.bars) do
+            for _, f in ipairs(entry.frames or {}) do
+                if f == name then return "actionbars", i end
+            end
+        end
+    end
+    return "actionbars", nil
+end
+
 function E.OpenSettings(key)
     local mod = E.ModuleFor(key or "")
+    local barMod, barIndex = E.BarTarget(key)
     reopen = false
     K.SetUnlocked(false)
     local O = WeintCodex.UIOptions
-    if O and O.Show then O.Show(mod) end
+    if not (O and O.Show) then return end
+    if barMod == "actionbars" then
+        if barIndex then K.Set("actionbars", "editBar", barIndex) end
+        O.Show("actionbars", O.PageIndex and O.PageIndex("actionbars", "leisten") or nil)
+        return
+    end
+    O.Show(barMod or mod)
 end
 
 function E.IsShown() return bar ~= nil and bar:IsShown() end
