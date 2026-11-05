@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.0.2.4",
+        date    = "05.11.2026",
+        notes   = {
+            "|cff7C6CFFDer Strich unter dem Chat-Reiter wechselt jetzt beim Anwählen|r – vorher folgte er nur dem Rechtsklick.",
+        },
+    },
+    {
         version = "1.0.2.3",
         date    = "05.11.2026",
         notes   = {

@@ -9,6 +9,13 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.0.2.4] – 2026-11-05
+
+- Behoben: Der Strich unter dem aktiven Chat-Reiter folgte dem zuletzt
+  per Rechtsklick geöffneten Menü (`FCF_GetCurrentChatFrame`) statt dem
+  gewählten Fenster, und der Linksklick zeichnete nicht neu. Jetzt
+  `FCFDock_GetSelectedWindow` und ein Haken am Reiter selbst.
+
 ## [1.0.2.3] – 2026-11-05
 
 - Erinnerungen: Buff-Essen wird auch erkannt, wenn der Tooltip den Buff
