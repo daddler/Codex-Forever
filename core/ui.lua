@@ -3374,7 +3374,7 @@ end
 -- gesicherten /reload-Makroknopf aus - ein Tastendruck mehr als /reload.
 -- Hat schon ein anderes Addon /rl, bleibt es dessen.
 local rlFrame
-function WeintCodex.ReloadPrompt()
+function WeintCodex.ReloadPrompt(text)
     if InCombatLockdown and InCombatLockdown() then
         print(WeintCodex.ColorText("accent", "[WeintCodex]") .. " Im Kampf nicht – danach /rl oder /reload.")
         return
@@ -3392,6 +3392,7 @@ function WeintCodex.ReloadPrompt()
         local lvl = (surf:GetFrameLevel() or 1) + 2
         local t = WeintCodex.Label(surf, "Oberfläche neu laden?", { size = 13, color = "textBright" })
         t:SetPoint("TOP", surf, "TOP", 0, -18)
+        f.title = t
         local go = WeintCodex.CreateButton(surf, { text = "Neu laden (Enter)", kind = "primary", height = 26, size = 12,
                                                    radius = 13, backdrop = "bgDark" })
         go:SetWidth(150)
@@ -3425,6 +3426,11 @@ function WeintCodex.ReloadPrompt()
         -- Erst verbergen, damit das erste Show() OnShow ausloest (Enter).
         f:Hide()
         rlFrame = f
+    end
+    -- 1.0.0.6: eigener Text (Leisten eingeschaltet), sonst der uebliche.
+    if rlFrame.title and rlFrame.title.SetText then
+        rlFrame.title:SetText(type(text) == "string" and text or "Oberfläche neu laden?")
+        if text and rlFrame.SetWidth then rlFrame:SetWidth(300) elseif rlFrame.SetWidth then rlFrame:SetWidth(260) end
     end
     rlFrame:Show()
 end

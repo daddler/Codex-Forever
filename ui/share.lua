@@ -465,8 +465,17 @@ function SH.OnLogin()
     local bars = SH.NewBars(p.bars)
     local ok = SH.ApplyBars(bars)
     if not ok then return end
+    -- 1.0.0.6 (Bild einer Spielerin: Leisten uebereinander, erst der
+    -- Bearbeitungsmodus ordnete sie): ohne MultiActionBar_Update (seit
+    -- 1.0.0.2, es verunreinigte das Spiel) ordnet das Spiel die frisch
+    -- eingeschalteten Leisten erst beim naechsten Laden. Darum fragt
+    -- WeintCodex einmal nach dem Neuladen - ueber den gesicherten Knopf,
+    -- Neuladen aus Addon-Code sperrt das Spiel.
     print(WeintCodex.ColorText("accent", "[WeintCodex]") .. " Aktionsleisten eingeschaltet (" .. SH.CountBars(bars)
-        .. " zusätzliche an) – ausschalten geht unter Aktionsleisten → Leisten.")
+        .. " zusätzliche an) – einmal neu laden, dann ordnet das Spiel sie. Ausschalten geht unter Aktionsleisten → Leisten.")
+    if WeintCodex.ReloadPrompt and _G.C_Timer and _G.C_Timer.After then
+        _G.C_Timer.After(3, function() WeintCodex.ReloadPrompt("Leisten eingeschaltet – neu laden?") end)
+    end
     st.barsFrom = name
 end
 
