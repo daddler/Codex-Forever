@@ -9,6 +9,12 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.0.2.5] – 2026-11-05
+
+- Klickzauber: `clickHelpfulOnly` ab Werk aus – die Tafel zeigt alle aktiven
+  Zauber; auf Mausrad und Tastatur-Tasten (wirken auf jede Einheit unter der
+  Maus) immer alle.
+
 ## [1.0.2.4] – 2026-11-05
 
 - Behoben: Der Strich unter dem aktiven Chat-Reiter folgte dem zuletzt

@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.0.2.5",
+        date    = "05.11.2026",
+        notes   = {
+            "|cff7C6CFFKlickzauber: alle Zauber aus dem Zauberbuch zum Belegen|r – nicht mehr nur die hilfreichen. Auf Mausrad und Tasten stehen immer alle; „Nur hilfreiche Zauber“ lässt sich weiter einschalten.",
+        },
+    },
+    {
         version = "1.0.2.4",
         date    = "05.11.2026",
         notes   = {
