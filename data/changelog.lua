@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.0.1.4",
+        date    = "05.11.2026",
+        notes   = {
+            "|cff7C6CFFKlickzauber: die Seite sagt jetzt, was fest ist|r – auf allen Rahmen, auch Spieler und Ziel, wählt Links das Ziel und Rechts öffnet das Menü, beides nur ohne Zusatztaste.",
+        },
+    },
+    {
         version = "1.0.1.3",
         date    = "05.11.2026",
         notes   = {
