@@ -10983,6 +10983,25 @@ do
     Check(ok, "Chat: aktiver Reiter = gewaehltes Fenster" .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 1.0.2.6: Rechtsklick > Fluestern waehlt genau dieses Gespraech, auch
+-- wenn es nur aus dem Verlauf stammt.
+do
+    local MS, K = WeintCodex.UIMessenger, WeintCodex.UIKit
+    local ok, err = pcall(function()
+        local oldActive = MS.Active
+        MS.Active = function() return true end
+        local key = MS.KeyForTarget("WHISPER", "Chantalle")
+        local c = MS.Conv and MS.Conv(key)
+        local eb = { GetAttribute = function(_, a) if a == "chatType" then return "WHISPER" end return "Chantalle" end }
+        MS.historyMode = true
+        MS.OnChatEdit(eb)
+        MS.Active = oldActive
+        assert(MS.current == key, "Fluestern waehlt nicht die angefluesterte Person: " .. tostring(MS.current))
+        assert(MS.historyMode == false, "Fenster bleibt im Verlauf")
+    end)
+    Check(ok, "Messenger: Fluestern waehlt das Gespraech der Person" .. (ok and "" or (": " .. tostring(err))))
+end
+
 -- 1.0.0.5: Trennstriche der Hauptleiste (Client 1.60.1) unsichtbar.
 do
     local AB = WeintCodex.UIActionBars

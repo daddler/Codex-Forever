@@ -1500,6 +1500,14 @@ function MS.OnChatEdit(eb)
     lastEdit[eb] = sig
     local key = MS.KeyForTarget(kind, target)
     if not key then return end
+    -- 1.0.2.6 (Video einer Spielerin: Rechtsklick > Fluestern oeffnete den
+    -- Messenger beim falschen Gespraech, im Verlauf): ein Gespraech nur aus
+    -- dem Verlauf galt als "nicht sichtbar", das Fenster sprang aufs erste
+    -- sichtbare. Wer selbst fluestern will, meint dieses Gespraech - es
+    -- gilt ab jetzt als laufend, und das Fenster zeigt Gespraeche, nicht den
+    -- Verlauf.
+    if conv[key] then conv[key].live = true end
+    MS.historyMode = false
     if win and win:IsShown() then
         MS.Select(key)
     else
