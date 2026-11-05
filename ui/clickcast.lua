@@ -1049,7 +1049,7 @@ function CC.BuildPage(B)
     local class = PlayerClass()
     local label = class and WeintCodex.Names and WeintCodex.Names.ClassLabel(class) or "deine Klasse"
     B:Section("Belegung – " .. tostring(label),
-        "Klick mit Taste auf einen Gruppen- oder Schlachtzugsrahmen (auch die des Spiels, wenn du die Oberfläche nicht nutzt) wirkt den Zauber auf diese Einheit – ohne sie erst anzuwählen. Gilt für diese Klasse. Im Kampf änderst du nichts; es greift danach.")
+        "Klick mit Taste auf einen Gruppen- oder Schlachtzugsrahmen (auch die des Spiels, wenn du die Oberfläche nicht nutzt) wirkt den Zauber auf diese Einheit – ohne sie erst anzuwählen. Gilt für diese Klasse. Im Kampf änderst du nichts; es greift danach. Fest vom Spiel, auf allen Rahmen – auch Spieler und Ziel: Links wählt das Ziel, Rechts öffnet das Menü, beides nur ohne Zusatztaste.")
     B:Row({ type = "custom", height = LIST_ROWS * 26 + 18, create = function(parent, width)
                 return CC.BuildList(parent, width)
             end }, nil)
@@ -1077,7 +1077,7 @@ function CC.BuildPage(B)
             description = "Spieler, Ziel, Fokus, Ziel des Ziels und Begleiter von WeintCodex – nur mit der Oberfläche." },
           { type = "toggle", label = "Belegung im Tooltip", key = "clickTooltip",
             description = "Maus über einem Rahmen zeigt, welche Taste welchen Zauber wirkt." })
-    B:Note("Links ohne Zusatztaste wählt sonst das Ziel, Rechts öffnet das Menü – belegst du sie, gilt deine Belegung. Maustasten 6 bis 12 wirken auf dem Rahmen wie Links und Rechts. Schickt deine Maus ihre Seitentasten als Tastatur-Tasten (Corsair Scimitar, Razer Naga ab Werk), wirkt die Taste auf die Einheit unter der Maus – überall, auch auf Plaketten – und tut sonst nichts mehr, solange sie belegt ist. Das Menü geht nur mit Maustasten, Kombinationen wie Strg + Umschalt gar nicht. Das Mausrad wirkt außerhalb des Kampfes nur über den Rahmen und zoomt sonst die Kamera; im Kampf wirkt es auf jede Einheit unter der Maus und zoomt nicht – das Spiel lässt dort keinen Wechsel zu.")
+    B:Note("Links ohne Zusatztaste wählt sonst das Ziel, Rechts öffnet das Menü – belegst du sie, gilt deine Belegung. Maustasten 6 bis 12 wirken auf dem Rahmen wie Links und Rechts. Schickt deine Maus ihre Seitentasten als Tastatur-Tasten (Corsair Scimitar, Razer Naga ab Werk), wirkt die Taste auf die Einheit unter der Maus – überall, auch auf Plaketten – und tut sonst nichts mehr, solange sie belegt ist. Ziel wählen und Menü gehen nur mit einer Maustaste ohne Zusatztaste – mit Alt, Strg oder Umschalt führt das Spiel sie nicht aus (gemessen). Das Mausrad wirkt außerhalb des Kampfes nur über den Rahmen und zoomt sonst die Kamera; im Kampf wirkt es auf jede Einheit unter der Maus und zoomt nicht – das Spiel lässt dort keinen Wechsel zu.")
 end
 
 -- Die Standardwerte stehen bei den Gruppenrahmen (dort waren sie immer;
