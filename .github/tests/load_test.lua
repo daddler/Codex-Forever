@@ -10886,6 +10886,23 @@ do
     Check(ok, "Klickzauber: Alt+Ziel/Menue auch auf den Einheitenrahmen des Spiels" .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 1.0.1.5: Leisten 6-8 im Gestaltungsmodus, auch frisch eingeschaltet.
+do
+    local BM, SH = WeintCodex.UIBarMover, WeintCodex.UIShare
+    local ok, err = pcall(function()
+        local keys = {}
+        for _, e in ipairs(BM.Entries()) do keys[e.key] = e end
+        for n = 2, 8 do assert(keys["bar" .. n], "Aktionsleiste " .. n .. " fehlt im Gestaltungsmodus") end
+        local oldOn = SH.BarOn
+        SH.BarOn = function(n) return n == 6 end
+        local w, h = BM.PlannedSize(keys.bar6)
+        assert(w and h and h > w, "eingeschaltete Leiste 6 ohne Platzhalter")
+        assert(BM.PlannedSize(keys.bar7) == nil, "ausgeschaltete Leiste 7 mit Platzhalter")
+        SH.BarOn = oldOn
+    end)
+    Check(ok, "Gestaltungsmodus: Aktionsleisten 2 bis 8 verschiebbar" .. (ok and "" or (": " .. tostring(err))))
+end
+
 -- 1.0.0.5: Trennstriche der Hauptleiste (Client 1.60.1) unsichtbar.
 do
     local AB = WeintCodex.UIActionBars

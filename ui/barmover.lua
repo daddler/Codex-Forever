@@ -59,6 +59,16 @@ function BM.Size(f)
     return w, h
 end
 
+BM.BUTTON = 38
+function BM.PlannedSize(e)
+    local n = tonumber(type(e.key) == "string" and e.key:match("^bar(%d)$"))
+    local SH = WeintCodex.UIShare
+    if not (n and n >= 2 and SH and SH.BarOn and SH.BarOn(n)) then return nil end
+    local long, short = 12 * BM.BUTTON, BM.BUTTON
+    if e.set and e.set.Orientation == 1 then return short, long end
+    return long, short
+end
+
 -- Der Spieler hat einen Platzhalter bewegt: Platz ins Layout.
 function BM.OnPlaced(key)
     local barKey = key:sub(#BM.PREFIX + 1)
@@ -83,6 +93,10 @@ function BM.Prepare()
         local shown = bar and bar.IsShown and bar:IsShown()
         local w, h = nil, nil
         if bar and shown then w, h = BM.Size(bar) end
+        -- 1.0.1.5: eine Leiste, die WeintCodex gerade eingeschaltet hat,
+        -- zeigt das Spiel erst nach dem Neuladen - ihr Platzhalter kommt
+        -- trotzdem, in der Groesse von zwoelf Knoepfen.
+        if not w then w, h = BM.PlannedSize(e) end
         local g = BM.ghosts[e.key]
         if w then
             if not g then

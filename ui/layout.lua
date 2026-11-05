@@ -205,6 +205,18 @@ K.GAME_LAYOUT = {
     { key = "bar5", label = "Aktionsleiste 5", sys = "ActionBar", idx = "RightBar2",
       point = "BOTTOMRIGHT", relPoint = "BOTTOMRIGHT", x = -(EDGE + SIDE_W), y = 60,
       set = { Orientation = 1 }, frames = { "MultiBarLeft" } },
+    -- 1.0.1.5 (Bild im Gestaltungsmodus: "Leisten 4-8 nicht bearbeitbar"):
+    -- Leiste 6 bis 8 fehlten hier - ohne Eintrag kein Platzhalter. Senkrecht
+    -- links neben Leiste 5, wie im Spiel.
+    { key = "bar6", label = "Aktionsleiste 6", sys = "ActionBar", idx = "ExtraBar1",
+      point = "BOTTOMRIGHT", relPoint = "BOTTOMRIGHT", x = -(EDGE + 2 * SIDE_W), y = 60,
+      set = { Orientation = 1 }, frames = { "MultiBar5" } },
+    { key = "bar7", label = "Aktionsleiste 7", sys = "ActionBar", idx = "ExtraBar2",
+      point = "BOTTOMRIGHT", relPoint = "BOTTOMRIGHT", x = -(EDGE + 3 * SIDE_W), y = 60,
+      set = { Orientation = 1 }, frames = { "MultiBar6" } },
+    { key = "bar8", label = "Aktionsleiste 8", sys = "ActionBar", idx = "ExtraBar3",
+      point = "BOTTOMRIGHT", relPoint = "BOTTOMRIGHT", x = -(EDGE + 4 * SIDE_W), y = 60,
+      set = { Orientation = 1 }, frames = { "MultiBar7" } },
     { key = "stance", label = "Haltungsleiste", sys = "ActionBar", idx = "StanceBar",
       point = "BOTTOMRIGHT", relPoint = "BOTTOM", x = -4, y = ROW_Y, frames = { "StanceBar" } },
     { key = "possess", label = "Besessenheitsleiste", sys = "ActionBar", idx = "PossessActionBar",
