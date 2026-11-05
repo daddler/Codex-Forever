@@ -10930,6 +10930,32 @@ do
     Check(ok, "Companion: Fassung 1.x (Forever) kennt Charakterstand und -meldung" .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 1.0.1.9: Wegpunkt nie bei offener Weltkarte (CopyToClipboard verboten).
+do
+    local QA, K = WeintCodex.UIQuestArrow, WeintCodex.UIKit
+    local ok, err = pcall(function()
+        local oldMap, oldCM, oldST, oldP, oldT = _G.WorldMapFrame, _G.C_Map, _G.C_SuperTrack, _G.UiMapPoint, _G.C_Timer
+        local map = CreateFrame("Frame", "WorldMapFrame", UIParent)
+        _G.WorldMapFrame = map
+        map:Show()
+        local set = 0
+        _G.C_Map = { SetUserWaypoint = function() set = set + 1 end, GetUserWaypoint = function() return nil end }
+        _G.C_SuperTrack = { SetSuperTrackedUserWaypoint = function() end }
+        _G.UiMapPoint = { CreateFromCoordinates = function(m, x, y) return { uiMapID = m, x = x, y = y } end }
+        _G.C_Timer = { After = function(_, f) f() end }
+        K.Set("questarrow", "worldMarker", true)
+        QA.pin = nil
+        assert(QA.PinGame({ map = 1429, x = 0.5, y = 0.5 }) == false and set == 0, "Wegpunkt bei offener Karte gesetzt")
+        map:Hide()
+        local hide = map:GetScript("OnHide")
+        if hide then hide(map) end
+        assert(set == 1, "Wegpunkt nach dem Schliessen der Karte nicht gesetzt")
+        QA.pin = nil
+        _G.WorldMapFrame, _G.C_Map, _G.C_SuperTrack, _G.UiMapPoint, _G.C_Timer = oldMap, oldCM, oldST, oldP, oldT
+    end)
+    Check(ok, "Questpfeil: Wegpunkt des Spiels nie bei offener Weltkarte" .. (ok and "" or (": " .. tostring(err))))
+end
+
 -- 1.0.0.5: Trennstriche der Hauptleiste (Client 1.60.1) unsichtbar.
 do
     local AB = WeintCodex.UIActionBars

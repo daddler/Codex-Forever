@@ -640,8 +640,38 @@ local function MapPoint(map, x, y)
     return nil
 end
 
+-- 1.0.1.9 (Fehlerbericht: "Verboten: CopyToClipboard()" aus
+-- WaypointLocationDataProvider): setzt WeintCodex den Wegpunkt, waehrend
+-- die Weltkarte offen ist, baut das Spiel seine Wegpunkt-Marke auf der
+-- Karte in unserem Aufruf neu - danach ist jeder Klick darauf verunreinigt
+-- und "In die Zwischenablage" verboten. Bei offener Karte deshalb erst nach
+-- dem Schliessen; beim naechsten Oeffnen baut das Spiel die Marke selbst.
+local function MapOpen()
+    local w = _G.WorldMapFrame
+    return type(w) == "table" and w.IsShown and K.Bool(w:IsShown(), false) or false
+end
+QA.MapOpen = MapOpen
+local mapHooked = false
+local function AfterMap(fn)
+    QA.afterMap = fn
+    if mapHooked then return end
+    local w = _G.WorldMapFrame
+    if type(w) ~= "table" or not w.HookScript then return end
+    mapHooked = true
+    w:HookScript("OnHide", function()
+        local f = QA.afterMap
+        QA.afterMap = nil
+        if f and _G.C_Timer and _G.C_Timer.After then _G.C_Timer.After(0, f) elseif f then f() end
+    end)
+end
+
 -- Den Wegpunkt des Spiels aufs eigene Ziel setzen. true, wenn gesetzt.
 function QA.PinGame(t)
+    if MapOpen() then
+        QA.pinState = "wartet, bis die Karte zu ist"
+        AfterMap(function() QA.PinGame(t) end)
+        return false
+    end
     local cm, st = _G.C_Map, _G.C_SuperTrack
     if not (t and type(t.map) == "number" and type(t.x) == "number" and type(t.y) == "number") then return false end
     if not (K.Get(KEY, "worldMarker") and cm and cm.SetUserWaypoint and st and st.SetSuperTrackedUserWaypoint) then return false end
@@ -689,6 +719,10 @@ end
 function QA.UnpinGame()
     local pin = QA.pin
     if not pin then return false end
+    if MapOpen() then
+        AfterMap(function() QA.UnpinGame() end)
+        return false
+    end
     local ours = QA.PinIsOurs()
     QA.pin = nil
     if not ours then return false end
