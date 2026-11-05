@@ -117,7 +117,7 @@ CC._class = PlayerClass
 local function Copy(list)
     local out = {}
     for i, b in ipairs(list or {}) do
-        out[i] = { button = b.button, mod = b.mod, action = b.action, spell = b.spell, rank = b.rank }
+        out[i] = { button = b.button, mod = b.mod, action = b.action, spell = b.spell, rank = b.rank, free = b.free }
     end
     return out
 end
@@ -204,8 +204,9 @@ function CC.KeyText(b)
     else
         key = Short(CC.BUTTONS, b.button)
     end
-    if b.mod == "" then return key end
-    return Short(CC.MODS, b.mod) .. " + " .. key
+    if b.mod ~= "" then key = Short(CC.MODS, b.mod) .. " + " .. key end
+    if CC.IsFree and CC.IsFree(b) then key = key .. " (überall)" end
+    return key
 end
 
 function CC.ActionText(b)
@@ -214,7 +215,6 @@ function CC.ActionText(b)
         if b.rank then return (b.spell or "?") .. " (" .. b.rank .. ")" .. note end
         return (b.spell or "?") .. note
     end
-    if not CC.Works(b) then return Short(CC.ACTIONS, b.action) .. "  –  wirkt nicht: " .. CC.MENU_NOTE end
     return Short(CC.ACTIONS, b.action)
 end
 
@@ -243,9 +243,18 @@ function CC.ApplyTo(f, list)
     local keys = {}
     for _, b in ipairs(list) do
         local kind = ATTR_ACTION[b.action]
-        if kind and not CC.IsKey(b) and not (b.action == "spell" and not b.spell) then
+        if kind and not CC.IsKey(b) and not CC.IsFree(b) and not (b.action == "spell" and not b.spell) then
             local t = b.mod .. "type" .. CC.Suffix(b.button)
-            f:SetAttribute(t, kind)
+            if b.action == "target" and b.mod ~= "" then
+                -- 1.0.2.7: mit Zusatztaste ueber ein Makro (die Aktion
+                -- "target" fuehrt das Spiel mit Zusatztaste nicht aus).
+                local m = b.mod .. "macrotext" .. CC.Suffix(b.button)
+                f:SetAttribute(t, "macro")
+                f:SetAttribute(m, "/target [@mouseover,exists]")
+                keys[#keys + 1] = m
+            else
+                f:SetAttribute(t, kind)
+            end
             keys[#keys + 1] = t
             if b.action == "spell" then
                 local s = b.mod .. "spell" .. CC.Suffix(b.button)
@@ -282,10 +291,38 @@ function CC.HookClick(f)
         local ok, t = false, nil
         if get then ok, t = pcall(get, self, "type", button) end
         local name = self.GetName and self:GetName() or "?"
+        -- 1.0.2.7: Menue mit Zusatztaste - das Spiel oeffnet es nicht, also
+        -- nach dem Klick WeintCodex (nur ausserhalb des Kampfes).
+        if ok and t == "togglemenu" and ModNow() ~= "" and not K.InCombat() then
+            CC.OpenUnitMenu(self)
+        end
         table.insert(CC.lastClicks, 1, string.format("%s  %s%s%s  ->  type=%s", tostring(name), ModNow(),
             tostring(button), down and " (gedrückt)" or "", ok and tostring(t) or "?"))
         CC.lastClicks[9] = nil
     end)
+end
+
+-- Das Menue einer Einheit, wie ein Rechtsklick des Spiels. Gibt zurueck,
+-- welcher Weg ging (fuer /wcui klick), oder nil.
+CC.MENU_WHICH = { player = "SELF", target = "TARGET", focus = "FOCUS", pet = "PET" }
+function CC.OpenUnitMenu(f)
+    local unit = f and f.GetAttribute and f:GetAttribute("unit")
+    unit = K.Plain(unit)
+    if type(unit) ~= "string" then return nil end
+    if f.OpenMenu and pcall(f.OpenMenu, f) then CC.menuVia = "OpenMenu" return CC.menuVia end
+    local open = _G.UnitPopup_OpenMenu
+    if type(open) == "function" then
+        local which = CC.MENU_WHICH[unit]
+        if not which then
+            which = (unit:find("^raid") and "RAID_PLAYER") or (unit:find("^party") and "PARTY") or "TARGET"
+        end
+        local name, server = _G.UnitName(unit)
+        if pcall(open, which, { unit = unit, name = K.Plain(name), server = K.Plain(server) }) then
+            CC.menuVia = "UnitPopup_OpenMenu" return CC.menuVia
+        end
+    end
+    CC.menuVia = "kein Weg"
+    return nil
 end
 
 function CC.ClickReport()
@@ -431,6 +468,7 @@ function CC.KeyMacro(b)
     local text
     if b.action == "spell" then
         local s = CC.SpellAttr(b)
+        if s and CC.IsFree(b) then return "/cast " .. s end
         text = s and ("/cast [@mouseover,exists] " .. s) or nil
     elseif b.action == "target" then
         text = "/target [@mouseover,exists]"
@@ -445,7 +483,9 @@ end
 
 -- "shift-" + "1" -> "SHIFT-1", wie SetBinding es will.
 function CC.BindingKey(b)
-    return string.upper(b.mod or "") .. b.button
+    local key = b.button
+    if type(key) == "number" then key = "BUTTON" .. key end
+    return string.upper(b.mod or "") .. key
 end
 
 function CC.ApplyKeys(list)
@@ -459,7 +499,7 @@ function CC.ApplyKeys(list)
     wheelKeys = {}
     local n = 0
     for _, b in ipairs(list) do
-        local text = CC.IsKey(b) and CC.KeyMacro(b)
+        local text = (CC.IsKey(b) or CC.IsFree(b)) and CC.KeyMacro(b)
         if text and set then
             n = n + 1
             local btn = keyButtons[n]
@@ -478,7 +518,7 @@ function CC.ApplyKeys(list)
             -- Tasten ebenfalls als Vorrang-Belegung - wer nach uns kommt,
             -- gewinnt sonst (6.29.11.0, Spieler: "nach dem Einloggen ging
             -- der Zauber auf der Taste nicht mehr").
-            if CC.WHEEL[b.button] then
+            if CC.WHEEL[b.button] and not CC.IsFree(b) then
                 -- Mausrad: nur ueber den Rahmen (CC.WheelOn), sonst zoomt es.
                 wheelKeys[#wheelKeys + 1] = { CC.BindingKey(b), "WeintCodexClickKey" .. n }
             else
@@ -716,18 +756,32 @@ CC.draft = draft
 -- Belegung wirkt nie; die Seite bietet sie nicht an und sagt es bei alten.
 -- 1.0.1.3: ebenso "Ziel waehlen" (gemessen: Alt+Links auf Ziel des Ziels
 -- wechselt das Ziel nicht). Zauber mit Zusatztaste wirken.
+-- 1.0.2.7 (Wunsch: "das muss gehen"): Ziel waehlen mit Zusatztaste laeuft
+-- jetzt ueber ein Makro ("/target [@mouseover]") statt ueber die Aktion des
+-- Rahmens - Makros wirken mit Zusatztaste wie Zauber. Das Menue oeffnet das
+-- Spiel weiterhin nur ohne Zusatztaste; mit Zusatztaste oeffnet WeintCodex
+-- es nach dem Klick selbst (CC.OpenUnitMenu).
 function CC.Works(b)
-    return not (b and (b.action == "menu" or b.action == "target") and (b.mod or "") ~= "")
+    return true
 end
-CC.MENU_NOTE = "Ziel wählen und Menü gehen im Spiel nur ohne Zusatztaste"
+CC.MENU_NOTE = "Menü mit Zusatztaste öffnet WeintCodex selbst – darin gesperrte Einträge (z. B. Fokus) gehen nur ohne Zusatztaste"
+
+-- 1.0.2.7 (Wunsch: "Donnerknall einfach so, nicht an einen Rahmen"):
+-- "ueberall" - die Taste wirkt den Zauber ohne Einheit, wo die Maus auch
+-- ist. Geht nur mit Tasten, Mausrad und Maustasten 3 bis 12 (Links und
+-- Rechts braucht das Spiel fuer Kamera und Klicks).
+function CC.CanFree(b)
+    if not b then return false end
+    if CC.IsKey(b) then return true end
+    return type(b.button) == "number" and b.button >= 3
+end
+function CC.IsFree(b)
+    return b and b.free == true and b.action == "spell" and CC.CanFree(b) or false
+end
 
 function CC.Pick(action, spell, rank)
-    if (action == "menu" or action == "target") and (draft.mod or "") ~= "" then
-        print(WeintCodex.ColorText("accent", "[WeintCodex]") .. " " .. CC.MENU_NOTE
-            .. " – wähle bei Zusatztaste „ohne“.")
-        return false
-    end
     local b = { button = draft.button, mod = draft.mod, action = action }
+    if action == "spell" and draft.free and CC.CanFree(draft) then b.free = true end
     if action == "spell" then
         if type(spell) ~= "string" or spell == "" then return false end
         b.spell = spell
@@ -898,11 +952,10 @@ function CC.BuildPicker(parent, width)
                 local d = C.textMuted
                 tip:AddLine("Zauber " .. e.id, d[1], d[2], d[3])
             end
-            if (e.action == "menu" or e.action == "target") and (draft.mod or "") ~= "" then
+            tip:AddLine("Klick: auf " .. CC.KeyText(draft) .. " legen", a[1], a[2], a[3])
+            if e.action == "menu" and (draft.mod or "") ~= "" then
                 local w = C.warning or C.textMuted
-                tip:AddLine(CC.MENU_NOTE .. " – Zusatztaste „ohne“ wählen.", w[1], w[2], w[3], true)
-            else
-                tip:AddLine("Klick: auf " .. CC.KeyText(draft) .. " legen", a[1], a[2], a[3])
+                tip:AddLine(CC.MENU_NOTE, w[1], w[2], w[3], true)
             end
             local ranks = e.ranks or {}
             if #ranks > 1 then
@@ -1074,14 +1127,19 @@ function CC.BuildPage(B)
             end }, nil)
     B:Row({ type = "toggle", label = "Nur hilfreiche Zauber", key = "clickHelpfulOnly",
             description = "Heilungen, Buffs, Bannen – was man auf Verbündete wirkt." },
-          { type = "empty" })
+          { type = "toggle", label = "Überall wirken (ohne Rahmen)",
+            get = function() return draft.free and true or false end,
+            set = function(v) draft.free = v and true or nil DraftChanged() end,
+            disabled = function() return not CC.CanFree(draft) end,
+            disabledHint = "Nur Tasten, Mausrad und Maustasten 3 bis 12 – Links und Rechts braucht das Spiel.",
+            description = "Der Zauber wirkt ohne Einheit unter der Maus – etwa Donnerknall. Nur Tasten, Mausrad, Maustasten 3–12." })
     -- Entfluchen hat seit 1.10.24.0 einen eigenen Reiter (ui/dispel.lua).
     B:Section("Wo")
     B:Row({ type = "toggle", label = "Auch Einheitenrahmen", key = "clickUnitFrames",
             description = "Spieler, Ziel, Fokus, Ziel des Ziels und Begleiter von WeintCodex – nur mit der Oberfläche." },
           { type = "toggle", label = "Belegung im Tooltip", key = "clickTooltip",
             description = "Maus über einem Rahmen zeigt, welche Taste welchen Zauber wirkt." })
-    B:Note("Links ohne Zusatztaste wählt sonst das Ziel, Rechts öffnet das Menü – belegst du sie, gilt deine Belegung. Maustasten 6 bis 12 wirken auf dem Rahmen wie Links und Rechts. Schickt deine Maus ihre Seitentasten als Tastatur-Tasten (Corsair Scimitar, Razer Naga ab Werk), wirkt die Taste auf die Einheit unter der Maus – überall, auch auf Plaketten – und tut sonst nichts mehr, solange sie belegt ist. Ziel wählen und Menü gehen nur mit einer Maustaste ohne Zusatztaste – mit Alt, Strg oder Umschalt führt das Spiel sie nicht aus (gemessen). Das Mausrad wirkt außerhalb des Kampfes nur über den Rahmen und zoomt sonst die Kamera; im Kampf wirkt es auf jede Einheit unter der Maus und zoomt nicht – das Spiel lässt dort keinen Wechsel zu.")
+    B:Note("Links ohne Zusatztaste wählt sonst das Ziel, Rechts öffnet das Menü – belegst du sie, gilt deine Belegung. Maustasten 6 bis 12 wirken auf dem Rahmen wie Links und Rechts. Schickt deine Maus ihre Seitentasten als Tastatur-Tasten (Corsair Scimitar, Razer Naga ab Werk), wirkt die Taste auf die Einheit unter der Maus – überall, auch auf Plaketten – und tut sonst nichts mehr, solange sie belegt ist. Ziel wählen geht auch mit Zusatztaste (über ein Makro). Das Menü mit Zusatztaste öffnet WeintCodex selbst – darin gesperrte Einträge wie „Fokus setzen“ gehen nur über den einfachen Rechtsklick. Das Mausrad wirkt außerhalb des Kampfes nur über den Rahmen und zoomt sonst die Kamera; im Kampf wirkt es auf jede Einheit unter der Maus und zoomt nicht – das Spiel lässt dort keinen Wechsel zu.")
 end
 
 -- Die Standardwerte stehen bei den Gruppenrahmen (dort waren sie immer;

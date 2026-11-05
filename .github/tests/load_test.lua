@@ -7082,9 +7082,9 @@ do
         picker.tiles[4]:Click()
         assert(menu == nil and f1:GetAttribute("alt-spell3") == "Göttliche Pein", "Zauber ohne Raenge fragt nach")
         WeintCodex.OpenDropMenu = oldOpen
-        -- 1.0.1.3: Ziel waehlen nur ohne Zusatztaste (mit Zusatztaste gemessen wirkungslos).
+        -- 1.0.2.7: Ziel waehlen mit Zusatztaste ueber ein Makro.
         picker.tiles[1]:Click()
-        assert(f1:GetAttribute("alt-type3") ~= "target", "Ziel waehlen mit Zusatztaste gelegt")
+        assert(f1:GetAttribute("alt-type3") == "macro", "Ziel waehlen mit Zusatztaste nicht als Makro gelegt")
         local oMod = CC.draft.mod
         CC.draft.mod = ""
         picker.tiles[1]:Click()
@@ -10874,18 +10874,17 @@ do
         for k, v in pairs(saved) do UF.frames[k] = v end
         assert(found, "Spielerrahmen des Spiels bekommt keine Klickbelegung")
         CC.ApplyTo(pf, { { button = 1, mod = "alt-", action = "target" }, { button = 2, mod = "alt-", action = "menu" } })
-        assert(pf:GetAttribute("alt-type1") == "target" and pf:GetAttribute("alt-type2") == "togglemenu",
-            "Alt+Links/Rechts nicht gesetzt")
+        -- 1.0.2.7: Ziel mit Zusatztaste ueber ein Makro.
+        assert(pf:GetAttribute("alt-type1") == "macro" and tostring(pf:GetAttribute("alt-macrotext1")):find("/target", 1, true)
+            and pf:GetAttribute("alt-type2") == "togglemenu", "Alt+Links/Rechts nicht gesetzt")
         -- 1.0.1.2: Menue mit Zusatztaste oeffnet das Spiel nie - nicht angeboten.
         local d = CC.draft
         local oB, oM = d.button, d.mod
-        d.button, d.mod = 2, "alt-"
-        assert(CC.Pick("menu") == false, "Menue auf Alt+Rechts angeboten")
-        assert(CC.ActionText({ button = 2, mod = "alt-", action = "menu" }):find("wirkt nicht"), "alte Belegung ohne Hinweis")
-        assert(not CC.ActionText({ button = 2, mod = "", action = "menu" }):find("wirkt nicht"), "Rechts ohne Zusatztaste falsch gewarnt")
-        d.button = 1
-        assert(CC.Pick("target") == false, "Ziel waehlen auf Alt+Links angeboten")
-        assert(CC.ActionText({ button = 1, mod = "alt-", action = "target" }):find("wirkt nicht"), "Ziel mit Alt ohne Hinweis")
+        -- 1.0.2.7: "ueberall" nur fuer Tasten, Mausrad, Maustasten ab 3.
+        assert(CC.CanFree({ button = "Q" }) and CC.CanFree({ button = 4 }) and not CC.CanFree({ button = 1 })
+            and not CC.CanFree({ button = 2 }), "Ueberall-Regel falsch")
+        local fb = { button = 4, mod = "", action = "spell", spell = "Donnerknall", free = true }
+        assert(CC.KeyMacro(fb) == "/cast Donnerknall" and CC.BindingKey(fb) == "BUTTON4", "Ueberall-Makro/Taste falsch")
         d.button, d.mod = oB, oM
         local rep = CC.ClickReport()
         assert(type(rep) == "table" and #rep >= 3, "Klickbericht leer")
