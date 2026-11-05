@@ -1954,25 +1954,46 @@ function O.HookGameMenu()
         O.gameMenuButton = b
         return b
     end
+    -- 1.0.2.9 (Wunsch: "zwischen Addons und Bearbeitungsmodus"): nach dem
+    -- Anordnen des Spiels ruecken die Knoepfe ab "Bearbeitungsmodus" um eine
+    -- Knopfhoehe nach unten (nur ihr Ankerpunkt - liegt im Client, keine
+    -- Lua-Variable des Spiels wird beschrieben), unser Knopf sitzt in der
+    -- Luecke. Findet er "Addons" nicht, steht er unten.
     local function Place()
         if K.InCombat() then return end
         local btn = Make()
-        -- Breite und Hoehe wie die Knoepfe des Spiels (der unterste zeigt sie).
-        local w, h = 200, 26
-        local last
+        local list = {}
         if type(gm.buttonPool) == "table" and type(gm.buttonPool.EnumerateActive) == "function" then
-            for x in gm.buttonPool:EnumerateActive() do
-                if not last or (K.Plain(x.layoutIndex) or 0) > (K.Plain(last.layoutIndex) or 0) then last = x end
+            for x in gm.buttonPool:EnumerateActive() do list[#list + 1] = x end
+        end
+        table.sort(list, function(a, c) return (K.Plain(a.layoutIndex) or 0) < (K.Plain(c.layoutIndex) or 0) end)
+        local addonsText = _G.ADDONS or "Addons"
+        local after
+        for i, x in ipairs(list) do
+            local t = x.GetText and K.Plain(x:GetText())
+            if t == addonsText then after = i break end
+        end
+        local ref = list[after or #list]
+        local w, h = 200, 26
+        if ref then w, h = K.Plain(ref:GetWidth()) or w, K.Plain(ref:GetHeight()) or h end
+        btn:SetSize(w, h)
+        local step = h + O.GAME_MENU_GAP
+        if not O.gameMenuShifted and after then
+            O.gameMenuShifted = true
+            for i = after + 1, #list do
+                local x = list[i]
+                local ok, p, rel, rp, px, py = pcall(x.GetPoint, x, 1)
+                -- Am Menue verankert: jeder rueckt. An seinem Vorgaenger
+                -- verankert: nur der erste, die anderen folgen von selbst.
+                if ok and p and type(K.Plain(py)) == "number" and (rel == gm or i == after + 1) then
+                    x:ClearAllPoints()
+                    x:SetPoint(p, rel, rp, K.Plain(px) or 0, K.Plain(py) - step)
+                end
             end
         end
-        if last then
-            w = K.Plain(last:GetWidth()) or w
-            h = K.Plain(last:GetHeight()) or h
-        end
-        btn:SetSize(w, h)
         btn:ClearAllPoints()
-        if last then
-            btn:SetPoint("TOP", last, "BOTTOM", 0, -O.GAME_MENU_GAP)
+        if ref then
+            btn:SetPoint("TOP", ref, "BOTTOM", 0, after and -O.GAME_MENU_GAP or -O.GAME_MENU_GAP)
         else
             btn:SetPoint("BOTTOM", gm, "BOTTOM", 0, 14)
         end
@@ -1980,12 +2001,14 @@ function O.HookGameMenu()
         local gh = K.Plain(gm:GetHeight())
         if type(gh) == "number" and not O.gameMenuGrown then
             O.gameMenuGrown = true
-            gm:SetHeight(gh + h + O.GAME_MENU_GAP)
+            gm:SetHeight(gh + step)
         end
     end
-    gm:HookScript("OnShow", function() O.gameMenuGrown = false Place() end)
+    gm:HookScript("OnShow", function() Place() end)
     if _G.hooksecurefunc and type(gm.Layout) == "function" then
-        _G.hooksecurefunc(gm, "Layout", function() O.gameMenuGrown = false Place() end)
+        -- Nach jedem Anordnen stehen die Knoepfe des Spiels wieder an
+        -- seinem Platz: neu ruecken, neu wachsen.
+        _G.hooksecurefunc(gm, "Layout", function() O.gameMenuGrown = false O.gameMenuShifted = false Place() end)
     end
     gm:HookScript("OnHide", function() if b then b:Hide() end end)
     return true
