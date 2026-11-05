@@ -9,6 +9,13 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.0.1.0] – 2026-11-05
+
+- Behoben: Ohne eigene Einheitenrahmen bekamen die Rahmen des Spiels
+  (`PlayerFrame`, `TargetFrame`, `FocusFrame`, `PetFrame`, Ziel des Ziels)
+  keine Klickbelegung – Alt+Links (Ziel) und Alt+Rechts (Menü) wirkten dort
+  nicht. Schalter „Auch Einheitenrahmen“.
+
 ## [1.0.0.9] – 2026-11-05
 
 - Behoben: Die Entfluchen-Felder wirkten nur mit Linksklick, und mit

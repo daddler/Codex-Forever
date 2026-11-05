@@ -267,6 +267,8 @@ function CC.GameFrames()
     return GG.active or not K.IsActive("groupframes")
 end
 
+CC.GAME_UNIT_FRAMES = { "PlayerFrame", "TargetFrame", "FocusFrame", "PetFrame", "TargetFrameToT", "FocusFrameToT" }
+
 function CC.Frames()
     local out = {}
     local GG = WeintCodex.UIGameGroup
@@ -278,8 +280,22 @@ function CC.Frames()
         for _, b in ipairs(GF.buttons) do out[#out + 1] = b end
     end
     local UF = WeintCodex.UIUnitFrames
+    local own = false
     if Opt("clickUnitFrames") and UF and UF.frames then
-        for _, f in pairs(UF.frames) do out[#out + 1] = f end
+        for _, f in pairs(UF.frames) do out[#out + 1] = f own = true end
+    end
+    -- 1.0.1.0 (Bericht: "Alt+Links Ziel, Alt+Rechts Menue - geht nicht"):
+    -- ohne eigene Einheitenrahmen bekamen die des Spiels (Spieler, Ziel,
+    -- Fokus, Begleiter, Ziel des Ziels) nie eine Belegung - dort tat jede
+    -- Klickbelegung nichts. Jetzt auch diese, nur gesicherte Einheitenknoepfe,
+    -- nie verbotene.
+    if Opt("clickUnitFrames") and not own then
+        for _, name in ipairs(CC.GAME_UNIT_FRAMES) do
+            local f = _G[name]
+            if type(f) == "table" and f.SetAttribute and not (f.IsForbidden and f:IsForbidden()) then
+                out[#out + 1] = f
+            end
+        end
     end
     return out
 end

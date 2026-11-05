@@ -10847,6 +10847,26 @@ do
     Check(ok, "Profile: frisch beginnen im Nachhinein" .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 1.0.1.0: Alt+Links Ziel, Alt+Rechts Menue - auch auf den Rahmen des Spiels.
+do
+    local CC = WeintCodex.UIClickCast
+    local ok, err = pcall(function()
+        local pf = _G.PlayerFrame or CreateFrame("Button", "PlayerFrame", UIParent)
+        local UF = WeintCodex.UIUnitFrames
+        local saved = {}
+        for k, v in pairs(UF.frames) do saved[k] = v UF.frames[k] = nil end
+        local found = false
+        for _, f in ipairs(CC.Frames()) do if f == pf then found = true end end
+        for k, v in pairs(saved) do UF.frames[k] = v end
+        assert(found, "Spielerrahmen des Spiels bekommt keine Klickbelegung")
+        CC.ApplyTo(pf, { { button = 1, mod = "alt-", action = "target" }, { button = 2, mod = "alt-", action = "menu" } })
+        assert(pf:GetAttribute("alt-type1") == "target" and pf:GetAttribute("alt-type2") == "togglemenu",
+            "Alt+Links/Rechts nicht gesetzt")
+        CC.ApplyTo(pf, {})
+    end)
+    Check(ok, "Klickzauber: Alt+Ziel/Menue auch auf den Einheitenrahmen des Spiels" .. (ok and "" or (": " .. tostring(err))))
+end
+
 -- 1.0.0.5: Trennstriche der Hauptleiste (Client 1.60.1) unsichtbar.
 do
     local AB = WeintCodex.UIActionBars

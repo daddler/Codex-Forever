@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.0.1.0",
+        date    = "05.11.2026",
+        notes   = {
+            "|cff7C6CFFKlickzauber wirken jetzt auch auf Spieler-, Ziel-, Fokus- und Begleiterrahmen des Spiels|r – ohne die Oberfläche bekamen diese Rahmen bisher keine Belegung, Alt+Links für Ziel oder Alt+Rechts für das Menü taten dort nichts.",
+        },
+    },
+    {
         version = "1.0.0.9",
         date    = "05.11.2026",
         notes   = {
