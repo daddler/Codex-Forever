@@ -386,6 +386,8 @@ local function Create(unit)
     f:SetAttribute("*type1", "target")
     f:SetAttribute("*type2", "togglemenu")
     if f.RegisterForClicks then f:RegisterForClicks("AnyUp") end
+    -- 1.0.0.9: Klickzauber (Entfluchen) auch mit "Aktion beim Druecken".
+    f:SetAttribute("useOnKeyDown", false)
     f:SetFrameStrata("LOW")
 
     local health = K.NewBar(f)

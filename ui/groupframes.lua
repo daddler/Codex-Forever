@@ -479,6 +479,8 @@ local function Style(b)
     b:HookScript("OnShow", function(self) self:Refresh() self:UpdateRange() end)
 
     if b.RegisterForClicks then b:RegisterForClicks("AnyUp") end
+    -- 1.0.0.9: Klickzauber (Entfluchen) auch mit "Aktion beim Druecken".
+    b:SetAttribute("useOnKeyDown", false)
     b:SetAttribute("*type1", "target")
     b:SetAttribute("*type2", "togglemenu")
     b:SetScript("OnEnter", function(self)

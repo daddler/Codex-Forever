@@ -20512,6 +20512,11 @@ do
         end
         _G.C_UnitAuras, _G.UnitExists = oA, oE
         assert(lit, "Feld leuchtet bei Gift nicht")
+        -- 1.0.0.9: Links UND Rechts wirken, nie nur beim Druecken.
+        local sq = DP.cells[1].sq[1]
+        assert(sq:GetAttribute("type") == "spell" and type(sq:GetAttribute("spell")) == "string"
+            and sq:GetAttribute("type1") == nil, "Feld wirkt nicht mit jeder Maustaste")
+        assert(sq:GetAttribute("useOnKeyDown") == false, "Feld loest beim Druecken aus (nie)")
         K.Set("groupframes", "dispelBar", false)
         DP.ApplyBar()
         DP.Resolve = oR

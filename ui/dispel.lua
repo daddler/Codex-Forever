@@ -265,7 +265,13 @@ local function NewCell(parent, unit)
         local ok, b = pcall(CreateFrame, "Button", nil, c, "SecureUnitButtonTemplate")
         if not ok then b = CreateFrame("Button", nil, c) end
         b:SetAttribute("unit", unit)
+        -- 1.0.0.9 (Bericht: "Rechtsklick auf den Indikator geht nicht"):
+        -- beide Maustasten. Wie Automark und Totems (im Spiel gemessen,
+        -- 6.27.2.1): auf Loslassen, nie beim Druecken - ohne useOnKeyDown =
+        -- false loest der Client geschuetzte Knoepfe beim Druecken aus,
+        -- registriert war nur das Loslassen, also nie.
         if b.RegisterForClicks then b:RegisterForClicks("AnyUp") end
+        b:SetAttribute("useOnKeyDown", false)
         b.bg = b:CreateTexture(nil, "BACKGROUND")
         b.bg:SetAllPoints()
         b.bg:SetColorTexture(0.12, 0.12, 0.14, 0.85)
@@ -281,7 +287,7 @@ local function NewCell(parent, unit)
             tip:SetOwner(self, "ANCHOR_TOP")
             local name = _G.UnitName and K.Plain(_G.UnitName(c.unit))
             tip:AddLine(type(name) == "string" and name or c.unit)
-            if self._spell then tip:AddLine("Klick: " .. self._spell, 1, 1, 1) end
+            if self._spell then tip:AddLine("Links- oder Rechtsklick: " .. self._spell, 1, 1, 1) end
             tip:Show()
         end)
         b:SetScript("OnLeave", function() if _G.GameTooltip then _G.GameTooltip:Hide() end end)
@@ -339,12 +345,18 @@ function DP.ApplyBar()
             b:ClearAllPoints()
             b:SetPoint("LEFT", c, "LEFT", (k - 1) * (size + 1), 0)
             if fnd then
-                b:SetAttribute("type1", "spell")
-                b:SetAttribute("spell1", fnd.spell)
+                -- 1.0.0.9: jede Maustaste wirkt den Zauber dieses Feldes
+                -- (vorher nur Links - Rechts tat nichts).
+                b:SetAttribute("type1", nil)
+                b:SetAttribute("spell1", nil)
+                b:SetAttribute("type", "spell")
+                b:SetAttribute("spell", fnd.spell)
                 b._spell, b._types = fnd.spell, fnd.types
                 b:Show()
             else
                 b:SetAttribute("type1", nil)
+                b:SetAttribute("type", nil)
+                b:SetAttribute("spell", nil)
                 b._spell, b._types = nil, nil
                 b:Hide()
             end
