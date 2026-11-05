@@ -536,6 +536,49 @@ local function BarFrame(entry)
 end
 AB.BarFrame = BarFrame
 
+-- 1.0.2.7 (Wunsch: "die Leiste, die man gerade einstellt, farbig
+-- markieren - sonst muss ich erst im Gestaltungsmodus suchen"): solange die
+-- Seite "Leisten" offen ist, liegt ueber der gewaehlten Leiste ein Rahmen in
+-- der Akzentfarbe mit ihrem Namen. Nur Deckkraft und eigene Flaechen, nie
+-- die Leiste selbst angefasst; keine Maus.
+local mark
+function AB.MarkBar(i, anchorWidget)
+    local e = BAR_BUTTONS[i or 1]
+    local bar = e and BarFrame(e)
+    if not mark then
+        mark = CreateFrame("Frame", "WeintCodexBarMark", UIParent)
+        mark:SetFrameStrata("TOOLTIP")
+        mark:EnableMouse(false)
+        local a = WeintCodex.Colors.accent
+        mark.fill = mark:CreateTexture(nil, "BACKGROUND")
+        mark.fill:SetAllPoints(mark)
+        mark.fill:SetColorTexture(a[1], a[2], a[3], 0.18)
+        mark.ring = K.Border(mark, 2, a[1], a[2], a[3], 1, "OVERLAY")
+        mark.label = K.NewText(mark, 12)
+        mark.label:SetPoint("BOTTOM", mark, "TOP", 0, 4)
+        mark.label:SetTextColor(a[1], a[2], a[3], 1)
+        mark:Hide()
+        local acc = 0
+        mark:SetScript("OnUpdate", function(self, dt)
+            acc = acc + (dt or 0)
+            if acc < 0.25 then return end
+            acc = 0
+            local w = self.widget
+            if not (w and w.IsVisible and w:IsVisible()) then self:Hide() return end
+            AB.MarkBar(K.Get(KEY, "editBar") or 1, w)
+        end)
+    end
+    if anchorWidget then mark.widget = anchorWidget end
+    if not (bar and bar.IsVisible and bar:IsVisible() and mark.widget) then mark:Hide() return false end
+    mark:ClearAllPoints()
+    mark:SetPoint("TOPLEFT", bar, "TOPLEFT", -3, 3)
+    mark:SetPoint("BOTTOMRIGHT", bar, "BOTTOMRIGHT", 3, -3)
+    mark.label:SetText(e.label)
+    mark:Show()
+    return true
+end
+AB.Mark = function() return mark end
+
 local function Clamp(v, lo, hi)
     if type(v) ~= "number" then return lo end
     return math.max(lo, math.min(hi, math.floor(v + 0.5)))
@@ -1388,6 +1431,15 @@ K.Register({
             local items = {}
             for i, e in ipairs(BAR_BUTTONS) do items[i] = { value = i, text = e.label } end
             B:Section("Leiste")
+            -- 1.0.2.7: unsichtbarer Zeuge - solange er sichtbar ist (diese
+            -- Seite offen), ist die gewaehlte Leiste markiert.
+            B:Row({ type = "custom", height = 1, create = function(parent)
+                        local w = CreateFrame("Frame", nil, parent)
+                        w:SetSize(1, 1)
+                        w:SetScript("OnShow", function(self) AB.MarkBar(Sel(), self) end)
+                        AB.MarkBar(Sel(), w)
+                        return w
+                    end }, nil)
             B:Row({ type = "dropdown", label = "Leiste", key = "editBar", items = items },
                   Per("show", { type = "dropdown", label = "Sichtbar", items = {
                         { value = "always",    text = "Immer (Ruhe und Kampf)" },

@@ -11001,6 +11001,22 @@ do
     Check(ok, "Messenger: Fluestern waehlt das Gespraech der Person" .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 1.0.2.7: gewaehlte Leiste markiert, solange die Seite offen ist.
+do
+    local AB = WeintCodex.UIActionBars
+    local ok, err = pcall(function()
+        local bar = _G.MultiBarBottomLeft or CreateFrame("Frame", "MultiBarBottomLeft", UIParent)
+        bar:Show()
+        local w = CreateFrame("Frame", nil, UIParent)
+        w:Show()
+        assert(AB.MarkBar(2, w) == true and AB.Mark():IsShown(), "Leiste 2 nicht markiert")
+        w:Hide()
+        AB.Mark():GetScript("OnUpdate")(AB.Mark(), 1)
+        assert(not AB.Mark():IsShown(), "Markierung bleibt nach dem Schliessen der Seite")
+    end)
+    Check(ok, "Aktionsleisten: gewaehlte Leiste beim Einstellen markiert" .. (ok and "" or (": " .. tostring(err))))
+end
+
 -- 1.0.0.5: Trennstriche der Hauptleiste (Client 1.60.1) unsichtbar.
 do
     local AB = WeintCodex.UIActionBars

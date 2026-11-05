@@ -22,6 +22,14 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.0.2.7",
+        date    = "05.11.2026",
+        notes   = {
+            "|cff7C6CFFKlickzauber: Ziel wählen und Menü gehen auch mit Zusatztaste|r – und ein Zauber wie Donnerknall lässt sich „überall“ auf eine Taste, das Mausrad oder Maustaste 3–12 legen, ohne Rahmen unter der Maus.",
+            "|cff7C6CFFDie Leiste, die du gerade einstellst, ist markiert|r – auf der Seite „Leisten“ leuchtet die gewählte Aktionsleiste in deiner Farbe, mit ihrem Namen.",
+        },
+    },
+    {
         version = "1.0.2.6",
         date    = "05.11.2026",
         notes   = {

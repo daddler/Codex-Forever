@@ -9,6 +9,16 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.0.2.7] – 2026-11-05
+
+- Klickzauber: „Ziel wählen“ mit Zusatztaste über ein Makro
+  (`/target [@mouseover,exists]`); „Menü“ mit Zusatztaste öffnet WeintCodex
+  nach dem Klick selbst (`CC.OpenUnitMenu`, gesperrte Einträge darin nur
+  ohne Zusatztaste). Neu: „Überall wirken (ohne Rahmen)“ für Tasten, Mausrad
+  und Maustasten 3–12 (`/cast Zauber`, Vorrang-Belegung).
+- Aktionsleisten: auf der Seite „Leisten“ ist die gewählte Leiste markiert
+  (`AB.MarkBar`, Rahmen in der Akzentfarbe, nur solange die Seite offen ist).
+
 ## [1.0.2.6] – 2026-11-05
 
 - Behoben: Rechtsklick → Flüstern öffnete den Messenger beim falschen
