@@ -9,6 +9,13 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.0.1.3] – 2026-11-05
+
+- Geändert: „Ziel wählen“ bei den Klickzaubern nur noch ohne Zusatztaste
+  (gemessen: Alt+Links auf „Ziel des Ziels“ wechselt das Ziel nicht). Alte
+  Belegungen tragen den Hinweis „wirkt nicht“. Zauber mit Zusatztaste
+  bleiben.
+
 ## [1.0.1.2] – 2026-11-05
 
 - Geändert: „Menü“ bei den Klickzaubern nur noch ohne Zusatztaste. Gemessen

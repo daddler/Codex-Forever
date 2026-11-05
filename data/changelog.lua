@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.0.1.3",
+        date    = "05.11.2026",
+        notes   = {
+            "|cff7C6CFFKlickzauber: auch „Ziel wählen“ nur noch ohne Zusatztaste|r – wie beim Menü führt das Spiel es mit Alt, Strg oder Umschalt nicht aus. Zauber mit Zusatztaste wirken weiter.",
+        },
+    },
+    {
         version = "1.0.1.2",
         date    = "05.11.2026",
         notes   = {
