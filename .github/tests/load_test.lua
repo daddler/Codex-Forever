@@ -11032,6 +11032,27 @@ do
     Check(ok, "Gestaltungsmodus: Rechtsklick auf eine Leiste oeffnet ihre Einstellungen" .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 1.0.3.2: Plaketten nach dem Tod - als Geist bleibt ein Gegner Gegner.
+do
+    local NP = WeintCodex.UINameplates
+    local ok, err = pcall(function()
+        local oD, oF, oA = _G.UnitIsDeadOrGhost, _G.UnitIsFriend, _G.UnitCanAttack
+        _G.UnitIsDeadOrGhost = function() return true end
+        _G.UnitIsFriend = function() return false end
+        _G.UnitCanAttack = function() return false end
+        assert(NP.IsFriendly("nameplate1") == false, "als Geist wird ein Gegner zum Freund")
+        _G.UnitIsFriend = function() return true end
+        assert(NP.IsFriendly("nameplate1") == true, "Freund als Geist nicht freundlich")
+        _G.UnitIsDeadOrGhost = function() return false end
+        _G.UnitIsFriend = function() return false end
+        _G.UnitCanAttack = function() return true end
+        assert(NP.IsFriendly("nameplate1") == false, "Gegner lebend freundlich")
+        _G.UnitIsDeadOrGhost, _G.UnitIsFriend, _G.UnitCanAttack = oD, oF, oA
+        assert(type(NP.Reattach()) == "number", "Neu einrichten fehlt")
+    end)
+    Check(ok, "Namensplaketten: nach dem Tod keine Gegner als Freunde" .. (ok and "" or (": " .. tostring(err))))
+end
+
 -- 1.0.0.5: Trennstriche der Hauptleiste (Client 1.60.1) unsichtbar.
 do
     local AB = WeintCodex.UIActionBars

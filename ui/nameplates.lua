@@ -2146,7 +2146,7 @@ local function Attach(unit)
     -- (6.29.0.0, Glitzern haengt dort seine Funken an).
     NP.UndimObject(unit)
     if NP.IsObjectPlate(unit) then NP.DimObject(nameplate, unit) return end
-    local friendly = not K.Bool(_G.UnitCanAttack and _G.UnitCanAttack("player", unit), false)
+    local friendly = NP.IsFriendly(unit)
     if friendly and not S.friendlyEnabled then return end
 
     local p = table.remove(pool) or NP.MeasuredBuild(nameplate)
@@ -2237,7 +2237,41 @@ local CAST_EVENTS = {
     UNIT_SPELLCAST_INTERRUPTED = "failed", UNIT_SPELLCAST_FAILED = "failed",
 }
 
+-- 1.0.3.2 (Meldungen: "nach dem Tod sind die Namensplaketten aus, man muss
+-- sie von Hand wieder einschalten"): als Geist kann man niemanden
+-- angreifen - "nicht angreifbar" machte jeden Gegner zum Freund, seine
+-- Plakette blieb (ohne freundliche Plaketten) leer oder freundlich, bis sie
+-- neu entstand. Freund ist jetzt, was das Spiel Freund nennt; tot oder
+-- Geist zaehlt nur das. Beim Tod und bei der Rueckkehr werden alle
+-- stehenden Plaketten neu eingerichtet.
+function NP.IsFriendly(unit)
+    local dead = K.Bool(_G.UnitIsDeadOrGhost and _G.UnitIsDeadOrGhost("player"), false)
+    local friend = _G.UnitIsFriend and K.Bool(_G.UnitIsFriend("player", unit), nil)
+    if dead then return friend == true end
+    if friend == true then return true end
+    return not K.Bool(_G.UnitCanAttack and _G.UnitCanAttack("player", unit), false)
+end
+
+function NP.Reattach()
+    local cn = _G.C_NamePlate
+    if not (cn and cn.GetNamePlates) then return 0 end
+    local n = 0
+    for _, np in ipairs(cn.GetNamePlates() or {}) do
+        local unit = K.Plain(np.namePlateUnitToken)
+        if type(unit) == "string" then
+            Detach(unit)
+            Attach(unit)
+            n = n + 1
+        end
+    end
+    return n
+end
+
 local function OnEvent(_, event, unit)
+    if event == "PLAYER_DEAD" or event == "PLAYER_ALIVE" or event == "PLAYER_UNGHOST" then
+        NP.Reattach()
+        return
+    end
     if event == "NAME_PLATE_UNIT_ADDED" then
         Attach(unit)
         return
@@ -2707,6 +2741,7 @@ local function Enable()
         "NAME_PLATE_UNIT_ADDED", "NAME_PLATE_UNIT_REMOVED", "UNIT_FACTION",
         "PLAYER_TARGET_CHANGED", "PLAYER_FOCUS_CHANGED", "RAID_TARGET_UPDATE",
         "QUEST_LOG_UPDATE", "UNIT_QUEST_LOG_CHANGED", "UPDATE_MOUSEOVER_UNIT", "UNIT_TARGET",
+        "PLAYER_DEAD", "PLAYER_ALIVE", "PLAYER_UNGHOST",
     }) do Register(events, e) end
     for e in pairs(UNIT_EVENTS) do Register(events, e) end
     for e in pairs(CAST_EVENTS) do Register(events, e) end
