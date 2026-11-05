@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.0.3.2",
+        date    = "05.11.2026",
+        notes   = {
+            "|cff7C6CFFNamensplaketten bleiben nach dem Tod da|r – als Geist galten Gegner als Freunde und verloren ihre Plakette bis zum Aus- und Einschalten. Beim Sterben und Wiederbeleben richtet WeintCodex alle Plaketten neu ein.",
+        },
+    },
+    {
         version = "1.0.3.1",
         date    = "05.11.2026",
         notes   = {

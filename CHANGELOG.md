@@ -9,6 +9,13 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.0.3.2] – 2026-11-05
+
+- Behoben: Plaketten der Oberfläche hielten als Geist jeden Gegner für
+  freundlich (`UnitCanAttack` = nein) und blieben so bis zum Neuaufbau.
+  Jetzt `NP.IsFriendly` (`UnitIsFriend`, tot nur das) und `NP.Reattach` bei
+  `PLAYER_DEAD`/`PLAYER_ALIVE`/`PLAYER_UNGHOST`.
+
 ## [1.0.3.1] – 2026-11-05
 
 - Gespräche im Codex-Stil: Gesprächsoptionen zeigen das Symbol des Spiels
