@@ -10829,6 +10829,28 @@ do
         .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 1.0.0.5: Trennstriche der Hauptleiste (Client 1.60.1) unsichtbar.
+do
+    local AB = WeintCodex.UIActionBars
+    local ok, err = pcall(function()
+        local bar = _G.MainActionBar or CreateFrame("Frame", "MainActionBar", UIParent)
+        local div = CreateFrame("Frame", nil, bar)
+        div.TopEdge, div.BottomEdge, div.Center = {}, {}, {}
+        local alpha
+        div.SetAlpha = function(_, a) alpha = a end
+        local other = CreateFrame("Frame", nil, bar)
+        local touched = false
+        other.SetAlpha = function() touched = true end
+        local oldKids = bar.GetChildren
+        bar.GetChildren = function() return div, other end
+        AB.HideDividers()
+        bar.GetChildren = oldKids
+        assert(alpha == 0, "Trennstrich nicht ausgeblendet")
+        assert(not touched, "anderes Kind der Leiste angefasst")
+    end)
+    Check(ok, "Aktionsleisten: Trennstriche der Hauptleiste ausgeblendet" .. (ok and "" or (": " .. tostring(err))))
+end
+
 -- 6.3.2.0: Haltungsleiste so breit wie die Haltungen der Klasse.
 do
     local AB = WeintCodex.UIActionBars

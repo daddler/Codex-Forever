@@ -131,6 +131,7 @@ local FAMILIES = {
 
 local skinned = {}
 AB.skinned = skinned
+local HideDividers
 
 local function Region(b, key)
     local r = b[key]
@@ -446,6 +447,30 @@ local function Apply(b, d)
     ShortenHotkey(b)
 end
 
+-- 1.0.0.5 (Bild einer Spielerin, Client 1.60.1): die Hauptleiste zeichnet
+-- zwischen den Plaetzen Trennstriche (Atlas ...Frame-Divider-ThreeSlice,
+-- Kinder der Leiste mit TopEdge/Center/BottomEdge). Zu den flachen Knoepfen
+-- von WeintCodex passen sie nicht - ohne Knopf darunter standen sie allein
+-- da. Nur Deckkraft, nichts Geschuetztes; das Spiel legt sie beim Neuordnen
+-- neu an, darum bei jedem Durchlauf.
+local DIVIDER_BARS = { "MainActionBar", "MainMenuBar", "MultiBarBottomLeft", "MultiBarBottomRight",
+    "MultiBarRight", "MultiBarLeft", "MultiBar5", "MultiBar6", "MultiBar7" }
+HideDividers = function()
+    for _, name in ipairs(DIVIDER_BARS) do
+        local bar = _G[name]
+        if type(bar) == "table" and type(bar.GetChildren) == "function" then
+            for _, c in ipairs({ bar:GetChildren() }) do
+                if type(c) == "table" and type(c.TopEdge) == "table" and type(c.BottomEdge) == "table"
+                    and type(c.Center) == "table" and c.SetAlpha and not hiddenParts[c] then
+                    c:SetAlpha(0)
+                    KeepHidden(c)
+                end
+            end
+        end
+    end
+end
+AB.HideDividers = HideDividers
+
 local function SkinAll()
     for _, fam in ipairs(FAMILIES) do
         for i = 1, fam[2] do
@@ -456,6 +481,7 @@ local function SkinAll()
             end
         end
     end
+    HideDividers()
     if Opt("hideEndCaps") then
         -- Die Greifen/Loewen am Ende der Hauptleiste. Namen je nach
         -- Clientstand verschieden; was fehlt, fehlt.
