@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.0.1.1",
+        date    = "05.11.2026",
+        notes   = {
+            "|cff7C6CFFNeu: /wcui klick|r – zeigt die Klickbelegung des Rahmens unter der Maus, die Selbstzauber-Taste und deine letzten Klicks samt dem, was das Spiel daraus macht. Hilft, wenn ein Klickzauber nicht wirkt.",
+        },
+    },
+    {
         version = "1.0.1.0",
         date    = "05.11.2026",
         notes   = {
