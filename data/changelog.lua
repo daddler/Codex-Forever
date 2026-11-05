@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.0.0.5",
+        date    = "05.11.2026",
+        notes   = {
+            "|cff7C6CFFKeine einzelnen Trennstriche mehr auf der Hauptleiste|r – die Striche, die das Spiel zwischen die Plätze zeichnet, passen nicht zu den flachen Knöpfen und standen bei leeren Plätzen allein da.",
+        },
+    },
+    {
         version = "1.0.0.4",
         date    = "05.11.2026",
         notes   = {

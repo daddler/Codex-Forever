@@ -9,6 +9,12 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.0.0.5] – 2026-11-05
+
+- Behoben: Mit der Oberfläche zeigte die Hauptleiste die Trennstriche des
+  Spiels (Client 1.60.1, `…Frame-Divider-ThreeSlice`) – bei leeren Plätzen
+  standen sie allein. Sie werden jetzt ausgeblendet (nur Deckkraft).
+
 ## [1.0.0.4] – 2026-11-05
 
 - Behoben: In 1.0.0.3 waren zwei Felder der Questdatenbank vertauscht
