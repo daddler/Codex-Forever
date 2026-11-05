@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.0.2.2",
+        date    = "05.11.2026",
+        notes   = {
+            "|cff7C6CFFKein Lua-Fehler mehr beim Öffnen des Bearbeitungsmodus über das Spielmenü|r – der Knopf „WeintCodex UI“ steht jetzt unter dem Esc-Menü statt darin und stört das Menü des Spiels nicht mehr.",
+        },
+    },
+    {
         version = "1.0.2.1",
         date    = "05.11.2026",
         notes   = {
