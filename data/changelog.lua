@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.0.2.8",
+        date    = "05.11.2026",
+        notes   = {
+            "|cff7C6CFF„WeintCodex UI“ steht wieder im Spielmenü|r – als letzter Knopf unter „Zurück zum Spiel“, im Stil der anderen Menüknöpfe.",
+        },
+    },
+    {
         version = "1.0.2.7",
         date    = "05.11.2026",
         notes   = {

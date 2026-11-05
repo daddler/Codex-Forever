@@ -9,6 +9,13 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.0.2.8] – 2026-11-05
+
+- Spielmenü: „WeintCodex UI“ wieder im Menüfenster – eigener Knopf in der
+  Vorlage der Menüknöpfe unter „Zurück zum Spiel“, das Fenster wächst um
+  eine Knopfhöhe. Weiter nicht im Knopf-Vorrat des Menüs (Taint im
+  Bearbeitungsmodus, 1.0.2.2).
+
 ## [1.0.2.7] – 2026-11-05
 
 - Klickzauber: „Ziel wählen“ mit Zusatztaste über ein Makro
