@@ -91,7 +91,9 @@ CC.ACTIONS = {
 CC.DEFAULTS = {
     clickUnitFrames = true,   -- auch Spieler, Ziel, Fokus, ...
     clickTooltip    = true,   -- Belegung im Tooltip
-    clickHelpfulOnly = true,  -- Tafel: nur hilfreiche Zauber
+    -- 1.0.2.5 (Wunsch: "alle Faehigkeiten drin, damit man alles binden kann"):
+    -- ab Werk ALLE Zauber des Zauberbuchs; "nur hilfreiche" bleibt waehlbar.
+    clickHelpfulOnly = false, -- Tafel: nur hilfreiche Zauber
 }
 
 local function Opt(k) return K.Get(KEY, k) end
@@ -918,7 +920,9 @@ function CC.BuildPicker(parent, width)
             .. "   –   Klick auf einen Zauber legt ihn auf diese Taste.")
         local entries = {}
         for _, e in ipairs(SPECIAL) do entries[#entries + 1] = e end
-        local book = CC.Spellbook(Opt("clickHelpfulOnly"))
+        -- Mausrad und Tastatur-Tasten wirken auf jede Einheit unter der
+        -- Maus, auch auf Gegner: dort immer alle Zauber.
+        local book = CC.Spellbook(Opt("clickHelpfulOnly") and not CC.IsKey(draft))
         for _, sp in ipairs(book) do entries[#entries + 1] = sp end
         for i = 1, math.min(#entries, cap) do
             local t = w.tiles[i] or Tile(i)
