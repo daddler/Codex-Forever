@@ -252,8 +252,72 @@ function CC.ApplyTo(f, list)
         end
     end
     applied[f] = keys
+    CC.HookClick(f)
     CC.HookTooltip(f)
     CC.HookWheel(f)
+end
+
+-- 1.0.1.1 (Bericht: "Alt+Links Ziel, Alt+Rechts Menue gehen nicht" -
+-- Belegung im Prueflauf richtig gesetzt): messen statt raten. Jeder Klick
+-- auf einen belegten Rahmen wird gemerkt - Taste, Zusatztasten und was der
+-- Client daraus macht (SecureButton_GetModifiedAttribute). /wcui klick
+-- zeigt es samt Belegung des Rahmens unter der Maus.
+CC.lastClicks = {}
+local clickHooked = setmetatable({}, { __mode = "k" })
+local function ModNow()
+    local m = ""
+    if _G.IsAltKeyDown and K.Bool(_G.IsAltKeyDown(), false) then m = m .. "alt-" end
+    if _G.IsControlKeyDown and K.Bool(_G.IsControlKeyDown(), false) then m = m .. "ctrl-" end
+    if _G.IsShiftKeyDown and K.Bool(_G.IsShiftKeyDown(), false) then m = m .. "shift-" end
+    return m
+end
+function CC.HookClick(f)
+    if clickHooked[f] or not f.HookScript then return end
+    clickHooked[f] = true
+    pcall(f.HookScript, f, "OnClick", function(self, button, down)
+        local get = _G.SecureButton_GetModifiedAttribute
+        local ok, t = false, nil
+        if get then ok, t = pcall(get, self, "type", button) end
+        local name = self.GetName and self:GetName() or "?"
+        table.insert(CC.lastClicks, 1, string.format("%s  %s%s%s  ->  type=%s", tostring(name), ModNow(),
+            tostring(button), down and " (gedrückt)" or "", ok and tostring(t) or "?"))
+        CC.lastClicks[9] = nil
+    end)
+end
+
+function CC.ClickReport()
+    local out = { "WeintCodex " .. tostring(WeintCodex.Version) .. " · Klickzauber" }
+    local foci = _G.GetMouseFoci and { _G.GetMouseFoci() } or { _G.GetMouseFocus and _G.GetMouseFocus() }
+    local f = type(foci[1]) == "table" and foci[1] or nil
+    if type(f) == "table" and type(f[1]) == "table" then f = f[1] end
+    local function cv(n)
+        local ok, v = pcall(function() return _G.C_CVar and _G.C_CVar.GetCVar(n) or (_G.GetCVar and _G.GetCVar(n)) end)
+        return ok and tostring(v) or "?"
+    end
+    local okS, sc = pcall(function() return _G.GetModifiedClick and _G.GetModifiedClick("SELFCAST") end)
+    out[#out + 1] = "Selbstzauber-Taste: " .. (okS and tostring(sc) or "?") .. " · autoSelfCast " .. cv("autoSelfCast")
+        .. " · Aktion beim Drücken " .. cv("ActionButtonUseKeyDown")
+    out[#out + 1] = "Klickbindungen des Spiels (C_ClickBindings): " .. ((_G.C_ClickBindings and "vorhanden") or "nicht vorhanden")
+    if f and f.GetAttribute then
+        out[#out + 1] = "Rahmen unter der Maus: " .. tostring(f.GetName and f:GetName() or "?")
+            .. " · geschützt " .. tostring(f.IsProtected and f:IsProtected())
+            .. " · unit " .. tostring(f:GetAttribute("unit"))
+            .. " · belegt von WeintCodex " .. tostring(applied[f] ~= nil)
+        for _, m in ipairs({ "", "*", "shift-", "ctrl-", "alt-" }) do
+            local parts = {}
+            for b = 1, 2 do
+                local t = f:GetAttribute(m .. "type" .. b)
+                if t ~= nil then parts[#parts + 1] = b .. "=" .. tostring(t) .. (t == "spell" and (" " .. tostring(f:GetAttribute(m .. "spell" .. b))) or "") end
+            end
+            if #parts > 0 then out[#out + 1] = "   " .. (m == "" and "ohne" or m) .. ": " .. table.concat(parts, ", ") end
+        end
+    else
+        out[#out + 1] = "Kein Rahmen unter der Maus – Maus auf den Spieler- oder Zielrahmen, dann /wcui klick."
+    end
+    out[#out + 1] = "Letzte Klicks auf belegte Rahmen (neueste zuerst):"
+    if #CC.lastClicks == 0 then out[#out + 1] = "   noch keiner" end
+    for _, l in ipairs(CC.lastClicks) do out[#out + 1] = "   " .. l end
+    return out
 end
 
 -- Jeder Rahmen, der eine Einheit zeigt.

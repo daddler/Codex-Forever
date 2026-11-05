@@ -10862,6 +10862,8 @@ do
         CC.ApplyTo(pf, { { button = 1, mod = "alt-", action = "target" }, { button = 2, mod = "alt-", action = "menu" } })
         assert(pf:GetAttribute("alt-type1") == "target" and pf:GetAttribute("alt-type2") == "togglemenu",
             "Alt+Links/Rechts nicht gesetzt")
+        local rep = CC.ClickReport()
+        assert(type(rep) == "table" and #rep >= 3, "Klickbericht leer")
         CC.ApplyTo(pf, {})
     end)
     Check(ok, "Klickzauber: Alt+Ziel/Menue auch auf den Einheitenrahmen des Spiels" .. (ok and "" or (": " .. tostring(err))))

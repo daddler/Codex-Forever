@@ -1653,6 +1653,12 @@ SlashCmdList["WEINTCODEXUI"] = function(msg)
         print(WeintCodex.ColorText("accent", "[WeintCodex]") .. " Kampfprotokoll im Fenster – Strg+C kopiert.")
         return
     end
+    if msg == "klick" or msg == "click" then
+        local lines = WeintCodex.UIClickCast.ClickReport()
+        K.ShowReport("Klickzauber", lines)
+        print(WeintCodex.ColorText("accent", "[WeintCodex]") .. " Klickzauber – Bericht im Fenster, Strg+C kopiert.")
+        return
+    end
     if msg == "fenster" or msg == "window" then
         local lines = K.InspectWindow()
         K.ShowReport("Fenster unter der Maus", lines)
