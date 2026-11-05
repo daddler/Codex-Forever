@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.0.2.9",
+        date    = "05.11.2026",
+        notes   = {
+            "|cff7C6CFF„WeintCodex UI“ steht im Spielmenü wieder zwischen „Addons“ und „Bearbeitungsmodus“|r.",
+        },
+    },
+    {
         version = "1.0.2.8",
         date    = "05.11.2026",
         notes   = {

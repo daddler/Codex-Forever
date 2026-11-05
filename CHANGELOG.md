@@ -9,6 +9,12 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.0.2.9] – 2026-11-05
+
+- Spielmenü: „WeintCodex UI“ zwischen „Addons“ und „Bearbeitungsmodus“ –
+  die Knöpfe darunter rücken nach jedem Anordnen per Anker eine Knopfhöhe
+  tiefer; weiterhin nichts im Knopf-Vorrat des Menüs.
+
 ## [1.0.2.8] – 2026-11-05
 
 - Spielmenü: „WeintCodex UI“ wieder im Menüfenster – eigener Knopf in der
