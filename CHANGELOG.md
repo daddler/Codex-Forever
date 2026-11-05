@@ -9,6 +9,13 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.0.1.5] – 2026-11-05
+
+- Behoben: Im Gestaltungsmodus fehlten die Platzhalter für Aktionsleiste
+  6–8 (`MultiBar5–7`, `ExtraBar1–3` fehlten in `ui/layout.lua`). Dazu
+  bekommt eine eingeschaltete, noch nicht gezeigte Leiste einen Platzhalter
+  in der Größe von zwölf Knöpfen.
+
 ## [1.0.1.4] – 2026-11-05
 
 - Klickzauber-Seite: Hinweis, dass Links (Ziel) und Rechts (Menü) auf allen

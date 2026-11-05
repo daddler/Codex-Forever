@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.0.1.5",
+        date    = "05.11.2026",
+        notes   = {
+            "|cff7C6CFFAktionsleisten 6 bis 8 lassen sich im Gestaltungsmodus verschieben|r – und frisch eingeschaltete Leisten bekommen ihren Platzhalter schon vor dem Neuladen.",
+        },
+    },
+    {
         version = "1.0.1.4",
         date    = "05.11.2026",
         notes   = {
