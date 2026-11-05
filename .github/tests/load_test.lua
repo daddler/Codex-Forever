@@ -21490,11 +21490,28 @@ do
         TH.hidden.owns = false
         TH.ApplyHidden()
         Check(cv.nameplateShowFriends == "1" and click == true, "Unsichtbare Plaketten: eingeschaltet und nicht anklickbar")
-        local oldUCA = _G.UnitCanAttack
+        local oldUCA, oldUIF, oldDead = _G.UnitCanAttack, _G.UnitIsFriend, _G.UnitIsDeadOrGhost
         _G.UnitCanAttack = function() return false end
+        _G.UnitIsFriend = function() return true end
+        _G.UnitIsDeadOrGhost = function() return false end
         TH.PlateAdded("nameplate1")
         Check(plate:GetAlpha() == 0, "Freundliche Plakette ist unsichtbar")
-        _G.UnitCanAttack = oldUCA
+        -- 1.0.0.8: als Geist kann man nichts angreifen - ein Gegner bleibt
+        -- trotzdem Gegner, und tot wird nichts unsichtbar.
+        plate:SetAlpha(1) TH.hiddenPlates[plate] = nil
+        _G.UnitIsFriend = function() return false end
+        TH.PlateAdded("nameplate1")
+        Check(plate:GetAlpha() == 1, "Gegner (nicht angreifbar, z. B. als Geist) bleibt sichtbar")
+        _G.UnitIsFriend = function() return true end
+        _G.UnitIsDeadOrGhost = function() return true end
+        TH.PlateAdded("nameplate1")
+        Check(plate:GetAlpha() == 1, "Tot: keine Plakette unsichtbar")
+        _G.UnitIsDeadOrGhost = function() return false end
+        TH.PlateAdded("nameplate1")
+        _G.UnitIsDeadOrGhost = function() return true end
+        TH.RestoreHostile()
+        Check(plate:GetAlpha() == 1, "Beim Tod wieder sichtbar")
+        _G.UnitCanAttack, _G.UnitIsFriend, _G.UnitIsDeadOrGhost = oldUCA, oldUIF, oldDead
         K.Set("comfort", "thanksHidden", false)
         TH.ApplyHidden()
         Check(cv.nameplateShowFriends == "0" and click == false and plate:GetAlpha() == 1, "Ausgeschaltet: Einstellung und Plakette zurueck")

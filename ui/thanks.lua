@@ -685,14 +685,38 @@ function TH.ApplyHidden()
     return true
 end
 
+-- 1.0.0.8 (Bericht: "wenn man gestorben ist, sind die Namensplaketten
+-- aus"): als Geist kann man niemanden angreifen - "nicht angreifbar" machte
+-- jeden Gegner zum Freund, seine Plakette blieb unsichtbar, auch nach der
+-- Wiederbelebung. Freundlich heisst jetzt: das Spiel nennt die Einheit
+-- Freund (UnitIsFriend). Tot oder Geist: gar nichts unsichtbar machen.
+local function PlayerDead()
+    return K.Bool(_G.UnitIsDeadOrGhost and _G.UnitIsDeadOrGhost("player"), false)
+end
 local function Friendly(unit)
+    if PlayerDead() then return false end
+    local friend = _G.UnitIsFriend and K.Bool(_G.UnitIsFriend("player", unit), nil)
+    if friend ~= true then return false end
     local can = _G.UnitCanAttack and K.Bool(_G.UnitCanAttack("player", unit), nil)
-    return can == false
+    return can ~= true
+end
+TH.Friendly = Friendly
+
+-- Nach Tod und Wiederbelebung: alles, was nicht (mehr) freundlich ist,
+-- wieder sichtbar.
+function TH.RestoreHostile()
+    for plate in pairs(hiddenPlates) do
+        local unit = type(plate) == "table" and K.Plain(plate.namePlateUnitToken) or nil
+        if PlayerDead() or type(unit) ~= "string" or not Friendly(unit) then
+            pcall(plate.SetAlpha, plate, 1)
+            hiddenPlates[plate] = nil
+        end
+    end
 end
 
 -- Waehrend des Hinschauens entstandene Plaketten unsichtbar halten.
 function TH.PlateAdded(unit)
-    if not (st.peeking or (TH.hidden.owns and Friendly(unit))) then return end
+    if not ((st.peeking and not PlayerDead()) or (TH.hidden.owns and Friendly(unit))) then return end
     local np = _G.C_NamePlate
     local ok, plate = pcall(function() return np and np.GetNamePlateForUnit and np.GetNamePlateForUnit(unit) end)
     if ok and type(plate) == "table" and not (plate.IsForbidden and plate:IsForbidden()) and plate.SetAlpha then
@@ -784,7 +808,8 @@ end
 local ev = CreateFrame("Frame")
 pcall(ev.RegisterUnitEvent, ev, "UNIT_AURA", "player")
 for _, e in ipairs({ "PLAYER_TARGET_CHANGED", "UPDATE_MOUSEOVER_UNIT", "NAME_PLATE_UNIT_ADDED",
-                     "NAME_PLATE_UNIT_REMOVED", "GROUP_ROSTER_UPDATE", "PLAYER_LOGIN", "PLAYER_ENTERING_WORLD" }) do
+                     "NAME_PLATE_UNIT_REMOVED", "GROUP_ROSTER_UPDATE", "PLAYER_LOGIN", "PLAYER_ENTERING_WORLD",
+                     "PLAYER_DEAD", "PLAYER_ALIVE", "PLAYER_UNGHOST" }) do
     pcall(ev.RegisterEvent, ev, e)
 end
 pcall(ev.RegisterEvent, ev, "ADDON_ACTION_BLOCKED")
@@ -802,6 +827,8 @@ ev:SetScript("OnEvent", function(_, event, a1, a2)
         pcall(TH.ApplyHidden)
     elseif event == "NAME_PLATE_UNIT_REMOVED" then
         pcall(TH.PlateRemoved, a1)
+    elseif event == "PLAYER_DEAD" or event == "PLAYER_ALIVE" or event == "PLAYER_UNGHOST" then
+        pcall(TH.RestoreHostile)
     elseif event == "PLAYER_TARGET_CHANGED" or event == "UPDATE_MOUSEOVER_UNIT"
         or event == "NAME_PLATE_UNIT_ADDED" or event == "GROUP_ROSTER_UPDATE" then
         if event == "NAME_PLATE_UNIT_ADDED" then pcall(TH.PlateAdded, a1) end

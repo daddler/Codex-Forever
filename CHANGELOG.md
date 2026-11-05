@@ -9,6 +9,16 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.0.0.8] – 2026-11-05
+
+- Behoben: Nach dem Tod waren Namensplaketten weg. „Danke“ mit unsichtbaren
+  freundlichen Plaketten hielt jede nicht angreifbare Einheit für freundlich
+  – als Geist also jeden Gegner. Jetzt zählt `UnitIsFriend`; tot wird nichts
+  unsichtbar, beim Tod und bei der Wiederbelebung kommt alles zurück.
+- Behoben: Questhilfe zeigte in Ironforge Dutzende Quests der Stufe 60
+  (Kriegsanstrengung von Ahn'Qiraj, „ab Stufe 1“). Gesperrt wie bei Questie
+  ab Werk, dazu Invasionen; nie mehr als 10 Stufen über dem Charakter.
+
 ## [1.0.0.7] – 2026-11-05
 
 - Neu: Unter Profile „Neues Profil frisch“ (eigenes Profil mit den

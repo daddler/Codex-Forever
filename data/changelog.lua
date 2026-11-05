@@ -22,6 +22,14 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.0.0.8",
+        date    = "05.11.2026",
+        notes   = {
+            "|cff7C6CFFNamensplaketten bleiben nach dem Tod an|r – als Geist galten alle Gegner als freundlich, ihre Plaketten wurden unsichtbar und blieben es auch nach der Wiederbelebung.",
+            "|cff7C6CFFKeine Quests der Stufe 60 mehr für niedrige Charaktere|r – die Kriegsanstrengung von Ahn'Qiraj und die Invasionen gibt es auf Forever nicht, und Quests mehr als 10 Stufen über dir erscheinen nicht auf der Karte.",
+        },
+    },
+    {
         version = "1.0.0.7",
         date    = "05.11.2026",
         notes   = {
