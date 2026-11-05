@@ -1921,6 +1921,14 @@ end
 -- scheiterte an seinen eigenen geheimen Werten. Jetzt ein EIGENER Knopf
 -- unter dem Menue: nichts im Vorrat, kein Haken auf InitButtons, nur
 -- OnShow/OnHide des Menues.
+-- 1.0.2.8 (Wunsch: "der Knopf muss wieder im Menue sein"): IM Menuefenster,
+-- aber weiter nicht in seinem Knopf-Vorrat. Ein eigener Knopf in der
+-- Vorlage der Menueknoepfe (sonst im WeintCodex-Stil) unten im Fenster,
+-- unter "Zurueck zum Spiel"; das Fenster wird nach jedem Anordnen um eine
+-- Knopfhoehe groesser (Haken auf Layout, nur die Groesse - die liegt im
+-- Client, keine Lua-Variable des Spiels wird beschrieben). Der Vorrat, aus
+-- dem "Bearbeitungsmodus" kommt, bleibt unberuehrt.
+O.GAME_MENU_GAP = 6
 function O.HookGameMenu()
     local gm = _G.GameMenuFrame
     if O.gameMenuHooked or type(gm) ~= "table" or not gm.HookScript then return false end
@@ -1928,24 +1936,57 @@ function O.HookGameMenu()
     local b
     local function Make()
         if b then return b end
-        b = WeintCodex.CreateButton(UIParent, { text = O.GameMenuText(), kind = "secondary", height = 26, size = 12,
-            radius = 13, backdrop = "bgDark", onClick = function()
+        local ok, made = pcall(CreateFrame, "Button", "WeintCodexGameMenuButton", gm, "MainMenuFrameButtonTemplate")
+        if ok and made then
+            b = made
+            if b.SetText then b:SetText(O.GameMenuText()) end
+            b:SetScript("OnClick", function()
                 if _G.HideUIPanel then pcall(_G.HideUIPanel, gm) else gm:Hide() end
                 O.Show()
-            end })
-        b:SetWidth(180)
-        b:SetFrameStrata("DIALOG")
-        b:Hide()
+            end)
+        else
+            b = WeintCodex.CreateButton(gm, { text = O.GameMenuText(), kind = "secondary", height = 26, size = 12,
+                radius = 13, backdrop = "bgDark", onClick = function()
+                    if _G.HideUIPanel then pcall(_G.HideUIPanel, gm) else gm:Hide() end
+                    O.Show()
+                end })
+        end
         O.gameMenuButton = b
         return b
     end
-    gm:HookScript("OnShow", function()
+    local function Place()
         if K.InCombat() then return end
         local btn = Make()
+        -- Breite und Hoehe wie die Knoepfe des Spiels (der unterste zeigt sie).
+        local w, h = 200, 26
+        local last
+        if type(gm.buttonPool) == "table" and type(gm.buttonPool.EnumerateActive) == "function" then
+            for x in gm.buttonPool:EnumerateActive() do
+                if not last or (K.Plain(x.layoutIndex) or 0) > (K.Plain(last.layoutIndex) or 0) then last = x end
+            end
+        end
+        if last then
+            w = K.Plain(last:GetWidth()) or w
+            h = K.Plain(last:GetHeight()) or h
+        end
+        btn:SetSize(w, h)
         btn:ClearAllPoints()
-        btn:SetPoint("TOP", gm, "BOTTOM", 0, -8)
+        if last then
+            btn:SetPoint("TOP", last, "BOTTOM", 0, -O.GAME_MENU_GAP)
+        else
+            btn:SetPoint("BOTTOM", gm, "BOTTOM", 0, 14)
+        end
         btn:Show()
-    end)
+        local gh = K.Plain(gm:GetHeight())
+        if type(gh) == "number" and not O.gameMenuGrown then
+            O.gameMenuGrown = true
+            gm:SetHeight(gh + h + O.GAME_MENU_GAP)
+        end
+    end
+    gm:HookScript("OnShow", function() O.gameMenuGrown = false Place() end)
+    if _G.hooksecurefunc and type(gm.Layout) == "function" then
+        _G.hooksecurefunc(gm, "Layout", function() O.gameMenuGrown = false Place() end)
+    end
     gm:HookScript("OnHide", function() if b then b:Hide() end end)
     return true
 end
