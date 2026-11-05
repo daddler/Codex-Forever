@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.0.2.6",
+        date    = "05.11.2026",
+        notes   = {
+            "|cff7C6CFFFlüstern öffnet den Messenger jetzt bei der richtigen Person|r – auch wenn es mit ihr nur ein altes Gespräch im Verlauf gab; das Fenster wechselt dabei aus dem Verlauf.",
+        },
+    },
+    {
         version = "1.0.2.5",
         date    = "05.11.2026",
         notes   = {

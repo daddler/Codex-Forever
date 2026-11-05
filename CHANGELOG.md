@@ -9,6 +9,13 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.0.2.6] – 2026-11-05
+
+- Behoben: Rechtsklick → Flüstern öffnete den Messenger beim falschen
+  Gespräch (Gespräche nur aus dem Verlauf galten als unsichtbar, das
+  Fenster sprang aufs erste sichtbare und blieb im Verlauf). Jetzt gilt das
+  angeflüsterte Gespräch als laufend, der Verlauf wird verlassen.
+
 ## [1.0.2.5] – 2026-11-05
 
 - Klickzauber: `clickHelpfulOnly` ab Werk aus – die Tafel zeigt alle aktiven
