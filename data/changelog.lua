@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.0.0.9",
+        date    = "05.11.2026",
+        notes   = {
+            "|cff7C6CFFEntfluchen per Klick wirkt wieder|r – die Felder zum Anklicken entfluchen mit Links- und Rechtsklick, und Klicks gehen auch, wenn im Spiel „Aktion beim Drücken“ an ist. Das gilt auch für die Gruppen- und Einheitenrahmen der Oberfläche.",
+        },
+    },
+    {
         version = "1.0.0.8",
         date    = "05.11.2026",
         notes   = {

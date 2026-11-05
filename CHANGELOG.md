@@ -9,6 +9,13 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.0.0.9] – 2026-11-05
+
+- Behoben: Die Entfluchen-Felder wirkten nur mit Linksklick, und mit
+  „Aktion beim Drücken“ gar nicht. Jetzt jede Maustaste (`type`/`spell`)
+  und `useOnKeyDown = false`; ebenso an den Gruppen- und Einheitenrahmen
+  der Oberfläche (Klickzauber).
+
 ## [1.0.0.8] – 2026-11-05
 
 - Behoben: Nach dem Tod waren Namensplaketten weg. „Danke“ mit unsichtbaren
