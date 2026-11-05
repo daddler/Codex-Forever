@@ -9,6 +9,13 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.0.0.6] – 2026-11-05
+
+- Behoben: Seit 1.0.0.2 standen die beim ersten Einloggen eingeschalteten
+  Leisten 2–5 bis zum nächsten Laden falsch (erst der Bearbeitungsmodus
+  ordnete sie). Jetzt fragt WeintCodex danach einmal nach dem Neuladen
+  (gesicherter Knopf, Enter).
+
 ## [1.0.0.5] – 2026-11-05
 
 - Behoben: Mit der Oberfläche zeigte die Hauptleiste die Trennstriche des

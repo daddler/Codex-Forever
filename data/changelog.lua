@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.0.0.6",
+        date    = "05.11.2026",
+        notes   = {
+            "|cff7C6CFFNeue Charaktere: keine verrutschten Aktionsleisten mehr|r – nach dem Einschalten der Leisten fragt WeintCodex einmal nach dem Neuladen, dann ordnet das Spiel sie richtig an.",
+        },
+    },
+    {
         version = "1.0.0.5",
         date    = "05.11.2026",
         notes   = {
