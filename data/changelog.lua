@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.0.0.7",
+        date    = "05.11.2026",
+        notes   = {
+            "|cff7C6CFFEin frisches Profil geht jetzt auch im Nachhinein|r – unter Profile legt „Neues Profil frisch“ ein eigenes Profil mit den Grundeinstellungen an, alle Leisten sichtbar, wie beim ersten Einloggen. „Profil-Frage zeigen“ holt die Frage vom Anfang zurück. Hilft, wenn ein importiertes Profil nicht passt.",
+        },
+    },
+    {
         version = "1.0.0.6",
         date    = "05.11.2026",
         notes   = {

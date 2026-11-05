@@ -133,6 +133,12 @@ function PR.New(name, fresh)
     if not ok then return nil, clean end
     ui.profiles[clean] = fresh and {} or DeepCopy(ui.profiles[PR.Chosen()] or {})
     PR.Choose(clean)
+    -- 1.0.0.7: frisch heisst auch die Leisten wie beim ersten Mal - beim
+    -- naechsten Einloggen schaltet ui/share.lua sie ein, egal welche Stufe.
+    if fresh then
+        local st = K.CharState and K.CharState()
+        if type(st) == "table" then st.barsFrom = false end
+    end
     return clean
 end
 
@@ -276,6 +282,14 @@ function PR.BuildPage(B)
           { type = "button", label = "Neues Profil", text = "Als Kopie anlegen",
             tooltip = "Legt ein Profil mit dem Namen dieses Charakters an – eine Kopie des gewählten – und wählt es. Wirkt nach dem Neuladen.",
             onClick = function() PR.New() end })
+    -- 1.0.0.7 (Wunsch: "auch im Nachhinein ein Profil erstellen, so wie am
+    -- Anfang"): dieselben Wege wie die Frage beim ersten Einloggen.
+    B:Row({ type = "button", label = "Frisch beginnen", text = "Neues Profil frisch",
+            tooltip = "Legt ein eigenes Profil mit den Grundeinstellungen von WeintCodex an – alle Leisten sichtbar, wie beim ersten Mal – und wählt es. Hilft, wenn ein importiertes Profil nicht passt. Wirkt nach dem Neuladen.",
+            onClick = function() PR.AskCreate(true) end },
+          { type = "button", label = "Wie beim ersten Mal", text = "Profil-Frage zeigen",
+            tooltip = "Zeigt die Frage vom ersten Einloggen noch einmal: eigenes Profil als Kopie, frisch beginnen oder Standard behalten.",
+            onClick = function() PR.ShowAsk("frage") end })
     B:Row({ type = "input", label = "Name des Profils",
             get = PR.Chosen,
             -- Bei jeder Eingabe: ein ungueltiger Name (leer, vergeben)

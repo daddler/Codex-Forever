@@ -9,6 +9,12 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.0.0.7] – 2026-11-05
+
+- Neu: Unter Profile „Neues Profil frisch“ (eigenes Profil mit den
+  Grundeinstellungen, Leisten 2–5 beim nächsten Einloggen an – auch über
+  Stufe 5) und „Profil-Frage zeigen“ (die Frage vom ersten Einloggen).
+
 ## [1.0.0.6] – 2026-11-05
 
 - Behoben: Seit 1.0.0.2 standen die beim ersten Einloggen eingeschalteten

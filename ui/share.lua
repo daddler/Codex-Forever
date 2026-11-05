@@ -455,6 +455,8 @@ function SH.OnLogin()
     if type(p) ~= "table" or type(st) ~= "table" then return end
     local name = K.ActiveProfile and K.ActiveProfile()
     if st.barsFrom == name then return end
+    -- false (1.0.0.7): "frisch beginnen" - Leisten einschalten, auch ueber
+    -- Stufe SH.NEW_LEVEL.
     -- Charaktere von vor 6.42.0.0 (noch kein Eintrag, schon gespielt):
     -- nur merken, nichts umstellen - ihre Leisten hat der Spieler gesetzt.
     local lvl = K.Plain(_G.UnitLevel and _G.UnitLevel("player"))

@@ -10829,6 +10829,22 @@ do
         .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 1.0.0.7: frisches Profil auch im Nachhinein, mit Leisten wie beim ersten Mal.
+do
+    local PR, K = WeintCodex.UIProfiles, WeintCodex.UIKit
+    local ok, err = pcall(function()
+        local before = PR.Chosen()
+        local name = PR.New("Frisch-Test", true)
+        assert(name == "Frisch-Test" and PR.Chosen() == name, "frisches Profil nicht angelegt/gewaehlt")
+        local st = K.CharState()
+        assert(st.barsFrom == false, "frisches Profil schaltet die Leisten nicht ein")
+        PR.Choose(before)
+        PR.Delete(name)
+        st.barsFrom = nil
+    end)
+    Check(ok, "Profile: frisch beginnen im Nachhinein" .. (ok and "" or (": " .. tostring(err))))
+end
+
 -- 1.0.0.5: Trennstriche der Hauptleiste (Client 1.60.1) unsichtbar.
 do
     local AB = WeintCodex.UIActionBars
