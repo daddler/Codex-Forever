@@ -10967,6 +10967,22 @@ do
     Check(ok, "Messenger: Battle.net-Gespraech ohne Ziel oeffnet keine leere Fluesterzeile" .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 1.0.2.4: Strich unter dem Reiter folgt dem gewaehlten Fenster, nicht dem
+-- zuletzt per Rechtsklick geoeffneten Menue.
+do
+    local CH = WeintCodex.UIChat
+    local ok, err = pcall(function()
+        local a, b = {}, {}
+        local oG, oD, oS = _G.FCF_GetCurrentChatFrame, _G.GENERAL_CHAT_DOCK, _G.FCFDock_GetSelectedWindow
+        _G.FCF_GetCurrentChatFrame = function() return a end
+        _G.GENERAL_CHAT_DOCK = { selected = b }
+        _G.FCFDock_GetSelectedWindow = function(d) return d.selected end
+        assert(CH.CurrentFrame() == b, "Strich folgt dem Rechtsklick-Menue statt dem gewaehlten Reiter")
+        _G.FCF_GetCurrentChatFrame, _G.GENERAL_CHAT_DOCK, _G.FCFDock_GetSelectedWindow = oG, oD, oS
+    end)
+    Check(ok, "Chat: aktiver Reiter = gewaehltes Fenster" .. (ok and "" or (": " .. tostring(err))))
+end
+
 -- 1.0.0.5: Trennstriche der Hauptleiste (Client 1.60.1) unsichtbar.
 do
     local AB = WeintCodex.UIActionBars

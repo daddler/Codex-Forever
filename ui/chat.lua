@@ -374,12 +374,7 @@ local tabHooked, tabGuard = {}, false
 local function TabFloor(tab)
     for cf, d in pairs(done) do
         if d.tab == tab then
-            local cur = _G.SELECTED_CHAT_FRAME
-            if _G.FCF_GetCurrentChatFrame then
-                local ok, f = pcall(_G.FCF_GetCurrentChatFrame)
-                if ok and f then cur = f end
-            end
-            return cf == cur and 1 or 0.8
+            return cf == CH.CurrentFrame() and 1 or 0.8
         end
     end
     return 0.8
@@ -399,13 +394,20 @@ local function KeepTabVisible(tab)
 end
 
 -- Reiter: flach, der aktive hell mit Strich, die anderen gedaempft.
+-- 1.0.2.4: FCF_GetCurrentChatFrame ist das Fenster, dessen Reiter-Menue
+-- zuletzt (Rechtsklick) offen war - nicht das gewaehlte. Gewaehlt ist, was
+-- die Andockleiste als gewaehlt fuehrt, sonst SELECTED_CHAT_FRAME.
 local function CurrentFrame()
-    if _G.FCF_GetCurrentChatFrame then
-        local ok, f = pcall(_G.FCF_GetCurrentChatFrame)
-        if ok and f then return f end
+    local dock = _G.GENERAL_CHAT_DOCK
+    local get = _G.FCFDock_GetSelectedWindow
+    if dock and type(get) == "function" then
+        local ok, f = pcall(get, dock)
+        if ok and type(f) == "table" then return f end
     end
+    if type(dock) == "table" and type(dock.selected) == "table" then return dock.selected end
     return _G.SELECTED_CHAT_FRAME or _G.DEFAULT_CHAT_FRAME
 end
+CH.CurrentFrame = CurrentFrame
 
 -- Die Andockleiste (und mit ihr die Reiter) eine Schicht ueber den Chat.
 -- Im Beta-Test blieben die Reiter auch mit der Flaeche in BACKGROUND
@@ -452,6 +454,23 @@ local function UpdateTabs()
     end
 end
 CH.UpdateTabs = UpdateTabs
+
+-- 1.0.2.4 (Video eines Spielers: der Strich unter dem Reiter wechselt nur
+-- beim Rechtsklick): die Reiter rufen die Funktion des Spiels ueber ihr
+-- eigenes OnClick, nicht ueber die globale FCF_Tab_OnClick, an der der
+-- Haken haengt - beim Linksklick lief UpdateTabs nie. Jetzt am Reiter
+-- selbst, einen Takt spaeter (dann hat das Spiel das Fenster gewechselt).
+local tabClickHooked = {}
+function CH.HookTabClick(tab)
+    if tabClickHooked[tab] or type(tab) ~= "table" or not tab.HookScript then return end
+    tabClickHooked[tab] = true
+    local function Later()
+        local t = _G.C_Timer
+        if type(t) == "table" and t.After then t.After(0, UpdateTabs) else UpdateTabs() end
+    end
+    pcall(tab.HookScript, tab, "OnClick", Later)
+    pcall(tab.HookScript, tab, "OnMouseUp", Later)
+end
 
 --------------------------------------------------
 -- Knopfspalte
@@ -870,7 +889,7 @@ local function ApplyAll()
         _G.CHAT_FRAME_TAB_ALERTING_NOMOUSE_ALPHA = 1
     end
     for _, d in pairs(done) do
-        if d.tab then KeepTabVisible(d.tab) end
+        if d.tab then KeepTabVisible(d.tab) CH.HookTabClick(d.tab) end
         if d.edit then CH.HookEdit(d.edit) end
     end
     if Opt("flatTabs") then RaiseDock() end
