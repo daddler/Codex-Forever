@@ -386,6 +386,17 @@ end
 
 local function OpenGameReply(c, text)
     if not c then return false end
+    -- 1.0.2.1 (Lua-Fehler "GetAutoCompletePresenceID (Usage ...)" beim
+    -- Absenden): Battle.net-Gespraeche aus dem Verlauf haben kein Ziel mehr
+    -- (die Kennung gilt nur eine Sitzung, darum nie gespeichert). Eine
+    -- Fluesterzeile ohne Empfaenger liess den Chat des Spiels beim Senden
+    -- abstuerzen. Ohne Ziel: keine Zeile, ein Hinweis.
+    if type(c.target) ~= "string" and type(c.target) ~= "number" or c.target == "" then
+        print(WeintCodex.ColorText("accent", "[WeintCodex]") .. " "
+            .. tostring(c.name or "?") .. ": Antworten geht erst wieder, wenn eine neue Nachricht kommt"
+            .. " – nach dem Neuladen kennt das Spiel das Battle.net-Gespräch nicht mehr.")
+        return false
+    end
     if c.bn then
         local f = (_G.ChatFrameUtil and _G.ChatFrameUtil.SendBNetTell) or _G.ChatFrame_SendBNetTell
         if f and pcall(f, c.target) then

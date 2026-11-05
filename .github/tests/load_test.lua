@@ -10956,6 +10956,21 @@ do
     Check(ok, "Questpfeil: Wegpunkt des Spiels nie bei offener Weltkarte" .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 1.0.2.1: Battle.net-Gespraech ohne Ziel (aus dem Verlauf) oeffnet keine Zeile.
+do
+    local MS = WeintCodex.UIMessenger
+    local ok, err = pcall(function()
+        local called = false
+        local oldF, oldU = _G.ChatFrame_SendBNetTell, _G.ChatFrameUtil
+        _G.ChatFrameUtil = nil
+        _G.ChatFrame_SendBNetTell = function() called = true end
+        assert(MS.OpenGameReply({ bn = true, name = "Freund" }) == false and not called,
+            "Fluesterzeile ohne Empfaenger geoeffnet")
+        _G.ChatFrame_SendBNetTell, _G.ChatFrameUtil = oldF, oldU
+    end)
+    Check(ok, "Messenger: Battle.net-Gespraech ohne Ziel oeffnet keine leere Fluesterzeile" .. (ok and "" or (": " .. tostring(err))))
+end
+
 -- 1.0.0.5: Trennstriche der Hauptleiste (Client 1.60.1) unsichtbar.
 do
     local AB = WeintCodex.UIActionBars
