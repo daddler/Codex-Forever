@@ -52,6 +52,10 @@ MH.KINDS = {
     { value = "fallback", text = "Erst A, wenn möglich – sonst B (sonst C, D)" },
     { value = "switch",   text = "Unter einer Bedingung A, sonst B" },
     { value = "sequence", text = "Zauber nacheinander (Abfolge)" },
+    -- 1.0.4.0 (Wunsch: Sturmangriff aus jeder Haltung, danach zurueck):
+    -- Haltung je Zeile - erst in die Haltung des Zaubers, dann der Zauber,
+    -- dann in eine andere zurueck.
+    { value = "stance",   text = "In Haltung wechseln, Zauber, zurück" },
 }
 
 -- Bedingung fuer "switch": A, wenn sie gilt, sonst B.
@@ -246,7 +250,10 @@ function MH.Build(d)
         lines[#lines + 1] = text
         explain[#explain + 1] = why
     end
-    if d.tooltip then Line("#showtooltip", "zeigt auf der Leiste Symbol, Abklingzeit und Reichweite des Zaubers") end
+    if d.tooltip and d.kind == "stance" then
+        -- Der Zauber, nicht die Haltung: sonst zeigte die Leiste die Haltung.
+        Line("#showtooltip " .. s1, "zeigt auf der Leiste Symbol, Abklingzeit und Reichweite von " .. s1)
+    elseif d.tooltip then Line("#showtooltip", "zeigt auf der Leiste Symbol, Abklingzeit und Reichweite des Zaubers") end
     if d.stopcasting then Line("/stopcasting", "bricht ab, was du gerade wirkst – der Zauber kommt sofort") end
     if d.trinkets then
         Line("/use 13", "benutzt dein oberes Schmuckstück (wenn es etwas kann und bereit ist)")
@@ -313,6 +320,20 @@ function MH.Build(d)
         Line("/cast " .. Join(MH.Conditions(d.target, With(sw.value, base)), s1) .. "; "
                 .. Join(MH.Conditions(d.target, base), s2),
             string.format("%s: %s, sonst %s – jeweils %s%s", sw.text, s1, s2, t.explain, cond))
+    elseif d.kind == "stance" then
+        if s2 == "" then return nil, {}, "Trag die Haltung ein, in der der Zauber geht (Feld 2)." end
+        local n = s4:match("^%d+$") and tonumber(s4)
+        if not n or n < 1 or n > 10 then
+            return nil, {}, "Feld 4: die Nummer dieser Haltung auf deiner Haltungsleiste (z. B. 1 für die erste)."
+        end
+        Line("/cast " .. Bracket("nostance:" .. n, d.when or "") .. " " .. s2,
+            string.format("bist du nicht in %s (Haltung %d), wechselt der Druck erst dorthin", s2, n))
+        Line("/cast " .. Join(MH.Conditions(d.target, base), s1),
+            string.format("wirkt %s %s%s – aus einer anderen Haltung erst beim zweiten Druck", s1, t.explain, cond))
+        if s3 ~= "" then
+            Line("/cast " .. Bracket("stance:" .. n, d.when or "") .. " " .. s3,
+                string.format("danach zurück in %s", s3))
+        end
     elseif d.kind == "sequence" then
         local list = { s1 }
         if s2 ~= "" then list[#list + 1] = s2 end
@@ -478,6 +499,8 @@ function MH.FieldLabel(i, kind)
     if kind == "mods" then return ({ "Ohne Taste", "Mit Umschalt", "Mit Strg", "Mit Alt" })[i] end
     if kind == "fallback" then return ({ "Zuerst (A)", "Sonst (B)", "Sonst (C)", "Sonst (D)" })[i] end
     if kind == "switch" then return ({ "Wenn die Bedingung gilt", "Sonst" })[i] or ("Zauber " .. i) end
+    if kind == "stance" then return ({ "Zauber (z. B. Sturmangriff)", "Haltung davor (z. B. Kampfhaltung)",
+        "Haltung danach (leer = bleiben)", "Nummer der Haltung davor (z. B. 1)" })[i] end
     if kind == "modifier" then return ({ "Ohne Taste", "Mit Zusatztaste" })[i] or ("Zauber " .. i) end
     return (i == 1) and "Zauber" or ("Zauber " .. i)
 end
@@ -492,7 +515,7 @@ local function Field(i)
         disabled = function()
             local k = draft.kind
             if i == 2 then return k == "cast" end
-            if i >= 3 then return not (k == "sequence" or k == "mods" or k == "fallback") end
+            if i >= 3 then return not (k == "sequence" or k == "mods" or k == "fallback" or k == "stance") end
             return false
         end,
     }
@@ -638,6 +661,7 @@ function MH.BuildPreview(parent, width)
         local book = MH.Book()
         for i = 1, 4 do
             local s = draft.spells[i]
+            if draft.kind == "stance" and i == 4 then s = "" end   -- eine Nummer, kein Zauber
             if MH.Known(s, book) == false then warn = string.format("„%s“ steht nicht in deinem Zauberbuch – dann tut die Zeile nichts.", Trim(s)) break end
         end
         local line = (err and text) and err or warn or MH.last or ""

@@ -3562,6 +3562,14 @@ do
         -- Name: hoechstens 16 Zeichen, Umlaute heil.
         local n = MH.Name(D({ spells = { "Große Heilung der Ältesten", "", "" } }))
         assert(WeintCodex.Utf8Len(n) == 16 and n == "Große Heilung de", "Name: " .. n)
+        -- 1.0.4.0: Haltung je Zeile (Sturmangriff aus jeder Haltung, zurueck).
+        local st = MH.Build(D({ kind = "stance", spells = { "Sturmangriff", "Kampfhaltung", "Verteidigungshaltung", "1" } }))
+        assert(st == "#showtooltip Sturmangriff\n/cast [nostance:1] Kampfhaltung\n/cast Sturmangriff\n/cast [stance:1] Verteidigungshaltung",
+            "Haltungsmakro: " .. tostring(st))
+        local _, _, e4 = MH.Build(D({ kind = "stance", spells = { "Sturmangriff", "Kampfhaltung", "", "x" } }))
+        assert(e4 and e4:find("Feld 4", 1, true), "Haltungsnummer nicht geprueft")
+        local st2 = MH.Build(D({ kind = "stance", spells = { "Sturmangriff", "Kampfhaltung", "", "1" } }))
+        assert(not st2:find("[stance:1]", 1, true), "Rueckwechsel ohne Haltung danach")
         assert(MH.Name(D({ name = "  Mein Makro ", spells = { "A", "", "" } })) == "Mein Makro", "eigener Name")
         -- Anlegen.
         local names = { "InCombatLockdown", "CreateMacro", "EditMacro", "GetMacroIndexByName", "GetNumMacros", "PickupMacro" }
