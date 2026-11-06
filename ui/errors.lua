@@ -225,8 +225,11 @@ ER.Hook()
 -- die Tasche): ein Gegenstand aus der Tasche gesperrt heisst, ein Feld am
 -- Taschenknopf ist "tainted". Welches, sagt nur der Taint-Bericht der
 -- Taschen - er haengt gleich mit am Fehler, im Augenblick der Sperre.
-function ER.Extra(func)
-    local f = tostring(K.Plain(func) or "")
+-- 1.0.3.7 (Fehlerbericht "Verboten: UNKNOWN()" aus UseContainerItem, ohne
+-- Taint-Bericht): der Client nennt die Funktion nicht immer - dann zaehlt,
+-- was im Stapel steht.
+function ER.Extra(func, stack)
+    local f = tostring(K.Plain(func) or "") .. " " .. tostring(stack or "")
     if not (f:find("ContainerItem", 1, true) or f:find("UseItem", 1, true)) then return nil end
     local BG = WeintCodex.UIBags
     if not (BG and BG.TaintReport) then return nil end
@@ -249,6 +252,6 @@ ev:SetScript("OnEvent", function(_, event, addon, func)
     if addon ~= "WeintCodex" then return end
     local msg = (event == "ADDON_ACTION_FORBIDDEN" and "Verboten: " or "Blockiert: ") .. tostring(func or "?")
     local stack = _G.debugstack and _G.debugstack(2) or ""
-    ER.Announce(ER.Record("blocked", msg, stack, ER.Extra(func)))
+    ER.Announce(ER.Record("blocked", msg, stack, ER.Extra(func, stack)))
 end)
 ER.events = ev
