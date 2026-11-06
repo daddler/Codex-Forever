@@ -10984,6 +10984,18 @@ do
     Check(ok, "Chat: aktiver Reiter = gewaehltes Fenster" .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 1.0.3.3: Reiter leuchten bei neuen Nachrichten, nicht der gewaehlte.
+do
+    local CH = WeintCodex.UIChat
+    local ok, err = pcall(function()
+        assert(not select(2, pcall(CH.Alert, {}, true)), "Alarm fuer fremdes Fenster wirft")
+        local src = io.open(arg[1] .. "/ui/chat.lua"):read("*a")
+        assert(src:find('hooksecurefunc("FCF_StartAlertFlash"', 1, true)
+            and src:find('hooksecurefunc("FCF_StopAlertFlash"', 1, true), "Aufleuchten nicht am Spiel eingehakt")
+    end)
+    Check(ok, "Chat: Reiter leuchten bei neuen Nachrichten" .. (ok and "" or (": " .. tostring(err))))
+end
+
 -- 1.0.2.6: Rechtsklick > Fluestern waehlt genau dieses Gespraech, auch
 -- wenn es nur aus dem Verlauf stammt.
 do

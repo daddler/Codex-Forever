@@ -166,6 +166,21 @@ local function SkinFrame(cf)
         local a = K.Highlight()
         d.line:SetColorTexture(a[1], a[2], a[3], 1)
         d.line:Hide()
+        -- 1.0.3.3: eigenes Aufleuchten bei neuen Nachrichten (s. CH.Alert).
+        d.alert = d.tab:CreateTexture(nil, "ARTWORK")
+        d.alert:SetPoint("TOPLEFT", d.tab, "TOPLEFT", 4, -4)
+        d.alert:SetPoint("BOTTOMRIGHT", d.tab, "BOTTOMRIGHT", -4, 2)
+        d.alert:SetColorTexture(a[1], a[2], a[3], 0.35)
+        d.alert:Hide()
+        if d.alert.CreateAnimationGroup then
+            local ag = d.alert:CreateAnimationGroup()
+            ag:SetLooping("BOUNCE")
+            local fade = ag:CreateAnimation("Alpha")
+            fade:SetFromAlpha(1)
+            fade:SetToAlpha(0.15)
+            fade:SetDuration(0.8)
+            d.alertAnim = ag
+        end
         for _, suffix in ipairs({ "Left", "Middle", "Right", "SelectedLeft", "SelectedMiddle",
             "SelectedRight", "HighlightLeft", "HighlightMiddle", "HighlightRight",
             "ActiveLeft", "ActiveMiddle", "ActiveRight" }) do
@@ -313,7 +328,7 @@ local function ApplyFrame(cf, d)
         end
         -- Das Aufleuchten bei neuen Fluesternachrichten bleibt.
         HideTextures(d.tab, { [d.tab.glow or false] = true, [d.tab.conversationIcon or false] = true,
-                              [d.line or false] = true })
+                              [d.line or false] = true, [d.alert or false] = true })
         -- Die Schrift des Reiters bleibt die des Spiels: es misst die
         -- Reiterbreite an ihr, und eine andere Schrift schnitt die Namen
         -- ab ("Allge...", 6.0.0.5). Gefaerbt wird nur (UpdateTabs).
@@ -441,6 +456,7 @@ local function UpdateTabs()
         if d.tab and d.line then
             local on = (cf == cur)
             d.line:SetShown(on)
+            if on then CH.Alert(cf, false) end
             local fs = d.tab.Text or (d.tab.GetFontString and d.tab:GetFontString())
             if type(fs) == "table" and fs.SetTextColor then
                 fs:SetTextColor(unpack(on and C.textBright or C.textMuted))
@@ -866,7 +882,35 @@ function CH.Inspect()
     return out
 end
 
+-- 1.0.3.3 (Spielerwunsch: "wie im Standard UI blinkt der Reiter, wenn im
+-- Gildenchat neue Nachrichten sind"): das Spiel ruft FCF_StartAlertFlash
+-- fuer ein Fenster, das nicht gewaehlt ist, und FCF_StopAlertFlash beim
+-- Anklicken. Sein eigenes Leuchten ist auf den flachen Reitern kaum zu
+-- sehen (oder fehlt, wenn tab.glow anders heisst) - deshalb ein eigenes,
+-- nur Haken, kein Eingriff in den Chatcode.
+function CH.Alert(cf, on)
+    local d = done[cf]
+    if not d or not d.alert then return end
+    on = on and Opt("flatTabs") and cf ~= CurrentFrame()
+    d.alert:SetShown(on and true or false)
+    if d.alertAnim then
+        if on then d.alertAnim:Play() else d.alertAnim:Stop() end
+    end
+end
+local alertHooked = false
+function CH.HookAlerts()
+    if alertHooked or not _G.hooksecurefunc then return end
+    alertHooked = true
+    if type(_G.FCF_StartAlertFlash) == "function" then
+        _G.hooksecurefunc("FCF_StartAlertFlash", function(cf) CH.Alert(cf, true) end)
+    end
+    if type(_G.FCF_StopAlertFlash) == "function" then
+        _G.hooksecurefunc("FCF_StopAlertFlash", function(cf) CH.Alert(cf, false) end)
+    end
+end
+
 local function ApplyAll()
+    CH.HookAlerts()
     for i = 1, (_G.NUM_CHAT_WINDOWS or 10) do
         local cf = _G["ChatFrame" .. i]
         local d = SkinFrame(cf)
