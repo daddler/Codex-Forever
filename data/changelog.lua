@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.0.5.0",
+        date    = "06.11.2026",
+        notes   = {
+            "|cff7C6CFFKöcher, Munitions- und Seelentaschen auch nach Kategorien|r – jede Spezialtasche steht als eigener Block mit Namen und freien Plätzen, statt in den Kategorien unterzugehen.",
+        },
+    },
+    {
         version = "1.0.4.9",
         date    = "06.11.2026",
         notes   = {

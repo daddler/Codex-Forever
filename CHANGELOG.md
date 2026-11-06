@@ -9,6 +9,11 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.0.5.0] – 2026-11-06
+
+- Neu: Taschen nach Kategorien zeigen Spezialtaschen (Taschenart ≠ 0,
+  `BG.SpecialBag`) als eigenen Block mit „frei / Plätze“.
+
 ## [1.0.4.9] – 2026-11-06
 
 - Behoben: „Gut erholt“ (Erholung, Erfahrung, Laufzeit) galt als satt;
