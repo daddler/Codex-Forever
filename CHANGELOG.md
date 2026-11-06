@@ -9,6 +9,14 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.0.4.1] – 2026-11-06
+
+- Neu: Schalter `buffsOnTarget` – Buffs und Buff-Essen nur mit
+  angreifbarem Ziel (`R.HostileTarget`), ab Werk aus.
+- Neu: beim Angeln keine Erinnerungen (`FI.Busy`, bis 20 s nach dem Wurf).
+- Abschnitt „Symbole“ der Anzeige-Seite unter „Erweitert“ (höchstens
+  15 sichtbare Einstellungen).
+
 ## [1.0.4.0] – 2026-11-06
 
 - Neu: Makro-Helfer, Art „In Haltung wechseln, Zauber, zurück“ – Haltung

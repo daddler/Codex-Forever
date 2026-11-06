@@ -22,6 +22,14 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.0.4.1",
+        date    = "06.11.2026",
+        notes   = {
+            "|cff7C6CFFBuff-Erinnerungen erst mit Gegner im Ziel|r – auf Wunsch erinnern fehlende Buffs und Buff-Essen erst, wenn du einen Gegner anvisierst. Schalter unter Erinnerungen → Anzeige.",
+            "|cff7C6CFFRuhe beim Angeln|r – während du angelst, zeigt WeintCodex keine Erinnerungen.",
+        },
+    },
+    {
         version = "1.0.4.0",
         date    = "06.11.2026",
         notes   = {
