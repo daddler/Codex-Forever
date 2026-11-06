@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.0.4.9",
+        date    = "06.11.2026",
+        notes   = {
+            "|cff7C6CFFErinnerung an Buff-Essen auch mit „Gut erholt“|r – der Erholungsbuff gibt Erfahrung und galt deshalb als „satt“. Erholung zählt jetzt nicht mehr als Essen.",
+        },
+    },
+    {
         version = "1.0.4.8",
         date    = "06.11.2026",
         notes   = {
