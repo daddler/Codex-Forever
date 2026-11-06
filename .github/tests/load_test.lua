@@ -10984,6 +10984,55 @@ do
     Check(ok, "Chat: aktiver Reiter = gewaehltes Fenster" .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 1.0.3.6: Dungeon-Questfilter merkt je Charakter; ein anderer Charakter
+-- stellt nie fremde Quests wieder her; einmalige Reparatur ohne Verfolgung.
+do
+    local QT = WeintCodex.UIQuestTracker
+    local ok, err = pcall(function()
+        local oQL, oName, oInst, oGI = _G.C_QuestLog, _G.UnitName, _G.IsInInstance, _G.GetInstanceInfo
+        local watched, who, inside = {}, "Druide", true
+        local log = { { isHeader = true, title = "Verlies" }, { questID = 1 }, { questID = 2, isOnMap = true } }
+        _G.C_QuestLog = {
+            GetNumQuestWatches = function() local n = 0 for _ in pairs(watched) do n = n + 1 end return n end,
+            GetQuestIDForQuestWatchIndex = function(i) local l = {} for id in pairs(watched) do l[#l + 1] = id end table.sort(l) return l[i] end,
+            AddQuestWatch = function(id) watched[id] = true end,
+            RemoveQuestWatch = function(id) watched[id] = nil end,
+            GetNumQuestLogEntries = function() return #log end,
+            GetInfo = function(i) return log[i] end,
+        }
+        _G.UnitName = function() return who end
+        _G.IsInInstance = function() return inside, inside and "party" or "none" end
+        _G.GetInstanceInfo = function() return "Verlies" end
+        local ui = WeintCodex.UIKit.Root()
+        ui.questWatch = { active = "Alt", removed = { 99 }, added = {} }
+        watched = { [1] = true, [2] = true }
+        log[1].title = "Anderswo"
+        QT.EnterDungeon("Verlies")
+        assert(not watched[1] and watched[2], "Dungeonfilter nimmt fremde Quest nicht heraus")
+        assert(ui.questWatch == nil, "altes kontoweites Gemerktes nicht verworfen")
+        -- Anderer Charakter draussen: nichts vom Druiden.
+        who, inside = "Krieger", false
+        local other = { [5] = true }
+        watched = other
+        QT.CheckDungeon()
+        assert(not other[1] and not other[99] and other[5], "anderer Charakter bekam fremde Quests")
+        -- Druide draussen: seine Quest kommt zurueck.
+        who = "Druide"
+        watched = { [2] = true }
+        QT.CheckDungeon()
+        assert(watched[1] and watched[2], "Druide bekommt seine Quests nicht zurueck")
+        -- Reparatur: ohne Verfolgung alles verfolgen, aber nur einmal.
+        who, watched = "Jaeger", {}
+        QT.CheckDungeon()
+        assert(watched[1] and watched[2], "Reparatur verfolgt nicht")
+        watched = {}
+        QT.CheckDungeon()
+        assert(not watched[1], "Reparatur lief zweimal")
+        _G.C_QuestLog, _G.UnitName, _G.IsInInstance, _G.GetInstanceInfo = oQL, oName, oInst, oGI
+    end)
+    Check(ok, "Questliste: Dungeonfilter je Charakter, keine fremden Quests" .. (ok and "" or (": " .. tostring(err))))
+end
+
 -- 1.0.3.5: Rezeptnamen aus dem Client (deutsch) fuer die Rezeptsuche im Discord.
 do
     local PRO = WeintCodex.Professions

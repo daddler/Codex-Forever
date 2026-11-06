@@ -195,12 +195,26 @@ function QT.Panel() return panel end
 
 local function QL() return _G.C_QuestLog end
 
+-- 1.0.3.6 (Spieler: "beim Druiden ist die Questliste weg, bei den anderen
+-- nicht"): das Gemerkte lag fuer das ganze Konto in ui.questWatch. Wer im
+-- Dungeon ausloggte, bekam die herausgenommenen Quests nie zurueck - der
+-- naechste Charakter draussen "stellte" sie bei sich wieder her (fremde
+-- questIDs) und loeschte das Gemerkte. Jetzt je Charakter; das alte
+-- gemeinsame Gemerkte gehoert keinem sicher und wird verworfen.
 local function Memory()
     local ui = K.Root()
-    if not ui then return nil end
-    ui.questWatch = ui.questWatch or { removed = {}, added = {}, active = false }
-    return ui.questWatch
+    local who = K.CharKey()
+    if not (ui and who) then return nil end
+    ui.questWatch = nil
+    ui.questWatchChars = ui.questWatchChars or {}
+    local m = ui.questWatchChars[who]
+    if not m then
+        m = { removed = {}, added = {}, active = false }
+        ui.questWatchChars[who] = m
+    end
+    return m
 end
+QT.Memory = Memory
 
 -- Instanz, in der man steht: Name, oder nil draussen.
 local function InstanceName()
@@ -278,9 +292,32 @@ function QT.LeaveDungeon()
     mem.active, mem.removed, mem.added = false, {}, {}
 end
 
+-- Einmal je Charakter (1.0.3.6): wer draussen ohne eine einzige verfolgte
+-- Quest steht, aber Quests im Log hat, war sehr wahrscheinlich vom Fehler
+-- oben betroffen - alle Quests wieder verfolgen (soweit das Spiel laesst).
+function QT.RepairWatches()
+    local mem, ql = Memory(), QL()
+    if not mem or mem.repaired or mem.active or InstanceName() then return end
+    if not (ql and ql.AddQuestWatch and ql.GetNumQuestLogEntries and ql.GetInfo) then return end
+    mem.repaired = true
+    if #Watched() > 0 then return end
+    local n = K.Plain(ql.GetNumQuestLogEntries())
+    if type(n) ~= "number" then return end
+    local added = 0
+    for i = 1, n do
+        local ok, info = pcall(ql.GetInfo, i)
+        if ok and type(info) == "table" and not info.isHeader and not info.isHidden and info.questID then
+            local id = K.Plain(info.questID)
+            if id and pcall(ql.AddQuestWatch, id) then added = added + 1 end
+        end
+    end
+    return added
+end
+
 function QT.CheckDungeon()
     local instance = InstanceName()
     local mem = Memory()
+    if not instance then QT.RepairWatches() end
     if instance and K.Get(KEY, "dungeonOnly") then
         -- In einen anderen Dungeon gewechselt: erst zurueck, dann neu.
         if mem and mem.active and mem.active ~= instance then QT.LeaveDungeon() end
