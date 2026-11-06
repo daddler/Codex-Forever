@@ -11096,6 +11096,20 @@ do
     Check(ok, "Namensplaketten: in Instanzen nur Namen (Spieleinstellung)" .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 1.0.5.0: Spezialtaschen (Taschenart ~= 0) auch nach Kategorien als Block.
+do
+    local BG = WeintCodex.UIBags
+    local oCC = _G.C_Container
+    local ok, err = pcall(function()
+        _G.C_Container = { GetContainerNumFreeSlots = function(b) if b == 2 then return 3, 1 end return 5, 0 end }
+        assert(BG.SpecialBag(2) == true, "Koecher nicht erkannt")
+        assert(BG.SpecialBag(1) == false, "normale Tasche als Spezialtasche")
+        assert(BG.SpecialBag(0) == false, "Rucksack als Spezialtasche")
+    end)
+    _G.C_Container = oCC
+    Check(ok, "Taschen: Spezialtaschen nach Kategorien als eigener Block" .. (ok and "" or (": " .. tostring(err))))
+end
+
 -- 1.0.4.2: Makros im Klickzauber (Rahmen: type/macro; Taste: Knopf mit Makro).
 do
     local CC = WeintCodex.UIClickCast

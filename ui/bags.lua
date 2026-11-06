@@ -724,7 +724,7 @@ function BG.DropOn(head)
     if not (GetCursorInfo and head and head.cat) then return false end
     local kind, id = GetCursorInfo()
     if kind ~= "item" or type(K.Plain(id)) ~= "number" then return false end
-    if head.cat.key == "new" or head.cat.key == "empty" then return false end
+    if head.cat.key == "new" or head.cat.key == "empty" or head.cat.special then return false end
     if _G.ClearCursor then _G.ClearCursor() end
     return BG.Assign(K.Plain(id), head.cat.key)
 end
@@ -849,7 +849,7 @@ function BG.NewCatHead()
     end)
     b:SetScript("OnReceiveDrag", function(self) BG.DropOn(self) end)
     b:SetScript("OnEnter", function(self)
-        if self.cat.key == "empty" or self.cat.key == "new" then return end
+        if self.cat.key == "empty" or self.cat.key == "new" or self.cat.special then return end
         local tt = _G.GameTooltip
         tt:SetOwner(self, "ANCHOR_TOP")
         tt:SetText(self.cat.label, 1, 1, 1)
@@ -860,6 +860,21 @@ function BG.NewCatHead()
     b:SetScript("OnLeave", function() if _G.GameTooltip then _G.GameTooltip:Hide() end end)
     return b
 end
+-- 1.0.5.0 (Wunsch: "Taschen mit Kategorien muessen anzeigen, wenn
+-- Munitionsbeutel etc. drin sind"): Spezialtaschen (Koecher, Munitions-,
+-- Seelen-, Kraeutertasche ...) - das Spiel nennt eine Taschenart ungleich 0
+-- - stehen auch nach Kategorien als eigener Block mit Name und "frei /
+-- Plaetze"; ihre Plaetze mischen sich nicht in die Kategorien.
+function BG.SpecialBag(bag)
+    if bag == (_G.BACKPACK_CONTAINER or 0) then return false end
+    local cc = _G.C_Container
+    local f = (cc and cc.GetContainerNumFreeSlots) or _G.GetContainerNumFreeSlots
+    if type(f) ~= "function" then return false end
+    local ok, _, family = pcall(f, bag)
+    family = ok and K.Plain(family)
+    return type(family) == "number" and family ~= 0
+end
+
 -- Bloecke nebeneinander, solange sie in die Breite passen (wie Baganator).
 function BG.LayoutCategories(list, size, sp, cols)
     local cell = size + sp
@@ -877,7 +892,16 @@ function BG.LayoutCategories(list, size, sp, cols)
     local maxW = cols
     local hi = 0
     BG.catBlocks = {}
-    for _, c in ipairs(BG.AllCategories()) do
+    local cats = {}
+    for _, c in ipairs(BG.AllCategories()) do cats[#cats + 1] = c end
+    for _, bag in ipairs(BG.specialOrder or {}) do
+        local items = byCat["bag:" .. bag] or {}
+        local free = 0
+        for _, e in ipairs(items) do if e.empty then free = free + 1 end end
+        cats[#cats + 1] = { key = "bag:" .. bag, special = true,
+                            label = BG.BagLabel(bag) .. string.format("  %d / %d frei", free, #items) }
+    end
+    for _, c in ipairs(cats) do
         local items = byCat[c.key] or (c.custom and {}) or nil
         if items and (#items > 0 or c.custom) then
             local w = math.max(math.min(#items, cols), c.custom and math.min(4, cols) or 1)
@@ -898,7 +922,7 @@ function BG.LayoutCategories(list, size, sp, cols)
             hd.cat, hd.items = c, items
             hd.text:SetText(c.label .. (c.key == "empty" and ("  " .. #items) or "")
                 .. ((c.custom and #items == 0) and "  ·  hierher ziehen" or ""))
-            hd.text:SetTextColor(unpack(c.key == "new" and C.accent or C.textMuted))
+            hd.text:SetTextColor(unpack(c.key == "new" and C.accent or (c.special and C.textNormal) or C.textMuted))
             hd:Show()
             for i, e in ipairs(items) do
                 local col, row = (i - 1) % w, math.floor((i - 1) / w)
@@ -1037,15 +1061,22 @@ function BG.RefreshCategories()
     local size, sp, cols = Opt("slotSize"), Opt("spacing"), Opt("columns")
     local n, missing, filled = 0, 0, 0
     local list = {}
+    BG.specialOrder = {}
     for _, bag in ipairs(BagIDs()) do
+        local special = NumSlots(bag) > 0 and BG.SpecialBag(bag)
+        if special then BG.specialOrder[#BG.specialOrder + 1] = bag end
         for slot = 1, NumSlots(bag) do
             n = n + 1
             local s = slots[n]
             if s then
                 s.holder:SetSize(size, size)
                 K.SetFont(s.d.ilvl, math.max(8, math.floor(size * 0.3)))
-                if PaintSlot(s, bag, slot) then filled = filled + 1 end
-                list[#list + 1] = { s = s, bag = bag, slot = slot, cat = BG.CategoryOf(bag, slot, Info(bag, slot)) }
+                local has = PaintSlot(s, bag, slot)
+                if has then filled = filled + 1 end
+                local info = Info(bag, slot)
+                local cat = special and ("bag:" .. bag) or BG.CategoryOf(bag, slot, info)
+                list[#list + 1] = { s = s, bag = bag, slot = slot, cat = cat,
+                                    empty = type(info and K.Plain(info.itemID)) ~= "number" }
             else
                 missing = missing + 1
             end
