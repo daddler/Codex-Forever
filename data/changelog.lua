@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.0.4.8",
+        date    = "06.11.2026",
+        notes   = {
+            "|cff7C6CFFErinnerung an Buff-Essen trotz Erfahrungsbonus|r – ein lang laufender Buff, der Erfahrung erwähnt (etwa von einem Ereignis), galt als „satt“. Jetzt zählen nur Buffs bis zwei Stunden, wie Essen. /wcui essen nennt den Buff beim Namen.",
+        },
+    },
+    {
         version = "1.0.4.7",
         date    = "06.11.2026",
         notes   = {

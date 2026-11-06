@@ -9,6 +9,12 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.0.4.8] – 2026-11-06
+
+- Behoben: Buff-Essen-Erinnerung blieb bei einem lang laufenden
+  Erfahrungsbuff aus; „satt durch Erfahrung“ nur bei Buffs bis
+  `R.FOOD_MAX_DURATION` (2 h, geschätzt). `/wcui essen` nennt den Buff.
+
 ## [1.0.4.7] – 2026-11-06
 
 - Behoben: Buff-Essen-Erinnerung blieb aus, wenn ein dauerhafter Buff im
