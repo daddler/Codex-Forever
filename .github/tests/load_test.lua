@@ -20120,6 +20120,9 @@ do
         -- 1.0.4.7: ein dauerhafter Buff, der Erfahrung nennt, macht nicht satt.
         helpful = { { name = "Bonus des Servers", spellId = 778, auraInstanceID = 2, duration = 0 } }
         assert(#R.BagBuffs({}) == 1, "dauerhafter Erfahrungsbuff galt als satt")
+        -- 1.0.4.8: Ereignis-Buff ueber Tage zaehlt auch nicht.
+        helpful = { { name = "Ereignis", spellId = 779, auraInstanceID = 3, duration = 7 * 86400 } }
+        assert(#R.BagBuffs({}) == 1, "Ereignis-Buff galt als satt")
         G.C_TooltipInfo = oTI2
         helpful = { { name = "Satt" } }
         assert(#R.BagBuffs({}) == 0, "Erinnerung trotz Satt")

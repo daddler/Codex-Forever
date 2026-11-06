@@ -1278,7 +1278,7 @@ local function HelpfulNames()
     -- satt - auch dauerhafte (ohne Ablauf, etwa ein Erfahrungsbonus des
     -- Servers). Fuer "Erfahrung" zaehlen jetzt nur Buffs mit Laufzeit
     -- (timed); dazu je Buff der Name fuer /wcui essen.
-    local names, tips, timed, labels = {}, {}, {}, {}
+    local names, tips, timed, labels, timedLabels = {}, {}, {}, {}, {}
     for i = 1, 40 do
         local ok, a = pcall(ua.GetAuraDataByIndex, "player", i, "HELPFUL")
         if not ok or K.IsSecret(a) then return nil end
@@ -1290,12 +1290,20 @@ local function HelpfulNames()
             tips[#tips + 1] = tip
             labels[#tips] = type(n) == "string" and n or "?"
             local d = K.Plain(a.duration)
-            if type(d) == "number" and d > 0 then timed[#timed + 1] = tip end
+            -- 1.0.4.8 (Bericht: "Satt: Buff mit Laufzeit, Tooltip nennt
+            -- Erfahrung" ohne Essen): auch Ereignis-Buffs laufen ab, aber nach
+            -- Tagen. Essen haelt hoechstens ein, zwei Stunden.
+            if type(d) == "number" and d > 0 and d <= R.FOOD_MAX_DURATION then
+                timed[#timed + 1] = tip
+                timedLabels[#timed] = type(n) == "string" and n or "?"
+            end
         end
     end
+    labels.timed = timedLabels
     return names, tips, timed, labels
 end
 R.HelpfulNames = HelpfulNames
+R.FOOD_MAX_DURATION = 2 * 3600
 
 -- Warum gilt der Spieler als satt? Text oder nil.
 function R.FedReason(names, tips, timed, labels)
@@ -1305,8 +1313,11 @@ function R.FedReason(names, tips, timed, labels)
     for i, t in ipairs(tips or {}) do
         if HasWord(t, R.FED_WORDS) then return "Buff „" .. tostring(labels and labels[i] or "?") .. "“ (Tooltip: satt)" end
     end
-    for _, t in ipairs(timed or {}) do
-        if HasWord(t, R.XP_WORDS) then return "Buff mit Laufzeit, Tooltip nennt Erfahrung" end
+    for i, t in ipairs(timed or {}) do
+        if HasWord(t, R.XP_WORDS) then
+            local tl = labels and labels.timed
+            return "Buff „" .. tostring(tl and tl[i] or "?") .. "“ (Laufzeit, Tooltip nennt Erfahrung)"
+        end
     end
     return nil
 end
