@@ -9,6 +9,13 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.0.4.6] – 2026-11-06
+
+- Freundliche Plaketten in Instanzen (gesperrt für Addons, die des
+  Spiels): `nameplateShowOnlyNames` über `PF.SetCVar` (Besitzer
+  „nameplates“), wenn „nur Name“ gewählt ist; auf Forever ungemessen.
+- Würfe in der Gruppe: frei ziehbar (`K.DragToMove`), X zum Schließen.
+
 ## [1.0.4.5] – 2026-11-06
 
 - Behoben: Würfe in der Gruppe – die Texte des Clients beginnen mit

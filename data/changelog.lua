@@ -22,6 +22,14 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.0.4.6",
+        date    = "06.11.2026",
+        notes   = {
+            "|cff7C6CFFFreundliche Plaketten im Dungeon nur mit Namen|r – in Instanzen darf WeintCodex freundliche Plaketten nicht gestalten; jetzt kürzt das Spiel sie selbst auf den Namen, wie draußen.",
+            "|cff7C6CFFWürfe in der Gruppe: ziehen und schließen|r – das Fenster lässt sich mit der Maus verschieben und mit dem X schließen; beim nächsten Wurf ist es wieder da.",
+        },
+    },
+    {
         version = "1.0.4.5",
         date    = "06.11.2026",
         notes   = {
