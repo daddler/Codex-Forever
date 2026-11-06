@@ -9,6 +9,12 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.0.4.7] – 2026-11-06
+
+- Behoben: Buff-Essen-Erinnerung blieb aus, wenn ein dauerhafter Buff im
+  Tooltip „Erfahrung“ nennt; Erfahrung zählt nur bei Buffs mit Laufzeit
+  (`R.FedReason`). `/wcui essen` nennt Grund und Schalter.
+
 ## [1.0.4.6] – 2026-11-06
 
 - Freundliche Plaketten in Instanzen (gesperrt für Addons, die des

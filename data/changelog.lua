@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.0.4.7",
+        date    = "06.11.2026",
+        notes   = {
+            "|cff7C6CFFErinnerung an Buff-Essen zuverlässiger|r – ein dauerhafter Buff, der Erfahrung erwähnt, galt als „satt“ und unterdrückte die Erinnerung. Jetzt zählen dafür nur Buffs mit Laufzeit. /wcui essen nennt außerdem, warum du als satt giltst.",
+        },
+    },
+    {
         version = "1.0.4.6",
         date    = "06.11.2026",
         notes   = {
