@@ -9,6 +9,14 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.0.4.4] – 2026-11-06
+
+- Behoben: Quest- und Farmleiste bei großer Karte übereinander am
+  Bildrand; jetzt in der Karte untereinander (`QH.LayoutBars`), die
+  Gebietszeile rückt darüber (`ZI.Place`).
+- Behoben: Questpfeil nahm den Wegpunkt des Spiels auch im Kampf ab →
+  „Blockiert: SetPassThroughButtons“ je Questnadel; jetzt nach dem Kampf.
+
 ## [1.0.4.3] – 2026-11-06
 
 - Behoben: Knopf „Kopieren“ lag bei vielen Reitern über dem letzten;

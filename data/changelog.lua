@@ -22,6 +22,14 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.0.4.4",
+        date    = "06.11.2026",
+        notes   = {
+            "|cff7C6CFFLeisten bei großer Karte|r – Quest- und Farmleiste lagen bei großer Karte übereinander am Bildrand. Jetzt stehen sie dann unten links in der Karte, sauber untereinander.",
+            "|cff7C6CFFKeine Fehlerflut der Karte im Kampf|r – erreichte der Questpfeil im Kampf sein Ziel, sperrte das Spiel den Neuaufbau der Kartennadeln. Der Wegpunkt des Spiels wird jetzt erst nach dem Kampf abgenommen.",
+        },
+    },
+    {
         version = "1.0.4.3",
         date    = "06.11.2026",
         notes   = {
