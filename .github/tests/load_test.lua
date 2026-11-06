@@ -10984,6 +10984,23 @@ do
     Check(ok, "Chat: aktiver Reiter = gewaehltes Fenster" .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 1.0.3.5: Rezeptnamen aus dem Client (deutsch) fuer die Rezeptsuche im Discord.
+do
+    local PRO = WeintCodex.Professions
+    local ok, err = pcall(function()
+        local oldCS = _G.C_Spell
+        _G.C_Spell = { GetSpellName = function(id) if id == 3914 then return "Leinenbeutel" end end }
+        local m = { known = { [3914] = true, [5] = true }, names = {} }
+        PRO.RememberName(m, 3914)
+        PRO.RememberName(m, 5)
+        PRO.RememberName(m, 7, "Aus dem Fenster")
+        _G.C_Spell = oldCS
+        assert(m.names[3914] == "Leinenbeutel" and m.names[7] == "Aus dem Fenster", "Name aus dem Client nicht gemerkt")
+        assert(m.names[5] == nil, "unbekannter Name als leerer Eintrag gemerkt")
+    end)
+    Check(ok, "Berufe: Rezeptnamen aus dem Client gemerkt" .. (ok and "" or (": " .. tostring(err))))
+end
+
 -- 1.0.3.3: Reiter leuchten bei neuen Nachrichten, nicht der gewaehlte.
 do
     local CH = WeintCodex.UIChat

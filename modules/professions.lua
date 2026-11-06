@@ -199,7 +199,38 @@ function PRO.Memory()
         sd.professions[who] = m
     end
     m.known, m.scanned = m.known or {}, m.scanned or {}
+    m.names = m.names or {}
     return m
+end
+
+-- 1.0.3.5 (Rezeptsuche im Discord nur auf Englisch): der Name eines
+-- gelernten Rezepts so, wie ihn der Client nennt (deutsch im deutschen
+-- Spiel). Der Bestand kennt nur die englischen Namen; die Companion
+-- meldet diese, wenn hier keiner steht.
+function PRO.RememberName(m, id, name)
+    if not m or type(id) ~= "number" then return end
+    name = Plain(name)
+    if type(name) ~= "string" or name == "" then
+        local cs = _G.C_Spell
+        local ok, n = false, nil
+        if type(cs) == "table" and type(cs.GetSpellName) == "function" then ok, n = pcall(cs.GetSpellName, id) end
+        name = ok and Plain(n) or nil
+    end
+    if type(name) == "string" and name ~= "" then m.names[id] = name end
+end
+
+-- Namen fuer alles Gelernte nachtragen, das noch keinen hat.
+function PRO.FillNames()
+    local m = PRO.Memory()
+    if not m then return 0 end
+    local n = 0
+    for id in pairs(m.known) do
+        if not m.names[id] then
+            PRO.RememberName(m, id)
+            if m.names[id] then n = n + 1 end
+        end
+    end
+    return n
 end
 
 local function Now() return (_G.time and _G.time()) or 0 end
@@ -211,7 +242,7 @@ function PRO.Scan()
     if not m then return 0 end
     local index = SpellIndex()
     local seen, count, ids, matched, via = {}, 0, 0, 0, {}
-    local function mark(id, learned)
+    local function mark(id, learned, name)
         id = Plain(id)
         ids = ids + 1
         local key = type(id) == "number" and index[id] or nil
@@ -221,6 +252,7 @@ function PRO.Scan()
         if learned then
             m.known[id] = true
             count = count + 1
+            PRO.RememberName(m, id, name)
         else
             m.known[id] = nil
         end
@@ -232,7 +264,7 @@ function PRO.Scan()
             via[#via + 1] = "C_TradeSkillUI"
             for _, id in ipairs(list) do
                 local ok2, info = pcall(ts.GetRecipeInfo, id)
-                if ok2 and type(info) == "table" then mark(id, Plain(info.learned) == true) end
+                if ok2 and type(info) == "table" then mark(id, Plain(info.learned) == true, info.name) end
             end
         end
     end
@@ -1158,14 +1190,14 @@ ev:SetScript("OnEvent", function(_, event, id)
     if event == "PLAYER_LOGIN" or event == "SKILL_LINES_CHANGED" then pcall(PRO.RememberSkills) end
     if event == "PLAYER_LOGIN" then
         -- 1.0.1.6: noch einmal, wenn der Client die Berufe sicher kennt.
-        if _G.C_Timer and _G.C_Timer.After then _G.C_Timer.After(10, function() pcall(PRO.RememberSkills) end) end
+        if _G.C_Timer and _G.C_Timer.After then _G.C_Timer.After(10, function() pcall(PRO.RememberSkills) pcall(PRO.FillNames) end) end
         return
     end
     if event == "TRADE_SKILL_SHOW" or event == "CRAFT_SHOW" then QueueScan(0.3) return end
     if event == "NEW_RECIPE_LEARNED" then
         local m = PRO.Memory()
         id = Plain(id)
-        if m and type(id) == "number" then m.known[id] = true end
+        if m and type(id) == "number" then m.known[id] = true PRO.RememberName(m, id) end
     end
     if event == "TRADE_SKILL_LIST_UPDATE" or event == "TRADE_SKILL_UPDATE" or event == "CRAFT_UPDATE"
        or event == "NEW_RECIPE_LEARNED" then
