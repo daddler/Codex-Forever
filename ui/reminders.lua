@@ -70,6 +70,9 @@ local defaults = {
     -- 1.0.3.9 (Spielerwunsch: "Erinnerung, wenn ich einen Talentpunkt
     -- vergeben kann"):
     talentPoints  = true,
+    -- 1.0.4.1 (Wunsch: "Buff-Erinnerungen erst, wenn man einen Gegner ins
+    -- Visier nimmt"): Buffs und Essen nur mit angreifbarem Ziel.
+    buffsOnTarget = false,
 }
 R.DEFAULTS = defaults
 
@@ -1514,7 +1517,25 @@ end
 -- An einem ruhigen Ort (Stadt, Gasthaus - das Spiel sagt "ruhend") und
 -- der Schalter an? Dann zeigt WeintCodex keine Erinnerung und kein Symbol.
 function R.Quiet()
-    return Opt("hideResting") and K.Bool(_G.IsResting and _G.IsResting(), false) or false
+    if Opt("hideResting") and K.Bool(_G.IsResting and _G.IsResting(), false) then return true end
+    -- 1.0.4.1: beim Angeln keine Erinnerungen.
+    local FI = WeintCodex.UIFishing
+    if FI and FI.Busy then
+        local ok, busy = pcall(FI.Busy)
+        if ok and busy then return true end
+    end
+    return false
+end
+
+-- Ein Gegner im Ziel (lebend, angreifbar)? Unbekannt zaehlt als nein.
+function R.HostileTarget()
+    local function ask(f, ...)
+        if type(f) ~= "function" then return nil end
+        local ok, v = pcall(f, ...)
+        return ok and K.Bool(v, false) or false
+    end
+    return ask(_G.UnitExists, "target") and ask(_G.UnitCanAttack, "player", "target")
+        and not ask(_G.UnitIsDead, "target") or false
 end
 
 local function Alpha() return math.max(0.1, math.min(1, (tonumber(Opt("alpha")) or 100) / 100)) end
@@ -1584,8 +1605,11 @@ function R.Active()
     local where = Opt("where")
     if where == "group" and not InGroup() then return out end
     if where == "instance" and not InInstance() then return out end
+    -- Buffs und Essen erst mit Gegner im Ziel (Schalter, ab Werk aus).
+    local buffsNow = not Opt("buffsOnTarget") or fighting or R.HostileTarget()
     for _, rule in ipairs(R.Here()) do
         local k = rule.kind
+        if k == "buff" and not buffsNow then k = "skip" end
         local clock = fighting and k == "buff" and R.ClockHit(rule)
         if clock then
             out[#out + 1] = clock
@@ -1615,7 +1639,7 @@ function R.Active()
         end
     end
     if not fighting then
-        R.BagBuffs(out)
+        if buffsNow then R.BagBuffs(out) end
         local t = R.TalentHit()
         if t then out[#out + 1] = t end
     end
@@ -1892,7 +1916,7 @@ local function Enable()
         "UNIT_AURA", "UNIT_PET", "UNIT_INVENTORY_CHANGED", "GROUP_ROSTER_UPDATE", "ZONE_CHANGED_NEW_AREA",
         "SPELL_UPDATE_COOLDOWN", "SPELL_UPDATE_CHARGES", "READY_CHECK", "PLAYER_MOUNT_DISPLAY_CHANGED",
         "BAG_UPDATE_DELAYED", "UNIT_HAPPINESS", "PLAYER_UPDATE_RESTING",
-        "PLAYER_LEVEL_UP", "CHARACTER_POINTS_CHANGED", "PLAYER_TALENT_UPDATE" }) do
+        "PLAYER_LEVEL_UP", "CHARACTER_POINTS_CHANGED", "PLAYER_TALENT_UPDATE", "PLAYER_TARGET_CHANGED" }) do
         pcall(ev.RegisterEvent, ev, e)
     end
     pcall(ev.RegisterEvent, ev, "SPELLS_CHANGED")
@@ -2212,17 +2236,21 @@ K.Register({
             B:Row({ type = "toggle", label = "An ruhigen Orten ausblenden", key = "hideResting",
                     description = "In Städten und Gasthäusern (wo das Spiel „ruhend“ sagt) keine Erinnerung und kein Symbol." }, nil)
             B:Row({ type = "toggle", label = "Talentpunkte zu vergeben", key = "talentPoints",
-                    description = "Nach dem Stufenaufstieg: Erinnerung, solange ein Talentpunkt frei ist." }, nil)
+                    description = "Nach dem Stufenaufstieg: Erinnerung, solange ein Talentpunkt frei ist." },
+                  { type = "toggle", label = "Buffs und Essen erst mit Gegner im Ziel", key = "buffsOnTarget",
+                    description = "Fehlende Buffs und Buff-Essen erst, wenn du einen Gegner anvisierst. Waffe, Begleiter und Munition wie immer. Beim Angeln schweigen die Erinnerungen ohnehin." })
             B:Section("Aus der Tasche")
             B:Row({ type = "toggle", label = "Essen mit Buff", key = "bagFood",
                     description = "Liegt Essen in der Tasche, das „Wohlgenährt“ oder Erfahrung gibt, und der Buff fehlt: Erinnerung. Erfahrungsessen nur beim Leveln." },
                   { type = "toggle", label = "Elixiere, Fläschchen, Rollen", key = "bagElixir",
                     description = "Liegt eins in der Tasche und keiner seiner Buffs ist auf dir: Erinnerung. Rollen nur, wenn ihr Wert deiner Klasse nützt und – falls sie auf eine Waffe gehören – diese Waffe getragen wird." })
+            B:Advanced()
             B:Section("Symbole")
             B:Row({ type = "toggle", label = "Buffs und Procs", key = "showProcs" },
                   { type = "slider", label = "Größe", key = "iconSize", min = 20, max = 64, step = 2, format = px })
             B:Row({ type = "toggle", label = "Abklingzeiten", key = "showCooldowns" },
                   { type = "slider", label = "Größe", key = "cdSize", min = 20, max = 56, step = 2, format = px })
+            B:EndAdvanced()
             B:Note("Verschieben im Gestaltungsmodus. Im Kampf zeigen Symbole und Uhren, was der Client herausgibt; nennt er eine Aura nur verschlüsselt, bleibt ihr Symbol aus.")
         end },
     },

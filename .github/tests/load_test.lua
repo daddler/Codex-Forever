@@ -11009,6 +11009,33 @@ do
     Check(ok, "Erinnerungen: freie Talentpunkte" .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 1.0.4.1: Buffs erst mit Gegner im Ziel; beim Angeln still.
+do
+    local R, FI = WeintCodex.UIReminders, WeintCodex.UIFishing
+    local ok, err = pcall(function()
+        local oE, oA, oD, oT = _G.UnitExists, _G.UnitCanAttack, _G.UnitIsDead, _G.GetTime
+        _G.UnitExists = function() return true end
+        _G.UnitCanAttack = function() return true end
+        _G.UnitIsDead = function() return false end
+        assert(R.HostileTarget() == true, "Gegner im Ziel nicht erkannt")
+        _G.UnitCanAttack = function() return false end
+        assert(R.HostileTarget() == false, "Freund als Gegner")
+        _G.UnitExists = function() return false end
+        assert(R.HostileTarget() == false, "kein Ziel als Gegner")
+        local now = 100
+        _G.GetTime = function() return now end
+        FI.OnEvent(nil, "UNIT_SPELLCAST_CHANNEL_START", "player", "x", 7620)
+        assert(FI.Busy() and R.Quiet(), "beim Angeln nicht still")
+        FI.OnEvent(nil, "UNIT_SPELLCAST_CHANNEL_STOP", "player", "x", 7620)
+        now = 110
+        assert(FI.Busy(), "zwischen zwei Wuerfen nicht still")
+        now = 200
+        assert(not FI.Busy(), "lange nach dem Angeln noch still")
+        _G.UnitExists, _G.UnitCanAttack, _G.UnitIsDead, _G.GetTime = oE, oA, oD, oT
+    end)
+    Check(ok, "Erinnerungen: Buffs erst mit Gegner im Ziel, beim Angeln still" .. (ok and "" or (": " .. tostring(err))))
+end
+
 -- 1.0.3.6: Dungeon-Questfilter merkt je Charakter; ein anderer Charakter
 -- stellt nie fremde Quests wieder her; einmalige Reparatur ohne Verfolgung.
 do

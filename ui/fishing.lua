@@ -86,6 +86,22 @@ FI.events = ev
 local function PF() return WeintCodex.UIProfile end
 local function Plain(v) return K.Plain and K.Plain(v) or v end
 
+-- 1.0.4.1 (Wunsch: "beim Angeln stand die ganze Zeit die Buff-Erinnerung"):
+-- angelt der Spieler gerade - im Wurf oder bis FI.BUSY_AFTER Sekunden danach
+-- (zwischen zwei Wuerfen, beim Looten)? Die Erinnerungen schweigen dann.
+FI.BUSY_AFTER = 20
+function FI.Busy()
+    if state.channeling then return true end
+    local now = _G.GetTime and K.Plain(_G.GetTime())
+    return type(now) == "number" and type(state.lastFish) == "number" and now >= state.lastFish and now - state.lastFish < FI.BUSY_AFTER
+end
+local function TellReminders()
+    local R = WeintCodex.UIReminders
+    if not (R and R.Schedule) then return end
+    pcall(R.Schedule, true, false, false)
+    if R.Recheck then pcall(R.Recheck, FI.BUSY_AFTER) end
+end
+
 function FI.On() return K.IsActive(KEY) and K.Get(KEY, "fishKeyOn") and true or false end
 function FI.Key()
     local k = K.Get(KEY, "fishKey")
@@ -285,13 +301,16 @@ local function OnEvent(_, event, ...)
             if InCombat() then FI.WatchCombat() else FI.BeginSession() end
             state.inReach = FI.IsBobber(SoftTarget())
             FI.Apply()
+            TellReminders()
         end
     elseif event == "UNIT_SPELLCAST_CHANNEL_STOP" then
         local unit = ...
         if Plain(unit) == "player" and state.channeling then
             state.channeling, state.inReach = false, false
+            state.lastFish = _G.GetTime and K.Plain(_G.GetTime()) or nil
             FI.Apply()
             FI.EndSession()
+            TellReminders()
         end
     elseif event == "PLAYER_SOFT_INTERACT_CHANGED" then
         if state.channeling then
