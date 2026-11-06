@@ -9,6 +9,14 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.0.3.6] – 2026-11-06
+
+- Behoben: Dungeon-Questfilter merkte kontoweit (`ui.questWatch`); ein
+  anderer Charakter „stellte“ fremde Quests wieder her. Jetzt je Charakter
+  (`ui.questWatchChars`), altes Gemerktes verworfen, einmalige Reparatur
+  ohne verfolgte Quest.
+- Neu: `/wcui questliste` – Bericht zur Zielverfolgung des Spiels.
+
 ## [1.0.3.5] – 2026-11-06
 
 - Neu: Namen gelernter Rezepte aus dem Client (`professions[Charakter].names`,

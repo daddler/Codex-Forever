@@ -22,6 +22,14 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.0.3.6",
+        date    = "06.11.2026",
+        notes   = {
+            "|cff7C6CFFQuests nach dem Dungeon zurück|r – „Nur Quests des Dungeons“ merkte sich die herausgenommenen Quests für alle Charaktere gemeinsam; wer im Dungeon ausloggte, bekam sie nie zurück. Jetzt je Charakter, und wer ohne verfolgte Quest dasteht, verfolgt einmal alle wieder.",
+            "|cff7C6CFF/wcui questliste|r zeigt, was mit der Questliste los ist – zum Kopieren, falls sie bei einem Charakter fehlt.",
+        },
+    },
+    {
         version = "1.0.3.5",
         date    = "06.11.2026",
         notes   = {
