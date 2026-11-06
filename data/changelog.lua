@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.0.3.8",
+        date    = "06.11.2026",
+        notes   = {
+            "|cff7C6CFFFehlerberichte an der Bank vollständiger|r – sperrt das Spiel beim Öffnen der Bank den ersten Bankreiter, hängt der Bericht an, was an der Bank verändert war. Damit lässt sich die Ursache finden.",
+        },
+    },
+    {
         version = "1.0.3.7",
         date    = "06.11.2026",
         notes   = {
