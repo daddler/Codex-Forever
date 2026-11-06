@@ -20123,6 +20123,9 @@ do
         -- 1.0.4.8: Ereignis-Buff ueber Tage zaehlt auch nicht.
         helpful = { { name = "Ereignis", spellId = 779, auraInstanceID = 3, duration = 7 * 86400 } }
         assert(#R.BagBuffs({}) == 1, "Ereignis-Buff galt als satt")
+        -- 1.0.4.9: "Gut erholt" ist kein Essen.
+        helpful = { { name = "Gut erholt", spellId = 780, auraInstanceID = 4, duration = 3600 } }
+        assert(#R.BagBuffs({}) == 1, "Gut erholt galt als satt")
         G.C_TooltipInfo = oTI2
         helpful = { { name = "Satt" } }
         assert(#R.BagBuffs({}) == 0, "Erinnerung trotz Satt")

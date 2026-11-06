@@ -1293,7 +1293,10 @@ local function HelpfulNames()
             -- 1.0.4.8 (Bericht: "Satt: Buff mit Laufzeit, Tooltip nennt
             -- Erfahrung" ohne Essen): auch Ereignis-Buffs laufen ab, aber nach
             -- Tagen. Essen haelt hoechstens ein, zwei Stunden.
-            if type(d) == "number" and d > 0 and d <= R.FOOD_MAX_DURATION then
+            -- 1.0.4.9 (Bericht: "Satt: Buff 'Gut erholt'"): Erholung gibt
+            -- Erfahrung und laeuft ab, ist aber kein Essen.
+            local rest = type(n) == "string" and HasWord(n:lower(), R.REST_WORDS)
+            if not rest and type(d) == "number" and d > 0 and d <= R.FOOD_MAX_DURATION then
                 timed[#timed + 1] = tip
                 timedLabels[#timed] = type(n) == "string" and n or "?"
             end
@@ -1304,6 +1307,8 @@ local function HelpfulNames()
 end
 R.HelpfulNames = HelpfulNames
 R.FOOD_MAX_DURATION = 2 * 3600
+-- Buffs der Erholung (Gasthaus, Ruhe): geben Erfahrung, machen nicht satt.
+R.REST_WORDS = { "erholt", "ausgeruht", "erholung", "rested", "well rested" }
 
 -- Warum gilt der Spieler als satt? Text oder nil.
 function R.FedReason(names, tips, timed, labels)
