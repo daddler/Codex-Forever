@@ -2754,6 +2754,23 @@ end
 -- Modul
 --------------------------------------------------
 
+-- 1.0.4.6 (Bild aus einem Dungeon, auch nach 1.0.4.5: Gruppenmitglieder
+-- mit Balken und Stufe): in Instanzen sperrt das Spiel freundliche
+-- Plaketten fuer Addons - was dort steht, ist die Plakette DES SPIELS, die
+-- WeintCodex nicht bemalen darf. Das Spiel selbst kann sie auf den Namen
+-- kuerzen (nameplateShowOnlyNames) - wie draussen. Gemerkt ueber das Profil
+-- (Besitzer "nameplates"), mit der Oberflaeche aus kommt der alte Wert.
+function NP.InstanceNames()
+    local PF = WeintCodex.UIProfile
+    if not (PF and PF.SetCVar) then return false end
+    if S.friendlyEnabled and not S.friendlyHealth then
+        PF.SetCVar("nameplateShowOnlyNames", "1", "nameplates")
+        return true
+    end
+    if PF.Release then pcall(PF.Release, "nameplateShowOnlyNames") end
+    return false
+end
+
 local function Enable()
     NP.MigrateMotion()
     Resolve()
@@ -2768,6 +2785,7 @@ local function Enable()
     events:SetScript("OnEvent", K.Measured("Plaketten", OnEvent))
     NP.EnableCombo()
     NP.Prewarm()
+    K.AfterCombat(NP.InstanceNames)
 
     -- Plaketten, die beim Einschalten schon stehen (Neuladen mitten in
     -- der Welt), bekommen kein ADDED mehr.
@@ -2831,6 +2849,7 @@ end
 
 local function OnSetting()
     Resolve()
+    K.AfterCombat(NP.InstanceNames)
     for unit, p in pairs(plates) do
         Layout(p)
         p._lgen, p._lfriendly = NP.layoutGen, p._friendly

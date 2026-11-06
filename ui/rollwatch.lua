@@ -254,6 +254,9 @@ local function Build()
         if not self._unlock and RW.lastChange and Now() - RW.lastChange > RW.LINGER then self:Hide() end
     end)
     K.RegisterMover(frame, "rollwatch", "Würfe in der Gruppe", K.Layout("rollwatch"))
+    -- 1.0.4.6 (Wunsch: "das Beutefenster muss frei ziehbar sein"): am
+    -- Fenster selbst ziehen, ohne Gestaltungsmodus; die Stelle bleibt.
+    K.DragToMove(frame, "rollwatch")
     RW.frame = frame
     return frame
 end

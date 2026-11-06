@@ -11079,6 +11079,23 @@ do
     Check(ok, "Namensplaketten: Gruppe immer freundlich, als Geist nach Gesinnung" .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 1.0.4.6: freundliche Plaketten des Spiels in Instanzen nur mit Namen.
+do
+    local NP, PF = WeintCodex.UINameplates, WeintCodex.UIProfile
+    local oCV = _G.C_CVar
+    local cv = { nameplateShowOnlyNames = "0" }
+    _G.C_CVar = { GetCVar = function(n) return cv[n] end, SetCVar = function(n, v) cv[n] = v return true end }
+    local ok, err = pcall(function()
+        NP.InstanceNames()
+        assert(cv.nameplateShowOnlyNames == "1", "Wert nicht gesetzt")
+        local rec = PF.Record and PF.Record("nameplateShowOnlyNames")
+        assert(rec and rec.owner == "nameplates", "nameplateShowOnlyNames nicht gesetzt")
+    end)
+    if PF.Release then pcall(PF.Release, "nameplateShowOnlyNames") end
+    _G.C_CVar = oCV
+    Check(ok, "Namensplaketten: in Instanzen nur Namen (Spieleinstellung)" .. (ok and "" or (": " .. tostring(err))))
+end
+
 -- 1.0.4.2: Makros im Klickzauber (Rahmen: type/macro; Taste: Knopf mit Makro).
 do
     local CC = WeintCodex.UIClickCast
