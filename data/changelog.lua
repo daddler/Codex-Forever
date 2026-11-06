@@ -22,6 +22,14 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.0.4.5",
+        date    = "06.11.2026",
+        notes   = {
+            "|cff7C6CFFWürfe in der Gruppe stimmen wieder|r – statt Gegenstand und Wurf standen Zahlen in der Liste. Jetzt mit Gegenstand, Symbol, Wahl, Wurf und Gewinner.",
+            "|cff7C6CFFGruppenmitglieder im Dungeon mit Namensplakette wie draußen|r – sie bekamen teils die Plakette eines Gegners. Wer in deiner Gruppe ist, gilt jetzt immer als Freund.",
+        },
+    },
+    {
         version = "1.0.4.4",
         date    = "06.11.2026",
         notes   = {

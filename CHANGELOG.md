@@ -9,6 +9,14 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.0.4.5] – 2026-11-06
+
+- Behoben: Würfe in der Gruppe – die Texte des Clients beginnen mit
+  `|HlootHistory:%d|h`; die Nummer verschob alle Rollen.
+- Behoben: Gruppenmitglieder bekamen in Instanzen die Gegner-Plakette
+  (als Geist `UnitIsFriend` unbekannt); Gruppe immer freundlich, sonst
+  `UnitReaction`.
+
 ## [1.0.4.4] – 2026-11-06
 
 - Behoben: Quest- und Farmleiste bei großer Karte übereinander am
