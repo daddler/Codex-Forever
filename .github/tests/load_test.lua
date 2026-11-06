@@ -21176,6 +21176,7 @@ do
         assert(ER.Extra("CastSpellByName()") == nil, "Taint-Bericht an fremder Sperre")
         -- 1.0.3.7: Funktion unbekannt, aber der Stapel nennt die Tasche.
         assert(ER.Extra("UNKNOWN()", "[C]: in function 'UseContainerItem'"), "Taint-Bericht fehlt bei UNKNOWN()")
+        assert(ER.Extra("PurchaseBankTab()"), "Taint-Bericht fehlt an der Bank")
         local e = ER.Record("blocked", "Verboten: UseContainerItem() test", "", x)
         assert(e.stack:find("Taint-Bericht", 1, true), "Bericht nicht im Eintrag")
         BG.TaintReport = o

@@ -230,7 +230,9 @@ ER.Hook()
 -- was im Stapel steht.
 function ER.Extra(func, stack)
     local f = tostring(K.Plain(func) or "") .. " " .. tostring(stack or "")
-    if not (f:find("ContainerItem", 1, true) or f:find("UseItem", 1, true)) then return nil end
+    -- 1.0.3.8: auch die Bank ("Verboten: PurchaseBankTab()" beim Oeffnen,
+    -- dreimal gemeldet, Ursache unbekannt) - der Bericht nennt BankPanel.
+    if not (f:find("ContainerItem", 1, true) or f:find("UseItem", 1, true) or f:find("BankTab", 1, true)) then return nil end
     local BG = WeintCodex.UIBags
     if not (BG and BG.TaintReport) then return nil end
     local ok, lines = pcall(BG.TaintReport)
