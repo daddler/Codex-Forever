@@ -11009,6 +11009,23 @@ do
     Check(ok, "Erinnerungen: freie Talentpunkte" .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 1.0.4.4: Wegpunkt des Spiels nie im Kampf abnehmen (Kartennadeln gesperrt).
+do
+    local QA = WeintCodex.UIQuestArrow
+    local ok, err = pcall(function()
+        local K = WeintCodex.UIKit
+        local oIC, oCM, oPin = K.InCombat, _G.C_Map, QA.pin
+        local cleared = false
+        _G.C_Map = { ClearUserWaypoint = function() cleared = true end, GetUserWaypoint = function() return nil end }
+        K.InCombat = function() return true end
+        QA.pin = { map = 1, x = 0.5, y = 0.5 }
+        assert(QA.UnpinGame() == false and not cleared, "Wegpunkt im Kampf abgenommen")
+        K.InCombat = oIC
+        _G.C_Map, QA.pin = oCM, oPin
+    end)
+    Check(ok, "Questpfeil: Wegpunkt nie im Kampf abnehmen" .. (ok and "" or (": " .. tostring(err))))
+end
+
 -- 1.0.4.4: grosse Karte - Quest- und Farmleiste in der Karte, untereinander.
 do
     local QH = WeintCodex.UIQuestHelper

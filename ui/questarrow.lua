@@ -723,6 +723,14 @@ function QA.UnpinGame()
         AfterMap(function() QA.UnpinGame() end)
         return false
     end
+    -- 1.0.4.4 (Fehlerbericht "Blockiert: SetPassThroughButtons" aus
+    -- CacheCurrentSuperTrackInfo, 32x): ein Wegpunkt-Wechsel aus dem Addon
+    -- loest den Neuaufbau der Kartennadeln aus - im Kampf als Addon-Code,
+    -- und das Spiel sperrt jede Nadel. Im Kampf erst danach.
+    if K.InCombat() then
+        K.AfterCombat(function() QA.UnpinGame() end)
+        return false
+    end
     local ours = QA.PinIsOurs()
     QA.pin = nil
     if not ours then return false end
@@ -1143,9 +1151,13 @@ function QA.OwnArrival(t, d)
     if t.kind == "custom" then
         QA.ClearCustom()
     else
-        local cm, st = _G.C_Map, _G.C_SuperTrack
-        if cm and cm.ClearUserWaypoint then pcall(cm.ClearUserWaypoint) end
-        if st and st.SetSuperTrackedUserWaypoint then pcall(st.SetSuperTrackedUserWaypoint, false) end
+        local function clear()
+            local cm, st = _G.C_Map, _G.C_SuperTrack
+            if cm and cm.ClearUserWaypoint then pcall(cm.ClearUserWaypoint) end
+            if st and st.SetSuperTrackedUserWaypoint then pcall(st.SetSuperTrackedUserWaypoint, false) end
+        end
+        -- 1.0.4.4: nie im Kampf (s. QA.UnpinGame).
+        if K.InCombat() then K.AfterCombat(clear) else clear() end
     end
     QA.ownDone = (QA.ownDone or 0) + 1
     return true
