@@ -9,6 +9,12 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.0.3.3] – 2026-11-06
+
+- Neu: flache Chatreiter leuchten bei neuen Nachrichten (Haken an
+  `FCF_StartAlertFlash`/`FCF_StopAlertFlash`, eigene pulsierende Fläche);
+  das Leuchten des Spiels war auf den flachen Reitern kaum zu sehen.
+
 ## [1.0.3.2] – 2026-11-05
 
 - Behoben: Plaketten der Oberfläche hielten als Geist jeden Gegner für

@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.0.3.3",
+        date    = "06.11.2026",
+        notes   = {
+            "|cff7C6CFFChatreiter leuchten bei neuen Nachrichten|r – kommt in einem anderen Reiter etwas an (etwa im Gildenchat), pulsiert er wie im Standard-UI, bis du ihn anklickst.",
+        },
+    },
+    {
         version = "1.0.3.2",
         date    = "05.11.2026",
         notes   = {
