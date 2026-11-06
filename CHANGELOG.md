@@ -9,6 +9,12 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.0.4.2] – 2026-11-06
+
+- Neu: Klickzauber-Aktion „Makro“ (`b.macro`, Name des Spielmakros):
+  am Rahmen `type`=`macro` + `macro`, auf Tasten Knopf mit `macro`
+  statt `macrotext`; Tafel liest `GetMacroInfo` (`CC.Macros`).
+
 ## [1.0.4.1] – 2026-11-06
 
 - Neu: Schalter `buffsOnTarget` – Buffs und Buff-Essen nur mit

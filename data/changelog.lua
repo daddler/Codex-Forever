@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.0.4.2",
+        date    = "06.11.2026",
+        notes   = {
+            "|cff7C6CFFMakros in den Klickzaubern|r – deine Makros stehen jetzt in der Tafel neben den Zaubern und lassen sich auf Maustasten und Tasten legen, auch „überall“. Auf wen ein Makro wirkt, sagt das Makro selbst – für den Rahmen unter der Maus [@mouseover].",
+        },
+    },
+    {
         version = "1.0.4.1",
         date    = "06.11.2026",
         notes   = {
