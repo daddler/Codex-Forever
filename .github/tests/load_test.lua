@@ -11058,6 +11058,27 @@ do
     Check(ok, "Karte: Quest- und Farmleiste bei grosser Karte in der Karte" .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 1.0.4.5: Gruppenmitglieder immer freundlich; als Geist mit unbekanntem
+-- "Freund" entscheidet die Gesinnung.
+do
+    local NP = WeintCodex.UINameplates
+    local o1, o2, o3, o4, o5, o6 = _G.UnitInParty, _G.UnitInRaid, _G.UnitIsDeadOrGhost, _G.UnitIsFriend, _G.UnitReaction, _G.UnitCanAttack
+    local ok, err = pcall(function()
+        _G.UnitInParty = function(u) return u == "nameplate1" end
+        _G.UnitInRaid = function() return nil end
+        _G.UnitIsDeadOrGhost = function() return true end
+        _G.UnitIsFriend = function() return nil end
+        _G.UnitCanAttack = function() return false end
+        _G.UnitReaction = function(_, u) return u == "nameplate2" and 5 or 2 end
+        assert(NP.IsFriendly("nameplate1") == true, "Gruppenmitglied als Geist nicht freundlich")
+        assert(NP.IsFriendly("nameplate2") == true, "freundliche Gesinnung als Geist nicht freundlich")
+        assert(NP.IsFriendly("nameplate3") == false, "Gegner als Geist freundlich")
+    end)
+    _G.UnitInParty, _G.UnitInRaid, _G.UnitIsDeadOrGhost, _G.UnitIsFriend, _G.UnitReaction, _G.UnitCanAttack =
+        o1, o2, o3, o4, o5, o6
+    Check(ok, "Namensplaketten: Gruppe immer freundlich, als Geist nach Gesinnung" .. (ok and "" or (": " .. tostring(err))))
+end
+
 -- 1.0.4.2: Makros im Klickzauber (Rahmen: type/macro; Taste: Knopf mit Makro).
 do
     local CC = WeintCodex.UIClickCast

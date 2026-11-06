@@ -2244,11 +2244,31 @@ local CAST_EVENTS = {
 -- neu entstand. Freund ist jetzt, was das Spiel Freund nennt; tot oder
 -- Geist zaehlt nur das. Beim Tod und bei der Rueckkehr werden alle
 -- stehenden Plaketten neu eingerichtet.
+-- 1.0.4.5 (Bild aus einem Dungeon: Gruppenmitglieder mit Gegner-Plakette):
+-- in Instanzen nennt der Client "Freund" womoeglich nur verschluesselt -
+-- als Geist (Leichenlauf in die Instanz) hiess das "kein Freund", und die
+-- Plakette blieb so. Wer in deiner Gruppe ist, ist immer Freund; ist
+-- "Freund" unbekannt, entscheidet die Gesinnung (UnitReaction, 5+ =
+-- freundlich), erst dann wie vor 1.0.3.2.
+local function Ask(f, ...)
+    if type(f) ~= "function" then return nil end
+    local ok, v = pcall(f, ...)
+    if not ok then return nil end
+    return K.Plain(v)
+end
 function NP.IsFriendly(unit)
+    if Ask(_G.UnitInParty, unit) == true or Ask(_G.UnitInRaid, unit) ~= nil and Ask(_G.UnitInRaid, unit) ~= false then
+        return true
+    end
     local dead = K.Bool(_G.UnitIsDeadOrGhost and _G.UnitIsDeadOrGhost("player"), false)
-    local friend = _G.UnitIsFriend and K.Bool(_G.UnitIsFriend("player", unit), nil)
-    if dead then return friend == true end
+    local friend = Ask(_G.UnitIsFriend, "player", unit)
     if friend == true then return true end
+    if dead then
+        if friend == false then return false end
+        local r = Ask(_G.UnitReaction, "player", unit)
+        if type(r) == "number" then return r >= 5 end
+        return false
+    end
     return not K.Bool(_G.UnitCanAttack and _G.UnitCanAttack("player", unit), false)
 end
 
