@@ -22,6 +22,14 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.0.3.7",
+        date    = "06.11.2026",
+        notes   = {
+            "|cff7C6CFFKarte im Kampf ohne Fehlerflut|r – ein Klick auf die Koordinaten unter dem Chat öffnete die Weltkarte auch im Kampf, und das Spiel sperrte ihren Aufbau dutzendfach. Im Kampf bleibt der Klick jetzt ohne Wirkung.",
+            "|cff7C6CFFFehlerberichte aus der Tasche vollständiger|r – nennt das Spiel die gesperrte Funktion nicht, hängt der Bericht trotzdem an, was an der Tasche verändert war.",
+        },
+    },
+    {
         version = "1.0.3.6",
         date    = "06.11.2026",
         notes   = {

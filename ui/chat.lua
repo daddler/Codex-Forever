@@ -765,7 +765,13 @@ local function BuildInfoBar()
         info.dur = InfoCell(info, nil, "Niedrigste Haltbarkeit deiner Ausrüstung")
         info.fps = InfoCell(info, nil, "Bildrate")
         info.ms = InfoCell(info, nil, "Latenz (Welt)")
-        info.coords = InfoCell(info, function() if _G.ToggleWorldMap then pcall(_G.ToggleWorldMap) end end, "Deine Lage im Gebiet – Klick: Karte")
+        info.coords = InfoCell(info, function()
+            -- 1.0.3.7 (Fehlerbericht: "Blockiert: SetPassThroughButtons" beim
+            -- Oeffnen der Karte, 48x): im Kampf oeffnet ein Addon die Weltkarte
+            -- nicht - ihr Aufbau laeuft dann als Addon-Code und wird gesperrt.
+            if K.InCombat() then return end
+            if _G.ToggleWorldMap then pcall(_G.ToggleWorldMap) end
+        end, "Deine Lage im Gebiet – Klick: Karte")
         info.guild = InfoCell(info, function() if _G.ToggleGuildFrame then pcall(_G.ToggleGuildFrame) end end, "Gildenmitglieder online – Klick: Gilde")
         local acc = 0
         info:SetScript("OnUpdate", K.Measured("Chat-Infozeile", function(_, el)

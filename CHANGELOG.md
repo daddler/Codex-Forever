@@ -9,6 +9,14 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.0.3.7] – 2026-11-06
+
+- Behoben: Koordinaten-Feld der Infozeile öffnete die Weltkarte auch im
+  Kampf (`ToggleWorldMap` aus Addon-Code → „Blockiert:
+  SetPassThroughButtons“ je Kartennadel).
+- Taint-Bericht der Taschen auch bei „Verboten: UNKNOWN()“, wenn der
+  Stapel `UseContainerItem` nennt.
+
 ## [1.0.3.6] – 2026-11-06
 
 - Behoben: Dungeon-Questfilter merkte kontoweit (`ui.questWatch`); ein
