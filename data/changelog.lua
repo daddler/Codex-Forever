@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.0.3.9",
+        date    = "06.11.2026",
+        notes   = {
+            "|cff7C6CFFErinnerung an freie Talentpunkte|r – nach dem Stufenaufstieg steht bei den Erinnerungen, wie viele Talentpunkte du vergeben kannst, bis alle verteilt sind. Abschaltbar unter Erinnerungen.",
+        },
+    },
+    {
         version = "1.0.3.8",
         date    = "06.11.2026",
         notes   = {
