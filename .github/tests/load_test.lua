@@ -23430,6 +23430,31 @@ do
     Check(ok, "Wuerfe in der Gruppe" .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 1.0.4.5: Texte mit Verweis auf den Beuteverlauf (Forever-Client).
+do
+    local RW = WeintCodex.UIRollWatch
+    local saved = {}
+    local strings = {
+        LOOT_ROLL_NEED = "|HlootHistory:%d|h[Beute]|h: %s wählt 'Bedarf' für: %s",
+        LOOT_ROLL_ROLLED_NEED = "|HlootHistory:%d|h[Beute]|h: Bedarfswurf (%d) für %s von %s",
+        LOOT_ROLL_WON = "|HlootHistory:%d|h[Beute]|h: %s gewinnt: %s",
+    }
+    for k, v in pairs(strings) do saved[k] = _G[k]; _G[k] = v end
+    local ok, err = pcall(function()
+        RW.BuildPatterns()
+        local link = "|cff0070dd|Hitem:4711::::|h[Gespenstertuch]|h|r"
+        local a = RW.Parse("|HlootHistory:231124737|h[Beute]|h: Holzi Mcleod wählt 'Bedarf' für: " .. link)
+        assert(a and a.who == "Holzi Mcleod" and a.item == link, "Bedarf mit Verweis: " .. tostring(a and a.who))
+        local b = RW.Parse("|HlootHistory:231124737|h[Beute]|h: Bedarfswurf (11) für " .. link .. " von Bazinga")
+        assert(b and b.roll == 11 and b.who == "Bazinga" and b.item == link, "Wurf mit Verweis")
+        local c = RW.Parse("|HlootHistory:231124737|h[Beute]|h: Bazinga gewinnt: " .. link)
+        assert(c and c.kind == "won" and c.who == "Bazinga" and c.item == link, "Gewinner mit Verweis")
+    end)
+    for k in pairs(strings) do _G[k] = saved[k] end
+    RW.BuildPatterns()
+    Check(ok, "Wuerfe: Texte mit Verweis auf den Beuteverlauf" .. (ok and "" or (": " .. tostring(err))))
+end
+
 -- 1.6.0.0: PvP - Rollen nur aus Spezialisierungen, Heiler nur aus Zaubern.
 Section("PvP")
 do

@@ -88,7 +88,17 @@ RW.patterns = {}
 function RW.BuildPatterns()
     wipe(RW.patterns)
     for _, s in ipairs(RW.STRINGS) do
-        local pat, order = RW.Pattern(_G[s[1]], s[3])
+        -- 1.0.4.5 (Bild aus einer Dungeongruppe: Namen "11", "10", eine
+        -- lange Zahl statt des Gegenstands): die Texte des Forever-Clients
+        -- beginnen mit einem Verweis auf den Beuteverlauf
+        -- ("|HlootHistory:%d|h[Beute]|h: %s wählt …") - dessen Nummer ist
+        -- der erste Platzhalter, alle Rollen rutschten um eins.
+        local fmt, roles = _G[s[1]], s[3]
+        if type(fmt) == "string" and fmt:find("lootHistory", 1, true) then
+            roles = { "id" }
+            for _, r in ipairs(s[3]) do roles[#roles + 1] = r end
+        end
+        local pat, order = RW.Pattern(fmt, roles)
         if pat then
             RW.patterns[#RW.patterns + 1] = { pat = pat, order = order, kind = s[2], self = s.self, rolled = s.rolled }
         end
