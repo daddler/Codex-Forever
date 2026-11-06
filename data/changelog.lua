@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.0.3.4",
+        date    = "06.11.2026",
+        notes   = {
+            "|cff7C6CFFAngeln mit einer Taste holt wieder ein|r – beim Anbiss warf die Taste die Angel neu aus, statt den Fang zu holen. Solange die Angel draußen ist, holt sie jetzt immer ein.",
+        },
+    },
+    {
         version = "1.0.3.3",
         date    = "06.11.2026",
         notes   = {

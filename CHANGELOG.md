@@ -9,6 +9,13 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.0.3.4] – 2026-11-06
+
+- Behoben: Angeln mit einer Taste warf beim Anbiss neu aus – die Taste
+  wechselte erst auf `INTERACTTARGET`, wenn der Schwimmer als weiches
+  Ziel gemeldet war. Jetzt während des ganzen Wurfs; ein Kanal direkt
+  nach dem eigenen Wurf zählt auch ohne bekannte Zauber-ID.
+
 ## [1.0.3.3] – 2026-11-06
 
 - Neu: flache Chatreiter leuchten bei neuen Nachrichten (Haken an
