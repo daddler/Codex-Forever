@@ -10984,6 +10984,23 @@ do
     Check(ok, "Chat: aktiver Reiter = gewaehltes Fenster" .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 1.0.3.9: Erinnerung an freie Talentpunkte.
+do
+    local R = WeintCodex.UIReminders
+    local ok, err = pcall(function()
+        local old = _G.UnitCharacterPoints
+        _G.UnitCharacterPoints = function() return 2 end
+        local hit = R.TalentHit()
+        assert(hit and hit.text == "2 Talentpunkte zu vergeben", "keine Talenterinnerung: " .. tostring(hit and hit.text))
+        _G.UnitCharacterPoints = function() return 0 end
+        assert(R.TalentHit() == nil, "Erinnerung ohne freie Punkte")
+        _G.UnitCharacterPoints = function() error("fehlt") end
+        assert(R.TalentHit() == nil or _G.GetUnspentTalentPoints, "unbekannt wird Erinnerung")
+        _G.UnitCharacterPoints = old
+    end)
+    Check(ok, "Erinnerungen: freie Talentpunkte" .. (ok and "" or (": " .. tostring(err))))
+end
+
 -- 1.0.3.6: Dungeon-Questfilter merkt je Charakter; ein anderer Charakter
 -- stellt nie fremde Quests wieder her; einmalige Reparatur ohne Verfolgung.
 do

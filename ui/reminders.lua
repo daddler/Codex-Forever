@@ -67,6 +67,9 @@ local defaults = {
     castTimes     = true,     -- eigene Buffs aus dem Wirken mit Uhr
     castMissing   = true,     -- im Kampf "fehlt" (grau mit "!")
     castSize      = 28,       -- Symbolgroesse
+    -- 1.0.3.9 (Spielerwunsch: "Erinnerung, wenn ich einen Talentpunkt
+    -- vergeben kann"):
+    talentPoints  = true,
 }
 R.DEFAULTS = defaults
 
@@ -1553,6 +1556,24 @@ function R.ClockHit(rule)
     return { text = (rule.label or sp.name or rule.spell) .. " fehlt", icon = sp.icon }
 end
 
+-- Unverteilte Talentpunkte, wie der Client sie nennt; nil = unbekannt.
+function R.UnspentTalents()
+    for _, f in ipairs({ function() return _G.UnitCharacterPoints("player") end,
+                         function() return _G.GetUnspentTalentPoints() end }) do
+        local ok, n = pcall(f)
+        n = ok and K.Plain(n) or nil
+        if type(n) == "number" then return n end
+    end
+    return nil
+end
+
+function R.TalentHit()
+    if not Opt("talentPoints") then return nil end
+    local n = R.UnspentTalents()
+    if type(n) ~= "number" or n <= 0 then return nil end
+    return { text = n == 1 and "1 Talentpunkt zu vergeben" or (n .. " Talentpunkte zu vergeben") }
+end
+
 -- Alle Erinnerungen, die jetzt gelten.
 function R.Active()
     local out = {}
@@ -1593,7 +1614,11 @@ function R.Active()
             if hit then out[#out + 1] = hit end
         end
     end
-    if not fighting then R.BagBuffs(out) end
+    if not fighting then
+        R.BagBuffs(out)
+        local t = R.TalentHit()
+        if t then out[#out + 1] = t end
+    end
     return out
 end
 
@@ -1866,7 +1891,8 @@ local function Enable()
     for _, e in ipairs({ "PLAYER_ENTERING_WORLD", "PLAYER_REGEN_ENABLED", "PLAYER_REGEN_DISABLED",
         "UNIT_AURA", "UNIT_PET", "UNIT_INVENTORY_CHANGED", "GROUP_ROSTER_UPDATE", "ZONE_CHANGED_NEW_AREA",
         "SPELL_UPDATE_COOLDOWN", "SPELL_UPDATE_CHARGES", "READY_CHECK", "PLAYER_MOUNT_DISPLAY_CHANGED",
-        "BAG_UPDATE_DELAYED", "UNIT_HAPPINESS", "PLAYER_UPDATE_RESTING" }) do
+        "BAG_UPDATE_DELAYED", "UNIT_HAPPINESS", "PLAYER_UPDATE_RESTING",
+        "PLAYER_LEVEL_UP", "CHARACTER_POINTS_CHANGED", "PLAYER_TALENT_UPDATE" }) do
         pcall(ev.RegisterEvent, ev, e)
     end
     pcall(ev.RegisterEvent, ev, "SPELLS_CHANGED")
@@ -2185,6 +2211,8 @@ K.Register({
                     description = "Für Erinnerungen, Buffs/Procs und Abklingzeiten." })
             B:Row({ type = "toggle", label = "An ruhigen Orten ausblenden", key = "hideResting",
                     description = "In Städten und Gasthäusern (wo das Spiel „ruhend“ sagt) keine Erinnerung und kein Symbol." }, nil)
+            B:Row({ type = "toggle", label = "Talentpunkte zu vergeben", key = "talentPoints",
+                    description = "Nach dem Stufenaufstieg: Erinnerung, solange ein Talentpunkt frei ist." }, nil)
             B:Section("Aus der Tasche")
             B:Row({ type = "toggle", label = "Essen mit Buff", key = "bagFood",
                     description = "Liegt Essen in der Tasche, das „Wohlgenährt“ oder Erfahrung gibt, und der Buff fehlt: Erinnerung. Erfahrungsessen nur beim Leveln." },
