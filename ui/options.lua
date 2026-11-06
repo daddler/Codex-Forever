@@ -1659,6 +1659,12 @@ SlashCmdList["WEINTCODEXUI"] = function(msg)
         print(WeintCodex.ColorText("accent", "[WeintCodex]") .. " Klickzauber – Bericht im Fenster, Strg+C kopiert.")
         return
     end
+    if msg == "questliste" or msg == "quests" then
+        local lines = WeintCodex.UIQuestTracker.Report()
+        K.ShowReport("Questliste", lines)
+        print(WeintCodex.ColorText("accent", "[WeintCodex]") .. " Questliste – Bericht im Fenster, Strg+C kopiert.")
+        return
+    end
     if msg == "fenster" or msg == "window" then
         local lines = K.InspectWindow()
         K.ShowReport("Fenster unter der Maus", lines)

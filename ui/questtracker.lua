@@ -340,6 +340,53 @@ function StartDungeonFilter()
     end))
 end
 
+-- 1.0.3.6: /wcui questliste - was mit der Liste des Spiels los ist
+-- (Spieler: "beim Druiden weg, bei anderen da").
+function QT.Report()
+    local out = {}
+    local function add(k, v) out[#out + 1] = k .. ": " .. tostring(v) end
+    local function call(o, m, ...)
+        if type(o) ~= "table" or type(o[m]) ~= "function" then return "?" end
+        local ok, a, b, c, d, e = pcall(o[m], o, ...)
+        if not ok then return "Fehler" end
+        if m == "GetPoint" then
+            local rel = type(b) == "table" and b.GetName and b:GetName() or tostring(b)
+            return tostring(a) .. " " .. tostring(rel) .. " " .. tostring(c) .. " " .. tostring(K.Plain(d)) .. " " .. tostring(K.Plain(e))
+        end
+        return tostring(K.Plain(a))
+    end
+    add("Charakter", K.CharKey())
+    add("Modul an", K.IsActive and K.IsActive(KEY))
+    local t = _G.ObjectiveTrackerFrame
+    add("Rahmen", type(t) == "table" and "da" or "fehlt")
+    if type(t) == "table" then
+        for _, m in ipairs({ "IsShown", "IsVisible", "GetAlpha", "GetEffectiveScale", "GetLeft", "GetTop",
+                             "GetWidth", "GetHeight", "GetPoint", "IsForbidden" }) do
+            add(m, call(t, m))
+        end
+        local p = t.GetParent and t:GetParent()
+        add("Eltern", type(p) == "table" and ((p.GetName and p:GetName()) or "?") .. " sichtbar=" .. call(p, "IsVisible") or "keine")
+        add("eingeklappt", tostring(t.isCollapsed) .. " / Kopf " .. tostring(type(t.Header) == "table" and t.Header.isCollapsed))
+        local n = 0
+        for _, c in ipairs({ t:GetChildren() }) do
+            if type(c) == "table" and c ~= panel then
+                n = n + 1
+                if n <= 12 then
+                    add("  Teil " .. ((c.GetName and c:GetName()) or "?"), "sichtbar=" .. call(c, "IsVisible") .. " h=" .. call(c, "GetHeight"))
+                end
+            end
+        end
+    end
+    local ql = QL()
+    add("Verfolgte Quests", ql and ql.GetNumQuestWatches and K.Plain(ql.GetNumQuestWatches()) or "?")
+    add("Einträge im Log", ql and ql.GetNumQuestLogEntries and K.Plain(ql.GetNumQuestLogEntries()) or "?")
+    add("Fläche", panel and (call(panel, "IsShown") .. " h=" .. call(panel, "GetHeight")) or "keine")
+    local mem = Memory()
+    add("Dungeonfilter", mem and tostring(mem.active) or "?")
+    add("Instanz", tostring(InstanceName()))
+    return out
+end
+
 local function px(v) return string.format("%d px", v) end
 
 K.Register({

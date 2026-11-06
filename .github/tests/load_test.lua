@@ -11029,6 +11029,7 @@ do
         QT.CheckDungeon()
         assert(not watched[1], "Reparatur lief zweimal")
         _G.C_QuestLog, _G.UnitName, _G.IsInInstance, _G.GetInstanceInfo = oQL, oName, oInst, oGI
+        assert(#QT.Report() > 5, "Bericht der Questliste leer")
     end)
     Check(ok, "Questliste: Dungeonfilter je Charakter, keine fremden Quests" .. (ok and "" or (": " .. tostring(err))))
 end
