@@ -213,6 +213,12 @@ local function Build()
     frame.head = K.NewText(frame, 12, "OVERLAY")
     frame.head:SetPoint("TOPLEFT", frame, "TOPLEFT", 8, -7)
     frame.head:SetText("Würfe in der Gruppe")
+    -- 1.0.4.6 (Wunsch: "muss auch schliessbar sein, mit einem X"): zu bis
+    -- zum naechsten Wurf.
+    frame.close = WeintCodex.CreateButton(frame, { text = "×", kind = "ghost", height = 18, size = 13,
+        tooltip = "Schließen – beim nächsten Wurf wieder da.", onClick = function() RW.Close() end })
+    frame.close:SetWidth(20)
+    frame.close:SetPoint("TOPRIGHT", frame, "TOPRIGHT", -4, -3)
     frame.rows = {}
     for i = 1, RW.ROWS do
         local r = CreateFrame("Frame", nil, frame)
@@ -259,6 +265,10 @@ local function Build()
     K.DragToMove(frame, "rollwatch")
     RW.frame = frame
     return frame
+end
+
+function RW.Close()
+    if frame then frame:Hide() end
 end
 
 function RW.Fill(items)
