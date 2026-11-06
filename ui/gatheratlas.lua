@@ -1256,7 +1256,13 @@ function GA.SyncBar()
     local n = r and r.stops and #r.stops or 0
     bar.info:SetText(n > 0 and ("Route: " .. n .. " Halte") or "Noch keine Route")
     -- Unter der Quest-Leiste, wenn sie steht; sonst direkt unter der Karte.
+    -- Bei grosser Karte beide IN der Karte (1.0.4.4, QH.LayoutBars).
     local QH, wm = WeintCodex.UIQuestHelper, _G.WorldMapFrame
+    if QH and QH.LayoutBars then
+        if QH.HookLayout then QH.HookLayout() end
+        QH.LayoutBars()
+        return
+    end
     local qb = QH and QH.bar
     local below = (qb and qb.IsShown and qb:IsShown()) and qb or wm
     if bar._below ~= below then

@@ -971,7 +971,71 @@ function QH.BuildBar()
     bar.base = x + 4
     bar:SetWidth(x + 4)
     QH.bar = bar
+    QH.HookLayout()
+    if bar.HookScript then
+        bar:HookScript("OnShow", function() QH.layoutMode = nil QH.LayoutBars() end)
+        bar:HookScript("OnHide", function() QH.layoutMode = nil QH.LayoutBars() end)
+    end
     return bar
+end
+
+-- 1.0.4.4 (Bild eines Spielers: grosse Karte, Quest- und Farmleiste
+-- uebereinander gequetscht): unter dem Fenster ist bei grosser Karte kein
+-- Platz, und das Spiel schob beide an den Bildrand, aufeinander. Reicht
+-- der Platz unter der Karte nicht fuer beide, liegen sie IN der Karte,
+-- unten links, die Farmleiste unter der Questleiste. QH.inside sagt der
+-- Gebietszeile (ui/zoneinfo.lua), dass sie hoeher stehen muss.
+QH.BAR_H, QH.BAR_GAP = 28, 4
+function QH.LayoutBars()
+    local wm = _G.WorldMapFrame
+    if type(wm) ~= "table" or not wm.GetBottom then return end
+    local GA = WeintCodex.UIGatherAtlas
+    local farm = GA and GA.bar
+    local quest = bar
+    local qOn = quest and quest:IsShown()
+    local fOn = farm and farm:IsShown()
+    local n = (qOn and 1 or 0) + (fOn and 1 or 0)
+    local bottom = K.Plain(wm:GetBottom())
+    local scale = K.Plain(wm.GetEffectiveScale and wm:GetEffectiveScale() or 1) or 1
+    local need = n * (QH.BAR_H + QH.BAR_GAP) + 4
+    local inside = type(bottom) == "number" and bottom * scale < need * scale and n > 0
+    local parent = wm.ScrollContainer or wm
+    local mode = (inside and "in" or "out") .. n
+    if QH.layoutMode == mode then return end
+    QH.layoutMode, QH.inside = mode, inside and n or nil
+    if inside then
+        local y = 8
+        if fOn then farm:ClearAllPoints() farm:SetPoint("BOTTOMLEFT", parent, "BOTTOMLEFT", 8, y) y = y + QH.BAR_H + QH.BAR_GAP end
+        if qOn then quest:ClearAllPoints() quest:SetPoint("BOTTOMLEFT", parent, "BOTTOMLEFT", 8, y) end
+    else
+        if qOn then quest:ClearAllPoints() quest:SetPoint("TOPLEFT", wm, "BOTTOMLEFT", 0, -QH.BAR_GAP) end
+        if fOn then
+            farm:ClearAllPoints()
+            farm:SetPoint("TOPLEFT", qOn and quest or wm, "BOTTOMLEFT", 0, -QH.BAR_GAP)
+        end
+    end
+    if farm then farm._below = nil end
+    local ZI = WeintCodex.UIZoneInfo
+    if ZI and ZI.Place then pcall(ZI.Place) end
+end
+local layoutHooked = false
+function QH.HookLayout()
+    local wm = _G.WorldMapFrame
+    if layoutHooked or type(wm) ~= "table" then return end
+    layoutHooked = true
+    local function later()
+        QH.layoutMode = nil
+        if _G.C_Timer and _G.C_Timer.After then _G.C_Timer.After(0, QH.LayoutBars) else QH.LayoutBars() end
+    end
+    if wm.HookScript then
+        pcall(wm.HookScript, wm, "OnShow", later)
+        pcall(wm.HookScript, wm, "OnSizeChanged", later)
+    end
+    if _G.hooksecurefunc then
+        for _, m in ipairs({ "Maximize", "Minimize" }) do
+            if type(wm[m]) == "function" then pcall(_G.hooksecurefunc, wm, m, later) end
+        end
+    end
 end
 
 function QH.PaintBar()

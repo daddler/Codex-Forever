@@ -11009,6 +11009,38 @@ do
     Check(ok, "Erinnerungen: freie Talentpunkte" .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 1.0.4.4: grosse Karte - Quest- und Farmleiste in der Karte, untereinander.
+do
+    local QH = WeintCodex.UIQuestHelper
+    local ok, err = pcall(function()
+        local oWM = _G.WorldMapFrame
+        local function Fake(shown)
+            local f = { pts = {} }
+            function f:IsShown() return shown end
+            function f:ClearAllPoints() self.pts = {} end
+            function f:SetPoint(...) self.pts[#self.pts + 1] = { ... } end
+            return f
+        end
+        local bottom = 0
+        _G.WorldMapFrame = { GetBottom = function() return bottom end, GetEffectiveScale = function() return 1 end }
+        local quest, farm = Fake(true), Fake(true)
+        local oBar, oGA = QH.bar, WeintCodex.UIGatherAtlas.bar
+        -- QH.LayoutBars liest die lokale Leiste; ohne gebaute Leiste nur die Farmleiste.
+        WeintCodex.UIGatherAtlas.bar = farm
+        QH.layoutMode = nil
+        QH.LayoutBars()
+        assert(QH.inside and farm.pts[1] and farm.pts[1][1] == "BOTTOMLEFT", "grosse Karte: Farmleiste nicht in der Karte")
+        bottom = 400
+        QH.layoutMode = nil
+        QH.LayoutBars()
+        assert(not QH.inside and farm.pts[1][1] == "TOPLEFT", "kleine Karte: Farmleiste nicht unter dem Fenster")
+        WeintCodex.UIGatherAtlas.bar = oGA
+        _G.WorldMapFrame = oWM
+        QH.layoutMode = nil
+    end)
+    Check(ok, "Karte: Quest- und Farmleiste bei grosser Karte in der Karte" .. (ok and "" or (": " .. tostring(err))))
+end
+
 -- 1.0.4.2: Makros im Klickzauber (Rahmen: type/macro; Taste: Knopf mit Makro).
 do
     local CC = WeintCodex.UIClickCast

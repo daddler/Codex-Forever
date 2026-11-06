@@ -78,9 +78,20 @@ local panel, texts
 local lines = {}
 local expanded, continent, lastTarget, lastName = false, false, nil, nil
 
+-- 1.0.4.4: liegen Quest-/Farmleiste in der Karte (grosse Karte), steht
+-- die Gebietszeile ueber ihnen.
+function ZI.Place()
+    if not (panel and ZI.parent) then return end
+    local QH = WeintCodex.UIQuestHelper
+    local n = QH and QH.inside or 0
+    panel:ClearAllPoints()
+    panel:SetPoint("BOTTOMLEFT", ZI.parent, "BOTTOMLEFT", 8, 28 + n * ((QH and QH.BAR_H or 28) + (QH and QH.BAR_GAP or 4)))
+end
+
 local function Build(parent)
     panel = CreateFrame("Frame", nil, parent)
-    panel:SetPoint("BOTTOMLEFT", parent, "BOTTOMLEFT", 8, 28)
+    ZI.parent = parent
+    ZI.Place()
     panel:SetWidth(ZI.WIDTH)
     panel:SetFrameLevel((parent.GetFrameLevel and parent:GetFrameLevel() or 1) + 20)
     local bg = panel:CreateTexture(nil, "BACKGROUND")
