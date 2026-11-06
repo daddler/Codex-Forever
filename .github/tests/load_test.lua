@@ -11009,6 +11009,26 @@ do
     Check(ok, "Erinnerungen: freie Talentpunkte" .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 1.0.4.2: Makros im Klickzauber (Rahmen: type/macro; Taste: Knopf mit Makro).
+do
+    local CC = WeintCodex.UIClickCast
+    local ok, err = pcall(function()
+        local attrs = {}
+        local f = { SetAttribute = function(_, k, v) attrs[k] = v end, HookScript = function() end }
+        CC.ApplyTo(f, { { button = 2, mod = "shift-", action = "macro", macro = "Charge" } })
+        assert(attrs["shift-type2"] == "macro" and attrs["shift-macro2"] == "Charge",
+            "Makro nicht am Rahmen: " .. tostring(attrs["shift-type2"]) .. "/" .. tostring(attrs["shift-macro2"]))
+        assert(CC.ActionText({ action = "macro", macro = "Charge" }) == "Makro: Charge", "Text der Belegung")
+        local oN, oI = _G.GetNumMacros, _G.GetMacroInfo
+        _G.GetNumMacros = function() return 1, 1 end
+        _G.GetMacroInfo = function(i) if i == 1 then return "Charge", 134400 elseif i == 121 then return "Mein", 1 end end
+        local list = CC.Macros()
+        assert(#list == 2 and list[1].macro == "Charge" and list[2].macro == "Mein", "Makros des Spiels nicht gelesen")
+        _G.GetNumMacros, _G.GetMacroInfo = oN, oI
+    end)
+    Check(ok, "Klickzauber: Makros auf Rahmen und Tasten" .. (ok and "" or (": " .. tostring(err))))
+end
+
 -- 1.0.4.1: Buffs erst mit Gegner im Ziel; beim Angeln still.
 do
     local R, FI = WeintCodex.UIReminders, WeintCodex.UIFishing

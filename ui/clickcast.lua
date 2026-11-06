@@ -87,6 +87,9 @@ CC.ACTIONS = {
     { value = "spell",  text = "Zauber" },
     { value = "target", text = "Ziel wählen" },
     { value = "menu",   text = "Menü" },
+    -- 1.0.4.2 (Wunsch: "Makros im Klickzauber"): ein Makro des Spiels per
+    -- Namen. Auf wen es wirkt, sagt das Makro selbst ([@mouseover]).
+    { value = "macro",  text = "Makro" },
 }
 CC.DEFAULTS = {
     clickUnitFrames = true,   -- auch Spieler, Ziel, Fokus, ...
@@ -117,7 +120,7 @@ CC._class = PlayerClass
 local function Copy(list)
     local out = {}
     for i, b in ipairs(list or {}) do
-        out[i] = { button = b.button, mod = b.mod, action = b.action, spell = b.spell, rank = b.rank, free = b.free }
+        out[i] = { button = b.button, mod = b.mod, action = b.action, spell = b.spell, rank = b.rank, free = b.free, macro = b.macro }
     end
     return out
 end
@@ -215,6 +218,7 @@ function CC.ActionText(b)
         if b.rank then return (b.spell or "?") .. " (" .. b.rank .. ")" .. note end
         return (b.spell or "?") .. note
     end
+    if b.action == "macro" then return "Makro: " .. (b.macro or "?") end
     return Short(CC.ACTIONS, b.action)
 end
 
@@ -235,7 +239,7 @@ end
 local applied = setmetatable({}, { __mode = "k" })
 local hooked = setmetatable({}, { __mode = "k" })
 
-local ATTR_ACTION = { spell = "spell", target = "target", menu = "togglemenu" }
+local ATTR_ACTION = { spell = "spell", target = "target", menu = "togglemenu", macro = "macro" }
 
 function CC.ApplyTo(f, list)
     if not (f and f.SetAttribute) then return end
@@ -243,7 +247,8 @@ function CC.ApplyTo(f, list)
     local keys = {}
     for _, b in ipairs(list) do
         local kind = ATTR_ACTION[b.action]
-        if kind and not CC.IsKey(b) and not CC.IsFree(b) and not (b.action == "spell" and not b.spell) then
+        if kind and not CC.IsKey(b) and not CC.IsFree(b) and not (b.action == "spell" and not b.spell)
+           and not (b.action == "macro" and not b.macro) then
             local t = b.mod .. "type" .. CC.Suffix(b.button)
             if b.action == "target" and b.mod ~= "" then
                 -- 1.0.2.7: mit Zusatztaste ueber ein Makro (die Aktion
@@ -260,6 +265,10 @@ function CC.ApplyTo(f, list)
                 local s = b.mod .. "spell" .. CC.Suffix(b.button)
                 f:SetAttribute(s, CC.SpellAttr(b))
                 keys[#keys + 1] = s
+            elseif b.action == "macro" then
+                local m = b.mod .. "macro" .. CC.Suffix(b.button)
+                f:SetAttribute(m, b.macro)
+                keys[#keys + 1] = m
             end
         end
     end
@@ -500,7 +509,8 @@ function CC.ApplyKeys(list)
     local n = 0
     for _, b in ipairs(list) do
         local text = (CC.IsKey(b) or CC.IsFree(b)) and CC.KeyMacro(b)
-        if text and set then
+        local macro = (CC.IsKey(b) or CC.IsFree(b)) and b.action == "macro" and b.macro or nil
+        if (text or macro) and set then
             n = n + 1
             local btn = keyButtons[n]
             if not btn then
@@ -513,7 +523,9 @@ function CC.ApplyKeys(list)
                 btn:SetAttribute("type", "macro")
                 keyButtons[n] = btn
             end
-            btn:SetAttribute("macrotext", text)
+            -- Ohne Text nimmt der Knopf das Makro des Spiels beim Namen.
+            btn:SetAttribute("macrotext", text or nil)
+            btn:SetAttribute("macro", macro)
             -- Vorrang (true): Leisten-Addons wie Bartender legen ihre
             -- Tasten ebenfalls als Vorrang-Belegung - wer nach uns kommt,
             -- gewinnt sonst (6.29.11.0, Spieler: "nach dem Einloggen ging
@@ -776,12 +788,16 @@ function CC.CanFree(b)
     return type(b.button) == "number" and b.button >= 3
 end
 function CC.IsFree(b)
-    return b and b.free == true and b.action == "spell" and CC.CanFree(b) or false
+    return b and b.free == true and (b.action == "spell" or b.action == "macro") and CC.CanFree(b) or false
 end
 
 function CC.Pick(action, spell, rank)
     local b = { button = draft.button, mod = draft.mod, action = action }
-    if action == "spell" and draft.free and CC.CanFree(draft) then b.free = true end
+    if (action == "spell" or action == "macro") and draft.free and CC.CanFree(draft) then b.free = true end
+    if action == "macro" then
+        if type(spell) ~= "string" or spell == "" then return false end
+        b.macro = spell
+    end
     if action == "spell" then
         if type(spell) ~= "string" or spell == "" then return false end
         b.spell = spell
@@ -904,6 +920,26 @@ local SPECIAL = {
     { action = "menu",   name = "Menü",        icon = K.MEDIA .. "icon_gear" },
 }
 
+-- Die Makros des Spiels (Konto, dann Charakter), fuer die Tafel.
+function CC.Macros()
+    local out = {}
+    if type(_G.GetNumMacros) ~= "function" or type(_G.GetMacroInfo) ~= "function" then return out end
+    local ok, global, char = pcall(_G.GetNumMacros)
+    if not ok then return out end
+    global, char = tonumber(K.Plain(global)) or 0, tonumber(K.Plain(char)) or 0
+    local maxA = tonumber(_G.MAX_ACCOUNT_MACROS) or 120
+    local function add(i)
+        local ok2, name, icon = pcall(_G.GetMacroInfo, i)
+        name = ok2 and K.Plain(name) or nil
+        if type(name) == "string" and name ~= "" then
+            out[#out + 1] = { action = "macro", macro = name, name = name, icon = K.Plain(icon) }
+        end
+    end
+    for i = 1, global do add(i) end
+    for i = maxA + 1, maxA + char do add(i) end
+    return out
+end
+
 function CC.PickerHeight() return 22 + PICK_ROWS * (TILE + TILE_GAP) + 16 end
 
 function CC.BuildPicker(parent, width)
@@ -937,14 +973,20 @@ function CC.BuildPicker(parent, width)
         t:SetScript("OnClick", function(self)
             local e = self.entry
             if not e then return end
-            if e.action then CC.Pick(e.action) else CC.PickSpell(self, e) end
+            if e.action == "macro" then CC.Pick("macro", e.macro)
+            elseif e.action then CC.Pick(e.action) else CC.PickSpell(self, e) end
         end)
         t:SetScript("OnEnter", function(self)
             local e = self.entry
             if not e then return end
             local tip = _G.GameTooltip
             tip:SetOwner(self, "ANCHOR_TOP")
-            if e.id and tip.SetSpellByID then tip:SetSpellByID(e.id) else tip:SetText(e.name, 1, 1, 1) end
+            if e.id and tip.SetSpellByID then tip:SetSpellByID(e.id)
+            elseif e.action == "macro" then
+                tip:SetText("Makro: " .. e.name, 1, 1, 1)
+                local d = C.textMuted
+                tip:AddLine("Auf wen es wirkt, sagt das Makro – für den Rahmen unter der Maus [@mouseover].", d[1], d[2], d[3], true)
+            else tip:SetText(e.name, 1, 1, 1) end
             local a = C.accent
             -- 6.61.13.0: die Nummer des Zaubers, damit ein falscher Eintrag
             -- eindeutig gemeldet werden kann (Beta-Test: zwei "Wiederbeleb…").
@@ -973,6 +1015,7 @@ function CC.BuildPicker(parent, width)
             .. "   –   Klick auf einen Zauber legt ihn auf diese Taste.")
         local entries = {}
         for _, e in ipairs(SPECIAL) do entries[#entries + 1] = e end
+        for _, e in ipairs(CC.Macros()) do entries[#entries + 1] = e end
         -- Mausrad und Tastatur-Tasten wirken auf jede Einheit unter der
         -- Maus, auch auf Gegner: dort immer alle Zauber.
         local book = CC.Spellbook(Opt("clickHelpfulOnly") and not CC.IsKey(draft))
@@ -983,7 +1026,8 @@ function CC.BuildPicker(parent, width)
             local e = entries[i]
             t.entry = e
             t.icon:SetTexture(e.icon)
-            local on = cur and ((e.action and cur.action == e.action)
+            local on = cur and ((e.action == "macro" and cur.action == "macro" and cur.macro == e.macro)
+                or (e.action and e.action ~= "macro" and cur.action == e.action)
                 or (not e.action and cur.action == "spell" and cur.spell == e.name))
             t.ring:SetShown(on and true or false)
             t:Show()
