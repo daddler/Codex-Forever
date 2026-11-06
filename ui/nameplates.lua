@@ -2763,6 +2763,13 @@ end
 function NP.InstanceNames()
     local PF = WeintCodex.UIProfile
     if not (PF and PF.SetCVar) then return false end
+    -- 1.0.5.1 (Bild: "so sollen sie auch im Dungeon aussehen" - Namen in
+    -- Klassenfarbe): auch die Klassenfarbe stellt dort nur das Spiel.
+    if S.friendlyClassColor then
+        PF.SetCVar("ShowClassColorInFriendlyNameplate", "1", "nameplates")
+    elseif PF.Release then
+        pcall(PF.Release, "ShowClassColorInFriendlyNameplate")
+    end
     if S.friendlyEnabled and not S.friendlyHealth then
         PF.SetCVar("nameplateShowOnlyNames", "1", "nameplates")
         return true
