@@ -9,6 +9,12 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.0.3.5] – 2026-11-06
+
+- Neu: Namen gelernter Rezepte aus dem Client (`professions[Charakter].names`,
+  beim Scan, beim Lernen und zehn Sekunden nach dem Einloggen nachgetragen) –
+  die Companion (ab 1.0.3) meldet sie statt der englischen an den Bot.
+
 ## [1.0.3.4] – 2026-11-06
 
 - Behoben: Angeln mit einer Taste warf beim Anbiss neu aus – die Taste

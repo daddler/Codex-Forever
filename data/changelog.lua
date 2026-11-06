@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.0.3.5",
+        date    = "06.11.2026",
+        notes   = {
+            "|cff7C6CFFRezeptsuche im Discord auf Deutsch|r – WeintCodex merkt sich die Namen deiner Rezepte so, wie das Spiel sie nennt, und die Companion meldet sie so weiter. Öffne nach dem Update einmal deine Berufsfenster.",
+        },
+    },
+    {
         version = "1.0.3.4",
         date    = "06.11.2026",
         notes   = {
