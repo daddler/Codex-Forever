@@ -1273,7 +1273,12 @@ end
 local function HelpfulNames()
     local ua = _G.C_UnitAuras
     if not (ua and ua.GetAuraDataByIndex) then return nil end
-    local names, tips = {}, {}
+    -- 1.0.4.7 (Meldung: "vor den Todesminen kein Buff-Essen drin, aber keine
+    -- Erinnerung"): jeder Buff, dessen Tooltip "Erfahrung" nennt, galt als
+    -- satt - auch dauerhafte (ohne Ablauf, etwa ein Erfahrungsbonus des
+    -- Servers). Fuer "Erfahrung" zaehlen jetzt nur Buffs mit Laufzeit
+    -- (timed); dazu je Buff der Name fuer /wcui essen.
+    local names, tips, timed, labels = {}, {}, {}, {}
     for i = 1, 40 do
         local ok, a = pcall(ua.GetAuraDataByIndex, "player", i, "HELPFUL")
         if not ok or K.IsSecret(a) then return nil end
@@ -1281,9 +1286,29 @@ local function HelpfulNames()
         local n = K.Plain(a.name)
         if type(n) == "string" then names[#names + 1] = n:lower() end
         local tip = AuraTip(a)
-        if tip then tips[#tips + 1] = tip end
+        if tip then
+            tips[#tips + 1] = tip
+            labels[#tips] = type(n) == "string" and n or "?"
+            local d = K.Plain(a.duration)
+            if type(d) == "number" and d > 0 then timed[#timed + 1] = tip end
+        end
     end
-    return names, tips
+    return names, tips, timed, labels
+end
+R.HelpfulNames = HelpfulNames
+
+-- Warum gilt der Spieler als satt? Text oder nil.
+function R.FedReason(names, tips, timed, labels)
+    for _, n in ipairs(names or {}) do
+        if HasWord(n, R.FED_WORDS) then return "Buff „" .. n .. "“ (Name)" end
+    end
+    for i, t in ipairs(tips or {}) do
+        if HasWord(t, R.FED_WORDS) then return "Buff „" .. tostring(labels and labels[i] or "?") .. "“ (Tooltip: satt)" end
+    end
+    for _, t in ipairs(timed or {}) do
+        if HasWord(t, R.XP_WORDS) then return "Buff mit Laufzeit, Tooltip nennt Erfahrung" end
+    end
+    return nil
 end
 -- DAS SPIEL SAGT NEIN (6.110.5.0, Beta-Test mit Bild: Rolle des Schutzes
 -- aktiv, die Erinnerung wollte trotzdem das schwaechere Verteidigungs-
@@ -1423,6 +1448,19 @@ function R.FoodReport()
         end
     end
     if #out == 0 then out[1] = "Keine Verbrauchsgüter in den Taschen." end
+    -- 1.0.4.7: und warum (nicht) erinnert wird.
+    local names, tips, timed, labels = HelpfulNames()
+    if not names then
+        out[#out + 1] = "Buffs: vom Client nicht lesbar (Kampf?) – keine Erinnerung."
+    else
+        local why = R.FedReason(names, tips, timed, labels)
+        out[#out + 1] = "Satt: " .. (why or "nein")
+        if AnyName(names, R.EATING_WORDS) then out[#out + 1] = "Isst/trinkt gerade – keine Erinnerung." end
+    end
+    out[#out + 1] = "Schalter Essen mit Buff: " .. (Opt("bagFood") and "an" or "aus")
+        .. " · erst mit Gegner: " .. (Opt("buffsOnTarget") and "an" or "aus")
+        .. " · Wo: " .. tostring(Opt("where")) .. " · ruhige Orte aus: " .. (Opt("hideResting") and "an" or "aus")
+    if R.Quiet and R.Quiet() then out[#out + 1] = "Gerade still (ruhender Ort oder Angeln)." end
     return out
 end
 
@@ -1437,7 +1475,7 @@ function R.BagBuffs(out)
        or K.Bool(_G.UnitIsDeadOrGhost and _G.UnitIsDeadOrGhost("player"), false) then
         return out
     end
-    local names, tips = HelpfulNames()
+    local names, tips, timed, labels = HelpfulNames()
     if not names then return out end
     if AnyName(names, R.EATING_WORDS) then return out end   -- isst gerade
     local level = K.Plain(_G.UnitLevel and _G.UnitLevel("player"))
@@ -1495,7 +1533,7 @@ function R.BagBuffs(out)
     if wantFood then
         -- Satt ist, wer einen Essensbuff hat (Name) oder irgendeinen Buff,
         -- der laut Tooltip Erfahrung gibt oder satt macht.
-        local fed = AnyName(names, R.FED_WORDS) or AnyName(tips, R.FED_WORDS) or AnyName(tips, R.XP_WORDS)
+        local fed = R.FedReason(names, tips, timed, labels) ~= nil
         local pick = (xp and leveling) and xp or food
         if pick and not fed then
             local kinds = (xp and leveling) and xpKinds or foodKinds

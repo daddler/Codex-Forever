@@ -20115,8 +20115,11 @@ do
         local oTI2 = G.C_TooltipInfo
         G.C_TooltipInfo = { GetItemByID = oTI2.GetItemByID,
             GetUnitBuffByAuraInstanceID = function() return { lines = { { leftText = "Durch Siege erhaltene Erfahrung um 5% erhöht." } } } end }
-        helpful = { { name = "Festmahl", spellId = 777, auraInstanceID = 1 } }
+        helpful = { { name = "Festmahl", spellId = 777, auraInstanceID = 1, duration = 900 } }
         assert(#R.BagBuffs({}) == 0, "Erfahrungsbuff am Tooltip nicht erkannt")
+        -- 1.0.4.7: ein dauerhafter Buff, der Erfahrung nennt, macht nicht satt.
+        helpful = { { name = "Bonus des Servers", spellId = 778, auraInstanceID = 2, duration = 0 } }
+        assert(#R.BagBuffs({}) == 1, "dauerhafter Erfahrungsbuff galt als satt")
         G.C_TooltipInfo = oTI2
         helpful = { { name = "Satt" } }
         assert(#R.BagBuffs({}) == 0, "Erinnerung trotz Satt")
