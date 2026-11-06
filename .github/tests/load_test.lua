@@ -23045,11 +23045,11 @@ do
         Check(tonumber(cv.SoftTargetInteractRange) >= 30 and cv.SoftTargetInteract == "3", "Angeln: Reichweite während des Wurfs ("
             .. tostring(cv.SoftTargetInteractRange) .. "/" .. tostring(cv.SoftTargetInteract) .. ")")
         Check(cv.Sound_SFXVolume == "1" and cv.Sound_EnableSoundWhenGameIsInBG == "1", "Angeln: Ton während des Wurfs")
-        Check(bound.F == "CLICK WeintCodexFishingCast", "Angeln: ohne Schwimmer in Reichweite bleibt Auswerfen")
-        FI.OnEvent(nil, "PLAYER_SOFT_INTERACT_CHANGED", nil, "GameObject-0-1-0-1-35591-0001")
-        Check(bound.F == "INTERACTTARGET", "Angeln: Schwimmer in Reichweite - Taste holt ein (" .. tostring(bound.F) .. ")")
+        -- 1.0.3.4: waehrend des Wurfs holt die Taste immer ein, auch ohne
+        -- gemeldeten Schwimmer (im Spiel warf sie sonst neu aus).
+        Check(bound.F == "INTERACTTARGET", "Angeln: waehrend des Wurfs holt die Taste ein (" .. tostring(bound.F) .. ")")
         FI.OnEvent(nil, "PLAYER_SOFT_INTERACT_CHANGED", nil, "Creature-0-1-0-1-1234-0001")
-        Check(bound.F == "CLICK WeintCodexFishingCast", "Angeln: anderes Ziel ist kein Schwimmer")
+        Check(bound.F == "INTERACTTARGET", "Angeln: anderes weiches Ziel wirft nicht neu aus")
         FI.OnEvent(nil, "UNIT_SPELLCAST_CHANNEL_STOP", "player", "x", 7620)
         local mine = 0
         for _, list in ipairs({ FI.SESSION, FI.LOUD, FI.BG, FI.ICON }) do

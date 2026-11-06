@@ -189,7 +189,11 @@ function FI.Wanted()
     if not FI.On() or not key then return nil end
     if not FI.PoleEquipped() then return nil end
     if state.lootOpen then return "loot", key end
-    if state.channeling and state.inReach then return "reel", key end
+    -- 1.0.3.4 (Spieler: "beim Anbiss wirft er neu aus statt zu looten"):
+    -- waehrend des Wurfs immer Interaktion, nicht erst wenn der Schwimmer
+    -- als weiches Ziel gemeldet ist - auf Forever kam die Meldung offenbar
+    -- nicht (oder mit anderer Kennung), und die Taste warf neu aus.
+    if state.channeling then return "reel", key end
     return "cast", key
 end
 
@@ -207,6 +211,7 @@ local function EnsureCast()
         castBtn:SetScript("PreClick", function()
             local can = not _G.SecureCmdOptionParse or _G.SecureCmdOptionParse(FI.CONDITIONS .. " 1")
             if FI.On() and can then
+                state.castAt = _G.GetTime and _G.GetTime() or nil
                 FI.BeginSession()
                 if not state.channeling then
                     if endTimer then endTimer:Cancel() end
@@ -269,7 +274,12 @@ end
 local function OnEvent(_, event, ...)
     if event == "UNIT_SPELLCAST_CHANNEL_START" then
         local unit, _, spellID = ...
-        if Plain(unit) == "player" and FI.IsFishing(spellID) then
+        -- Auch ein Kanal direkt nach unserem Wurf zaehlt: die Zauber-ID
+        -- des Angelns ist auf Forever nicht gemessen.
+        local now = _G.GetTime and _G.GetTime()
+        local ours = state.castAt and now and (now - state.castAt) < FI.WAIT
+        if Plain(unit) == "player" and (FI.IsFishing(spellID) or ours) then
+            state.castAt = nil
             state.channeling = true
             if endTimer then endTimer:Cancel(); endTimer = nil end
             if InCombat() then FI.WatchCombat() else FI.BeginSession() end
