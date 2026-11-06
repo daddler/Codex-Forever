@@ -64,7 +64,11 @@ local function Make(cf)
     -- 6.69.1.0 (Beta-Test: "man sieht es nicht, weil der Text von den
     -- Leuten drueber schwappt"): nicht mehr IM Fenster, sondern darueber,
     -- rechts auf Hoehe der Reiter - dort schreibt kein Chat hin.
-    b:SetPoint("BOTTOMRIGHT", cf, "TOPRIGHT", 0, 4)
+    -- 1.0.4.3 (Bild eines Spielers: "Kopieren" lag ueber dem letzten Reiter
+    -- "Raid/Group"): bei vielen Reitern ist rechts in der Reiterzeile kein
+    -- Platz. Jetzt IM Fenster oben rechts, aber nur sichtbar, solange die
+    -- Maus ueber dem Chat ist - dann liest man nicht, sondern will kopieren.
+    b:SetPoint("TOPRIGHT", cf, "TOPRIGHT", -2, -2)
     b:SetFrameLevel((cf:GetFrameLevel() or 1) + 5)
     local bg = b:CreateTexture(nil, "BACKGROUND")
     bg:SetAllPoints(b)
@@ -75,7 +79,24 @@ local function Make(cf)
     b.text:SetText("Kopieren")
     local t = C.textNormal
     b.text:SetTextColor(t[1], t[2], t[3])
-    b:SetAlpha(CC.IDLE)
+    b:SetAlpha(0)
+    local function Over()
+        local over = _G.MouseIsOver
+        if type(over) ~= "function" then return false end
+        local ok1, a = pcall(over, cf)
+        local ok2, c = pcall(over, b)
+        return (ok1 and a) or (ok2 and c) or false
+    end
+    b.Fade = function()
+        if b:IsMouseOver() then return end
+        b:SetAlpha(Over() and CC.IDLE or 0)
+    end
+    if cf.HookScript then
+        pcall(cf.HookScript, cf, "OnEnter", function() b:SetAlpha(CC.IDLE) end)
+        pcall(cf.HookScript, cf, "OnLeave", function()
+            if _G.C_Timer and _G.C_Timer.After then _G.C_Timer.After(0.1, b.Fade) else b:SetAlpha(0) end
+        end)
+    end
     b:SetScript("OnEnter", function(self)
         self:SetAlpha(CC.HOVER)
         local tip = _G.GameTooltip
@@ -87,7 +108,7 @@ local function Make(cf)
         end
     end)
     b:SetScript("OnLeave", function(self)
-        self:SetAlpha(CC.IDLE)
+        self:SetAlpha(Over() and CC.IDLE or 0)
         if _G.GameTooltip then _G.GameTooltip:Hide() end
     end)
     b:SetScript("OnClick", function() CC.Copy(cf) end)
@@ -125,7 +146,7 @@ if mod then
             B:Section("Chat")
             B:Row({ type = "toggle", label = "Chat kopieren", key = "chatCopy",
                     set = function(v) K.Set(KEY, "chatCopy", v) pcall(CC.Apply) end,
-                    description = "Knopf „Kopieren“ oben rechts an jedem Chatfenster: der Verlauf (Allgemein, Handel …) zum Markieren und Kopieren." },
+                    description = "Knopf „Kopieren“ oben rechts im Chatfenster, sobald die Maus darüber ist: der Verlauf (Allgemein, Handel …) zum Markieren und Kopieren." },
                   { type = "empty" })
         end
     end
