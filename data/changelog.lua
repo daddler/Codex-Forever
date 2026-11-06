@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.0.4.3",
+        date    = "06.11.2026",
+        notes   = {
+            "|cff7C6CFF„Kopieren“ verdeckt keinen Chatreiter mehr|r – der Knopf sitzt jetzt oben rechts im Chatfenster und erscheint nur, solange die Maus über dem Chat ist.",
+        },
+    },
+    {
         version = "1.0.4.2",
         date    = "06.11.2026",
         notes   = {

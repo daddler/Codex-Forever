@@ -9,6 +9,11 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.0.4.3] – 2026-11-06
+
+- Behoben: Knopf „Kopieren“ lag bei vielen Reitern über dem letzten;
+  jetzt im Fenster oben rechts, sichtbar nur mit der Maus über dem Chat.
+
 ## [1.0.4.2] – 2026-11-06
 
 - Neu: Klickzauber-Aktion „Makro“ (`b.macro`, Name des Spielmakros):
