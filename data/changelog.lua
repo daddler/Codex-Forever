@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.0.5.1",
+        date    = "06.11.2026",
+        notes   = {
+            "|cff7C6CFFFreundliche Namen im Dungeon in Klassenfarbe|r – dort zeichnet das Spiel die Plaketten selbst; WeintCodex schaltet jetzt auch dessen Klassenfarbe ein, wie draußen.",
+        },
+    },
+    {
         version = "1.0.5.0",
         date    = "06.11.2026",
         notes   = {

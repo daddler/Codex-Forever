@@ -9,6 +9,12 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.0.5.1] – 2026-11-06
+
+- Freundliche Plaketten in Instanzen: `ShowClassColorInFriendlyNameplate`
+  über `PF.SetCVar` (Besitzer „nameplates“), wenn Klassenfarbe gewählt;
+  auf Forever ungemessen.
+
 ## [1.0.5.0] – 2026-11-06
 
 - Neu: Taschen nach Kategorien zeigen Spezialtaschen (Taschenart ≠ 0,
