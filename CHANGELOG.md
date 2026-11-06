@@ -9,6 +9,12 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.0.4.0] – 2026-11-06
+
+- Neu: Makro-Helfer, Art „In Haltung wechseln, Zauber, zurück“ – Haltung
+  je Zeile (`[nostance:N]` davor, `[stance:N]` zurück), `#showtooltip` mit
+  dem Zauber.
+
 ## [1.0.3.9] – 2026-11-06
 
 - Neu: Erinnerung „N Talentpunkte zu vergeben“ (`R.TalentHit`, Schalter

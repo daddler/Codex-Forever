@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.0.4.0",
+        date    = "06.11.2026",
+        notes   = {
+            "|cff7C6CFFMakro-Helfer: in Haltung wechseln, Zauber, zurück|r – etwa Sturmangriff aus jeder Haltung und danach wieder in die Verteidigungshaltung. Zu finden unter Komfort → Makros → „Was“.",
+        },
+    },
+    {
         version = "1.0.3.9",
         date    = "06.11.2026",
         notes   = {
