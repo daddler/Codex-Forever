@@ -11173,6 +11173,36 @@ do
     Check(ok, "Namensplaketten: in Instanzen nur Namen (Spieleinstellung)" .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 1.0.5.13: Ziel der Mitspieler und Buffs von anderen im Gruppenrahmen;
+-- Fenstermodus: nach Groessenwechsel alles neu gesetzt und im Bild.
+do
+    local GX, K = WeintCodex.UIGroupExtra, WeintCodex.UIKit
+    local saved = { _G.UnitExists, _G.UnitName, _G.UnitIsUnit, _G.C_UnitAuras, _G.InCombatLockdown }
+    local ok, err = pcall(function()
+        local f = CreateFrame("Frame", nil, UIParent)
+        f._wcUnit = "party1"
+        _G.UnitExists = function(u) return u == "party1target" end
+        _G.UnitName = function(u) if u == "party1target" then return "Hogger" end end
+        _G.UnitIsUnit = function(a, b) return a == "party1target" and b == "target" end
+        assert(GX.UpdateTarget(f) == "Hogger" and GX.over[f].target:GetText() == "» Hogger", "Ziel nicht gezeigt")
+        local auras = {
+            { icon = 135932, duration = 1800, sourceUnit = "party2", isFromPlayerOrPlayerPet = false },
+            { icon = 1, duration = 1800, sourceUnit = "player", isFromPlayerOrPlayerPet = true },
+            { icon = 2, duration = 10, sourceUnit = "party2" },
+        }
+        _G.C_UnitAuras = { GetAuraDataByIndex = function(u, i) return auras[i] end }
+        _G.InCombatLockdown = function() return false end
+        assert(GX.UpdateBuffs(f) == 1, "Buffs von anderen: " .. tostring(GX.UpdateBuffs(f)))
+        _G.InCombatLockdown = function() return true end
+        assert(GX.UpdateBuffs(f) == nil and GX.over[f].icons[1]:IsShown(), "im Kampf nicht stehen gelassen")
+        local n0 = K.refits
+        K.RefitAll()
+        assert(K.refits == n0 + 1, "Fenstermodus: nicht neu gesetzt")
+    end)
+    _G.UnitExists, _G.UnitName, _G.UnitIsUnit, _G.C_UnitAuras, _G.InCombatLockdown = unpack(saved, 1, 5)
+    Check(ok, "Gruppe: Ziel der Mitspieler, Buffs von anderen; Fenstermodus neu gesetzt" .. (ok and "" or (": " .. tostring(err))))
+end
+
 -- 1.0.5.12: Mauszeiger hervorheben, eigener Spielerpfeil (nie geratene Richtung).
 do
     local CU, K = WeintCodex.UICursor, WeintCodex.UIKit

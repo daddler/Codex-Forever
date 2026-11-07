@@ -1434,6 +1434,50 @@ local unlocked = false
 local selected           -- Schluessel des angewaehlten Rahmens (Gestaltungsmodus)
 K.movers = movers
 
+-- 1.0.5.13 (Fenstermodus: "da zickt das UI manchmal rum"): wer im Fenster
+-- spielt, aendert die Groesse des Spielfensters - die Oberflaeche wird
+-- kleiner oder groesser, und Rahmen, die einmal gesetzt wurden, standen
+-- teils ausserhalb oder verrutscht. Nach DISPLAY_SIZE_CHANGED /
+-- UI_SCALE_CHANGED (gebuendelt, eine halbe Sekunde Ruhe) setzt WeintCodex
+-- jeden verschiebbaren Rahmen neu an seinen Platz und haelt ihn im Bild
+-- (SetClampedToScreen); geschuetzte erst nach dem Kampf. Nichts wird
+-- gespeichert - nur angewendet.
+K.refits = 0
+function K.RefitAll()
+    for key, m in pairs(movers) do
+        local f = m.frame
+        if type(f) == "table" and f.SetClampedToScreen and not (f.IsForbidden and f:IsForbidden()) then
+            if m.secure then
+                K.AfterCombat(function() pcall(f.SetClampedToScreen, f, true) end)
+            else
+                pcall(f.SetClampedToScreen, f, true)
+            end
+        end
+        pcall(K.ApplyPosition, key)
+    end
+    K.refits = K.refits + 1
+    if WeintCodex.ApplySavedWindow then pcall(WeintCodex.ApplySavedWindow) end
+end
+do
+    local ev = CreateFrame("Frame")
+    for _, e in ipairs({ "DISPLAY_SIZE_CHANGED", "UI_SCALE_CHANGED" }) do pcall(ev.RegisterEvent, ev, e) end
+    local due
+    ev:SetScript("OnEvent", function()
+        local now = (_G.GetTime and _G.GetTime()) or 0
+        local first = due == nil
+        due = now + 0.5
+        if not first or not (_G.C_Timer and _G.C_Timer.After) then return end
+        local function check()
+            local t = (_G.GetTime and _G.GetTime()) or 0
+            if due and t < due then _G.C_Timer.After(due - t + 0.05, check) return end
+            due = nil
+            K.RefitAll()
+        end
+        _G.C_Timer.After(0.55, check)
+    end)
+    K.refitEvents = ev
+end
+
 -- Einrasten (ui/editmode.lua setzt es): nach dem Ziehen die linke untere
 -- Ecke aufs Raster, die Mitte auf die Mittelachse, wenn sie nahe ist.
 -- Liefert die Verschiebung dx, dy in Einheiten von UIParent.

@@ -261,6 +261,7 @@ ui/swingskin.lua
 ui/totems.lua
 ui/groupframes.lua
 ui/gamegroup.lua
+ui/groupextra.lua
 ui/clickcast.lua
 # Gruppenwerkzeuge (6.29.13.0): statt des Menues des Spiels links, Reiter der Gruppenrahmen.
 ui/raidtools.lua

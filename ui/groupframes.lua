@@ -927,15 +927,15 @@ K.Register({
                     description = "Was du selbst entfernen kannst." },
                   { type = "toggle", label = "Buffs", key = "buffs",
                     description = "Unten links im Rahmen, z. B. Segen, Intelligenz, Mal der Wildnis." })
+            B:Row({ type = "toggle", label = "Ziel der Mitspieler", key = "groupTargets",
+                    description = "Unter dem Namen „» Ziel“ – in deiner Akzentfarbe, wenn es auch dein Ziel ist." },
+                  { type = "toggle", label = "Buffs von anderen", key = "groupOtherBuffs",
+                    description = "Oben rechts: Buffs, die andere gewirkt haben (Intelligenz, Mal der Wildnis …) – die Rahmen des Spiels zeigen nur, was du selbst wirken kannst. Gelesen außerhalb des Kampfes." })
             B:Section("Mehr im Rahmen")
             B:Row({ type = "toggle", label = "Eingehende Heilung", key = "healPrediction",
                     description = "Ein heller grüner Balken hinter dem Leben: so weit reichen Heilungen, die gerade gewirkt werden." },
                   { type = "toggle", label = "Schilde", key = "absorbs",
                     description = "Ein weißer Balken dahinter: wie viel Schaden Schilde noch abfangen." })
-            B:Row({ type = "toggle", label = "Rollensymbol", key = "roleIcon",
-                    description = "Schild, Kreuz oder Schwert oben links – nur, wenn eine Rolle zugewiesen ist." },
-                  { type = "toggle", label = "Bereitschaftscheck", key = "readyCheck",
-                    description = "Haken, Kreuz oder „?“ in der Mitte; das Ergebnis bleibt ein paar Sekunden stehen." })
             B:Note("Wer gerade wiederbelebt oder beschworen wird, steht unter dem Namen („Wird belebt“, „Beschwörung“). Schaden, der erst noch kommt, kennt das Spiel nicht – das Aufblitzen zeigt Treffer in dem Moment, in dem sie landen.")
             -- 6.10.1.0: Farbtoene, Rand, Groessen und Kleinigkeiten zugeklappt.
             B:Advanced()
@@ -961,6 +961,11 @@ K.Register({
                     disabled = function() return not K.Get(KEY, "buffs") end })
             B:Row({ type = "toggle", label = "Krone beim Gruppenleiter", key = "leaderIcon" },
                   { type = "empty" })
+            -- 1.0.5.13: unter "Erweitert", damit Ziel und Buffs von anderen oben Platz haben.
+            B:Row({ type = "toggle", label = "Rollensymbol", key = "roleIcon",
+                    description = "Schild, Kreuz oder Schwert oben links – nur, wenn eine Rolle zugewiesen ist." },
+                  { type = "toggle", label = "Bereitschaftscheck", key = "readyCheck",
+                    description = "Haken, Kreuz oder „?“ in der Mitte; das Ergebnis bleibt ein paar Sekunden stehen." })
         end },
         { key = "gruppe", label = "Gruppe", build = function(B)
             local off = function() return not K.Get(KEY, "partyEnabled") end

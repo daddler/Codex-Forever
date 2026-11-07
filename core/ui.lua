@@ -2814,6 +2814,9 @@ frame:SetPoint("CENTER")
 -- der, mit dem das Fenster bis zum ADDON_LOADED dasteht.
 frame:SetFrameStrata("HIGH")
 frame:SetToplevel(true)
+-- 1.0.5.13 (Fenstermodus: nach dem Verkleinern des Spielfensters lag es
+-- halb ausserhalb): nie ueber den Rand.
+frame:SetClampedToScreen(true)
 frame:SetMovable(true)
 frame:EnableMouse(true)
 frame:RegisterForDrag("LeftButton")
