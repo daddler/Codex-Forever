@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.0.5.9",
+        date    = "07.11.2026",
+        notes   = {
+            "|cff7C6CFFStufenfarbe stimmt mit den EP überein|r – Gegner und Quests sind erst grau, wenn sie keine Erfahrung mehr geben (Namensplaketten, Rahmen, Questhilfe).",
+        },
+    },
+    {
         version = "1.0.5.8",
         date    = "07.11.2026",
         notes   = {

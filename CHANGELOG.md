@@ -9,6 +9,12 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.0.5.9] – 2026-11-07
+
+- Stufenfarbe nach klassischer EP-Regel (`K.GrayLevel`, `K.DifficultyColor`)
+  statt `GetCreatureDifficultyColor`: Namensplaketten, Einheitenrahmen,
+  Questhilfe. Farben in `GameColors.diff*`.
+
 ## [1.0.5.8] – 2026-11-07
 
 - Infozeile: über der Minikarte rechtsbündig (`CH.FlowInfo`).
