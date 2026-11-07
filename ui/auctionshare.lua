@@ -13,8 +13,12 @@
 --   (nach kurzer Zufallspause; wer ein gleich gutes Angebot hoert,
 --   schweigt); der Fragende nennt den Besten ("W"), und der schickt seinen
 --   Scan in Stuecken an die Gilde ("B") - alle, die ihn brauchen, auf
---   einmal. Gesendet wird nur, was der eigene letzte vollstaendige Scan
---   gesehen hat, nie Weitergereichtes.
+--   einmal. Gesendet wurde bis 1.0.5.10 nur der eigene letzte Scan. Seit
+--   1.0.5.11 (Wunsch: Weitergabe verbessern) auch: ein empfangener Scan,
+--   frischer als der eigene, bis AS.RELAY_MAX_AGE weitergereicht (wer spaeter
+--   online kommt, bekommt ihn trotzdem); Live-Preise ("P") aus der eigenen
+--   Suche und dem Kauf, gesammelt je AS.LIVE_GAP; und die Gilde wird auch
+--   nach dem neutralen Auktionshaus gefragt.
 --
 --   FOREVERGUIDE (ahListenFG): NUR ZUHOEREN. WeintCodex tritt dem
 --   versteckten Kanal von ForeverGuide bei (AS.FG_CHANNEL) und liest die
@@ -75,6 +79,10 @@ AS.JOIN_DELAY    = 12          -- nach dem Einloggen erst dann dem Kanal beitret
 AS.FIRST_QUERY   = 20          -- nach dem Einloggen erst dann die Gilde fragen
 AS.MAX_HELD      = 2000
 AS.TICK          = 0.25
+-- 1.0.5.11 (Wunsch: "die Weitergabe in der Gilde verbessern"):
+AS.LIVE_GAP      = 60          -- Live-Preise (eigene Suche, Kauf) gesammelt so oft senden
+AS.LIVE_MAX      = 200         -- hoechstens so viele je Sammlung
+AS.RELAY_MAX_AGE = 3 * 3600    -- empfangene Scans so lange weiterreichen
 
 local SIDE_CODE = { Alliance = "A", Horde = "H", Neutral = "N" }
 local CODE_SIDE = { A = "Alliance", H = "Horde", N = "Neutral" }
@@ -157,12 +165,23 @@ function AS.MyStamp(side)
     return math.max(own, sh)
 end
 
--- Eigene vollstaendige Scans, wie frisch (Uhr des Servers) - nur die
--- werden angeboten, nie Weitergereichtes.
-local function OwnStamp(side)
+-- Was WeintCodex anbieten kann (Uhr des Servers): der eigene letzte
+-- vollstaendige Scan - oder, seit 1.0.5.11, ein empfangener, der frischer
+-- ist (hoechstens AS.RELAY_MAX_AGE alt). So bekommt auch, wer erst spaeter
+-- online kommt, den Scan eines anderen, der dann schon offline ist.
+-- Rueckgabe: Stempel, ab welchem Tag die Preise dazugehoeren, weitergereicht?
+local function OfferInfo(side)
     local st = AP.Store(side)
-    return st and st.full and ToServer(st.full) or 0
+    if not st then return 0, 0, false end
+    local own = st.full and ToServer(st.full) or 0
+    local sh = type(st.shared) == "table" and st.shared or nil
+    if sh and (sh.stamp or 0) > own and sh.at and Time() - sh.at <= AS.RELAY_MAX_AGE then
+        return sh.stamp, AP.Day(sh.at), true
+    end
+    return own, own > 0 and AP.Day(st.full) or 0, false
 end
+AS.OfferInfo = OfferInfo
+local function OwnStamp(side) return (OfferInfo(side)) end
 
 --------------------------------------------------
 -- Senden: eine Schlange, eine Nachricht je AS.SEND_GAP
@@ -234,11 +253,11 @@ function AS.Query(side, now)
     return true
 end
 
-local function CountOwn(st, since)
+local function CountOwn(st, since, relay)
     local n = 0
     for _, v in pairs(st.items) do
         local _, _, day, shared = AP.Unpack(v)
-        if not shared and day >= since then n = n + 1 end
+        if (relay or not shared) and day >= since then n = n + 1 end
     end
     return n
 end
@@ -246,9 +265,9 @@ end
 function AS.Offer(side)
     if not (AS.Guild() and InGuild()) then return false end
     local st = AP.Store(side)
-    local stamp = OwnStamp(side)
+    local stamp, since, relay = OfferInfo(side)
     if not st or stamp <= 0 or ServerTime() - stamp > AS.OFFER_MAX_AGE then return false end
-    local n = CountOwn(st, AP.Day(st.full))
+    local n = CountOwn(st, since, relay)
     if n == 0 then return false end
     Queue(Head("O", side, stamp) .. ":" .. E(n))
     Log("Angeboten (" .. side .. "): " .. n .. " Gegenstände")
@@ -258,12 +277,11 @@ end
 -- Den eigenen Scan in Stuecken an die Gilde.
 function AS.Broadcast(side, now)
     local st = AP.Store(side)
-    local stamp = OwnStamp(side)
+    local stamp, since, relay = OfferInfo(side)
     if not st or stamp <= 0 then return 0 end
     now = now or Clock()
     if now - (lastBroadcast[side] or -1e9) < AS.BROADCAST_GAP then return 0 end
     lastBroadcast[side] = now
-    local since = AP.Day(st.full)
     local head = Head("B", side, stamp) .. ":"
     local maxLen = 255 - #head - 6
     local seq, parts, len, total = 0, {}, 0, 0
@@ -276,7 +294,7 @@ function AS.Broadcast(side, now)
     end
     for id, v in pairs(st.items) do
         local price, qty, day, shared = AP.Unpack(v)
-        if not shared and day >= since and price > 0 then
+        if (relay or not shared) and day >= since and price > 0 then
             local part = E(id) .. "," .. E(price) .. "," .. E(qty)
             if len + #part + 1 > maxLen then flush() end
             parts[#parts + 1] = part
@@ -285,8 +303,53 @@ function AS.Broadcast(side, now)
         end
     end
     flush()
-    Log("Gesendet (" .. side .. "): " .. total .. " Gegenstände in " .. seq .. " Nachrichten")
+    Log((relay and "Weitergereicht (" or "Gesendet (") .. side .. "): " .. total .. " Gegenstände in " .. seq .. " Nachrichten")
     return total
+end
+
+-- Live-Preise (1.0.5.11): was die eigene Suche oder ein Kauf gerade zeigt,
+-- gesammelt und alle AS.LIVE_GAP s als "P" an die Gilde - nur Eigenes,
+-- jeder Preis mit dem Stempel von jetzt. Empfaenger pruefen je Gegenstand
+-- (neuerer Tag schlaegt aelteren, Ausreisser warten), nicht den ganzen Scan.
+local live, liveN, liveAt = {}, 0, {}
+AS.live = live
+function AS.OnPassive(side, id, price, qty)
+    if not (AS.Guild() and InGuild()) or type(side) ~= "string" or not SIDE_CODE[side] then return end
+    if type(id) ~= "number" or type(price) ~= "number" or price <= 0 then return end
+    live[side] = live[side] or {}
+    if not live[side][id] then
+        if liveN >= AS.LIVE_MAX then return end
+        liveN = liveN + 1
+    end
+    live[side][id] = { price, qty or 0 }
+    liveAt[side] = liveAt[side] or (Clock() + AS.LIVE_GAP)
+end
+AP.OnPassiveHook = AS.OnPassive
+
+function AS.FlushLive(side)
+    local items = live[side]
+    live[side], liveAt[side] = nil, nil
+    if not items then return 0 end
+    local head = Head("P", side, ServerTime()) .. ":"
+    local maxLen = 255 - #head - 2
+    local parts, len, n = {}, 0, 0
+    local function flush()
+        if #parts == 0 then return end
+        Queue(head .. table.concat(parts, ";"))
+        for i = #parts, 1, -1 do parts[i] = nil end
+        len = 0
+    end
+    for id, v in pairs(items) do
+        local part = E(id) .. "," .. E(v[1]) .. "," .. E(v[2])
+        if len + #part + 1 > maxLen then flush() end
+        parts[#parts + 1] = part
+        len = len + #part + 1
+        n = n + 1
+        liveN = math.max(0, liveN - 1)
+    end
+    flush()
+    if n > 0 then Log("Live-Preise gesendet (" .. side .. "): " .. n) end
+    return n
 end
 
 -- Eigener vollstaendiger Scan (aus ui/auctionprices.lua): gleich anbieten.
@@ -351,9 +414,9 @@ function AS.ApplyPrice(st, id, price, qty, day, from)
     return true
 end
 
-function AS.OnBulk(sender, via, side, stamp, payload, now)
+function AS.OnBulk(sender, via, side, stamp, payload, now, live)
     if AS.OtherRealm(sender) or AS.IsMe(sender) then return 0 end
-    if stamp <= AS.MyStamp(side) - 60 then
+    if not live and stamp <= AS.MyStamp(side) - 60 then
         stats.ignored = stats.ignored + 1
         return 0
     end
@@ -378,6 +441,21 @@ function AS.OnBulk(sender, via, side, stamp, payload, now)
     end
     ib.n = ib.n + n
     if via == AS.VIA_CHANNEL then stats.fgIn = stats.fgIn + n else stats.guildIn = stats.guildIn + n end
+    return n
+end
+
+function AS.OnLive(sender, side, stamp, payload)
+    if AS.OtherRealm(sender) or AS.IsMe(sender) then return 0 end
+    local t = ToLocal(stamp)
+    if t > Time() + 300 then return 0 end
+    local st = AP.Store(side, true)
+    if not st then return 0 end
+    local day, from, n = AP.Day(t), Short(sender), 0
+    for a, b, c in payload:gmatch("(%w+),(%w+),(%w+)") do
+        if AS.ApplyPrice(st, D(a), D(b), D(c), day, from) then n = n + 1 end
+    end
+    stats.guildIn = stats.guildIn + n
+    stats.liveIn = (stats.liveIn or 0) + n
     return n
 end
 
@@ -465,6 +543,11 @@ function AS.OnAddonMessage(prefix, text, channel, sender, now)
     elseif kind == "B" then
         local payload = rest:match("^%w+:(.*)$")
         if payload then AS.OnBulk(sender, "Gilde", side, stamp, payload, now) end
+    elseif kind == "P" then
+        -- 1.0.5.11: Live-Preise - nur je Gegenstand geprueft. Ein Live-
+        -- Empfang darf den Stempel des ganzen Scans (st.shared) nicht
+        -- setzen: dafuer eigener Weg, ohne Empfangsliste.
+        if rest ~= "" then AS.OnLive(sender, side, stamp, rest) end
     end
 end
 
@@ -496,9 +579,14 @@ function AS.Step(now)
         end
     end
     if next(inbound) then FinishInbound(now) end
+    for side, at in pairs(liveAt) do
+        if now >= at then AS.FlushLive(side) end
+    end
     if AS.Guild() and nextQuery and now >= nextQuery then
         nextQuery = now + AS.QUERY_EVERY
         AS.Query(AP.Faction(), now)
+        -- 1.0.5.11: auch das neutrale Auktionshaus (vorher nie gefragt).
+        AS.Query("Neutral", now)
     end
     if AS.Listen() and not AS.joined and joinAt and now >= joinAt then
         joinAt = now + 60

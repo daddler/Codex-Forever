@@ -8535,7 +8535,31 @@ do
         -- Regelmaessig fragen, wenn die eigenen Preise alt sind.
         n0 = #sent
         Run(AS.QUERY_EVERY + 2)
-        assert(#sent == n0 + 1 and sent[#sent][2]:find("^Q:1:H:"), "Gilde nicht gefragt")
+        local qH, qN = false, false
+        for i = n0 + 1, #sent do
+            if sent[i][2]:find("^Q:1:H:") then qH = true end
+            if sent[i][2]:find("^Q:1:N:") then qN = true end
+        end
+        assert(qH and qN, "Gilde nicht gefragt (eigene Seite und neutral, 1.0.5.11)")
+
+        -- 1.0.5.11: Live-Preise - eigene Suche geht gesammelt an die Gilde,
+        -- Empfang je Gegenstand (auch wenn der eigene Scan frischer ist).
+        AS.OnPassive("Horde", 950, 1234, 5)
+        AS.OnPassive("Horde", 951, 99, 1)
+        n0 = #sent
+        Run(AS.LIVE_GAP + 2)
+        local liveMsg
+        for i = n0 + 1, #sent do if sent[i][2]:find("^P:1:H:") then liveMsg = sent[i][2] end end
+        assert(liveMsg and liveMsg:find(E(950) .. "," .. E(1234), 1, true), "Live-Preise nicht gesendet")
+        Msg("P:1:H:" .. E(Server() - 30) .. ":" .. E(960) .. "," .. E(555) .. ",2", "Gina")
+        assert(st.items[960] and select(1, AP.Unpack(st.items[960])) == 555, "Live-Preis nicht uebernommen")
+        -- Weiterreichen: frischer empfangener Scan wird angeboten.
+        local saveFull, saveShared = st.full, st.shared
+        st.full = os.time() - 5 * 3600
+        st.shared = { stamp = Server() - 120, at = os.time() - 120, from = "Anna", via = "Gilde", n = 1 }
+        local stamp, _, relay = AS.OfferInfo("Horde")
+        assert(relay == true and stamp == st.shared.stamp, "empfangener Scan nicht weitergereicht")
+        st.full, st.shared = saveFull, saveShared
 
         -- ForeverGuide: beitreten (verzoegert), nur zuhoeren.
         K.Set("comfort", "ahListenFG", true)

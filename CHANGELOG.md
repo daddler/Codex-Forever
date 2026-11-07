@@ -9,6 +9,15 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.0.5.11] – 2026-11-07
+
+- Tooltip: `AP.FRESH_DAYS` (3) – nur frische Preise als „ab“, ältere und nicht
+  mehr angebotene gedämpft als „zuletzt“; alter Preis der eigenen Seite weicht
+  einem frischeren neutralen.
+- Gilde (`ui/auctionshare.lua`): Live-Preise „P“ aus eigener Suche/Kauf
+  (`AS.LIVE_GAP`), empfangene Scans bis `AS.RELAY_MAX_AGE` weiterreichen
+  (`AS.OfferInfo`), Frage auch für das neutrale Auktionshaus.
+
 ## [1.0.5.10] – 2026-11-07
 
 - Infozeile: eigene Deckkraft des Hintergrunds (`chat.infoBgAlpha`, `CH.PaintInfoBg`).

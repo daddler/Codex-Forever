@@ -22,6 +22,14 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.0.5.11",
+        date    = "07.11.2026",
+        notes   = {
+            "|cff7C6CFFAuktionspreise im Tooltip ehrlicher|r – nur Preise der letzten drei Tage stehen als Angebot. Ältere oder nicht mehr angebotene erscheinen gedämpft als „zuletzt“ mit Alter.",
+            "|cff7C6CFFPreise in der Gilde schneller verteilt|r – was du im Auktionshaus suchst oder kaufst, geht gleich an die Gilde. Empfangene Scans werden an später Eingeloggte weitergereicht, und auch das neutrale Auktionshaus wird geteilt.",
+        },
+    },
+    {
         version = "1.0.5.10",
         date    = "07.11.2026",
         notes   = {

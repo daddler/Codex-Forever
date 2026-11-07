@@ -750,7 +750,12 @@ function AP.CollectPassive(reset)
     end
     passive.seen = #results
     local store = AP.Store(AP.side, true)
-    return store and AP.Merge(store, price, qty) or 0
+    local n = store and AP.Merge(store, price, qty) or 0
+    -- 1.0.5.11: auch das an die Gilde (ui/auctionshare.lua, "Live-Preise").
+    if n > 0 and AP.OnPassiveHook then
+        for id, p in pairs(price) do AP.OnPassiveHook(AP.side, id, p, qty[id]) end
+    end
+    return n
 end
 
 -- 6.113.0.0 (Beta-Test: Tooltip „45 Kupfer“, im Auktionshaus 1 Silber 80 -
@@ -801,6 +806,7 @@ function AP.CollectSearch(event, arg)
     local store = AP.Store(AP.side, true)
     if not store then return nil end
     store.items[id] = AP.Pack(best, total, AP.Day())
+    if AP.OnPassiveHook then AP.OnPassiveHook(AP.side, id, best, total) end
     return best
 end
 
