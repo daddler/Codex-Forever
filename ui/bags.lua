@@ -1260,15 +1260,33 @@ local function Enable()
     local function Mirror()
         if AnyBlizzardOpen() then BG.Open() else BG.Close() end
     end
+    -- 1.0.5.4 (Fehlerbericht "Verboten: UNKNOWN()" beim Verkaufen, Taint-
+    -- Bericht: MerchantFrame.selectedTab / BankFrame.currentBankPage tainted
+    -- genau beim Oeffnen von Haendler und Bank - beide oeffnen dabei die
+    -- Taschen): die Haken sassen an den METHODEN der Taschenrahmen
+    -- (f.Show/f.Hide). Das legt Felder an den Rahmen des Spiels an, die das
+    -- Spiel beim Oeffnen liest. Jetzt nur noch an den globalen Funktionen
+    -- des Spiels, und der Zustand wird erst im naechsten Augenblick gelesen
+    -- (dann ist ein inneres "Oeffnen" vor einem "Umschalten" schon vorbei).
     local function Watch(f)
-        if type(f) ~= "table" or not _G.hooksecurefunc then return end
-        watched[#watched + 1] = f
-        for _, m in ipairs({ "Show", "Hide", "SetShown" }) do
-            if type(f[m]) == "function" then _G.hooksecurefunc(f, m, Mirror) end
-        end
+        if type(f) == "table" then watched[#watched + 1] = f end
     end
     Watch(_G.ContainerFrameCombinedBags)
     for i = 1, (_G.NUM_CONTAINER_FRAMES or 13) do Watch(_G["ContainerFrame" .. i]) end
+    local queued = false
+    local function Later()
+        if queued then return end
+        queued = true
+        local function Run() queued = false Mirror() end
+        if _G.C_Timer and _G.C_Timer.After then _G.C_Timer.After(0, Run) else Run() end
+    end
+    BG.MirrorLater = Later
+    if _G.hooksecurefunc then
+        for _, fn in ipairs({ "OpenAllBags", "CloseAllBags", "ToggleAllBags", "OpenBackpack", "CloseBackpack",
+            "ToggleBackpack", "OpenBag", "CloseBag", "ToggleBag" }) do
+            if type(_G[fn]) == "function" then _G.hooksecurefunc(fn, Later) end
+        end
+    end
 
     -- Schliesst man dieses Fenster (Kreuz, Esc), gehen auch die des Spiels
     -- zu - sonst oeffnete die Taschentaste beim naechsten Mal nichts, weil
