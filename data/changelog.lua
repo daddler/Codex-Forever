@@ -22,6 +22,15 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.0.5.12",
+        date    = "07.11.2026",
+        notes   = {
+            "|cff7C6CFFMauszeiger hervorheben|r – Ring oder Schein um den Zeiger, in Klassen- oder eigener Farbe, Größe einstellbar, auf Wunsch nur im Kampf (Komfort → Maus & Pfeil).",
+            "|cff7C6CFFEigener Spielerpfeil auf der Minikarte|r – größer, farbig, mit Kreis auf Wunsch.",
+            "|cff7C6CFFSpielerrahmen in der Gruppe ausblenden|r – neue Option unter Einheitenrahmen → Spieler.",
+        },
+    },
+    {
         version = "1.0.5.11",
         date    = "07.11.2026",
         notes   = {

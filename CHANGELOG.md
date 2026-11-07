@@ -9,6 +9,15 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.0.5.12] – 2026-11-07
+
+- Neu: `ui/cursor.lua` (Komfortseite „Maus & Pfeil“): Ring/Schein am
+  Mauszeiger, Zeigergröße über `cursorSizePreferred`, eigener Spielerpfeil
+  auf der Minikarte (`GetPlayerFacing`, ohne Richtung kein eigener Pfeil);
+  `media/ui/ring.tga` aus `.github/scripts/make_ring.py`.
+- Einheitenrahmen: `player_hideInGroup` über Sichtbarkeits-Treiber
+  `[group] hide; show`; „Symbol für Kampf und Ruhe“ unter „Erweitert“.
+
 ## [1.0.5.11] – 2026-11-07
 
 - Tooltip: `AP.FRESH_DAYS` (3) – nur frische Preise als „ab“, ältere und nicht
