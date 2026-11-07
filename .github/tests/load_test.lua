@@ -11199,25 +11199,30 @@ do
         _G.UnitIsUnit = function(a, b) return a == b or (a == "party1target" and b == "target") end
         K.Set("groupframes", "groupTargetBar", false)
         assert(GX.UpdateTarget(f) == "Hogger" and GX.over[f].target:GetText() == "» Hogger", "Ziel nicht gezeigt")
-        local auras = {
-            { icon = 135932, duration = 1800, sourceUnit = "party2", isFromPlayerOrPlayerPet = true },
-            { icon = 1, duration = 1800, sourceUnit = "player", isFromPlayerOrPlayerPet = true },
-            { icon = 2, duration = 10, sourceUnit = "party2" },
-        }
+        -- 1.0.5.17: nur Gruppenbuffs DEINER Klasse, und nur, wo einer fehlt.
+        _G.InCombatLockdown = function() return false end
+        GX._mine = { { label = "Arkane Intelligenz", ids = { 1459, 23028 }, names = { ["Arkane Intelligenz"] = true }, icon = 135932 } }
+        GX._mineAt = 1e12
+        local auras = { { icon = 1, name = "Aspekt des Falken", spellId = 13165, duration = 0 } }
         _G.C_UnitAuras = { GetAuraDataByIndex = function(u, i) return auras[i] end }
-        _G.InCombatLockdown = function() return false end
-        assert(GX.UpdateBuffs(f) == 1, "Buffs von anderen: " .. tostring(GX.UpdateBuffs(f)))
+        assert(GX.UpdateBuffs(f) == 1 and GX.over[f].icons[1]:IsShown(), "fehlende Intelligenz nicht gezeigt (Aspekt zaehlt nicht)")
+        auras[2] = { icon = 135932, name = "Arkane Intelligenz", spellId = 10157, duration = 1800 }
+        assert(GX.UpdateBuffs(f) == 0, "Intelligenz da, trotzdem gezeigt")
+        auras[2] = { icon = 135932, spellId = 23028, duration = 3600 }
+        assert(GX.UpdateBuffs(f) == 0, "Arkane Brillanz zaehlt nicht")
+        auras[2] = nil
         _G.InCombatLockdown = function() return true end
-        assert(GX.UpdateBuffs(f) == nil and GX.over[f].icons[1]:IsShown(), "im Kampf nicht stehen gelassen")
-        -- 1.0.5.14: ohne C_UnitAuras ueber UnitBuff; Selbstbuff des Magiers zaehlt.
+        assert(GX.UpdateBuffs(f) == nil, "im Kampf gelesen")
         _G.InCombatLockdown = function() return false end
+        -- Ohne C_UnitAuras ueber UnitBuff (Name, Nummer an Stelle 10).
         _G.C_UnitAuras = nil
         local oUB = _G.UnitBuff
         _G.UnitBuff = function(u, i)
-            if i == 1 then return "Arkane Intelligenz", 135932, 0, nil, 1800, 0, "party1" end
+            if i == 1 then return "Arkane Intelligenz", 135932, 0, nil, 1800, 0, "party2", nil, nil, 1459 end
         end
-        assert(GX.UpdateBuffs(f) == 1 and GX.via == "UnitBuff", "UnitBuff nicht gelesen")
+        assert(GX.UpdateBuffs(f) == 0 and GX.via == "UnitBuff", "UnitBuff nicht gelesen")
         _G.UnitBuff = oUB
+        GX._mine, GX._mineAt = nil, nil
         -- Balken: Leben des Ziels rechts daneben.
         local oH, oM, oA = _G.UnitHealth, _G.UnitHealthMax, _G.UnitCanAttack
         _G.UnitHealth, _G.UnitHealthMax, _G.UnitCanAttack = function() return 50 end, function() return 100 end, function() return true end

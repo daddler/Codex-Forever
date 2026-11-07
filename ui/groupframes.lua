@@ -929,8 +929,8 @@ K.Register({
                     description = "Unten links im Rahmen, z. B. Segen, Intelligenz, Mal der Wildnis." })
             B:Row({ type = "toggle", label = "Ziel der Mitspieler", key = "groupTargets",
                     description = "Unter dem Namen „» Ziel“ – in deiner Akzentfarbe, wenn es auch dein Ziel ist." },
-                  { type = "toggle", label = "Buffs von anderen", key = "groupOtherBuffs",
-                    description = "Oben rechts: Buffs, die andere gewirkt haben (Intelligenz, Mal der Wildnis …) – die Rahmen des Spiels zeigen nur, was du selbst wirken kannst. Gelesen außerhalb des Kampfes." })
+                  { type = "toggle", label = "Fehlende Buffs deiner Klasse", key = "groupOtherBuffs",
+                    description = "Oben rechts, rot: wem dein Gruppenbuff fehlt – Magier Intelligenz, Druide Mal der Wildnis, Priester Seelenstärke, Paladin Segen. Nur, was du gelernt hast; gelesen außerhalb des Kampfes." })
             B:Section("Mehr im Rahmen")
             B:Row({ type = "toggle", label = "Eingehende Heilung", key = "healPrediction",
                     description = "Ein heller grüner Balken hinter dem Leben: so weit reichen Heilungen, die gerade gewirkt werden." },

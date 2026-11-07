@@ -137,47 +137,149 @@ function GX.BuffAt(u, i)
             local src, mine = K.Plain(a.sourceUnit), nil
             if type(src) == "string" and _G.UnitIsUnit then mine = K.Bool(_G.UnitIsUnit(src, "player"), false) end
             GX.via = "C_UnitAuras"
-            return a.icon, mine, K.Plain(a.duration)
+            return a.icon, mine, K.Plain(a.duration), K.Plain(a.name), K.Plain(a.spellId)
         end
         if ok then GX.via = "C_UnitAuras" return nil end
     end
     local fn = _G.UnitBuff or _G.UnitAura
     if type(fn) == "function" then
-        local ok, name, icon, _, _, dur, _, caster = pcall(fn, u, i, "HELPFUL")
+        local ok, name, icon, _, _, dur, _, caster, _, _, sid = pcall(fn, u, i, "HELPFUL")
         if not ok or type(name) == "nil" then return nil end
         GX.via = "UnitBuff"
         local c = K.Plain(caster)
         local mine = (type(c) == "string" and _G.UnitIsUnit) and K.Bool(_G.UnitIsUnit(c, "player"), false) or nil
-        return icon, mine, K.Plain(dur)
+        return icon, mine, K.Plain(dur), K.Plain(name), K.Plain(sid)
     end
     return nil
 end
 
--- Buffs fuer die Reihe: alles, was nicht sicher von dir ist (deine eigenen
--- zeigt das Spiel), kurze (unter 2 Minuten, wenn lesbar) weg. Nur
--- ausserhalb des Kampfes gelesen.
+-- 1.0.5.17 (Wunsch: "nur klassenspezifische Buffs - den Magier
+-- interessiert der Aspekt des Jaegers nicht; er soll sehen, wo Intelligenz
+-- fehlt, der Druide, wo Mal der Wildnis fehlt"): die Reihe zeigt nur noch
+-- die Gruppenbuffs DEINER Klasse, und nur dort, wo einer FEHLT - als
+-- Symbol, rot getoent. Ein Buff zaehlt nur, wenn du ihn gelernt hast.
+-- Zauber-IDs aus Classic (Art classic); erkannt wird ueber Nummer ODER
+-- Namen (Raenge heissen gleich, Gruppenform zaehlt mit). Kann WeintCodex
+-- einen Buff am Mitspieler nicht lesen, ist er tot, offline oder ausser
+-- Sicht: kein Symbol - "weiss nicht" ist nicht "fehlt".
+GX.CLASS_GROUP_BUFFS = {
+    MAGE    = { { label = "Arkane Intelligenz", ids = { 1459, 23028 } } },
+    DRUID   = { { label = "Mal der Wildnis", ids = { 1126, 21849 } } },
+    PRIEST  = { { label = "Seelenstärke", ids = { 1243, 21562 } },
+                { label = "Göttlicher Willen", ids = { 14752, 27681 } },
+                { label = "Schattenschutz", ids = { 976, 27683 } } },
+    PALADIN = { { label = "Segen", ids = { 19740, 19742, 20217, 1038, 19977, 20911,
+                                         25782, 25894, 25898, 25895, 25890, 25899 } } },
+}
+
+local function SpellName(id)
+    local cs = _G.C_Spell
+    if cs and cs.GetSpellName then
+        local ok, n = pcall(cs.GetSpellName, id)
+        n = ok and K.Plain(n) or nil
+        if type(n) == "string" then return n end
+    end
+    if cs and cs.GetSpellInfo then
+        local ok, info = pcall(cs.GetSpellInfo, id)
+        local n = ok and type(info) == "table" and K.Plain(info.name) or nil
+        if type(n) == "string" then return n end
+    end
+    if _G.GetSpellInfo then
+        local ok, n = pcall(_G.GetSpellInfo, id)
+        n = ok and K.Plain(n) or nil
+        if type(n) == "string" then return n end
+    end
+    return nil
+end
+local function SpellIcon(id)
+    local cs = _G.C_Spell
+    if cs and cs.GetSpellTexture then
+        local ok, t = pcall(cs.GetSpellTexture, id)
+        if ok and type(t) ~= "nil" then return t end
+    end
+    if _G.GetSpellTexture then
+        local ok, t = pcall(_G.GetSpellTexture, id)
+        if ok and type(t) ~= "nil" then return t end
+    end
+    return nil
+end
+
+-- Die Buffs, nach denen DU schaust: { { label, ids, names = {..}, icon } }.
+-- Gelernt: irgendein Zauber der Reihe (true) - "unbekannt" (nil) zaehlt
+-- mit, nur "sicher nicht" (false) faellt weg.
+function GX.MyBuffs()
+    local class
+    if _G.UnitClass then
+        local _, c = _G.UnitClass("player")
+        class = K.Plain(c)
+    end
+    local out = {}
+    local R = WeintCodex.UIReminders
+    for _, fam in ipairs(GX.CLASS_GROUP_BUFFS[class or ""] or {}) do
+        local known = false
+        for _, id in ipairs(fam.ids) do
+            local k = R and R._SpellKnown and R._SpellKnown(id)
+            if k == nil then known = known or nil end
+            if k == true or (R and R.KnownByName and R.KnownByName(id)) then known = true break end
+        end
+        if known ~= false then
+            local names = {}
+            for _, id in ipairs(fam.ids) do
+                local n = SpellName(id)
+                if n then names[n] = true end
+            end
+            out[#out + 1] = { label = fam.label, ids = fam.ids, names = names, icon = SpellIcon(fam.ids[1]) }
+        end
+    end
+    return out
+end
+
 GX.lastRead = {}
 function GX.UpdateBuffs(f)
     local o = Over(f)
     local u = UnitOf(f)
-    local max = tonumber(Opt("groupOtherMax")) or 4
-    local n, seen = 0, 0
+    local n = 0
     if Opt("groupOtherBuffs") and u then
         if InCombat() then return nil end   -- stehen lassen, was davor galt
-        for i = 1, 40 do
-            if n >= max then break end
-            local icon, mine, dur = GX.BuffAt(u, i)
-            if type(icon) == "nil" then break end
-            seen = seen + 1
-            local short = type(dur) == "number" and dur > 0 and dur < 120
-            if mine ~= true and not short then
-                n = n + 1
-                local t = Icon(o, n)
-                t:SetTexture(icon)
-                t:Show()
-            end
+        local now = (_G.GetTime and K.Plain(_G.GetTime())) or 0
+        if not GX._mine or now - (GX._mineAt or -100) > 10 then GX._mine, GX._mineAt = GX.MyBuffs(), now end
+        local mine = GX._mine
+        -- Nur ein ausdrueckliches "tot" / "offline" / "nicht in Sicht" zaehlt.
+        local function Is(fn, want)
+            if type(fn) ~= "function" then return false end
+            local ok, v = pcall(fn, u)
+            v = ok and K.Plain(v) or nil
+            if type(v) == "nil" then return false end
+            return (v and true or false) == want
         end
-        GX.lastRead[u] = seen .. " gelesen, " .. n .. " gezeigt"
+        local gone = Is(_G.UnitIsDeadOrGhost, true) or Is(_G.UnitIsConnected, false) or Is(_G.UnitIsVisible, false)
+        if #mine > 0 and not gone then
+            local has, unsure, seen = {}, false, 0
+            for i = 1, 40 do
+                local icon, _, _, name, sid = GX.BuffAt(u, i)
+                if type(icon) == "nil" then break end
+                seen = seen + 1
+                if type(name) ~= "string" and type(sid) ~= "number" then unsure = true end
+                for fi, fam in ipairs(mine) do
+                    if (type(name) == "string" and fam.names[name]) then has[fi] = true end
+                    if type(sid) == "number" then
+                        for _, id in ipairs(fam.ids) do if id == sid then has[fi] = true end end
+                    end
+                end
+            end
+            local missing = 0
+            for fi, fam in ipairs(mine) do
+                if not has[fi] and not unsure and fam.icon then
+                    n = n + 1
+                    missing = missing + 1
+                    local t = Icon(o, n)
+                    t:SetTexture(fam.icon)
+                    t:SetVertexColor(1, 0.45, 0.45, 1)
+                    t:Show()
+                end
+            end
+            GX.lastRead[u] = seen .. " gelesen, " .. missing .. " fehlen" .. (unsure and " (unlesbar - nichts gezeigt)" or "")
+        end
     end
     for i = n + 1, #o.icons do o.icons[i]:Hide() end
     return n
@@ -254,7 +356,9 @@ end
 -- Fuer /wcui gruppe.
 function GX.Lines()
     local fr = GX.Frames()
-    local out = { "Buffs von anderen: " .. (Opt("groupOtherBuffs") and "an" or "aus") .. " · gelesen über " .. tostring(GX.via or "–")
+    local fams = {}
+    for _, fam in ipairs(GX.MyBuffs()) do fams[#fams + 1] = fam.label end
+    local out = { "Fehlende Buffs deiner Klasse: " .. (#fams > 0 and table.concat(fams, ", ") or "keine für deine Klasse") .. " · " .. (Opt("groupOtherBuffs") and "an" or "aus") .. " · gelesen über " .. tostring(GX.via or "–")
         .. " · Rahmen des Spiels " .. tostring(GX.gameFrames or 0) .. ", davon mit Einheit " .. #fr }
     if GX.lastErr then out[#out + 1] = "   Fehler zuletzt: " .. GX.lastErr end
     for u, l in pairs(GX.lastRead) do out[#out + 1] = "   " .. u .. ": " .. l end
