@@ -9,6 +9,22 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.0.5.2] – 2026-11-07
+
+Datenstand vom 07.11.2026.
+
+- Quests: QuestieDB 1.0.11 (Sperrliste von Questie wie bisher), 166 Quests
+  geändert, 3 NPCs/Objekte neu.
+- Dungeon-Journal: Naowh Forever 1.2.11 (Build 1.60.1.70790) – geteilte
+  Muster/Pläne an Bossen, Eingänge Drowned City und Shaper's Terrace;
+  Abgleich mit Dungeon Journal 1.7.0 – sechs Quests der Drowned City, Boss
+  Gill, Old Fire-Eye (95140) in drei Dungeons, 78307 und 78699.
+- Berufe: SkillUp 1.0.23 (Schwellen Build 70790); 118 Rezepte, die der
+  Bestand nicht kannte (`P.SU_RAW`), nur mit Herkunft laut Naowh Forever
+  Professions 1.2.11.
+- Unverändert: AtlasLoot (Beute), Shortest Path (Wegnetz, Reisen). Boss-
+  Nummern bewusst nicht neu erzeugt (vier Zuordnungen wären verloren).
+
 ## [1.0.5.1] – 2026-11-06
 
 - Freundliche Plaketten in Instanzen: `ShowClassColorInFriendlyNameplate`

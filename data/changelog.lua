@@ -22,6 +22,15 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.0.5.2",
+        date    = "07.11.2026",
+        notes   = {
+            "|cff7C6CFFDaten auf den neuesten Stand|r – Quests und Questgeber (166 Quests mit neuen Stufen oder Gebern), Beute der Dungeons mit neuen Mustern und Plänen, Schwellen der Berufe aus dem aktuellen Spiel.",
+            "|cff7C6CFF118 weitere Rezepte bei den Berufen|r – vor allem Leder, Schneiderei und Schmiedekunst, jeweils mit Reagenzien und Herkunft (Lehrer, Händler, Beute, Quest).",
+            "|cff7C6CFFDie Versunkene Stadt mit ihren Quests|r – sechs Quests für Horde und Allianz und der Boss Gill. Dazu „Old Fire-Eye“ (Paladine der Horde) und zwei Schurkenquests.",
+        },
+    },
+    {
         version = "1.0.5.1",
         date    = "06.11.2026",
         notes   = {
