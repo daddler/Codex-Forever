@@ -134,6 +134,7 @@ end
 -- Symbol, wenn man im Kampf ist, im Ruhemodus (Gasthaus)"). Eigene
 -- Grafiken (make_ui_media.py), keine des Spiels.
 defaults.player_stateIcon = true
+defaults.player_hideInGroup = false   -- 1.0.5.12: in Gruppe/Schlachtzug ausblenden
 -- Totems unter dem Spielerrahmen, Rechtsklick entfernt (6.27.0.6, ui/totems.lua).
 defaults.player_totems = true
 
@@ -1615,6 +1616,7 @@ function Frame:WCShowForUnlock(on)
             if _G.RegisterUnitWatch and u ~= "player" then _G.RegisterUnitWatch(self) end
             self:Refresh()
         end
+        if u == "player" then UF.ApplyGroupHide() end
     end)
 end
 
@@ -1912,6 +1914,7 @@ local function Build()
             f:Refresh()
         end
     end
+    UF.ApplyGroupHide()
     if frames.player and Opt("player_cast") and Opt("replacePlayerCast") then
         HideBlizzard("PlayerCastingBarFrame")
         HideBlizzard("CastingBarFrame")
@@ -1947,11 +1950,33 @@ local function Enable()
     events:SetScript("OnEvent", K.Measured("Einheitenrahmen", OnEvent))
 end
 
+-- 1.0.5.12 (Wunsch: "eigenes Spielerfenster in einer Gruppe ausblenden"):
+-- der Rahmen ist geschuetzt, darum ueber den Sichtbarkeits-Treiber des
+-- Spiels ("[group] hide; show") - der wirkt auch im Kampf, wenn jemand
+-- beitritt. Setzen und loesen nur ausserhalb des Kampfes. Im
+-- Gestaltungs-/Testmodus bleibt der Rahmen sichtbar.
+function UF.ApplyGroupHide()
+    local f = frames.player
+    if not f then return end
+    K.AfterCombat(function()
+        local want = Opt("player_hideInGroup") and not f._unlockShown
+        if want and not f._groupDriver and _G.RegisterStateDriver then
+            _G.RegisterStateDriver(f, "visibility", "[group] hide; show")
+            f._groupDriver = true
+        elseif not want and f._groupDriver and _G.UnregisterStateDriver then
+            _G.UnregisterStateDriver(f, "visibility")
+            f._groupDriver = nil
+            f:Show()
+        end
+    end)
+end
+
 local function OnSetting(key)
     for _, f in pairs(frames) do
         f:Layout()
         f:Refresh()
     end
+    UF.ApplyGroupHide()
 end
 
 local function px(v) return string.format("%d px", v) end
@@ -1997,7 +2022,9 @@ local function UnitPage(u)
                         { value = "flat",  text = "Flach" },
                         { value = "round", text = "Klassisch – rundes Porträt" } },
                     tooltip = "„Wie das Design“: rund, wenn unter Allgemein „Klassisch“ gewählt ist. Rund zeigt das Bild mit der Stufe am Porträt – ein bewegter Kopf lässt sich nicht rund zuschneiden, den gibt es in der flachen Form." },
-                  { type = "empty" })
+                  u == "player" and { type = "toggle", label = "In Gruppe ausblenden", key = "player_hideInGroup", disabled = off,
+                    description = "Bist du in einer Gruppe oder einem Schlachtzug, verschwindet dein eigener Rahmen – dann zeigen dich die Gruppenrahmen." }
+                  or { type = "empty" })
         end
         B:Row({ type = "slider", label = "Breite", key = u .. "_width", min = 60, max = 320, step = 1, format = px, disabled = off },
               { type = "slider", label = "Höhe", key = u .. "_height", min = 10, max = 80, step = 1, format = px, disabled = off })
@@ -2023,11 +2050,10 @@ local function UnitPage(u)
                           disabled = function() return off() or not K.Get(KEY, "player_cast") end }
                     or { type = "empty" })
             if u == "player" then
-                B:Row({ type = "toggle", label = "Symbol für Kampf und Ruhe", key = "player_stateIcon", disabled = off,
-                        description = "Gekreuzte Schwerter im Kampf, „zZ“ beim Ausruhen (Gasthaus, Stadt)." },
-                      { type = "toggle", label = "Mittig über den Leisten", key = "playerCastCentered",
+                B:Row({ type = "toggle", label = "Mittig über den Leisten", key = "playerCastCentered",
                         disabled = function() return off() or not K.Get(KEY, "player_cast") end,
-                        description = "Aus: direkt unter dem Spielerrahmen." })
+                        description = "Aus: direkt unter dem Spielerrahmen." },
+                      { type = "empty" })
             end
         end
         if u == "target" then
@@ -2048,7 +2074,9 @@ local function UnitPage(u)
         B:Section("Feinheiten")
         if u == "player" then
             B:Row({ type = "toggle", label = "Totems unter dem Rahmen", key = "player_totems",
-                    description = "Schamane: gestellte Totems mit Restzeit, Rechtsklick entfernt eins. Wirkt nach dem Neuladen." }, nil)
+                    description = "Schamane: gestellte Totems mit Restzeit, Rechtsklick entfernt eins. Wirkt nach dem Neuladen." },
+                  { type = "toggle", label = "Symbol für Kampf und Ruhe", key = "player_stateIcon", disabled = off,
+                    description = "Gekreuzte Schwerter im Kampf, „zZ“ beim Ausruhen (Gasthaus, Stadt)." })
         end
         B:Row({ type = "toggle", label = "Porträt rechts", key = u .. "_portraitRight",
                 disabled = function() local k = K.Get(KEY, u .. "_portrait") return off() or k == "none" or k == "bar" end },

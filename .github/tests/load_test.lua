@@ -11173,6 +11173,32 @@ do
     Check(ok, "Namensplaketten: in Instanzen nur Namen (Spieleinstellung)" .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 1.0.5.12: eigener Spielerrahmen in der Gruppe ausblenden (Sichtbarkeits-Treiber).
+do
+    local UF, K = WeintCodex.UIUnitFrames, WeintCodex.UIKit
+    local oR, oU = _G.RegisterStateDriver, _G.UnregisterStateDriver
+    local had = UF.frames.player
+    local ok, err = pcall(function()
+        local drv
+        _G.RegisterStateDriver = function(f, kind, cond) drv = { f, kind, cond } end
+        _G.UnregisterStateDriver = function(f, kind) drv = "weg" end
+        local shown = false
+        local f = had or { Show = function() shown = true end }
+        UF.frames.player = f
+        f._groupDriver, f._unlockShown = nil, nil
+        K.Set("unitframes", "player_hideInGroup", true)
+        UF.ApplyGroupHide()
+        assert(type(drv) == "table" and drv[2] == "visibility" and drv[3] == "[group] hide; show", "Treiber nicht gesetzt")
+        K.Set("unitframes", "player_hideInGroup", false)
+        UF.ApplyGroupHide()
+        assert(drv == "weg" and not f._groupDriver, "Treiber nicht geloest")
+    end)
+    _G.RegisterStateDriver, _G.UnregisterStateDriver = oR, oU
+    UF.frames.player = had
+    K.Set("unitframes", "player_hideInGroup", false)
+    Check(ok, "Einheitenrahmen: Spielerrahmen in der Gruppe ausblenden" .. (ok and "" or (": " .. tostring(err))))
+end
+
 -- 1.0.5.9: Stufenfarbe nach der klassischen EP-Regel (grau = keine EP).
 do
     local K, GC = WeintCodex.UIKit, WeintCodex.GameColors
