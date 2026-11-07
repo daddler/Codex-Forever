@@ -11173,6 +11173,26 @@ do
     Check(ok, "Namensplaketten: in Instanzen nur Namen (Spieleinstellung)" .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 1.0.5.18: Fenstermodus - nie einruecken, nie "breiter als beim Einrichten".
+do
+    local K, ES = WeintCodex.UIKit, WeintCodex.UISetup
+    local oG = _G.GetCVar
+    local ok, err = pcall(function()
+        local cv = { gxWindow = "1", gxMaximize = "0" }
+        _G.GetCVar = function(n) return cv[n] end
+        assert(K.Windowed() == true, "Fenster nicht erkannt")
+        assert(K.WideInset(2400, 768) == 0, "im Fenster eingerueckt")
+        assert(ES.CheckWide() == false, "Meldung im Fenstermodus")
+        cv = { gxWindow = "1", gxMaximize = "1" }
+        assert(K.Windowed() == false, "Vollbild-Fenster als Fenster gezaehlt")
+        assert(K.WideInset(2400, 768) > 0, "Breitbild im Vollbild nicht eingerueckt")
+        cv = { gxMaximize = "0" }
+        assert(K.Windowed() == true, "neuer Client: Fenster nicht erkannt")
+    end)
+    _G.GetCVar = oG
+    Check(ok, "Fenstermodus: kein Einruecken, keine Breitbild-Meldung" .. (ok and "" or (": " .. tostring(err))))
+end
+
 -- 1.0.5.16: Fehler des Spiels (Auktionshaus) sind nicht unsere, auch wenn
 -- der Fehlerweg selbst in der Aufrufkette steht.
 do

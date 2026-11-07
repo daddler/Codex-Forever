@@ -1014,6 +1014,11 @@ function ES.WideMismatch()
 end
 
 function ES.CheckWide()
+    -- 1.0.5.18: im Fenstermodus nie - die Form des Fensters aendert sich
+    -- staendig, und dort rueckt nichts ein (K.Windowed). Was beim Einrichten
+    -- im Fenster eingerueckt wurde, bleibt nur ein wenig nach innen - nie
+    -- ausserhalb des Bildes.
+    if K.Windowed() then return false end
     if wideTold or not K.UIEnabled() or not ES.WideMismatch() then return false end
     wideTold = true
     Say("Dein Bildschirm ist breiter oder schmaler als beim Einrichten – Chat, Minikarte und Questliste"

@@ -318,8 +318,27 @@ K.WIDE_AREAS = {
     { value = "edge", text = "Bis an den Rand" },
 }
 
+-- 1.0.5.18 (Spieler im Fenstermodus: "Dein Bildschirm ist breiter oder
+-- schmaler als beim Einrichten" bei jeder Fenstergroesse): im Fenster gibt
+-- es keinen breiten Bildschirm, nur ein Fenster beliebiger Form - dort
+-- ruecken die Rahmen NIE ein (Versatz 0), egal wie breit das Fenster ist.
+-- Fenster: gxWindow = 1 ohne gxMaximize = 1 (aelterer Client) oder
+-- gxMaximize = 0 ohne gxWindow (neuerer). Sagt der Client nichts: wie bisher.
+function K.Windowed()
+    local get = _G.GetCVar
+    if type(get) ~= "function" then return false end
+    local okW, win = pcall(get, "gxWindow")
+    local okM, max = pcall(get, "gxMaximize")
+    win = okW and K.Plain(win) or nil
+    max = okM and K.Plain(max) or nil
+    if win ~= nil then return tostring(win) == "1" and tostring(max) ~= "1" end
+    if max ~= nil then return tostring(max) == "0" end
+    return false
+end
+
 -- Wie weit Rahmen am linken/rechten Rand nach innen ruecken (Einheiten).
 function K.WideInset(w, h)
+    if K.Windowed() then return 0 end
     if not (w and h) then
         local ui = _G.UIParent
         local ok, a, b = pcall(function() return ui:GetWidth(), ui:GetHeight() end)
