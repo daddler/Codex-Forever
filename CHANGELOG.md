@@ -9,6 +9,12 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.0.5.15] – 2026-11-07
+
+- Gruppe: `GX.UnitOf` (unit, displayedUnit, Attribut „unit“), je Rahmen in
+  `pcall`, Bericht mit Rahmenzahl und letztem Fehler.
+- `GG.Inspect`: geschützte Teile nicht anfassen („forbidden object“).
+
 ## [1.0.5.14] – 2026-11-07
 
 - Gruppe: `GX.BuffAt` liest über `C_UnitAuras`, sonst `UnitBuff`/`UnitAura`,

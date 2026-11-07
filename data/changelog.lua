@@ -22,6 +22,14 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.0.5.15",
+        date    = "07.11.2026",
+        notes   = {
+            "|cff7C6CFFBuffs von anderen in den Gruppenrahmen|r – die Rahmen des Spiels werden jetzt zuverlässig erkannt; vorher konnten Buffs und Zielbalken ganz ausbleiben.",
+            "|cff7C6CFF/wcui gruppe|r – stürzt nicht mehr ab und sagt, ob und wie viele Buffs gelesen wurden.",
+        },
+    },
+    {
         version = "1.0.5.14",
         date    = "07.11.2026",
         notes   = {
