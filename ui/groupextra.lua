@@ -39,19 +39,37 @@ function GX.Frames()
     for i = #list, 1, -1 do list[i] = nil end
     local GG = WeintCodex.UIGameGroup
     if GG and GG.active and GG.Frames then
+        local n = 0
         for _, f in ipairs(GG.Frames()) do
-            local u = K.Plain(f.unit)
-            if type(u) == "string" and f.IsShown and f:IsShown() then list[#list + 1] = f end
+            n = n + 1
+            if GX.UnitOf(f) and f.IsShown and K.Bool(f:IsShown(), true) then list[#list + 1] = f end
         end
+        GX.gameFrames = n
     end
     local GF = WeintCodex.UIGroupFrames
     for _, b in ipairs(GF and GF.buttons or {}) do
-        if b._wcUnit and b.IsShown and b:IsShown() then list[#list + 1] = b end
+        if b._wcUnit and b.IsShown and K.Bool(b:IsShown(), true) then list[#list + 1] = b end
     end
     return list
 end
 
-local function UnitOf(f) return f._wcUnit or K.Plain(f.unit) end
+-- 1.0.5.15 (Feedback: "Buffs immer noch nicht"): f.unit kann am Rahmen
+-- des Spiels geheim sein - dann wurde der Rahmen uebersprungen. Weitere
+-- Wege: displayedUnit, das Attribut "unit" (vom Kopfrahmen gesetzt).
+function GX.UnitOf(f)
+    if type(f._wcUnit) == "string" then return f._wcUnit end
+    for _, k in ipairs({ "unit", "displayedUnit" }) do
+        local v = K.Plain(f[k])
+        if type(v) == "string" and v ~= "" then return v end
+    end
+    if f.GetAttribute then
+        local ok, v = pcall(f.GetAttribute, f, "unit")
+        v = ok and K.Plain(v) or nil
+        if type(v) == "string" and v ~= "" then return v end
+    end
+    return nil
+end
+local UnitOf = GX.UnitOf
 
 local function Over(f)
     local o = over[f]
@@ -196,7 +214,10 @@ end
 
 -- Fuer /wcui gruppe.
 function GX.Lines()
-    local out = { "Buffs von anderen: " .. (Opt("groupOtherBuffs") and "an" or "aus") .. " · gelesen über " .. tostring(GX.via or "–") }
+    local fr = GX.Frames()
+    local out = { "Buffs von anderen: " .. (Opt("groupOtherBuffs") and "an" or "aus") .. " · gelesen über " .. tostring(GX.via or "–")
+        .. " · Rahmen des Spiels " .. tostring(GX.gameFrames or 0) .. ", davon mit Einheit " .. #fr }
+    if GX.lastErr then out[#out + 1] = "   Fehler zuletzt: " .. GX.lastErr end
     for u, l in pairs(GX.lastRead) do out[#out + 1] = "   " .. u .. ": " .. l end
     return out
 end
@@ -211,8 +232,11 @@ function GX.UpdateAll(what)
         -- Neue Zusaetze an Rahmen des Spiels nur ausserhalb des Kampfes anlegen.
         if over[f] or not fight then
         Over(f):Show()
-        if what ~= "buffs" then GX.UpdateTarget(f) GX.UpdateTargetBar(f) end
-        if what ~= "targets" then GX.UpdateBuffs(f) end
+        local ok, err = pcall(function()
+            if what ~= "buffs" then GX.UpdateTarget(f) GX.UpdateTargetBar(f) end
+            if what ~= "targets" then GX.UpdateBuffs(f) end
+        end)
+        if not ok then GX.lastErr = tostring(err) end
         end
     end
 end

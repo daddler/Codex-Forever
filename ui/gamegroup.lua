@@ -413,9 +413,15 @@ function GG.Inspect()
         out[#out + 1] = "Hervorhebungen am Rahmen: " .. (#keys > 0 and table.concat(keys, ", ") or "keine gefunden")
         -- Wie die Teile der Debuff-Hervorhebung liegen (Abstand zum Rahmen).
         local o = frames[1].DispelOverlay
-        if type(o) == "table" and o.GetRegions then
+        -- 1.0.5.15 (Fehler "Attempt to access forbidden object"): geschuetzte
+        -- Teile nie anfassen; GetRegions nur in pcall.
+        local okR, regs = false, nil
+        if type(o) == "table" and o.GetRegions and not (o.IsForbidden and o:IsForbidden()) then
+            okR, regs = pcall(function() return { o:GetRegions() } end)
+        end
+        if okR and type(regs) == "table" then
             local parts = {}
-            for _, r in ipairs({ o:GetRegions() }) do
+            for _, r in ipairs(regs) do
                 local ok2, pt, _, rpt, x, y = pcall(r.GetPoint, r, 1)
                 local w, h = r.GetWidth and r:GetWidth(), r.GetHeight and r:GetHeight()
                 if ok2 and pt then
