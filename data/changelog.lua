@@ -22,6 +22,15 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.0.5.16",
+        date    = "07.11.2026",
+        notes   = {
+            "|cff7C6CFFBuffs von anderen in den Gruppenrahmen|r – erscheinen jetzt wirklich, auch Selbstbuffs eines Mitspielers.",
+            "|cff7C6CFFZiel der Mitspieler als kleiner Balken|r – direkt rechts neben dem Rahmen, wie der Fokusbalken: Name und Leben in Prozent.",
+            "|cff7C6CFFFehlerfenster nur noch für WeintCodex|r – Fehler des Spiels (etwa im Auktionshaus) werden nicht mehr als WeintCodex-Fehler gemeldet.",
+        },
+    },
+    {
         version = "1.0.5.15",
         date    = "07.11.2026",
         notes   = {

@@ -55,8 +55,19 @@ function ER.Ours(msg, stack)
     -- nicht unserer - auch wenn WeintCodex irgendwo in der Kette steht.
     local by = msg:match("tainted by '([^']+)'")
     if by and by ~= "WeintCodex" then return false end
-    local s = msg .. "\n" .. tostring(stack or "")
-    return s:find("WeintCodex", 1, true) ~= nil
+    -- 1.0.5.16 (Bericht: Fehler im Auktionshaus des Spiels, "CanPostItem",
+    -- ohne eine Zeile von WeintCodex - trotzdem als unserer gemeldet): die
+    -- Aufrufkette wird IN diesem Fehlerweg gelesen und enthielt deshalb
+    -- immer ui/errors.lua - jeder Lua-Fehler des Spiels galt als unserer.
+    -- Jetzt zaehlen nur Zeilen ausserhalb des Fehlerwegs.
+    if msg:find("WeintCodex", 1, true) then return true end
+    for line in tostring(stack or ""):gmatch("[^\n]+") do
+        if line:find("WeintCodex", 1, true) and not line:find("ui/errors.lua", 1, true)
+           and not line:find("ui\\errors.lua", 1, true) then
+            return true
+        end
+    end
+    return false
 end
 
 -- Aufrufkette kuerzen: nur die Zeilen, ohne die Huelle selbst.

@@ -11173,6 +11173,19 @@ do
     Check(ok, "Namensplaketten: in Instanzen nur Namen (Spieleinstellung)" .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 1.0.5.16: Fehler des Spiels (Auktionshaus) sind nicht unsere, auch wenn
+-- der Fehlerweg selbst in der Aufrufkette steht.
+do
+    local ER = WeintCodex.UIErrors
+    local ok, err = pcall(function()
+        local st = "[Interface/AddOns/WeintCodex/ui/errors.lua]:210: in function <...>\n"
+            .. "[Interface/AddOns/Blizzard_AuctionHouseUI/Shared/Blizzard_AuctionHouseSellFrame.lua]:477: in function 'CanPostItem'"
+        assert(ER.Ours("attempt to compare nil with number", st) == false, "Fehler des Spiels als unserer gezaehlt")
+        assert(ER.Ours("x", st .. "\n[Interface/AddOns/WeintCodex/ui/bags.lua]:12: in function 'Refresh'") == true, "unser Fehler nicht erkannt")
+    end)
+    Check(ok, "Fehlerfaenger: nur Fehler von WeintCodex, nicht der eigene Fehlerweg" .. (ok and "" or (": " .. tostring(err))))
+end
+
 -- 1.0.5.13: Ziel der Mitspieler und Buffs von anderen im Gruppenrahmen;
 -- Fenstermodus: nach Groessenwechsel alles neu gesetzt und im Bild.
 do

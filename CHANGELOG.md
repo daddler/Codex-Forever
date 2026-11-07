@@ -9,6 +9,14 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.0.5.16] – 2026-11-07
+
+- Gruppe: `isFromPlayerOrPlayerPet` heißt „von irgendeinem Spieler“ – nur
+  `sourceUnit` = Spieler gilt als eigener Buff; Zielbalken 72×14 rechts
+  daneben mit Name und Prozent (`UnitHealthPercent`).
+- Fehlerfänger (`ER.Ours`): Zeilen des eigenen Fehlerwegs zählen nicht –
+  vorher galt jeder Lua-Fehler des Spiels als WeintCodex-Fehler.
+
 ## [1.0.5.15] – 2026-11-07
 
 - Gruppe: `GX.UnitOf` (unit, displayedUnit, Attribut „unit“), je Rahmen in
