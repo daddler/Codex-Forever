@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.0.5.4",
+        date    = "07.11.2026",
+        notes   = {
+            "|cff7C6CFFVerkaufen beim Händler|r – der Rechtsklick in die Tasche sollte nicht mehr gelegentlich vom Spiel blockiert werden (auch an der Bank).",
+        },
+    },
+    {
         version = "1.0.5.3",
         date    = "07.11.2026",
         notes   = {

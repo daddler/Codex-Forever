@@ -9,6 +9,14 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.0.5.4] – 2026-11-07
+
+- Taschen: keine Haken mehr an `Show`/`Hide` der Taschenrahmen des Spiels,
+  stattdessen an den globalen Taschenfunktionen, Zustand einen Augenblick
+  später gelesen (Taint von `MerchantFrame.selectedTab`/
+  `BankFrame.currentBankPage` beim Öffnen, „Verboten: UNKNOWN()“ bei
+  `UseContainerItem`).
+
 ## [1.0.5.3] – 2026-11-07
 
 - Neu: `ui/questsell.lua` – nach einem Verkauf (Rückkaufliste,
