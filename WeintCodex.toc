@@ -329,6 +329,7 @@ ui/levelup.lua
 ui/rankcheck.lua
 # Warnton bei vermeidbarem Schaden (6.21.1.0, Seite "Feuer" im Komfort).
 ui/firealarm.lua
+ui/cursor.lua
 ui/gathertrack.lua
 # Sammel-Atlas: Fundstellen, Farmroute, stilles Teilen mit der Gilde (6.82.0.0).
 ui/gatheratlas.lua

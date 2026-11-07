@@ -11173,6 +11173,35 @@ do
     Check(ok, "Namensplaketten: in Instanzen nur Namen (Spieleinstellung)" .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 1.0.5.12: Mauszeiger hervorheben, eigener Spielerpfeil (nie geratene Richtung).
+do
+    local CU, K = WeintCodex.UICursor, WeintCodex.UIKit
+    local oF, oC = _G.GetPlayerFacing, _G.GetCursorPosition
+    local ok, err = pcall(function()
+        K.Set("comfort", "cursorOn", true)
+        _G.GetCursorPosition = function() return 100, 200 end
+        assert(CU.ApplyCursor() == true and CU.cursorFrame:IsShown(), "Ring nicht gezeigt")
+        K.Set("comfort", "cursorCombat", true)
+        assert(CU.ApplyCursor() == false, "nur im Kampf, aber gezeigt")
+        K.Set("comfort", "cursorCombat", false)
+        K.Set("comfort", "cursorOn", false)
+        assert(CU.ApplyCursor() == false and not CU.cursorFrame:IsShown(), "Ring bleibt nach dem Ausschalten")
+        K.Set("comfort", "pArrowOn", true)
+        if _G.Minimap then
+            _G.GetPlayerFacing = function() return 1.5 end
+            assert(CU.ApplyArrow() == true and CU.TurnArrow(CU.arrowFrame) == true, "Pfeil nicht gedreht")
+            _G.GetPlayerFacing = function() return nil end
+            assert(CU.TurnArrow(CU.arrowFrame) == false and not CU.arrowFrame.tex:IsShown(), "Pfeil ohne Blickrichtung gezeigt")
+        end
+        K.Set("comfort", "pArrowOn", false)
+        CU.ApplyArrow()
+    end)
+    _G.GetPlayerFacing, _G.GetCursorPosition = oF, oC
+    K.Set("comfort", "cursorOn", false)
+    K.Set("comfort", "pArrowOn", false)
+    Check(ok, "Mauszeiger und Spielerpfeil: Ring, nur im Kampf, Pfeil nur mit Blickrichtung" .. (ok and "" or (": " .. tostring(err))))
+end
+
 -- 1.0.5.12: eigener Spielerrahmen in der Gruppe ausblenden (Sichtbarkeits-Treiber).
 do
     local UF, K = WeintCodex.UIUnitFrames, WeintCodex.UIKit
@@ -11265,7 +11294,9 @@ do
         assert(has(O.Search("aggro", 60), "farben"), "Aggro findet Bedrohung nicht")
         assert(#O.Search("taschen xyzzy", 60) == 0, "Wort ohne Treffer zaehlt nicht")
         local hits = H.Search("pfeil")
-        assert(#hits > 0 and hits[1].title:find("Questpfeil", 1, true), "Hilfesuche Pfeil")
+        local qp = false
+        for _, h in ipairs(hits) do if h.title:find("Questpfeil", 1, true) then qp = true end end
+        assert(qp, "Hilfesuche Pfeil")
         -- Fenster ueber den Befehl, Hilfe zur Seite ueber "?".
         SlashCmdList["WEINTCODEX"]("hilfe Aggro")
         assert(H.win and H.win:IsShown(), "/wc hilfe oeffnet kein Fenster")
@@ -19825,10 +19856,10 @@ do
         end
         local order = table.concat(keys, ",")
         local pal = WeintCodex.UIPaladinBuffs.IsPaladin()
-        assert(order == "automatik,anzeigen,rausda,automark,klickzauber,entfluchen,makros," .. (pal and "segen," or "") .. "ringe,pvp,boss,boss_bars,boss_sounds,boss_bosses,karte,questhilfe,sammeln,glitzern,selten,flugspiele,auktion,fluestern,danke,gespraeche",
+        assert(order == "automatik,anzeigen,zeiger,rausda,automark,klickzauber,entfluchen,makros," .. (pal and "segen," or "") .. "ringe,pvp,boss,boss_bars,boss_sounds,boss_bosses,karte,questhilfe,sammeln,glitzern,selten,flugspiele,auktion,fluestern,danke,gespraeche",
             "Reihenfolge: " .. order)
         local d = pal and 0 or -1
-        assert(O.PageIndex("comfort", "gespraeche") == 24 + d and O.PageIndex("comfort", "fluestern") == 22 + d, "Index nach Sortieren")
+        assert(O.PageIndex("comfort", "gespraeche") == 25 + d and O.PageIndex("comfort", "fluestern") == 23 + d, "Index nach Sortieren")
         for _, h in ipairs(WL.HELPERS) do
             local mod = K.Module(h.module)
             assert(mod and mod.group ~= "ui" or h.module == "groupframes", h.label .. ": haengt an einem Modul der Oberflaeche")

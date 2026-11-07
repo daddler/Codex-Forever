@@ -134,6 +134,9 @@ P["comfort/automatik"] = { title = "Komfort · Automatik",
     text = "Kleine Arbeiten von selbst: reparieren (auch aus der Gildenbank), graue Gegenstände verkaufen, schneller plündern, Filmsequenzen überspringen. Jeder Schalter einzeln.",
     words = "reparieren verkaufen grau schrott automatisch auto" }
 P["comfort/anzeigen"] = { title = "Komfort · Anzeigen", text = "Zusätzliche Hinweise: Kampfbeginn, Bildrate und Latenz, Haltbarkeit, Würfe in der Gruppe, Neues beim Lehrer.", words = "anzeige" }
+P["comfort/zeiger"] = { title = "Komfort · Maus & Pfeil",
+    text = "Ring oder Schein um den Mauszeiger (Farbe, Größe, nur im Kampf), Größe des Zeigers selbst, und ein eigener großer, farbiger Spielerpfeil auf der Minikarte.",
+    words = "maus mauszeiger cursor zeiger finden spielerpfeil minikarte pfeil kreis ring" }
 P["comfort/rausda"] = { title = "Komfort · Raus da", text = "Warnton, wenn du in etwas Schädlichem stehst.", words = "boden ton warnung sound" }
 P["comfort/automark"] = { title = "Komfort · Automark", text = "Markierungen auf Gegner per Taste über dem Gegner.", words = "markieren marker totenkopf" }
 P["comfort/klickzauber"] = { title = "Komfort · Klickzauber",
@@ -166,7 +169,7 @@ P["questtracker/allgemein"] = { title = "Questliste", text = "Die Questliste am 
 -- Woerter, die Spieler tippen, und was in WeintCodex dasteht.
 local S = {
     aggro = { "bedrohung" }, threat = { "bedrohung" },
-    pfeil = { "questpfeil" }, navi = { "questpfeil" }, wegpunkt = { "questpfeil" },
+    pfeil = { "questpfeil", "spielerpfeil" }, cursor = { "mauszeiger" }, maus = { "mauszeiger" }, navi = { "questpfeil" }, wegpunkt = { "questpfeil" },
     sortieren = { "kategorie" }, ordnen = { "kategorie" },
     tasche = { "taschen" }, bag = { "taschen" }, bags = { "taschen" },
     nameplate = { "plakette" }, nameplates = { "plakette" }, plate = { "plakette" },
