@@ -1790,6 +1790,120 @@ J.DATA = {
 }
 
 --------------------------------------------------
+-- Abgleich vom 07.11.2026 mit Dungeon Journal 1.7.0
+--------------------------------------------------
+-- Neu: die sechs Quests der Drowned City (Dungeon noch nicht offen, Geber
+-- teils unbekannt - so steht es da), die Paladinquest der Horde "Old
+-- Fire-Eye" (95140) in drei Dungeons, zwei Schurkenquests aus dem
+-- Scharlachroten Kloster bzw. Shadowfang Keep (78307, 78699). Gleiche
+-- Herkunft wie oben (`community`). Was schon da ist, kommt nicht doppelt.
+local OLD_FIRE_EYE = {
+    id = 95140, name = "Old Fire-Eye", level = 26, requires = 20, faction = "horde",
+    class = "PALADIN",
+    giver = "Lumina Windsinger, Das Grabmal, Silberwald",
+    objective = "Mit der Mondsilberklinge Old Fire-Eye im Silberwald vernichten.",
+    turnin = "Lumina Windsinger, Das Grabmal, Silberwald",
+    reputation = { { "Unterstadt", 150 }, { "Irdener Ring", 150 }, { "Orgrimmar", 75 } },
+    rewards = { { 267369, "Wolfsbane", 3 } },
+}
+local NEW_QUESTS = {
+    the_deadmines = {
+        { base = OLD_FIRE_EYE, note = "Klassenquest für Paladine (Untote und Tauren). Hier: Whitestone Oak Lumber von den Goblin Woodcarvers. Die übrigen Teile: Enchanted Silver Ingot (Shadowfang Keep), Purified Kor Gem (Blackfathom Deeps)." },
+    },
+    shadowfang_keep = {
+        { base = OLD_FIRE_EYE, note = "Klassenquest für Paladine (Untote und Tauren). Hier: der Enchanted Silver Ingot. Die übrigen Teile: Whitestone Oak Lumber (The Deadmines), Purified Kor Gem (Blackfathom Deeps)." },
+        {
+            id = 78307, name = "The Horn of Xelthos", level = 23, requires = 20, faction = "both",
+            class = "ROGUE",
+            giver = "Dead Drop (Truhe in einer Hütte bei Pyrewood Village, Silberwald)",
+            objective = "Die Bezahlung von C am Dead Drop bei Pyrewood Village abholen.",
+            turnin = "Dead Drop, Pyrewood Village, Silberwald",
+            money = 3000,
+            rewards = { { 277210, "Pyrewood Signet Ring", 3 } },
+            note = "Klassenquest für Schurken, allein zu erledigen (nicht in einer Gruppe). Der Brief von C kommt ab Stufe 20 in einer Hauptstadt. Einen Taschenplatz frei halten.",
+        },
+    },
+    blackfathom_deeps = {
+        { base = OLD_FIRE_EYE, note = "Klassenquest für Paladine (Untote und Tauren). Hier: das Corrupted Kor Gem von den Blackfathom Sea Witches (drinnen) und den Tide Priestesses und Oracles am Eingang im Eschental, sobald ihr „Seeking the Kor Gem“ von Ulric Frostveil (Außenposten Zoram'gar) habt; er reinigt es." },
+    },
+    scarlet_monastery = {
+        {
+            id = 78699, name = "The Eye of Bhossca", level = 35, requires = 25, faction = "both",
+            class = "ROGUE",
+            giver = "Dead Drop (Truhe in einer Hütte bei Pyrewood Village, Silberwald)",
+            objective = "Die Bezahlung von C am Dead Drop bei Pyrewood Village abholen.",
+            turnin = "Dead Drop, Pyrewood Village, Silberwald",
+            money = 7500,
+            rewards = { { 277246, "Ruby-Adorned Blade", 3 } },
+            note = "Klassenquest für Schurken nach „The Horn of Xelthos“, allein zu erledigen. In jedem Flügel die Scarlet Initiate's Uniform tragen: Verstohlenheit oder Angreifen nimmt sie ab.",
+        },
+    },
+    drowned_city = {
+        {
+            id = 95775, name = "The Drowned City", level = 40, requires = 30, faction = "horde",
+            giver = "Kin'weelay, Grom'gol, Schlingendorntal",
+            objective = "Mit Haut und Kohle Abriebe der vier Tafeln von I'lalai in der Drowned City machen.",
+            turnin = "Kin'weelay, Grom'gol, Schlingendorntal",
+        },
+        {
+            id = 95776, name = "The Only Good Brinescale...", level = 38, requires = 30, faction = "horde",
+            giver = "Grom'gol, Schlingendorntal (Geber noch unbekannt)",
+            objective = "Var'Taka in der Drowned City töten.",
+            turnin = "Grom'gol, Schlingendorntal (noch unbekannt)",
+            choice = true,
+            rewards = { { 279888, "Tidesoaked Leggings", 2 }, { 279889, "Naga Priestess's Mantle", 2 } },
+        },
+        {
+            id = 96774, name = "Ancient Gurubashi Idol", level = 40, requires = 30, faction = "horde",
+            giver = "Mazu'kon, Mulgore",
+            objective = "Ein Ancient Gurubashi Idol aus der Drowned City holen (vom mächtigsten Priester dort).",
+            turnin = "Mazu'kon, Mulgore",
+            reputation = { { "Irdener Ring", 300 }, { "Dunkelspeertrolle", 150 } },
+        },
+        {
+            id = 95787, name = "Take Two With Water", level = 40, requires = 30, faction = "alliance",
+            giver = "Loremaster Dibbs, Süderstade, Vorgebirge des Hügellands",
+            objective = "Abriebe der vier Tafeln von I'lalai in der Drowned City machen.",
+            turnin = "Loremaster Dibbs, Süderstade, Vorgebirge des Hügellands",
+            note = "Geber noch nicht bestätigt. Vorquest: An Acquaintance in Southshore (Savage Coast Report Bundle zu Loremaster Dibbs bringen).",
+        },
+        {
+            id = 95788, name = "Magics of the Drowned City", level = 40, requires = 30, faction = "alliance",
+            giver = "noch unbekannt",
+            objective = "5 I'lalai Fetishes von den Trollen in der Drowned City sammeln.",
+            turnin = "noch unbekannt",
+        },
+        {
+            id = 97130, name = "Ancient Gurubashi Secrets", level = 40, requires = 34, faction = "alliance",
+            giver = "noch unbekannt (ein Magier der Kirin Tor, der mit Erzmagier Lan'dalock in Dalaran arbeitet)",
+            objective = "Ein Ancient Gurubashi Idol aus der Drowned City holen (vom mächtigsten Priester dort).",
+            turnin = "noch unbekannt",
+            money = 5000,
+            reputation = { { "Kirin Tor", 300 }, { "Sturmwind", 150 } },
+        },
+    },
+}
+for d, list in pairs(NEW_QUESTS) do
+    local entry = J.DATA[d] or {}
+    J.DATA[d] = entry
+    entry.quests = entry.quests or {}
+    local have = {}
+    for _, q in ipairs(entry.quests) do have[q.id] = true end
+    for _, add in ipairs(list) do
+        local q = add
+        if add.base then
+            q = {}
+            for k, v in pairs(add.base) do q[k] = v end
+            q.note = add.note
+        end
+        if not have[q.id] then
+            entry.quests[#entry.quests + 1] = q
+            have[q.id] = true
+        end
+    end
+end
+
+--------------------------------------------------
 -- Orte auf der Weltkarte (seit 6.5.1.0)
 --------------------------------------------------
 -- Wo eine Quest beginnt, als Punkt auf der Weltkarte: Karte (UiMapID)

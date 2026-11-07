@@ -423,6 +423,9 @@ WeintCodex_Dungeons = {
             { id = "vartaka",           name = "Var'Taka" },
             { id = "captain_dreadrise", name = "Captain Dreadrise" },
             { id = "deathless_marrow",  name = "Deathless Marrow" },
+            -- 1.0.5.2 (Dungeon Journal 1.7.0: sechs "Staging Area"-Gegner
+            -- im Client, 270882-270888): Gill dazu.
+            { id = "gill",              name = "Gill" },
             { id = "minloth",           name = "Min'loth the Serpent" },
         },
     },
