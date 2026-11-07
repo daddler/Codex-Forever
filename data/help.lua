@@ -127,6 +127,9 @@ P["damagemeter/fenster"] = { title = "Schadensanzeige · Je Fenster", text = "Me
 P["reminders/regeln"] = { title = "Erinnerungen · Regeln",
     text = "Was fehlen darf, bevor WeintCodex erinnert: Buffs, Essen, Waffe, Begleiter, Munition, Talentpunkte. Jede Regel einzeln an und aus.",
     words = "buff fehlt essen food erinnern talent munition" }
+P["reminders/essen"] = { title = "Erinnerungen · Essen",
+    text = "Erinnert, wenn Buff-Essen in der Tasche liegt und du nicht satt bist – mit eigenen Schaltern: wo, auch in Stadt und Gasthaus, erst mit Gegner. Ab Werk an.",
+    words = "essen food satt wohlgenährt buff essensbuff erfahrung" }
 P["reminders/buffzeiten"] = { title = "Erinnerungen · Buffzeiten", text = "Restzeit eigener Buffs.", words = "buff zeit dauer" }
 P["reminders/anzeige"] = { title = "Erinnerungen · Anzeige", text = "Wo und wie groß die Symbole stehen.", words = "symbol" }
 P["reminders/abklingzeitmanager"] = { title = "Erinnerungen · Abklingzeitmanager", text = "Abklingzeiten und Procs als Leisten.", words = "cooldown cd proc" }

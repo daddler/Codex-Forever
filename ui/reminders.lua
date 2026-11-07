@@ -57,6 +57,13 @@ local defaults = {
     -- 6.27.0.0 (Beta-Test: "Essensbuff 5 % EP in der Levelphase ... items in
     -- der Tasche scannen, die einen nuetzlichen Buff haben"):
     bagFood       = true,     -- Essen mit Buff in der Tasche, Buff fehlt
+    -- 1.0.5.18 (Wunsch: eigene Kategorie "Essen", ab Werk an; "in einer
+    -- Ruhezone funktioniert es nicht richtig"): eigene Schalter, unabhaengig
+    -- von den allgemeinen Sperren der Erinnerungen.
+    foodResting   = true,     -- auch in Stadt und Gasthaus (ruhend)
+    foodWhere     = "all",    -- all | group | instance
+    foodOnTarget  = false,    -- erst mit Gegner im Ziel
+    foodPreferXp  = true,     -- beim Leveln Erfahrungsessen nennen
     bagElixir     = false,    -- Elixiere, Flaeschchen, Rollen in der Tasche
     -- 6.27.3.0 (Beta-Test: "Skalierung geht nicht ... Transparenz ... an
     -- ruhigen Orten wie Stadt, Gasthaus nichts sichtbar"):
@@ -1473,17 +1480,19 @@ function R.FoodReport()
         out[#out + 1] = "Satt: " .. (why or "nein")
         if AnyName(names, R.EATING_WORDS) then out[#out + 1] = "Isst/trinkt gerade – keine Erinnerung." end
     end
-    out[#out + 1] = "Schalter Essen mit Buff: " .. (Opt("bagFood") and "an" or "aus")
-        .. " · erst mit Gegner: " .. (Opt("buffsOnTarget") and "an" or "aus")
-        .. " · Wo: " .. tostring(Opt("where")) .. " · ruhige Orte aus: " .. (Opt("hideResting") and "an" or "aus")
-    if R.Quiet and R.Quiet() then out[#out + 1] = "Gerade still (ruhender Ort oder Angeln)." end
+    out[#out + 1] = "Seite Essen: " .. (Opt("bagFood") and "an" or "aus")
+        .. " · Wo: " .. tostring(Opt("foodWhere")) .. " · in Stadt/Gasthaus: " .. (Opt("foodResting") and "ja" or "nein")
+        .. " · erst mit Gegner: " .. (Opt("foodOnTarget") and "an" or "aus")
+        .. " · ruhend jetzt: " .. (K.Bool(_G.IsResting and _G.IsResting(), false) and "ja" or "nein")
+    out[#out + 1] = "Erinnern darf jetzt: " .. (R.FoodAllowed(R.Fighting()) and "ja" or "nein")
     return out
 end
 
 -- Erinnerungen aus der Tasche: Liste von { text, icon }.
-function R.BagBuffs(out)
+function R.BagBuffs(out, only)
     out = out or {}
     local wantFood, wantElixir = Opt("bagFood"), Opt("bagElixir")
+    if only == "food" then wantElixir = false elseif only == "elixir" then wantFood = false end
     if not (wantFood or wantElixir) then return out end
     local cc = _G.C_Container
     if not (cc and cc.GetContainerNumSlots and cc.GetContainerItemID) then return out end
@@ -1550,6 +1559,7 @@ function R.BagBuffs(out)
         -- Satt ist, wer einen Essensbuff hat (Name) oder irgendeinen Buff,
         -- der laut Tooltip Erfahrung gibt oder satt macht.
         local fed = R.FedReason(names, tips, timed, labels) ~= nil
+        if not Opt("foodPreferXp") then xp = nil end
         local pick = (xp and leveling) and xp or food
         if pick and not fed then
             local kinds = (xp and leveling) and xpKinds or foodKinds
@@ -1649,8 +1659,32 @@ function R.TalentHit()
     return { text = n == 1 and "1 Talentpunkt zu vergeben" or (n .. " Talentpunkte zu vergeben") }
 end
 
--- Alle Erinnerungen, die jetzt gelten.
+-- 1.0.5.18: darf die Essenserinnerung jetzt? Nur ihre eigenen Schalter -
+-- vorher schwieg sie in Stadt und Gasthaus, sobald eine der allgemeinen
+-- Sperren griff (ruhige Orte, "Wo", "erst mit Gegner", Erinnerungen aus).
+function R.FoodAllowed(fighting)
+    if not Opt("bagFood") or fighting then return false end
+    local FI = WeintCodex.UIFishing
+    if FI and FI.Busy then
+        local ok, busy = pcall(FI.Busy)
+        if ok and busy then return false end
+    end
+    if not Opt("foodResting") and K.Bool(_G.IsResting and _G.IsResting(), false) then return false end
+    local where = Opt("foodWhere")
+    if where == "group" and not InGroup() then return false end
+    if where == "instance" and not InInstance() then return false end
+    if Opt("foodOnTarget") and not R.HostileTarget() then return false end
+    return true
+end
+
+-- Alle Erinnerungen, die jetzt gelten: die allgemeinen und das Essen.
 function R.Active()
+    local out = R.ActiveGeneral()
+    if R.FoodAllowed(R.Fighting()) then R.BagBuffs(out, "food") end
+    return out
+end
+
+function R.ActiveGeneral()
     local out = {}
     if R.Quiet() then return out end
     if not Opt("showReminders") then return out end
@@ -1693,7 +1727,7 @@ function R.Active()
         end
     end
     if not fighting then
-        if buffsNow then R.BagBuffs(out) end
+        if buffsNow then R.BagBuffs(out, "elixir") end
         local t = R.TalentHit()
         if t then out[#out + 1] = t end
     end
@@ -2267,6 +2301,22 @@ K.Register({
         { key = "buffzeiten", label = "Buffzeiten", build = function(B)
             WeintCodex.UIBuffTimes.BuildPage(B)
         end },
+        { key = "essen", label = "Essen", build = function(B)
+            local off = function() return not K.Get(KEY, "bagFood") end
+            B:Section("Essen mit Buff", "Liegt Essen in der Tasche, das „Wohlgenährt“ oder Erfahrung gibt, und der Buff fehlt: eine Erinnerung – anklicken isst. Diese Seite gilt nur fürs Essen; die allgemeinen Schalter unter „Anzeige“ wirken hier nicht.")
+            B:Row({ type = "toggle", label = "Ans Essen erinnern", key = "bagFood" },
+                  { type = "dropdown", label = "Wo", key = "foodWhere", disabled = off, items = {
+                        { value = "all",      text = "Überall" },
+                        { value = "group",    text = "Nur in einer Gruppe" },
+                        { value = "instance", text = "Nur in Dungeons und Schlachtzügen" } } })
+            B:Row({ type = "toggle", label = "Auch in Stadt und Gasthaus", key = "foodResting", disabled = off,
+                    description = "Wo das Spiel „ruhend“ sagt – dort isst man meist vor dem Losziehen." },
+                  { type = "toggle", label = "Erst mit Gegner im Ziel", key = "foodOnTarget", disabled = off })
+            B:Row({ type = "toggle", label = "Beim Leveln Erfahrungsessen nennen", key = "foodPreferXp", disabled = off,
+                    description = "Hast du Essen mit Erfahrungsbuff, nennt die Erinnerung beim Leveln dieses." },
+                  { type = "empty" })
+            B:Note("Nie im Kampf, beim Reiten, Fliegen, Angeln und solange du isst. Wer satt ist, sagt /wcui essen.")
+        end },
         { key = "anzeige", label = "Anzeige", build = function(B)
             B:Section("Erinnerungen")
             B:Row({ type = "toggle", label = "Erinnerungen zeigen", key = "showReminders" },
@@ -2291,13 +2341,13 @@ K.Register({
                     description = "In Städten und Gasthäusern (wo das Spiel „ruhend“ sagt) keine Erinnerung und kein Symbol." }, nil)
             B:Row({ type = "toggle", label = "Talentpunkte zu vergeben", key = "talentPoints",
                     description = "Nach dem Stufenaufstieg: Erinnerung, solange ein Talentpunkt frei ist." },
-                  { type = "toggle", label = "Buffs und Essen erst mit Gegner im Ziel", key = "buffsOnTarget",
-                    description = "Fehlende Buffs und Buff-Essen erst, wenn du einen Gegner anvisierst. Waffe, Begleiter und Munition wie immer. Beim Angeln schweigen die Erinnerungen ohnehin." })
+                  { type = "toggle", label = "Buffs erst mit Gegner im Ziel", key = "buffsOnTarget",
+                    description = "Fehlende Buffs erst, wenn du einen Gegner anvisierst. Essen stellst du auf seiner eigenen Seite ein. Waffe, Begleiter und Munition wie immer. Beim Angeln schweigen die Erinnerungen ohnehin." })
             B:Section("Aus der Tasche")
-            B:Row({ type = "toggle", label = "Essen mit Buff", key = "bagFood",
-                    description = "Liegt Essen in der Tasche, das „Wohlgenährt“ oder Erfahrung gibt, und der Buff fehlt: Erinnerung. Erfahrungsessen nur beim Leveln." },
-                  { type = "toggle", label = "Elixiere, Fläschchen, Rollen", key = "bagElixir",
-                    description = "Liegt eins in der Tasche und keiner seiner Buffs ist auf dir: Erinnerung. Rollen nur, wenn ihr Wert deiner Klasse nützt und – falls sie auf eine Waffe gehören – diese Waffe getragen wird." })
+            B:Row({ type = "toggle", label = "Elixiere, Fläschchen, Rollen", key = "bagElixir",
+                    description = "Liegt eins in der Tasche und keiner seiner Buffs ist auf dir: Erinnerung. Rollen nur, wenn ihr Wert deiner Klasse nützt und – falls sie auf eine Waffe gehören – diese Waffe getragen wird." },
+                  { type = "empty" })
+            B:Note("Essen mit Buff hat eine eigene Seite: Erinnerungen → Essen.")
             B:Advanced()
             B:Section("Symbole")
             B:Row({ type = "toggle", label = "Buffs und Procs", key = "showProcs" },

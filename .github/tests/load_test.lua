@@ -11173,6 +11173,34 @@ do
     Check(ok, "Namensplaketten: in Instanzen nur Namen (Spieleinstellung)" .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 1.0.5.18: Essen eigene Seite - allgemeine Sperren (ruhige Orte, Wo,
+-- erst mit Gegner, Erinnerungen aus) gelten fuers Essen nicht mehr.
+do
+    local R, K = WeintCodex.UIReminders, WeintCodex.UIKit
+    local oR = _G.IsResting
+    local saved = {}
+    for _, k in ipairs({ "hideResting", "showReminders", "buffsOnTarget", "where", "foodResting", "foodOnTarget", "bagFood" }) do
+        saved[k] = K.Get("reminders", k)
+    end
+    local ok, err = pcall(function()
+        _G.IsResting = function() return true end
+        K.Set("reminders", "hideResting", true)
+        K.Set("reminders", "showReminders", false)
+        K.Set("reminders", "buffsOnTarget", true)
+        K.Set("reminders", "where", "instance")
+        assert(R.FoodAllowed(false) == true, "Essen schweigt in der Stadt wegen allgemeiner Sperren")
+        K.Set("reminders", "foodResting", false)
+        assert(R.FoodAllowed(false) == false, "Schalter Stadt/Gasthaus wirkt nicht")
+        K.Set("reminders", "foodResting", true)
+        assert(R.FoodAllowed(true) == false, "im Kampf erinnert")
+        K.Set("reminders", "bagFood", false)
+        assert(R.FoodAllowed(false) == false, "abgeschaltet, trotzdem erinnert")
+    end)
+    _G.IsResting = oR
+    for k, v in pairs(saved) do K.Set("reminders", k, v) end
+    Check(ok, "Erinnerungen: Essen mit eigener Seite, auch in Stadt und Gasthaus" .. (ok and "" or (": " .. tostring(err))))
+end
+
 -- 1.0.5.18: Fenstermodus - nie einruecken, nie "breiter als beim Einrichten".
 do
     local K, ES = WeintCodex.UIKit, WeintCodex.UISetup

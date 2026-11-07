@@ -22,6 +22,14 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.0.5.18",
+        date    = "07.11.2026",
+        notes   = {
+            "|cff7C6CFFEssen hat eine eigene Seite|r – Erinnerungen → Essen: an/aus, wo, auch in Stadt und Gasthaus, erst mit Gegner. Ab Werk an, und die allgemeinen Sperren der Erinnerungen bremsen das Essen nicht mehr aus.",
+            "|cff7C6CFFFenstermodus|r – keine Meldung „Bildschirm breiter oder schmaler als beim Einrichten“ mehr; im Fenster rückt nichts für Breitbild ein.",
+        },
+    },
+    {
         version = "1.0.5.17",
         date    = "07.11.2026",
         notes   = {

@@ -9,6 +9,14 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.0.5.18] – 2026-11-07
+
+- Erinnerungen: Seite „Essen“ (`foodWhere`, `foodResting`, `foodOnTarget`,
+  `foodPreferXp`); `R.FoodAllowed` statt der allgemeinen Sperren (ruhige
+  Orte, Wo, erst mit Gegner, Erinnerungen aus); `/wcui essen` nennt sie.
+- Fenstermodus: `K.Windowed` (gxWindow/gxMaximize) – Versatz 0, keine
+  Breitbild-Meldung.
+
 ## [1.0.5.17] – 2026-11-07
 
 - Gruppe: statt aller fremden Buffs nur fehlende Gruppenbuffs der eigenen
