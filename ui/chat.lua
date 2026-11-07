@@ -40,7 +40,8 @@ local defaults = {
     -- Eingabezeile darueber (wie bei ElvUI).
     infoBar     = true,
     -- 6.34.0.0: wo die Infozeile steht und was sie zeigt
-    infoPlace   = "chat",   -- chat | minimap
+    infoPlace   = "chat",   -- chat | minimap | minimapTop
+    infoBgAlpha = 60,       -- 1.0.5.10: eigener Hintergrund der Infozeile
     infoClock   = true,
     infoMoney   = true,
     infoBags    = true,
@@ -318,7 +319,7 @@ local function ApplyFrame(cf, d)
         local r = cf[k]
         if type(r) == "table" and r.SetAlpha and not (r.IsForbidden and r:IsForbidden()) then Hide(r) end
     end
-    if CH.infoFrame and CH.infoFrame.kachel then CH.infoFrame.kachel:SetShown(not clear) end
+    CH.PaintInfoBg()
 
     if d.tab and Opt("flatTabs") then
         for _, suffix in ipairs({ "Left", "Middle", "Right", "SelectedLeft", "SelectedMiddle",
@@ -779,6 +780,17 @@ function CH.FlowInfo()
     info:SetHeight(INFO_H * #lines)
 end
 
+-- 1.0.5.10 (Wunsch mit Bild: "hinter den Informationen einen transparenten
+-- Balken, damit man es besser lesen kann"): eigene Deckkraft, nicht mehr die
+-- des Chats - ueber der Minikarte hatte die Zeile sonst keinen Grund.
+function CH.PaintInfoBg()
+    local k = info and info.kachel
+    if not k then return end
+    local a = (tonumber(Opt("infoBgAlpha")) or 60) / 100
+    k:SetShown(a > 0)
+    if a > 0 then k:SetAlpha(a) end
+end
+
 local function BuildInfoBar()
     local cf = _G.ChatFrame1
     if type(cf) ~= "table" then return end
@@ -786,7 +798,7 @@ local function BuildInfoBar()
         info = CreateFrame("Frame", "WeintCodexChatInfo", UIParent)
         info.kachel = K.Kachel(info, { shadow = 6 })
         CH.infoFrame = info
-        info.kachel:SetShown((Opt("bgAlpha") or 60) > 0)
+        CH.PaintInfoBg()
         -- 1.0.5.7: nie ToggleAllBags() des Spiels aus Addon-Code (machte den
         -- Zustand der Taschen "tainted", danach Verkaufen gesperrt). Nur die
         -- WeintCodex-Taschen; ohne sie oeffnet die Taste B.
@@ -1149,7 +1161,8 @@ K.Register({
                         { value = "chat",    text = "Unter dem Chat" },
                         { value = "minimap", text = "Unter der Minikarte" },
                         { value = "minimapTop", text = "Über der Minikarte" } } },
-                  { type = "empty" })
+                  { type = "slider", label = "Hintergrund der Infozeile", key = "infoBgAlpha", min = 0, max = 100, step = 5,
+                    disabled = off, format = function(v) return string.format("%d %%", v) end })
             B:Note("Unter dem Chat legt sich die Eingabezeile beim Schreiben darüber. Unter der Minikarte bricht die Zeile um, wenn die Werte nicht nebeneinander passen.")
             B:Section("Was")
             local items = CH.INFO_ITEMS

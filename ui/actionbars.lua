@@ -82,6 +82,7 @@ local defaults = {
     hideEndCaps  = true,
     microMenu    = "left",   -- left | game
     microScale   = 85,
+    bagsScale    = 100,   -- 1.0.5.10: Groesse der Taschenleiste wie beim Mikromenue
     bagsBar      = "right",  -- right | game
     -- Seit 6.3.0.3 (Beta-Test: "sieht nach wenig aus - bei ElvUI richtig
     -- schick"): eine Kachel hinter jeder Leiste, die Blaetterpfeile der
@@ -1085,6 +1086,7 @@ local function Place()
         local f = Frame(unpack(e.frames))
         if f and Opt(e.opt) == e.want then
             if e.key == "hud_micro" then f:SetScale((Opt("microScale") or 85) / 100) end
+            if e.key == "hud_bags" then f:SetScale((Opt("bagsScale") or 100) / 100) end
             if registered[e.key] ~= f then
                 registered[e.key] = f
                 K.RegisterMover(f, e.key, e.label, K.Layout(e.key), { secure = true })
@@ -1361,8 +1363,9 @@ K.Register({
             B:Row({ type = "dropdown", label = "Taschenleiste", key = "bagsBar", reload = true, items = {
                         { value = "right", text = "Unten rechts" },
                         { value = "game",  text = "Wie im Spiel" } } },
-                  { type = "toggle", label = "Taschenleiste im WeintCodex-Stil", key = "bagsSkin", reload = true,
-                    description = "Flache Taschenplätze mit feinem Rand statt der goldenen Rahmen." })
+                  { type = "slider", label = "Größe der Taschenleiste", key = "bagsScale", min = 60, max = 140, step = 5,
+                    format = function(v) return string.format("%d %%", v) end,
+                    disabled = function() return K.Get(KEY, "bagsBar") ~= "right" end })
             B:Note("Solange hier nicht „Wie im Spiel“ steht, bestimmt WeintCodex den Platz von Mikromenü und Taschenleiste: verschieben im Gestaltungsmodus von WeintCodex (ziehen, Umschalt+Rechtsklick setzt zurück), nicht im Bearbeitungsmodus des Spiels – dort bleibt der Platz von WeintCodex. Mit „Wie im Spiel“ verschiebt sie der Bearbeitungsmodus.")
             B:Section("Welche Leisten es gibt")
             B:Note("Welche Leisten es überhaupt gibt, bestimmt das Spiel (Esc → Optionen → Aktionsleisten). Eigene Leisten baut WeintCodex bewusst nicht: fürs Umblättern bei Haltung, Gestalt und Fahrzeug bräuchten sie eine Funktion, die dem Forever-Client derzeit fehlt – WeintCodex ordnet die Knöpfe des Spiels.")
@@ -1371,7 +1374,8 @@ K.Register({
             B:Section("Feinheiten der Knöpfe")
             B:Row({ type = "toggle", label = "Mikromenü im WeintCodex-Stil", key = "microSkin", reload = true,
                     description = "Die Symbole auf einer Kachel, ohne Rahmen und Flächen des Spiels." },
-                  { type = "empty" })
+                  { type = "toggle", label = "Taschenleiste im WeintCodex-Stil", key = "bagsSkin", reload = true,
+                    description = "Flache Taschenplätze mit feinem Rand statt der goldenen Rahmen." })
             B:Row({ type = "toggle", label = "Roter Punkt: Kontrolle wirkt nicht", key = "ccDot",
                     description = "Oben links am Knopf, wenn Verwandlung, Kopfnuss, Fesseln, Verbannen, Exorzismus & Co. beim Ziel nicht wirken – etwa Verwandlung auf Untote. Regeln wie in Classic." },
                   { type = "empty" })
