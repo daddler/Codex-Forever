@@ -7642,6 +7642,8 @@ do
         assert(#P.PROFS == 12, "Berufe im Bestand: " .. #P.PROFS)
         local tail = PRO.Recipes("tailoring")
         local lines = select(2, P.RAW.tailoring:gsub("\n", ""))
+        -- 1.0.5.2: dazu die Rezepte aus data/professions_su.lua.
+        if P.SU_RAW and P.SU_RAW.tailoring then lines = lines + select(2, P.SU_RAW.tailoring:gsub("\n", "")) end
         assert(#tail == lines and #tail > 300, "Schneiderei: " .. #tail .. " Rezepte, " .. lines .. " Zeilen")
         local withReag = 0
         for _, r in ipairs(tail) do if #r.reagents > 0 then withReag = withReag + 1 end end

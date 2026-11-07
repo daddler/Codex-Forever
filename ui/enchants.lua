@@ -65,6 +65,8 @@ function EN.Kinds()
     local P = WeintCodex.ProfessionData
     local raw = P and P.RAW and P.RAW.enchanting
     if type(raw) ~= "string" then EN.kinds = false return nil end
+    -- 1.0.5.2: auch die Rezepte aus data/professions_su.lua.
+    if P.SU_RAW and type(P.SU_RAW.enchanting) == "string" then raw = raw .. "\n" .. P.SU_RAW.enchanting end
     local k, r = {}, {}
     for line in raw:gmatch("[^\n]+") do
         local spell, learn, w, effect = line:match("^(%d+) %S+ (%S+) .-|Enchant ([^|]-) %- (.+)$")

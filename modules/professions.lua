@@ -56,6 +56,10 @@ function PRO.Line(key) return byKey[key] and byKey[key].line end
 function PRO.Recipes(key)
     if parsed[key] then return parsed[key] end
     local raw = P and P.RAW and P.RAW[key]
+    -- 1.0.5.2: dazu die Rezepte, die nur SkillUp/Naowh kennen
+    -- (data/professions_su.lua, P.SU_RAW).
+    local extra = P and P.SU_RAW and P.SU_RAW[key]
+    if extra then raw = (raw or "") .. "\n" .. extra end
     local out = {}
     for line in (raw or ""):gmatch("[^\n]+") do
         local head, reag, name = line:match("^([^|]*)|([^|]*)|(.*)$")

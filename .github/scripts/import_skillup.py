@@ -3,7 +3,7 @@
 
 Aufruf (im Wurzelordner des Repos):
 
-    python3 .github/scripts/import_skillup.py <SkillUpForever-Ordner>
+    python3 .github/scripts/import_skillup.py <SkillUpForever-Ordner> [<NaowhForever_Professions-Ordner>]
 
 Schreibt data/professions_su.lua (erzeugt - nicht von Hand aendern) und
 druckt einen Bericht.
@@ -24,7 +24,12 @@ seine Daten sind Zahlen aus den Clienttabellen):
   Haendler, Quest je Seite), noetige Fertigkeit und Stufe. Herkunft dort:
   CMaNGOS classic-db - im Spiel Art `classic`.
 
-Nicht uebernommen: Rezepte, die nur das Addon kennt (die vier "Lehrer"-
+* Seit 1.0.5.2: Rezepte, die data/professions.lua nicht kennt (P.SU_RAW) -
+  Reagenzien, Ergebnis und Schwellen aus SkillUp (Clienttabellen), nur wenn
+  NaowhForever_Professions (zweites Argument) sie mit belegter Herkunft
+  fuehrt (Lehrer, Haendler, Beute, Quest); Lernstufe, Lehrer und
+  Rezeptgegenstand von dort.
+Bis 1.0.5.2 nicht uebernommen: Rezepte, die nur das Addon kennt (die vier "Lehrer"-
 Rezepte darunter sind die alten Heiltraenke der Alchemie, die Forever in die
 Erste Hilfe verschoben hat), Preise, Lehrergebuehren, Wege.
 """
@@ -102,10 +107,57 @@ def skillup_ranks(folder):
     return ranks
 
 
+def skillup_recipes(folder):
+    """spell -> (skillLine, [(item, n)], output) und spell -> Name (englisch),
+    spell -> Rezeptgegenstand aus Data/Recipes.lua (seit SkillUp 1.0.x)."""
+    text = read(os.path.join(folder, "Data", "Recipes.lua"))
+    rec = {}
+    for spell, line, reag, out in re.findall(
+            r"^\s*\[(\d+)\] = \{ skillLine = (\d+), reagents = \{(.*?)\}, output = (false|\{[^}]*\}) \},?\s*$",
+            table(text, "RecipeData"), re.M):
+        items = [(int(a), int(b)) for a, b in re.findall(r"itemID = (\d+), quantity = (\d+)", reag)]
+        m = re.search(r"itemID = (\d+)", out)
+        rec[int(spell)] = (int(line), items, int(m.group(1)) if m else None)
+    names = {}
+    for name, spell in re.findall(r'\["((?:[^"\\]|\\.)*)"\] = (\d+),', table(text, "RecipeNames")):
+        names.setdefault(int(spell), name.replace('\\"', '"'))
+    scrolls = {}
+    for spell, item in re.findall(r"\[(\d+)\] = \{ (\d+), \d+ \}", table(text, "RecipeScrolls")):
+        scrolls[int(spell)] = int(item)
+    return rec, names, scrolls
+
+
+def naowh_recipes(folder):
+    """spell -> (Lernstufe, Herkunft, Rezeptgegenstand) aus NaowhForever_Professions
+    (Data/RecipeData.lua) - von Hand nach Wowhead Forever gepflegt."""
+    path = os.path.join(folder, "Data", "RecipeData.lua")
+    if not os.path.isfile(path):
+        return {}
+    out = {}
+    for line in read(path).splitlines():
+        m = re.match(r"\s*\{ spell = (\d+),(.*)", line)
+        if not m:
+            continue
+        rest = m.group(2)
+        sk = re.search(r"\bskill = (\d+)", rest)
+        src = re.search(r'source = "(\w+)"', rest)
+        ri = re.search(r"\brecipe = (\d+)", rest)
+        out[int(m.group(1))] = (int(sk.group(1)) if sk else None, src.group(1) if src else None,
+                                int(ri.group(1)) if ri else None)
+    return out
+
+
+def codex_lines():
+    """Fertigkeitslinie -> Schluessel aus P.PROFS."""
+    text = read(os.path.join(ROOT, "data", "professions.lua"))
+    return {int(l): k for k, l in re.findall(r'key = "([\w-]+)", spell = \d+, line = (\d+)', text)}
+
+
 def main():
-    if len(sys.argv) != 2:
+    if len(sys.argv) not in (2, 3):
         sys.exit(__doc__)
     folder = sys.argv[1]
+    naowh = naowh_recipes(sys.argv[2]) if len(sys.argv) == 3 else {}
     if os.path.isdir(os.path.join(folder, "SkillUpForever")):
         folder = os.path.join(folder, "SkillUpForever")
     cx = codex_recipes()
@@ -130,6 +182,34 @@ def main():
 
     ranks = skillup_ranks(folder)
 
+    # 1.0.5.2: Rezepte, die data/professions.lua (ForeverGuide) nicht kennt -
+    # vor allem die ganze Erste Hilfe. Reagenzien und Ergebnis aus SkillUp
+    # (Clienttabellen), Schwellen ebenso, Lernstufe und Herkunft (Lehrer,
+    # Rezeptgegenstand) aus Naowh Forever, wenn angegeben.
+    rec, names, scrolls = skillup_recipes(folder)
+    lines = codex_lines()
+    extra = {}
+    for spell, (o, y, g, gr) in sorted(su.items()):
+        if spell in cx or spell not in rec or gr <= y:
+            continue
+        # Nur, was auch Naowh Forever fuehrt: SkillUp liest die Clienttabellen,
+        # und die tragen auch Season-of-Discovery-Rezepte (426607 ...), deren
+        # Lernbarkeit auf Forever nicht belegt ist. Ohne Naowh: keine neuen.
+        if spell not in naowh or naowh[spell][1] in (None, "unknown"):
+            continue   # ohne belegte Herkunft (Lehrer, Haendler, Beute, Quest): nicht
+        line, items, output = rec[spell]
+        key = lines.get(line)
+        if not key or not items:
+            continue
+        nl, nsrc, nrec = naowh.get(spell, (None, None, None))
+        learn = nl if nl and nl <= y else (o if 1 < o <= y else y)
+        marks = "t" if nsrc == "trainer" else "-"
+        ritem = nrec or scrolls.get(spell)
+        reag = ",".join(f"{i}:{n}" for i, n in items)
+        name = names.get(spell, f"Rezept {spell}")
+        extra.setdefault(key, []).append(
+            f"{spell} {output or '-'} {learn} {y} {g} {gr} {'s' if spell < 30000 else 'n'} {marks} {ritem or '-'} -|{reag}|{name}")
+
     out = []
     out.append("--------------------------------------------------")
     out.append("-- WeintCodex :: Berufe - Abgleich der Schwellen und Raenge")
@@ -153,6 +233,16 @@ def main():
     out.append("P.SU_SOURCE = { kind = \"community\", label = \"Farbschwellen aus dem Forever-Client (Build 1.60.1.70707)\" }")
     out.append("P.RANK_SOURCE = { kind = \"classic\", label = \"Ränge der Berufe aus Classic\" }")
     out.append("")
+    out.append("-- P.SU_RAW[Beruf]: Rezepte, die der Bestand nicht kennt, im Format von P.RAW")
+    out.append("-- (Reagenzien und Schwellen aus den Clienttabellen, Lernstufe und Herkunft")
+    out.append("-- von Naowh Forever, Namen englisch - im Spiel nennt sie der Client).")
+    out.append("P.SU_RAW = {")
+    for key in sorted(extra):
+        out.append(f'    ["{key}"] = [[')
+        out.extend(extra[key])
+        out.append("]],")
+    out.append("}")
+    out.append("")
     out.append("P.SU_THRESH = {")
     for spell, (learn, y, g, gr) in sorted(fixes.items()):
         out.append(f"    [{spell}] = \"{'-' if learn is None else learn} {y} {g} {gr}\",")
@@ -169,6 +259,7 @@ def main():
     with open(OUT, "w", encoding="utf-8", newline="\n") as f:
         f.write("\n".join(out) + "\n")
 
+    print("Neu aus SkillUp/Naowh:", {k: len(v) for k, v in extra.items()})
     print(f"Rezepte im Codex: {len(cx)}, beim Addon: {len(su)}, gemeinsam: {len(set(cx) & set(su))}")
     print(f"Korrigiert: {len(fixes)} Rezepte - Gelb {stats['yellow']}, Grau {stats['grey']}, "
           f"Gruen {stats['green']}, Lernen {stats['learn']}")
