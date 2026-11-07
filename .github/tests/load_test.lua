@@ -7528,7 +7528,15 @@ do
         for _, q in ipairs(brd) do if q.id == 4126 then q4126 = q end end
         assert(q4126 and q4126.src == "fg" and J.QuestSource(q4126) == J.FG_SOURCE, "Quest 4126 nicht aus dem Abgleich")
         assert(J.QuestSource(J.Quests("hall_of_thanes")[1]) == J.SOURCE, "Journal-Quest traegt die Herkunft des Abgleichs")
-        assert(J.LootSource("dire_maul", "guard_fengus") == J.CLASSIC_LOOT_SOURCE, "Classic-Beute ohne Classic-Herkunft")
+        -- 1.0.5.2: Wache Fengus hat seit Naowh 1.2.11 eigene Beute - irgendein
+        -- Boss mit Classic-Beute statt eines festen.
+        J.LootSource("dire_maul", "alzzin")
+        local cb
+        for d, kinds in pairs(J.LOOT_KIND) do
+            for b, k in pairs(kinds) do if k == "classic" then cb = { d, b } break end end
+            if cb then break end
+        end
+        assert(cb and J.LootSource(cb[1], cb[2]) == J.CLASSIC_LOOT_SOURCE, "Classic-Beute ohne Classic-Herkunft")
         -- 1.4.0.0: Classic-Beute, die der Naowh-Abgleich kennt, ist ersetzt.
         assert(J.LootSource("scholomance", "darkmaster_gandling") == J.NF_SOURCE, "Abgleich ersetzt Classic-Beute nicht")
         assert(J.LootSource("hall_of_thanes", "faldrim_anvilmar") == J.SOURCE, "Journal-Beute als Classic ausgewiesen")
@@ -7581,7 +7589,7 @@ do
         assert(DP.entranceLinks == 2, "Stratholme hat zwei Eingaenge: " .. tostring(DP.entranceLinks))
         -- Boss mit Classic-Beute: die Zeile nennt Classic.
         texts = {}
-        DP.Select("dire_maul", "guard_fengus")
+        DP.Select(cb[1], cb[2])
         WeintCodex.Navigation.SwitchTo("dungeons")
         assert(table.concat(texts, "\n"):find("Beute aus Classic", 1, true), "Boss mit Classic-Beute ohne Hinweis")
         assert(DP.itemRows > 0, "Classic-Beute ohne Zeilen")

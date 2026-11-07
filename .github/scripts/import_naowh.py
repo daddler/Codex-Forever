@@ -35,7 +35,7 @@ import subprocess
 import sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-NF_VERSION = "1.1.47"
+NF_VERSION = "1.2.11"
 
 # Schluessel des Addons -> Dungeon des Codex (Fluegel zusammengefasst).
 # Schlachtzuege (Barrow Deeps, Hyjal Summit, Onyxias Hort) fehlen mit
