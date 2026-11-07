@@ -9,6 +9,13 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.0.5.6] – 2026-11-07
+
+- Infozeile: Ampelfarben je Wert (`CH.Tone`), Platz „Über der Minikarte“
+  (`infoPlace = "minimapTop"`).
+- Chat: `FCF_SetChatWindowFontSize` übernimmt die Größe in `chat.fontSize`
+  (`CH.TakeFontSize`); vorher setzte `ApplyAll` sie bei neuen Fenstern zurück.
+
 ## [1.0.5.5] – 2026-11-07
 
 - Neu: `data/help.lua` (Hilfetext je Seite des Codex-Fensters und der

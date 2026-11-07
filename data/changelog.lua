@@ -22,6 +22,15 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.0.5.6",
+        date    = "07.11.2026",
+        notes   = {
+            "|cff7C6CFFInfozeile in Ampelfarben|r – freie Taschenplätze, Haltbarkeit, Bildrate und Latenz werden grün, gelb oder rot.",
+            "|cff7C6CFFInfozeile über der Minikarte|r – neuer Platz unter Chat → Infozeile → „Infozeile steht“.",
+            "|cff7C6CFFSchriftgröße im Chat bleibt|r – die im Menü des Chat-Reiters gewählte Größe springt nicht mehr zurück.",
+        },
+    },
+    {
         version = "1.0.5.5",
         date    = "07.11.2026",
         notes   = {
