@@ -22,6 +22,14 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.0.5.7",
+        date    = "07.11.2026",
+        notes   = {
+            "|cff7C6CFFVerkaufen beim Händler wieder frei|r – der Rechtsklick in die Tasche wird nicht mehr vom Spiel gesperrt („WeintCodex wurde geblockt“), auch an Bank und Post.",
+            "|cff7C6CFFGroßes Händlerfenster nur noch auf Wunsch|r – es war ungewollt eingeschaltet und konnte das Verkaufen sperren. Wer es will, schaltet es unter Komfort → Händler wieder ein.",
+        },
+    },
+    {
         version = "1.0.5.6",
         date    = "07.11.2026",
         notes   = {

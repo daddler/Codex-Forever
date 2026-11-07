@@ -9,6 +9,18 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.0.5.7] – 2026-11-07
+
+- Taschen: kein `CloseAllBags()` mehr beim Schließen per Kreuz/Esc; das
+  Fenster folgt der Absicht aus den Haken (umschalten/öffnen/schließen).
+  Ursache von „Verboten: UNKNOWN()“ beim Verkaufen (Händler/Bank/Post beim
+  Öffnen tainted).
+- Chat-Infozeile: kein `ToggleAllBags()` mehr.
+- Händlerfenster groß ziehen: wirklich ab Werk aus (`vendorGrow2`), nicht
+  mehr im Willkommens-Assistenten.
+- Messenger: Teilen-Fenster nur verbergen statt `Cancel()`.
+- `load_test.lua`: direkte Aufrufe von Taschenfunktionen des Spiels schlagen fehl.
+
 ## [1.0.5.6] – 2026-11-07
 
 - Infozeile: Ampelfarben je Wert (`CH.Tone`), Platz „Über der Minikarte“
