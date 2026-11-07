@@ -9,6 +9,12 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.0.5.17] – 2026-11-07
+
+- Gruppe: statt aller fremden Buffs nur fehlende Gruppenbuffs der eigenen
+  Klasse (`GX.CLASS_GROUP_BUFFS`, `GX.MyBuffs`), nur gelernte, über Nummer
+  oder Namen; tot/offline/außer Sicht/unlesbar = kein Symbol.
+
 ## [1.0.5.16] – 2026-11-07
 
 - Gruppe: `isFromPlayerOrPlayerPet` heißt „von irgendeinem Spieler“ – nur

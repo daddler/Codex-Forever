@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.0.5.17",
+        date    = "07.11.2026",
+        notes   = {
+            "|cff7C6CFFFehlende Buffs deiner Klasse in den Gruppenrahmen|r – Magier sehen, wem Intelligenz fehlt, Druiden Mal der Wildnis, Priester Seelenstärke & Co., Paladine einen Segen. Rot oben rechts am Rahmen, nur was du gelernt hast.",
+        },
+    },
+    {
         version = "1.0.5.16",
         date    = "07.11.2026",
         notes   = {
