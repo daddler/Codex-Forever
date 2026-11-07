@@ -430,5 +430,7 @@ function GG.Inspect()
     local rs = GG.RaidStyleParty()
     out[#out + 1] = "Schlachtzugsartige Gruppenrahmen: "
         .. (rs == true and "an" or rs == false and "aus – dann zeigt die Gruppe keine HoTs" or "unbekannt")
+    local GX = WeintCodex.UIGroupExtra
+    if GX and GX.Lines then for _, l in ipairs(GX.Lines()) do out[#out + 1] = l end end
     return out
 end

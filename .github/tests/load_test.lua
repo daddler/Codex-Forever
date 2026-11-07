@@ -11195,6 +11195,20 @@ do
         assert(GX.UpdateBuffs(f) == 1, "Buffs von anderen: " .. tostring(GX.UpdateBuffs(f)))
         _G.InCombatLockdown = function() return true end
         assert(GX.UpdateBuffs(f) == nil and GX.over[f].icons[1]:IsShown(), "im Kampf nicht stehen gelassen")
+        -- 1.0.5.14: ohne C_UnitAuras ueber UnitBuff; Selbstbuff des Magiers zaehlt.
+        _G.InCombatLockdown = function() return false end
+        _G.C_UnitAuras = nil
+        local oUB = _G.UnitBuff
+        _G.UnitBuff = function(u, i)
+            if i == 1 then return "Arkane Intelligenz", 135932, 0, nil, 1800, 0, "party1" end
+        end
+        assert(GX.UpdateBuffs(f) == 1 and GX.via == "UnitBuff", "UnitBuff nicht gelesen")
+        _G.UnitBuff = oUB
+        -- Balken: Leben des Ziels rechts daneben.
+        local oH, oM, oA = _G.UnitHealth, _G.UnitHealthMax, _G.UnitCanAttack
+        _G.UnitHealth, _G.UnitHealthMax, _G.UnitCanAttack = function() return 50 end, function() return 100 end, function() return true end
+        assert(GX.UpdateTargetBar(f) == true and GX.over[f].wcBar:IsShown(), "Balken des Ziels fehlt")
+        _G.UnitHealth, _G.UnitHealthMax, _G.UnitCanAttack = oH, oM, oA
         local n0 = K.refits
         K.RefitAll()
         assert(K.refits == n0 + 1, "Fenstermodus: nicht neu gesetzt")

@@ -960,7 +960,8 @@ K.Register({
                     format = function(v) return tostring(v) end,
                     disabled = function() return not K.Get(KEY, "buffs") end })
             B:Row({ type = "toggle", label = "Krone beim Gruppenleiter", key = "leaderIcon" },
-                  { type = "empty" })
+                  { type = "toggle", label = "Balken: Leben des Ziels", key = "groupTargetBar",
+                    description = "Rechts neben jedem Rahmen ein schmaler Balken: das Leben des Ziels dieses Mitspielers, rot bei Gegnern." })
             -- 1.0.5.13: unter "Erweitert", damit Ziel und Buffs von anderen oben Platz haben.
             B:Row({ type = "toggle", label = "Rollensymbol", key = "roleIcon",
                     description = "Schild, Kreuz oder Schwert oben links – nur, wenn eine Rolle zugewiesen ist." },
