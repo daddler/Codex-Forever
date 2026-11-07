@@ -1161,9 +1161,9 @@ local function LevelText(unit)
         text = text .. "+"
     end
     local r, g, b = 1, 0.82, 0
-    if S.levelColor and _G.GetCreatureDifficultyColor then
-        local c = _G.GetCreatureDifficultyColor(plain)
-        if type(c) == "table" and K.Plain(c.r) then r, g, b = c.r, c.g, c.b end
+    if S.levelColor then
+        local c = K.DifficultyColor(plain)
+        if c then r, g, b = c[1], c[2], c[3] end
     end
     return text, r, g, b
 end

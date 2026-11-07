@@ -73,6 +73,37 @@ function K.IsSecret(v)
 end
 
 -- Ein Wert, mit dem Lua rechnen darf - oder nil, wenn nicht.
+-- 1.0.5.9 (Feedback: "Gegner 6 Stufen unter dem Spieler sind grau, geben
+-- aber noch EP"): GetCreatureDifficultyColor des Clients rechnet die Grenze
+-- fuer "grau" wie das heutige Spiel (wenige Stufen). Forever vergibt EP nach
+-- der klassischen Regel - grau ist erst, was keine EP mehr gibt:
+--   Stufe 1-5:  nie grau
+--   6-39:       Spielerstufe - floor(Stufe/10) - 5 und darunter
+--   40-59:      Spielerstufe - floor(Stufe/5) - 1 und darunter
+--   60:         51 und darunter (darueber wie 59)
+-- Oberhalb: gruen bis 3 Stufen darunter, gelb +-2, orange +3/+4, rot ab +5.
+-- Herkunft: die EP-Regel des klassischen Spiels (Art classic); im Spiel
+-- gegenzupruefen ueber EP fuer einen Gegner genau an der Grenze.
+function K.GrayLevel(player)
+    if type(player) ~= "number" then return nil end
+    if player <= 5 then return 0 end
+    if player <= 39 then return player - math.floor(player / 10) - 5 end
+    if player <= 59 then return player - math.floor(player / 5) - 1 end
+    return 51
+end
+
+function K.DifficultyColor(level, player)
+    local GC = WeintCodex.GameColors or {}
+    player = player or K.Plain(_G.UnitLevel and _G.UnitLevel("player"))
+    if type(level) ~= "number" or type(player) ~= "number" then return nil end
+    local d = level - player
+    if d >= 5 then return GC.diffImpossible end
+    if d >= 3 then return GC.diffHard end
+    if d >= -2 then return GC.diffEven end
+    if level > (K.GrayLevel(player) or 0) then return GC.diffEasy end
+    return GC.diffTrivial
+end
+
 function K.Plain(v)
     if K.IsSecret(v) then return nil end
     return v

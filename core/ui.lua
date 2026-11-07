@@ -213,6 +213,12 @@ WeintCodex.Colors = C
 --------------------------------------------------
 
 WeintCodex.GameColors = {
+    -- 1.0.5.9: Stufe nach Schwierigkeit, Farben wie im klassischen Spiel.
+    diffImpossible = {1.000, 0.100, 0.100, 1.0},
+    diffHard       = {1.000, 0.500, 0.250, 1.0},
+    diffEven       = {1.000, 1.000, 0.000, 1.0},
+    diffEasy       = {0.250, 0.750, 0.250, 1.0},
+    diffTrivial    = {0.500, 0.500, 0.500, 1.0},
     enemyInCombat = {0.800, 0.180, 0.180, 1.0},
     hostile       = {0.450, 0.125, 0.110, 1.0},   -- Feind, der (noch) nicht kaempft
     neutral       = {0.850, 0.720, 0.220, 1.0},

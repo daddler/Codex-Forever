@@ -577,6 +577,9 @@ function QH.Hue(id)
 end
 
 local function LevelColor(lvl)
+    -- 1.0.5.9: dieselbe klassische Regel wie fuer Gegner (K.DifficultyColor).
+    local dc = type(lvl) == "number" and lvl > 0 and WeintCodex.UIKit.DifficultyColor(lvl)
+    if dc then return dc[1], dc[2], dc[3] end
     if type(lvl) == "number" and lvl > 0 and _G.GetQuestDifficultyColor then
         local ok, c = pcall(_G.GetQuestDifficultyColor, lvl)
         if ok and type(c) == "table" and type(c.r) == "number" then return c.r, c.g, c.b end

@@ -276,10 +276,8 @@ local function LevelParts(unit)
     local cls = K.Plain(_G.UnitClassification and _G.UnitClassification(unit))
     if cls == "elite" or cls == "rareelite" or cls == "worldboss" then text = text .. "+" end
     local r, g, b = 1, 0.82, 0
-    if _G.GetCreatureDifficultyColor then
-        local c = _G.GetCreatureDifficultyColor(lvl)
-        if type(c) == "table" and type(K.Plain(c.r)) == "number" then r, g, b = c.r, c.g, c.b end
-    end
+    local c = K.DifficultyColor(lvl)   -- 1.0.5.9: klassische EP-Regel
+    if c then r, g, b = c[1], c[2], c[3] end
     return text, r, g, b
 end
 UF.LevelParts = LevelParts

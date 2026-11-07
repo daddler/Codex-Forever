@@ -11136,6 +11136,20 @@ do
     Check(ok, "Namensplaketten: in Instanzen nur Namen (Spieleinstellung)" .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 1.0.5.9: Stufenfarbe nach der klassischen EP-Regel (grau = keine EP).
+do
+    local K, GC = WeintCodex.UIKit, WeintCodex.GameColors
+    local ok, err = pcall(function()
+        assert(K.GrayLevel(21) == 14 and K.GrayLevel(5) == 0 and K.GrayLevel(45) == 35 and K.GrayLevel(60) == 51, "Grenze grau")
+        assert(K.DifficultyColor(15, 21) == GC.diffEasy, "6 unter Stufe 21 gibt EP - gruen, nicht grau")
+        assert(K.DifficultyColor(14, 21) == GC.diffTrivial, "14 bei 21 ist grau")
+        assert(K.DifficultyColor(19, 21) == GC.diffEven and K.DifficultyColor(24, 21) == GC.diffHard
+            and K.DifficultyColor(26, 21) == GC.diffImpossible, "gelb/orange/rot")
+        assert(K.DifficultyColor(nil, 21) == nil, "unbekannte Stufe ohne Farbe")
+    end)
+    Check(ok, "Stufenfarbe: grau erst ohne EP (klassische Regel)" .. (ok and "" or (": " .. tostring(err))))
+end
+
 -- 1.0.5.6: Ampel in der Infozeile, Schriftgroesse aus dem Menue des Spiels bleibt.
 do
     local CH = WeintCodex.UIChat
