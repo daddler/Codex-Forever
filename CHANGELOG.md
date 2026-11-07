@@ -9,6 +9,13 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.0.5.14] – 2026-11-07
+
+- Gruppe: `GX.BuffAt` liest über `C_UnitAuras`, sonst `UnitBuff`/`UnitAura`,
+  ohne Vergleiche mit geheimen Werten; unlesbar = zeigen.
+- Gruppe: `groupTargetBar` – Leben des Ziels rechts neben dem Rahmen.
+- `/wcui gruppe`: Lesweg und gelesen/gezeigt je Einheit.
+
 ## [1.0.5.13] – 2026-11-07
 
 - Neu: `ui/groupextra.lua` – Ziel der Mitspieler (`groupTargets`), Buffs

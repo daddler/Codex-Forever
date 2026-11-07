@@ -22,6 +22,14 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.0.5.14",
+        date    = "07.11.2026",
+        notes   = {
+            "|cff7C6CFFBuffs von anderen in den Gruppenrahmen|r – werden jetzt zuverlässiger gelesen, auch Selbstbuffs anderer (z. B. Intelligenz des Magiers).",
+            "|cff7C6CFFLeben des Ziels neben dem Gruppenrahmen|r – ein schmaler Balken rechts zeigt, wie es dem Ziel jedes Mitspielers geht.",
+        },
+    },
+    {
         version = "1.0.5.13",
         date    = "07.11.2026",
         notes   = {
