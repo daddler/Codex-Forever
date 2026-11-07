@@ -8298,7 +8298,20 @@ do
         tl = {}
         gt.GetPrimaryTooltipInfo = nil
         AP.OnItem(gt, { id = 300 })
-        assert(tl[2] == "Preis von vor 2 Tagen, zuletzt nicht im Angebot", "Fehlt: " .. table.concat(tl, " | "))
+        -- 1.0.5.11: nicht mehr im Angebot - gedaempft "zuletzt", kein "ab".
+        local joined = table.concat(tl, " | ")
+        assert(joined:find("nicht mehr im Angebot", 1, true) and joined:find("vor 2 Tagen", 1, true)
+            and not joined:find("ab ", 1, true), "Fehlt: " .. joined)
+        -- 1.0.5.11: aelter als AP.FRESH_DAYS - veraltet, nicht als Angebot.
+        local fullSaved = st.full
+        st.full = nil
+        st.items[320] = AP.Pack(500, 3, AP.Day() - (AP.FRESH_DAYS + 2))
+        local old = AP.TooltipLines(320)
+        assert(old and old[1][1]:find("veraltet", 1, true) and old[1][2]:find("zuletzt", 1, true), "alter Preis als Angebot")
+        st.items[321] = AP.Pack(500, 3, AP.Day() - 1)
+        local fresh = AP.TooltipLines(321)
+        assert(fresh and fresh[1][2]:find("^ab "), "frischer Preis nicht als Angebot")
+        st.items[320], st.items[321], st.full = nil, nil, fullSaved
 
         -- 3. Drei Tage lang gleich die Suche; ohne neue Seite nach AP.STALL s
         -- ist Schluss - ohne Ergebnis ehrlich gesagt.

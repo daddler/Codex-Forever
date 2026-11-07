@@ -61,6 +61,10 @@ AP.NO_REPLICATE    = 3 * 86400   -- ohne Antwort: so lange gleich die Suche
 AP.STALL           = 15          -- Suche: so lange ohne neue Seite, dann Schluss
 AP.BATCH           = 1000        -- Vollscan: Angebote je Bild
 AP.KEEP_DAYS       = 30
+-- 1.0.5.11 (Feedback: "viele Preise sind nicht aktuell und so nicht
+-- brauchbar"): ein Preis gilt im Tooltip nur so viele Tage als Preis ("ab");
+-- aelter steht er gedaempft als "zuletzt gesehen", nicht als Angebot.
+AP.FRESH_DAYS      = 3
 -- Preis * 1e7 + Menge * 1e4 + Tag muss unter 2^53 bleiben: hoechstens
 -- ~90.000 Gold je Stueck (mehr wird gekappt), 999 Stueck. Der Tag (bis
 -- AP.DAY_MAX, also bis 2039) traegt + AP.SHARED, wenn der Preis von anderen
@@ -257,21 +261,29 @@ end
 -- { price, qty, day, shared, neutral, missing } - missing: beim letzten
 -- vollstaendigen Scan nicht im Angebot (der Preis ist der zuletzt gesehene).
 local found = {}
+local function Entry(side, id)
+    local store = AP.Store(side)
+    local v = store and store.items[id]
+    if not v then return nil end
+    local price, qty, day, shared = AP.Unpack(v)
+    return { price = price, qty = qty, day = day, shared = shared, store = store }
+end
 function AP.Lookup(id)
     if type(id) ~= "number" then return nil end
     local side = AP.side or AP.Faction()
-    local store = AP.Store(side)
-    local v = store and store.items[id]
-    local neutral = side == "Neutral"
-    if not v and side ~= "Neutral" then
-        store = AP.Store("Neutral")
-        v = store and store.items[id]
-        neutral = true
+    local e, neutral = Entry(side, id), side == "Neutral"
+    -- 1.0.5.11: ist der Preis der eigenen Seite alt und der neutrale
+    -- frischer, gilt der neutrale (vorher schlug ein Preis von vor drei
+    -- Wochen den von heute).
+    if side ~= "Neutral" then
+        local n = Entry("Neutral", id)
+        if n and (not e or (AP.Day() - e.day > AP.FRESH_DAYS and n.day > e.day)) then e, neutral = n, true end
     end
-    if not v then return nil end
-    found.price, found.qty, found.day, found.shared = AP.Unpack(v)
+    if not e then return nil end
+    found.price, found.qty, found.day, found.shared = e.price, e.qty, e.day, e.shared
     found.neutral = neutral
-    found.missing = store.full ~= nil and found.day < AP.Day(store.full)
+    found.missing = e.store.full ~= nil and found.day < AP.Day(e.store.full)
+    found.fresh = AP.Day() - found.day <= AP.FRESH_DAYS and not found.missing
     return found
 end
 
@@ -362,22 +374,25 @@ function AP.TooltipLines(id, stack)
     local e = AP.Lookup(id)
     if not e then return nil end
     local lines = {}
-    lines[1] = { e.neutral and "Auktionshaus (neutral)" or "Auktionshaus", "ab " .. AP.Money(e.price) }
+    local from = e.shared and " (von Spielern)" or ""
+    local where = e.neutral and "Auktionshaus (neutral)" or "Auktionshaus"
+    -- 1.0.5.11: nur ein frischer Preis steht als Angebot ("ab"). Ein alter
+    -- oder einer, der beim letzten Scan nicht mehr im Angebot war, steht
+    -- gedaempft als "zuletzt" - mit Alter, ohne Stapelpreis.
+    if not e.fresh then
+        local why = e.missing and "nicht mehr im Angebot" or "veraltet"
+        lines[1] = { where .. ": " .. why, "zuletzt " .. AP.Money(e.price), dim = true }
+        lines[2] = { "Preis von " .. AP.AgeText(e.day) .. from .. " – neu scannen", dim = true }
+        return lines
+    end
+    lines[1] = { where, "ab " .. AP.Money(e.price) }
     if stack and stack > 1 then
         lines[#lines + 1] = { "Stapel (" .. stack .. ")", AP.Money(e.price * stack) }
     end
-    -- Weniger lesen (6.27.4.0, Beta-Test: "zu ueberladen ... wie viele heute
-    -- angeboten wurden interessiert keine Sau"): keine Stueckzahl mehr, und
-    -- eine Zeile zum Alter nur, wenn der Preis nicht von heute ist.
-    -- 6.113.0.0: wieder sagen, wenn der Preis von anderen Spielern kam -
-    -- dann hat ihn niemand hier selbst gesehen.
-    local from = e.shared and " (von Spielern)" or ""
-    if e.missing then
-        lines[#lines + 1] = { "Preis von " .. AP.AgeText(e.day) .. from .. ", zuletzt nicht im Angebot" }
-    elseif e.shared then
+    -- Weniger lesen (6.27.4.0): eine Zeile zum Alter nur, wenn der Preis
+    -- nicht von heute ist oder von anderen Spielern kam.
+    if e.shared or AP.AgeText(e.day) ~= "heute" then
         lines[#lines + 1] = { "Preis von " .. AP.AgeText(e.day) .. from }
-    elseif AP.AgeText(e.day) ~= "heute" then
-        lines[#lines + 1] = { "Preis von " .. AP.AgeText(e.day) }
     end
     return lines
 end
@@ -393,8 +408,12 @@ local function OnItem(tt, data)
     if not lines then return end
     local m, b = C.textMuted, C.textBright
     for _, l in ipairs(lines) do
+        local lm, lb = m, b
+        if l.dim then lm, lb = C.textFaint or m, C.textMuted or m end
         if l[2] then
-            tt:AddDoubleLine(l[1], l[2], m[1], m[2], m[3], b[1], b[2], b[3])
+            tt:AddDoubleLine(l[1], l[2], lm[1], lm[2], lm[3], lb[1], lb[2], lb[3])
+        elseif l.dim then
+            tt:AddLine(l[1], lm[1], lm[2], lm[3])
         else
             tt:AddLine(l[1], m[1], m[2], m[3])
         end
