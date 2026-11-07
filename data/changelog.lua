@@ -22,6 +22,15 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.0.5.13",
+        date    = "07.11.2026",
+        notes   = {
+            "|cff7C6CFFZiel der Mitspieler|r – in den Gruppenrahmen steht unter jedem Namen, wen er im Ziel hat; dasselbe Ziel wie deins in deiner Farbe.",
+            "|cff7C6CFFBuffs von anderen in den Gruppenrahmen|r – Intelligenz, Mal der Wildnis, Segen und Co. erscheinen jetzt auch, wenn du sie selbst nicht wirken kannst.",
+            "|cff7C6CFFFenstermodus|r – nach dem Verändern der Fenstergröße rücken alle Rahmen wieder an ihren Platz und bleiben im Bild.",
+        },
+    },
+    {
         version = "1.0.5.12",
         date    = "07.11.2026",
         notes   = {

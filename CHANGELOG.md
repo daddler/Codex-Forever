@@ -9,6 +9,15 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.0.5.13] – 2026-11-07
+
+- Neu: `ui/groupextra.lua` – Ziel der Mitspieler (`groupTargets`), Buffs
+  anderer Spieler (`groupOtherBuffs`, außerhalb des Kampfes gelesen) für die
+  Rahmen des Spiels und die eigenen Kacheln.
+- Gruppenrahmen: Rollensymbol/Bereitschaftscheck unter „Erweitert“.
+- Fenstermodus: `K.RefitAll` nach `DISPLAY_SIZE_CHANGED`/`UI_SCALE_CHANGED`;
+  Hauptfenster `SetClampedToScreen`.
+
 ## [1.0.5.12] – 2026-11-07
 
 - Neu: `ui/cursor.lua` (Komfortseite „Maus & Pfeil“): Ring/Schein am
