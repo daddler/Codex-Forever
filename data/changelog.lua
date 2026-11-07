@@ -22,6 +22,14 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.0.5.10",
+        date    = "07.11.2026",
+        notes   = {
+            "|cff7C6CFFBalken hinter der Infozeile|r – eigener Hintergrund mit einstellbarer Deckkraft (Chat → Infozeile), damit die Werte gut lesbar sind.",
+            "|cff7C6CFFGröße der Taschenleiste|r – einstellbar wie beim Mikromenü (Aktionsleisten → Anordnung).",
+        },
+    },
+    {
         version = "1.0.5.9",
         date    = "07.11.2026",
         notes   = {

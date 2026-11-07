@@ -9,6 +9,12 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.0.5.10] – 2026-11-07
+
+- Infozeile: eigene Deckkraft des Hintergrunds (`chat.infoBgAlpha`, `CH.PaintInfoBg`).
+- Taschenleiste: Größe (`actionbars.bagsScale`); Schalter WeintCodex-Stil der
+  Taschenleiste unter „Erweitert“.
+
 ## [1.0.5.9] – 2026-11-07
 
 - Stufenfarbe nach klassischer EP-Regel (`K.GrayLevel`, `K.DifficultyColor`)
