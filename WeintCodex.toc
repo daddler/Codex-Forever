@@ -2,7 +2,7 @@
 ## Title: |cff7C6CFFWeintCodex|r
 ## Notes: Raid Guide & Intelligence System — Forever Edition
 ## Author: Fabian
-## Version: 1.0.5.4
+## Version: 1.0.5.5
 ## SavedVariables: WeintCodex_SavedData, WeintCompanionDB, WeintCompanionInboxDB, WeintCodex_WhispersAccount
 ## SavedVariablesPerCharacter: WeintCodex_Whispers
 
@@ -161,6 +161,7 @@ data/zoneinfo.lua
 # um zu sagen, welche davon eine Rolle tragen koennen.
 #
 data/roles.lua
+data/help.lua
 
 #
 # modules/encounter_tracking.lua steht vor modules/raidpages.lua: die
@@ -415,6 +416,7 @@ ui/questlog.lua
 ui/calm.lua
 ui/testmode.lua
 ui/options.lua
+ui/help.lua
 ui/enchants.lua
 ui/glanzpage.lua
 # Symbol der Oberflaeche an der Minikarte (6.9.0.0), nur mit Oberflaeche.

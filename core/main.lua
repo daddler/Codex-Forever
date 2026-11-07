@@ -12,7 +12,7 @@ WeintCodex = WeintCodex or {}
 -- "v" plus diese Zahl sein. Die CI prueft alle vier gegeneinander und
 -- bricht sonst ab - siehe .github/scripts/release_notes.py und
 -- docs/development/releases.md.
-WeintCodex.Version = "1.0.5.4"
+WeintCodex.Version = "1.0.5.5"
 
 SLASH_WEINTCODEX1 = "/wc"
 SLASH_WEINTCODEX2 = "/weintcodex"
@@ -41,6 +41,12 @@ SlashCmdList["WEINTCODEX"] = function(msg)
     local verb, rest = cmd:match("^(%S+)%s*(.-)$")
     verb = verb or ""
     rest = rest or ""
+
+    -- 1.0.5.5: Hilfe - Text zur offenen Seite und Suche mit Schlagwoertern.
+    if verb == "hilfe" or verb == "help" or verb == "?" then
+        if WeintCodex.UIHelp then WeintCodex.UIHelp.Show((msg or ""):match("^%S+%s*(.-)$"), "codex") end
+        return
+    end
 
     -- Zugriffsprofil anzeigen / Verknuepfung aufheben
     if verb == "access" or verb == "zugriff" then

@@ -22,6 +22,15 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.0.5.5",
+        date    = "07.11.2026",
+        notes   = {
+            "|cff7C6CFFHilfe zur offenen Seite|r – das „?“ oben rechts im Fenster und in den Einstellungen erklärt die Seite in zwei, drei Sätzen.",
+            "|cff7C6CFFHilfesuche|r – /wc hilfe Wort sucht in Hilfe und Einstellungen. Jedes Wort zählt einzeln, und Wörter wie „Aggro“ oder „Taschen sortieren“ finden die passende Einstellung. Auch das Suchfeld der Einstellungen sucht jetzt so.",
+            "|cff7C6CFFWarnung bei verkauftem Questgegenstand|r – meldet nur noch Gegenstände mit genau dem Namen aus dem Questziel (vorher zählte ein Teil des Namens).",
+        },
+    },
+    {
         version = "1.0.5.4",
         date    = "07.11.2026",
         notes   = {

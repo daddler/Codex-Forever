@@ -3070,9 +3070,15 @@ closeBtn:SetScript("OnClick", function() WeintCodex.FadeHide(frame) end)
 closeBtn:SetScript("OnEnter", function() closeX:SetTextColor(unpack(C.textBright)) end)
 closeBtn:SetScript("OnLeave", function() closeX:SetTextColor(unpack(C.textMuted)) end)
 
+-- 1.0.5.5: Platz fuer "?" (Hilfe zur offenen Seite, ui/help.lua fuellt ihn).
+local helpSlot = CreateFrame("Frame", nil, titleBar)
+helpSlot:SetSize(24, 24)
+helpSlot:SetPoint("RIGHT", closeBtn, "LEFT", -2, 0)
+WeintCodex.HelpSlot = helpSlot
+
 local versionLbl = titleBar:CreateFontString(nil, "OVERLAY")
 versionLbl:SetFont(F.sans, 11, "")
-versionLbl:SetPoint("RIGHT", closeBtn, "LEFT", -8, 0)
+versionLbl:SetPoint("RIGHT", helpSlot, "LEFT", -6, 0)
 versionLbl:SetTextColor(unpack(C.textFaint))
 versionLbl:SetText(Spaced("V" .. (WeintCodex.Version or "5.0.0.0")))
 WeintCodex.VersionLabel = versionLbl

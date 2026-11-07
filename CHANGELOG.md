@@ -9,6 +9,17 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.0.5.5] – 2026-11-07
+
+- Neu: `data/help.lua` (Hilfetext je Seite des Codex-Fensters und der
+  Einstellungen, Schlagwörter) und `ui/help.lua` („?“ im Codex-Fenster und
+  im Einstellungsfenster, Fenster mit Suche, `/wc hilfe`, `/wcui hilfe`).
+- Suche der Einstellungen: jedes Wort einzeln, Reihenfolge egal, Schlagwörter
+  (`O.MatchWords`), Schlagwörter der Seite im Suchtext.
+- Tour, letzter Schritt: Hinweis auf „?“ und `/wc hilfe`.
+- Questgegenstand verkauft: Name des Questziels muss ganz passen
+  (`QS.ObjectiveName`), „Geiferzahnschnauze“ ≠ „Große Geiferzahnschnauze“.
+
 ## [1.0.5.4] – 2026-11-07
 
 - Taschen: keine Haken mehr an `Show`/`Hide` der Taschenrahmen des Spiels,

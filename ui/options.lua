@@ -1132,7 +1132,7 @@ function O.Build()
     headTitle:SetPoint("TOPLEFT", headEyebrow, "BOTTOMLEFT", 0, -4)
     headDesc = Label(head, F.sans, 12, "textMuted")
     headDesc:SetPoint("TOPLEFT", headTitle, "BOTTOMLEFT", 0, -6)
-    headDesc:SetWidth(CONTENT_W - 200)
+    headDesc:SetWidth(CONTENT_W - 240)
     headDesc:SetWordWrap(true)
 
     local close = CreateFrame("Button", nil, head)
@@ -1328,6 +1328,8 @@ function O.BuilderGameSettings(self, note, text, names)
     return b
 end
 
+function O.IsOpen() return frame ~= nil and K.Bool(frame:IsShown(), false) end
+
 function O.Show(key, pageIndex)
     O.Build()
     frame:Show()
@@ -1378,7 +1380,7 @@ function Recorder:EndAdvanced() self.adv = false end
 function Recorder:Add(label, description)
     if type(label) ~= "string" or label == "" then return end
     local out = self.out
-    out[#out + 1] = { module = self.module, page = self.page, pageLabel = self.pageLabel,
+    out[#out + 1] = { module = self.module, page = self.page, pageLabel = self.pageLabel, pageKey = self.pageKey,
                       section = self.section, label = label, description = description,
                       advanced = self.adv and true or false }
 end
@@ -1408,7 +1410,7 @@ function O.SearchIndex()
         O.SortPages(m)   -- Seitennummern wie im Fenster (O.Locate)
         for i, def in ipairs(m.pages or {}) do
             if def.build then
-                local R = setmetatable({ out = index, module = key, page = i, pageLabel = def.label,
+                local R = setmetatable({ out = index, module = key, page = i, pageLabel = def.label, pageKey = def.key,
                                          parent = scratch, y = -4, widgets = {} }, Recorder)
                 pcall(def.build, R)
             end
@@ -1417,16 +1419,38 @@ function O.SearchIndex()
     return index
 end
 
+-- 1.0.5.5 (Spieler: "minutenlang durch die Einstellungen gesucht"): jedes
+-- Wort zaehlt einzeln, die Reihenfolge nicht ("Taschen sortieren"), und ein
+-- Wort darf auch ueber ein Schlagwort passen ("Aggro" -> Bedrohung,
+-- data/help.lua). Vorher musste der ganze Text am Stueck dastehen.
+function O.MatchWords(hay, q)
+    local syn = WeintCodex.HelpData and WeintCodex.HelpData.SYNONYMS or {}
+    local any = false
+    for w in tostring(q or ""):gmatch("%S+") do
+        any = true
+        if not hay:find(w, 1, true) then
+            local ok = false
+            for _, alt in ipairs(syn[w] or {}) do
+                if hay:find(alt, 1, true) then ok = true break end
+            end
+            if not ok then return false end
+        end
+    end
+    return any
+end
+
 -- Treffer fuer `text` (ab zwei Zeichen), hoechstens `limit`.
 function O.Search(text, limit)
     local q = Fold(text):gsub("^%s+", ""):gsub("%s+$", "")
     local hits = {}
     if #q < 2 then return hits end
+    local pages = WeintCodex.HelpData and WeintCodex.HelpData.PAGES or {}
     for _, e in ipairs(O.SearchIndex()) do
         local m = Mod((O.Locate(e.module, e.page)))
+        local help = e.pageKey and pages[e.module .. "/" .. e.pageKey]
         local hay = Fold(e.label) .. " " .. Fold(e.section) .. " " .. Fold(e.pageLabel) .. " "
-            .. Fold(m and m.title) .. " " .. Fold(e.description)
-        if hay:find(q, 1, true) then
+            .. Fold(m and m.title) .. " " .. Fold(e.description) .. " " .. Fold(help and help.words)
+        if O.MatchWords(hay, q) then
             hits[#hits + 1] = e
             if limit and #hits >= limit then break end
         end
@@ -1567,6 +1591,17 @@ BuildSearch = function(parent, anchor)
     end)
     searchBox = eb
     O.searchBox = eb
+    -- 1.0.5.5: "?" links der Suche - Hilfe zur offenen Seite (ui/help.lua).
+    local help = CreateFrame("Button", nil, parent)
+    help:SetSize(24, 24)
+    help:SetPoint("RIGHT", eb, "LEFT", -6, 0)
+    local q = Label(help, F.sans, 14, "textMuted")
+    q:SetPoint("CENTER", help, "CENTER", 0, 0)
+    q:SetText("?")
+    help:SetScript("OnClick", function() if WeintCodex.UIHelp then WeintCodex.UIHelp.Show(nil, "options") end end)
+    help:SetScript("OnEnter", function() q:SetTextColor(unpack(C.textBright)) end)
+    help:SetScript("OnLeave", function() q:SetTextColor(unpack(C.textMuted)) end)
+    O.helpButton = help
     return eb
 end
 
@@ -1581,6 +1616,11 @@ SlashCmdList["WEINTCODEXUI"] = function(msg)
     msg = input:lower()
     if msg == "entsperren" or msg == "unlock" then
         K.SetUnlocked(not K.IsUnlocked())
+        return
+    end
+    local hq = input:match("^%s*[Hh][Ii][Ll][Ff][Ee]%s*(.-)$") or input:match("^%s*[Hh][Ee][Ll][Pp]%s*(.-)$")
+    if hq and WeintCodex.UIHelp then
+        WeintCodex.UIHelp.Show(hq, "options")
         return
     end
     if msg == "test" then

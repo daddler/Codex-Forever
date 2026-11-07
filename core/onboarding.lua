@@ -350,7 +350,12 @@ local TOUR_STEPS = {
     { chapter = "System", icon = ICON .. "INV_Misc_Note_02",
       title = "Alles Weitere",
       body =
-        "Unter " .. A("Einstellungen") .. " stellst du ein, wie sich das "
+        E("Du musst dir nichts davon merken.") .. " Das " .. A("?")
+        .. " oben rechts im Fenster und in den Einstellungen erklärt die "
+        .. "offene Seite in zwei, drei Sätzen. " .. A("/wc hilfe Wort")
+        .. " sucht in Hilfe und Einstellungen, auch mit Wörtern wie "
+        .. "„Aggro“ oder „Taschen sortieren“.\n\n"
+        .. "Unter " .. A("Einstellungen") .. " stellst du ein, wie sich das "
         .. "Fenster verhält: ob " .. A("Esc") .. " es schließt, ob es über "
         .. "anderen Fenstern liegt, wie groß es ist und ob das Symbol an der "
         .. "Minikarte steht.\n\n"

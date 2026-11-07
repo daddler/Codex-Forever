@@ -11106,6 +11106,53 @@ do
     Check(ok, "Namensplaketten: in Instanzen nur Namen (Spieleinstellung)" .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 1.0.5.5: Hilfe je Seite und Suche mit Schlagwoertern.
+do
+    local H, O, D = WeintCodex.UIHelp, WeintCodex.UIOptions, WeintCodex.HelpData
+    local ok, err = pcall(function()
+        assert(H and O and D, "Hilfe nicht geladen")
+        -- Jede Seite der Einstellungen hat einen Hilfetext, jeder Text eine Seite.
+        local K = WeintCodex.UIKit
+        local pages = {}
+        for _, key in ipairs(K.order) do
+            local m = K.Module(key)
+            for _, def in ipairs(m.pages or {}) do
+                if def.key then
+                    pages[key .. "/" .. def.key] = true
+                    assert(D.PAGES[key .. "/" .. def.key], "kein Hilfetext fuer " .. key .. "/" .. def.key)
+                end
+            end
+        end
+        local tabs = {}
+        for _, t in ipairs(WeintCodex.Navigation.Tabs()) do
+            tabs[t.id] = true
+            assert(D.PAGES["nav:" .. t.id], "kein Hilfetext fuer Reiter " .. t.id)
+        end
+        for k in pairs(D.PAGES) do
+            local tab = k:match("^nav:(.+)$")
+            assert((tab and tabs[tab]) or pages[k], "Hilfetext ohne Seite: " .. k)
+        end
+        -- Woerter einzeln, Reihenfolge egal, Schlagwoerter.
+        local function has(hits, pageKey)
+            for _, e in ipairs(hits) do if e.pageKey == pageKey then return true end end
+        end
+        assert(has(O.Search("sortieren taschen", 60), "kategorien"), "Taschen sortieren findet Kategorien nicht")
+        assert(has(O.Search("aggro", 60), "farben"), "Aggro findet Bedrohung nicht")
+        assert(#O.Search("taschen xyzzy", 60) == 0, "Wort ohne Treffer zaehlt nicht")
+        local hits = H.Search("pfeil")
+        assert(#hits > 0 and hits[1].title:find("Questpfeil", 1, true), "Hilfesuche Pfeil")
+        -- Fenster ueber den Befehl, Hilfe zur Seite ueber "?".
+        SlashCmdList["WEINTCODEX"]("hilfe Aggro")
+        assert(H.win and H.win:IsShown(), "/wc hilfe oeffnet kein Fenster")
+        assert(H.win.rows[1] and H.win.rows[1]:IsShown(), "keine Treffer im Fenster")
+        assert(H.ShowKey("bags/kategorien") and H.win.pageTitle:GetText():find("Kategorien", 1, true), "Hilfe zur Seite")
+        assert(O.helpButton or not O.Build, "kein ? im Einstellungsfenster")
+        assert(H.codexButton, "kein ? im Codex-Fenster")
+        H.win:Hide()
+    end)
+    Check(ok, "Hilfe: Text je Seite, Suche mit Schlagwoertern, /wc hilfe, ?-Knoepfe" .. (ok and "" or (": " .. tostring(err))))
+end
+
 -- 1.0.5.3: Questgegenstand verkauft - Warnung mit Quest, Zurueckkaufen.
 do
     local QS = WeintCodex.UIQuestSell
