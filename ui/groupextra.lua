@@ -26,6 +26,7 @@ local GX = WeintCodex.UIGroupExtra
 
 GX.DEFAULTS = { groupTargets = true, groupOtherBuffs = true, groupOtherMax = 4, groupTargetBar = true }
 GX.ICON = 12
+GX.BAR_W, GX.BAR_H = 72, 14   -- wie der kleine Fokusbalken (Bild des Spielers)
 
 local function Opt(k) return K.Get(KEY, k) end
 local over = setmetatable({}, { __mode = "k" })   -- [Rahmen] = Zusatz
@@ -104,7 +105,7 @@ end
 function GX.UpdateTarget(f)
     local o = Over(f)
     local u = UnitOf(f)
-    if not (Opt("groupTargets") and u) or not (_G.UnitExists and K.Bool(_G.UnitExists(u .. "target"), false)) then
+    if not (Opt("groupTargets") and u) or Opt("groupTargetBar") or not (_G.UnitExists and K.Bool(_G.UnitExists(u .. "target"), false)) then
         o.target:SetText("")
         return nil
     end
@@ -129,7 +130,13 @@ function GX.BuffAt(u, i)
         local ok, a = pcall(ua.GetAuraDataByIndex, u, i, "HELPFUL")
         if ok and type(a) == "table" then
             if type(a.icon) == "nil" then return nil end
-            local mine = K.IsSecret(a.isFromPlayerOrPlayerPet) and nil or (a.isFromPlayerOrPlayerPet and true or false)
+            -- 1.0.5.16 (/wcui gruppe: "player: 4 gelesen, 0 gezeigt"):
+            -- isFromPlayerOrPlayerPet heisst "von IRGENDEINEM Spieler", nicht
+            -- "von dir" - so fiel der Buff des Magiers heraus. Von dir ist nur,
+            -- was sourceUnit als dich nennt.
+            local src, mine = K.Plain(a.sourceUnit), nil
+            if type(src) == "string" and _G.UnitIsUnit then mine = K.Bool(_G.UnitIsUnit(src, "player"), false) end
+            GX.via = "C_UnitAuras"
             return a.icon, mine, K.Plain(a.duration)
         end
         if ok then GX.via = "C_UnitAuras" return nil end
@@ -189,15 +196,27 @@ function GX.UpdateTargetBar(f)
         return false
     end
     if type(o.wcBar) ~= "table" then
+        -- 1.0.5.16 (Feedback: "Balken gar nicht gut - kleiner, daneben, mit
+        -- kleiner Schrift und dem Namen des Ziels"): waagerecht rechts neben
+        -- dem Rahmen, mittig, mit dem Namen im Balken.
         local b = CreateFrame("StatusBar", nil, o)
         b:SetStatusBarTexture(K.BAR_TEXTURE)
-        b:SetPoint("TOPLEFT", f, "TOPRIGHT", 3, -2)
-        b:SetPoint("BOTTOMLEFT", f, "BOTTOMRIGHT", 3, 2)
-        b:SetWidth(6)
-        b:SetOrientation("VERTICAL")
+        b:SetSize(GX.BAR_W, GX.BAR_H)
+        b:SetPoint("LEFT", f, "RIGHT", 3, 0)
         b.bg = b:CreateTexture(nil, "BACKGROUND")
         b.bg:SetAllPoints(b)
-        b.bg:SetColorTexture(0, 0, 0, 0.6)
+        b.bg:SetColorTexture(0, 0, 0, 0.7)
+        b.edge = K.Border(b, 1, 0, 0, 0, 1, "OVERLAY")
+        b.name = K.NewText(b, 8, "OVERLAY")
+        b.name:SetPoint("LEFT", b, "LEFT", 2, 0)
+        b.name:SetPoint("RIGHT", b, "RIGHT", -26, 0)
+        b.pct = K.NewText(b, 8, "OVERLAY")
+        b.pct:SetPoint("RIGHT", b, "RIGHT", -2, 0)
+        b.pct:SetJustifyH("RIGHT")
+        if b.pct.SetShadowOffset then b.pct:SetShadowOffset(1, -1) end
+        b.name:SetJustifyH("LEFT")
+        b.name:SetWordWrap(false)
+        if b.name.SetShadowOffset then b.name:SetShadowOffset(1, -1) end
         o.wcBar = b
     end
     local b = o.wcBar
@@ -207,7 +226,27 @@ function GX.UpdateTargetBar(f)
     local enemy = _G.UnitCanAttack and K.Bool(_G.UnitCanAttack("player", tu), false)
     local GC = WeintCodex.GameColors
     local c = enemy and (GC.enemyInCombat or { 0.8, 0.2, 0.2 }) or (GC.friendly or { 0.3, 0.8, 0.4 })
-    b:SetStatusBarColor(c[1], c[2], c[3], 1)
+    b:SetStatusBarColor(c[1], c[2], c[3], 0.85)
+    -- Prozent: vom Client (UnitHealthPercent, auch geheim an SetFormattedText),
+    -- sonst gerechnet, wenn lesbar; sonst leer - nie geraten.
+    local okP = false
+    if _G.UnitHealthPercent and _G.CurveConstants and _G.CurveConstants.ScaleTo100 then
+        okP = pcall(function()
+            local v = _G.UnitHealthPercent(tu, true, _G.CurveConstants.ScaleTo100)
+            b.pct:SetFormattedText("%.0f%%", v)
+        end)
+    end
+    if not okP then
+        local h, m = K.Plain(hp), K.Plain(mx)
+        if type(h) == "number" and type(m) == "number" and m > 0 then
+            b.pct:SetText(string.format("%d%%", math.floor(h / m * 100 + 0.5)))
+        else
+            b.pct:SetText("")
+        end
+    end
+    local name = _G.UnitName and _G.UnitName(tu)
+    local plain = K.Plain(name)
+    if type(plain) == "string" then b.name:SetText(plain) elseif type(name) ~= "nil" then b.name:SetText(name) else b.name:SetText("") end
     b:Show()
     return true
 end

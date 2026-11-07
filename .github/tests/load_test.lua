@@ -11183,10 +11183,11 @@ do
         f._wcUnit = "party1"
         _G.UnitExists = function(u) return u == "party1target" end
         _G.UnitName = function(u) if u == "party1target" then return "Hogger" end end
-        _G.UnitIsUnit = function(a, b) return a == "party1target" and b == "target" end
+        _G.UnitIsUnit = function(a, b) return a == b or (a == "party1target" and b == "target") end
+        K.Set("groupframes", "groupTargetBar", false)
         assert(GX.UpdateTarget(f) == "Hogger" and GX.over[f].target:GetText() == "» Hogger", "Ziel nicht gezeigt")
         local auras = {
-            { icon = 135932, duration = 1800, sourceUnit = "party2", isFromPlayerOrPlayerPet = false },
+            { icon = 135932, duration = 1800, sourceUnit = "party2", isFromPlayerOrPlayerPet = true },
             { icon = 1, duration = 1800, sourceUnit = "player", isFromPlayerOrPlayerPet = true },
             { icon = 2, duration = 10, sourceUnit = "party2" },
         }
@@ -11207,7 +11208,9 @@ do
         -- Balken: Leben des Ziels rechts daneben.
         local oH, oM, oA = _G.UnitHealth, _G.UnitHealthMax, _G.UnitCanAttack
         _G.UnitHealth, _G.UnitHealthMax, _G.UnitCanAttack = function() return 50 end, function() return 100 end, function() return true end
+        K.Set("groupframes", "groupTargetBar", true)
         assert(GX.UpdateTargetBar(f) == true and GX.over[f].wcBar:IsShown(), "Balken des Ziels fehlt")
+        assert(GX.over[f].wcBar.name:GetText() == "Hogger", "Name im Balken fehlt")
         _G.UnitHealth, _G.UnitHealthMax, _G.UnitCanAttack = oH, oM, oA
         local n0 = K.refits
         K.RefitAll()
