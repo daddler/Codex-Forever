@@ -380,6 +380,7 @@ ui/gossip.lua
 ui/merchant.lua
 ui/merchantsize.lua
 ui/chatcopy.lua
+ui/questsell.lua
 ui/spellinfo.lua
 ui/thanks.lua
 ui/flightgames.lua

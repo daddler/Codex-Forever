@@ -11106,6 +11106,38 @@ do
     Check(ok, "Namensplaketten: in Instanzen nur Namen (Spieleinstellung)" .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 1.0.5.3: Questgegenstand verkauft - Warnung mit Quest, Zurueckkaufen.
+do
+    local QS = WeintCodex.UIQuestSell
+    local o = { _G.C_QuestLog, _G.GetNumBuybackItems, _G.GetBuybackItemLink, _G.BuybackItem }
+    local ok, err = pcall(function()
+        local buyback, bought = {}, nil
+        _G.GetNumBuybackItems = function() return #buyback end
+        _G.GetBuybackItemLink = function(i) return buyback[i] end
+        _G.BuybackItem = function(i) bought = i end
+        _G.C_QuestLog = {
+            GetNumQuestLogEntries = function() return 1 end,
+            GetInfo = function() return { questID = 7777, title = "Leinenlieferung" } end,
+            IsComplete = function() return false end,
+            GetQuestObjectives = function() return { { type = "item", text = "Leinenstoff: 3/10" } } end,
+        }
+        QS.events:GetScript("OnEvent")(nil, "MERCHANT_SHOW")
+        buyback[1] = "|cffffffff|Hitem:2589::::|h[Leinenstoff]|h|r"
+        QS.events:GetScript("OnEvent")(nil, "MERCHANT_UPDATE")
+        assert(QS.win and QS.win:IsShown(), "keine Warnung nach dem Verkauf")
+        assert(QS.win.body:GetText():find("Leinenlieferung", 1, true), "Quest nicht genannt")
+        QS.Buyback()
+        assert(bought == 1, "nicht zurueckgekauft")
+        -- Gegenstand ohne Quest: keine Meldung.
+        buyback[2] = "|cffffffff|Hitem:4306::::|h[Seidenstoff]|h|r"
+        QS.events:GetScript("OnEvent")(nil, "MERCHANT_UPDATE")
+        assert(not QS.win:IsShown(), "Meldung ohne Quest")
+        QS.events:GetScript("OnEvent")(nil, "MERCHANT_CLOSED")
+    end)
+    _G.C_QuestLog, _G.GetNumBuybackItems, _G.GetBuybackItemLink, _G.BuybackItem = o[1], o[2], o[3], o[4]
+    Check(ok, "Haendler: Warnung bei verkauftem Questgegenstand, Zurueckkaufen" .. (ok and "" or (": " .. tostring(err))))
+end
+
 -- 1.0.5.0: Spezialtaschen (Taschenart ~= 0) auch nach Kategorien als Block.
 do
     local BG = WeintCodex.UIBags
