@@ -743,23 +743,40 @@ function CH.FlowInfo()
     if not info then return end
     local W = K.Plain(info:GetWidth())
     if type(W) ~= "number" or W < 20 then W = 400 end
-    local x, row, rows = 2, 0, 1
+    -- 1.0.5.8 (Wunsch mit Bild): ueber der Minikarte rechtsbuendig - links
+    -- oben liegen dort die Knoepfe der Minikarte (Suche, Kalender).
+    local right = Opt("infoPlace") == "minimapTop"
+    local lines, x = { {} }, 2
     for _, it in ipairs(CH.INFO_ITEMS) do
         local cell = info[it.cell]
         if cell then
             if Opt(it.key) then
                 local w = K.Plain(cell:GetWidth()) or 40
-                if x > 2 and x + w > W - 2 then x, row, rows = 2, row + 1, rows + 1 end
-                cell:ClearAllPoints()
-                cell:SetPoint("TOPLEFT", info, "TOPLEFT", x, -row * INFO_H)
-                cell:Show()
+                if x > 2 and x + w > W - 2 then lines[#lines + 1] = {} x = 2 end
+                local line = lines[#lines]
+                line[#line + 1] = { cell = cell, w = w }
                 x = x + w + 2
             else
                 cell:Hide()
             end
         end
     end
-    info:SetHeight(INFO_H * rows)
+    for row, line in ipairs(lines) do
+        local px = 2
+        if right then
+            local total = 0
+            for _, c in ipairs(line) do total = total + c.w + 2 end
+            px = math.max(2, W - total)
+        end
+        for _, c in ipairs(line) do
+            c.cell:ClearAllPoints()
+            c.cell:SetPoint("TOPLEFT", info, "TOPLEFT", px, -(row - 1) * INFO_H)
+            c.cell:Show()
+            px = px + c.w + 2
+        end
+    end
+    CH.infoRight = right
+    info:SetHeight(INFO_H * #lines)
 end
 
 local function BuildInfoBar()
