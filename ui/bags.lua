@@ -1273,27 +1273,50 @@ local function Enable()
     end
     Watch(_G.ContainerFrameCombinedBags)
     for i = 1, (_G.NUM_CONTAINER_FRAMES or 13) do Watch(_G["ContainerFrame" .. i]) end
+    -- 1.0.5.7 (Fehlerbericht nach 1.0.5.4, wieder "Verboten: UNKNOWN()"
+    -- beim Verkaufen, Haendler/Bank/Post beim Oeffnen tainted): WeintCodex
+    -- rief beim Schliessen dieses Fensters (Kreuz, Esc) CloseAllBags() des
+    -- Spiels auf - aus Addon-Code. Das schrieb den Zustand der Taschen des
+    -- Spiels "tainted"; Haendler, Bank und Post oeffnen beim Aufgehen die
+    -- Taschen, lesen diesen Zustand und schreiben danach ihren Reiter
+    -- tainted - und der Rechtsklick zum Verkaufen liest genau den.
+    -- REGEL SEITDEM: WeintCodex ruft KEINE Taschenfunktion des Spiels auf.
+    -- Dieses Fenster folgt nur der Absicht, die die Haken sehen (alle in
+    -- einem Augenblick zusammengefasst): Umschalten (Taste, Rucksack) schaltet
+    -- dieses Fenster um, Oeffnen (Haendler, Bank, Post) zeigt es, Schliessen
+    -- verbirgt es, wenn das Spiel keine Tasche mehr offen hat. Dass die
+    -- (unsichtbaren) Taschen des Spiels nach Kreuz/Esc noch "offen" sind,
+    -- schadet nicht: der naechste Tastendruck schaltet dieses Fenster.
+    local want = { toggle = false, open = false, close = false }
     local queued = false
-    local function Later()
-        if queued then return end
-        queued = true
-        local function Run() queued = false Mirror() end
-        if _G.C_Timer and _G.C_Timer.After then _G.C_Timer.After(0, Run) else Run() end
-    end
-    BG.MirrorLater = Later
-    if _G.hooksecurefunc then
-        for _, fn in ipairs({ "OpenAllBags", "CloseAllBags", "ToggleAllBags", "OpenBackpack", "CloseBackpack",
-            "ToggleBackpack", "OpenBag", "CloseBag", "ToggleBag" }) do
-            if type(_G[fn]) == "function" then _G.hooksecurefunc(fn, Later) end
+    local function Run()
+        queued = false
+        local t, o, c = want.toggle, want.open, want.close
+        want.toggle, want.open, want.close = false, false, false
+        if t then
+            if win:IsShown() then BG.Close() else BG.Open() end
+        elseif o then
+            BG.Open()
+        elseif c and not AnyBlizzardOpen() then
+            BG.Close()
         end
     end
-
-    -- Schliesst man dieses Fenster (Kreuz, Esc), gehen auch die des Spiels
-    -- zu - sonst oeffnete die Taschentaste beim naechsten Mal nichts, weil
-    -- das Spiel sie noch fuer offen haelt.
-    win:HookScript("OnHide", function()
-        if AnyBlizzardOpen() and _G.CloseAllBags then _G.CloseAllBags() end
-    end)
+    local function Note(kind)
+        want[kind] = true
+        if queued then return end
+        queued = true
+        if _G.C_Timer and _G.C_Timer.After then _G.C_Timer.After(0, Run) else Run() end
+    end
+    BG.NoteBags, BG.RunBags = Note, Run
+    BG.Mirror = Mirror
+    if _G.hooksecurefunc then
+        local kinds = { ToggleAllBags = "toggle", ToggleBackpack = "toggle", ToggleBag = "toggle",
+                        OpenAllBags = "open", OpenBackpack = "open", OpenBag = "open",
+                        CloseAllBags = "close", CloseBackpack = "close", CloseBag = "close" }
+        for fn, kind in pairs(kinds) do
+            if type(_G[fn]) == "function" then _G.hooksecurefunc(fn, function() Note(kind) end) end
+        end
+    end
 
     local ev = CreateFrame("Frame")
     for _, e in ipairs({ "BAG_UPDATE_DELAYED", "ITEM_LOCK_CHANGED", "BAG_UPDATE_COOLDOWN",

@@ -35,7 +35,11 @@ local st = { cols = 2, per = nil }
 MS.state = st
 
 function MS.Active()
-    return K.IsActive(KEY) and K.Get(KEY, "vendorGrow") ~= false
+    -- 1.0.5.7: nur, wer es selbst einschaltet (neuer Schluessel, damit alte
+    -- gespeicherte "an" - auch aus dem Willkommens-Assistenten - nicht mehr
+    -- gelten). Es macht den Haendler "tainted", danach kann Verkaufen
+    -- gesperrt sein.
+    return K.IsActive(KEY) and K.Get(KEY, "vendorGrow2") == true
 end
 
 local function F() return _G.MerchantFrame end
@@ -283,15 +287,17 @@ if mod then
     -- muss die Seite des Haendlers neu aufbauen (MerchantFrame_Update aus
     -- Addon-Code), und alles, was der Aufbau dann schreibt, ist tainted.
     -- Wer es will, schaltet es ein - mit Hinweis.
-    if mod.defaults.vendorGrow == nil then mod.defaults.vendorGrow = true end
+    -- 1.0.5.7: stand trotz des Kommentars oben bis hierher auf "an" -
+    -- Ursache vieler "Verboten: UNKNOWN()" beim Verkaufen.
+    if mod.defaults.vendorGrow2 == nil then mod.defaults.vendorGrow2 = false end
     local page = mod.pages and mod.pages[1]
     if page then
         local build = page.build
         page.build = function(B)
             build(B)
             B:Section("Händlerfenster")
-            B:Row({ type = "toggle", label = "Händlerfenster groß ziehen", key = "vendorGrow", reload = true,
-                    description = "Am Griff unten rechts größer ziehen: alle Waren auf einen Blick, ohne Blättern. Achtung: solange ein Händler offen war, kann ein Klick in die Taschen „Verboten“ melden – dann bitte ausschalten und neu laden." },
+            B:Row({ type = "toggle", label = "Händlerfenster groß ziehen", key = "vendorGrow2", reload = true,
+                    description = "Am Griff unten rechts größer ziehen: alle Waren auf einen Blick, ohne Blättern. Achtung: das Spiel kann danach das Verkaufen per Rechtsklick sperren („WeintCodex wurde geblockt“). Nur einschalten, wenn du das in Kauf nimmst." },
                   { type = "empty" })
         end
     end

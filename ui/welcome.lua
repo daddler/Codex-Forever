@@ -165,8 +165,6 @@ WL.HELPERS = {
     { group = "handel", module = "comfort", key = "ahPrices", label = "Auktionspreise",
       text = "Merkt sich Preise im Auktionshaus und zeigt sie im Tooltip – und teilt sie mit der Gilde (abschaltbar)." },
     -- `optional`: aendert Gewohntes spuerbar - nicht in "Empfohlen".
-    { group = "handel", module = "comfort", key = "vendorGrow", label = "Händlerfenster groß ziehen",
-      text = "Am Griff unten rechts größer ziehen – so viele Waren, wie hineinpassen." },
     { group = "handel", module = "comfort", key = "msgOn", label = "Flüstern als Messenger",
       text = "Jedes Gespräch in einem eigenen Fenster." },
     { group = "handel", module = "comfort", key = "dlgOn", label = "Gespräche im Codex-Stil",

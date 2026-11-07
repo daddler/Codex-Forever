@@ -770,7 +770,13 @@ local function BuildInfoBar()
         info.kachel = K.Kachel(info, { shadow = 6 })
         CH.infoFrame = info
         info.kachel:SetShown((Opt("bgAlpha") or 60) > 0)
-        local function Bags() if _G.ToggleAllBags then _G.ToggleAllBags() end end
+        -- 1.0.5.7: nie ToggleAllBags() des Spiels aus Addon-Code (machte den
+        -- Zustand der Taschen "tainted", danach Verkaufen gesperrt). Nur die
+        -- WeintCodex-Taschen; ohne sie oeffnet die Taste B.
+        local function Bags()
+            local BGm = WeintCodex.UIBags
+            if BGm and BGm.Toggle and K.IsActive("bags") then BGm.Toggle() end
+        end
         info.clock = InfoCell(info, function() if _G.ToggleCalendar then pcall(_G.ToggleCalendar) end end, "Kalender")
         -- 6.26.0.0: Maus darauf - Einnahmen/Ausgaben der Sitzung und das
         -- Gold aller Charaktere (ui/inventory.lua).

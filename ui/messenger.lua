@@ -603,7 +603,9 @@ local function Build()
         ssf:HookScript("OnShow", function(self)
             if MS.linkedAt and (_G.GetTime and _G.GetTime() or 0) - MS.linkedAt < 0.3 then
                 MS.linkedAt = nil
-                if self.Cancel then pcall(self.Cancel, self) else self:Hide() end
+                -- 1.0.5.7: nicht self:Cancel() - das schriebe Felder des
+                -- Teilen-Fensters aus Addon-Code, die der Klick in die Tasche liest.
+                self:Hide()
             end
         end)
     end

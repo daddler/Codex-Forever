@@ -3000,6 +3000,36 @@ do
         .. (#offenders == 0 and "" or (": " .. table.concat(offenders, ", "))))
 end
 
+-- 1.0.5.7: KEINE Taschenfunktion des Spiels aus Addon-Code aufrufen
+-- (CloseAllBags beim Schliessen der Tasche machte Haendler, Bank und Post
+-- "tainted" - Verkaufen gesperrt, "WeintCodex wurde geblockt"). Haken
+-- (hooksecurefunc mit dem Namen als Zeichenkette) sind erlaubt.
+do
+    local offenders = {}
+    local bad = { "OpenAllBags", "CloseAllBags", "ToggleAllBags", "OpenBackpack", "CloseBackpack",
+                  "ToggleBackpack", "OpenBag", "CloseBag", "ToggleBag" }
+    for _, dir in ipairs({ "ui", "core", "modules" }) do
+        local pipe = io.popen and io.popen('ls "' .. ROOT .. '/' .. dir .. '" 2>/dev/null')
+        if pipe then
+            for name in pipe:lines() do
+                if name:match("%.lua$") then
+                    local h = io.open(ROOT .. "/" .. dir .. "/" .. name, "r")
+                    local code = h:read("*a"):gsub("%-%-[^\n]*", "")
+                    h:close()
+                    for _, fn in ipairs(bad) do
+                        if code:find("[^%w_\"]" .. fn .. "%s*%(") or code:find("_G%." .. fn .. "%s*%(") then
+                            offenders[#offenders + 1] = dir .. "/" .. name .. ": " .. fn
+                        end
+                    end
+                end
+            end
+            pipe:close()
+        end
+    end
+    Check(#offenders == 0, "Keine Taschenfunktion des Spiels aus Addon-Code (Taint beim Verkaufen)"
+        .. (#offenders == 0 and "" or (": " .. table.concat(offenders, ", "))))
+end
+
 -- KEIN "local a, b = f and f()" (1.9.1.0). Ein and/or-Ausdruck kappt auf
 -- EINEN Wert: b ist immer nil. So fehlte die Klasse an "Aggro: Name", in der
 -- Bedrohungsliste und im Bestand, und die Sammel-Suche im Wechsel meldete
@@ -4385,7 +4415,7 @@ end
 -- aus der gemessenen Groesse, nie kleiner als das Spiel, Zahl je Seite.
 do
     local MS = WeintCodex.UIMerchantSize
-    WeintCodex.UIKit.Set("comfort", "vendorGrow", true)   -- seit 6.79.0.0 ab Werk aus
+    WeintCodex.UIKit.Set("comfort", "vendorGrow2", true)   -- seit 1.0.5.7 wirklich ab Werk aus
     local saved = { _G.MerchantFrame, MS.state.native, _G.MERCHANT_ITEMS_PER_PAGE, _G.GetMerchantNumItems, _G.CreateFrame }
     -- Keine Plaetze anlegen: die Pruefung des Haendler-Stils zaehlt sie.
     _G.CreateFrame = function() end
