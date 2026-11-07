@@ -63,6 +63,17 @@ function QS.LogQuests()
     return out
 end
 
+-- Name des Gegenstands aus einem Questziel ("Große Geiferzahnschnauze: 1/5",
+-- englisch auch "1/5 Name"). 1.0.5.5: vorher reichte ein Teil des Textes -
+-- "Geiferzahnschnauze" meldete die Quest für "Große Geiferzahnschnauze".
+function QS.ObjectiveName(text)
+    if type(text) ~= "string" then return nil end
+    local name = text:match("^%s*(.-)%s*:%s*%d+%s*/%s*%d+%s*$")
+        or text:match("^%s*%d+%s*/%s*%d+%s+(.-)%s*$")
+        or text:match("^%s*(.-)%s*$")
+    return name
+end
+
 -- Welche Quests im Log brauchen diesen Gegenstand? Liste von Questnamen.
 function QS.QuestsFor(itemID, itemName)
     local out = {}
@@ -79,7 +90,7 @@ function QS.QuestsFor(itemID, itemName)
             local ok, objs = pcall(ql.GetQuestObjectives, q.id)
             for _, o in ipairs(ok and type(objs) == "table" and objs or {}) do
                 local text = Plain(o.text)
-                if Plain(o.type) == "item" and type(text) == "string" and text:find(itemName, 1, true) then
+                if Plain(o.type) == "item" and QS.ObjectiveName(text) == itemName then
                     hit = true
                     break
                 end

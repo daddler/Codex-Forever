@@ -11132,6 +11132,13 @@ do
         buyback[2] = "|cffffffff|Hitem:4306::::|h[Seidenstoff]|h|r"
         QS.events:GetScript("OnEvent")(nil, "MERCHANT_UPDATE")
         assert(not QS.win:IsShown(), "Meldung ohne Quest")
+        -- 1.0.5.5: nur der ganze Name zaehlt (Geiferzahnschnauze ~= Grosse Geiferzahnschnauze).
+        assert(QS.ObjectiveName("Große Geiferzahnschnauze: 1/5") == "Große Geiferzahnschnauze", "Zielname")
+        assert(QS.ObjectiveName("1/5 Gnoll Paw") == "Gnoll Paw", "Zielname englisch")
+        _G.C_QuestLog.GetQuestObjectives = function() return { { type = "item", text = "Große Geiferzahnschnauze: 1/5" } } end
+        buyback[3] = "|cffffffff|Hitem:1468::::|h[Geiferzahnschnauze]|h|r"
+        QS.events:GetScript("OnEvent")(nil, "MERCHANT_UPDATE")
+        assert(not QS.win:IsShown(), "Teil des Namens meldet Quest")
         QS.events:GetScript("OnEvent")(nil, "MERCHANT_CLOSED")
     end)
     _G.C_QuestLog, _G.GetNumBuybackItems, _G.GetBuybackItemLink, _G.BuybackItem = o[1], o[2], o[3], o[4]
