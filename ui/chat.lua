@@ -570,7 +570,24 @@ end
 -- steht sie immer offen (Chatstil "klassisch"), bleibt die Infozeile weg.
 
 local info
-function CH.InfoAtChat() return Opt("infoBar") and Opt("infoPlace") ~= "minimap" end
+function CH.InfoAtChat()
+    local p = Opt("infoPlace")
+    return Opt("infoBar") and p ~= "minimap" and p ~= "minimapTop"
+end
+
+-- 1.0.5.6 (Wunsch: "von Rot nach Gruen faerben, je nachdem wie viel noch
+-- Platz ist, wie die Haltbarkeit noch ist"): Ampel je Wert. Grenzen sind
+-- Faustregeln, keine Messung: Taschen 0-2 rot, bis 8 gelb; Haltbarkeit
+-- unter 20 % rot, unter 50 % gelb; Bildrate unter 20 rot, unter 40 gelb;
+-- Latenz ab 300 ms rot, ab 150 ms gelb. Sonst gruen.
+function CH.Tone(kind, v)
+    if type(v) ~= "number" then return nil end
+    if kind == "bags" then return v <= 2 and "danger" or (v <= 8 and "warning" or "success") end
+    if kind == "dur" then return v < 20 and "danger" or (v < 50 and "warning" or "success") end
+    if kind == "fps" then return v < 20 and "danger" or (v < 40 and "warning" or "success") end
+    if kind == "ms" then return v >= 300 and "danger" or (v >= 150 and "warning" or "success") end
+    return nil
+end
 
 -- Was die Zeile zeigen kann, in dieser Reihenfolge (6.34.0.0): Schalter,
 -- Feld. Links und rechts gibt es nicht mehr - die Felder fliessen von
@@ -667,24 +684,25 @@ function CH.UpdateInfoBar()
     Set(info.clock, h or "–")
     Set(info.money, Money())
     local free = FreeSlots()
-    Set(info.bags, free and (dim("textDim", "Taschen ") .. free) or (dim("textDim", "Taschen ") .. "–"))
+    Set(info.bags, free and (dim("textDim", "Taschen ") .. dim(CH.Tone("bags", free), tostring(free)))
+        or (dim("textDim", "Taschen ") .. "–"))
     local dur = Durability()
     if dur then
-        local tone = dur < 20 and "danger" or (dur < 50 and "warning" or nil)
         local v = string.format("%d%%", math.floor(dur + 0.5))
-        Set(info.dur, dim("textDim", "Rüstung ") .. (tone and dim(tone, v) or v))
+        Set(info.dur, dim("textDim", "Rüstung ") .. dim(CH.Tone("dur", dur), v))
     else
         Set(info.dur, dim("textDim", "Rüstung ") .. "–")
     end
     local fps = K.Plain(_G.GetFramerate and _G.GetFramerate())
-    Set(info.fps, type(fps) == "number" and (string.format("%d", math.floor(fps + 0.5)) .. dim("textDim", " fps")) or "–")
+    Set(info.fps, type(fps) == "number" and (dim(CH.Tone("fps", fps), string.format("%d", math.floor(fps + 0.5)))
+        .. dim("textDim", " fps")) or "–")
     local lat
     if _G.GetNetStats then
         local ok, _, _, home, world = pcall(_G.GetNetStats)
         home, world = ok and K.Plain(home) or nil, ok and K.Plain(world) or nil
         lat = type(world) == "number" and world or (type(home) == "number" and home or nil)
     end
-    Set(info.ms, type(lat) == "number" and (tostring(lat) .. dim("textDim", " ms")) or "–")
+    Set(info.ms, type(lat) == "number" and (dim(CH.Tone("ms", lat), tostring(lat)) .. dim("textDim", " ms")) or "–")
     if Opt("infoCoords") then
         local x, y = CH.Coords()
         Set(info.coords, x and string.format("%.1f, %.1f", x, y) or "–")
@@ -796,7 +814,12 @@ local function BuildInfoBar()
     end
     info:ClearAllPoints()
     local mm = _G.Minimap
-    if Opt("infoPlace") == "minimap" and type(mm) == "table" then
+    if Opt("infoPlace") == "minimapTop" and type(mm) == "table" then
+        -- 1.0.5.6 (Wunsch mit Bild): ueber der Minikarte, so breit wie sie.
+        info:SetPoint("BOTTOMLEFT", mm, "TOPLEFT", 0, 6)
+        info:SetPoint("BOTTOMRIGHT", mm, "TOPRIGHT", 0, 6)
+        info:SetFrameStrata(mm:GetFrameStrata() or "LOW")
+    elseif Opt("infoPlace") == "minimap" and type(mm) == "table" then
         -- Unter der Minikarte, so breit wie sie.
         info:SetPoint("TOPLEFT", mm, "BOTTOMLEFT", 0, -6)
         info:SetPoint("TOPRIGHT", mm, "BOTTOMRIGHT", 0, -6)
@@ -1017,6 +1040,16 @@ function CH.HookEdit(eb)
     end
 end
 
+function CH.TakeFontSize(size)
+    size = tonumber(K.Plain(size))
+    if not size or size < 6 or size > 40 then return false end
+    size = math.floor(size + 0.5)
+    if Opt("fontSize") == size then return false end
+    K.Set(KEY, "fontSize", size)
+    pcall(ApplyAll)
+    return true
+end
+
 local function Enable()
     ApplyAll()
     -- Fluesterfenster und neue Reiter legt das Spiel spaeter an.
@@ -1025,6 +1058,17 @@ local function Enable()
     end
     if _G.hooksecurefunc and _G.FCF_OpenNewWindow then
         _G.hooksecurefunc("FCF_OpenNewWindow", function() ApplyAll() end)
+    end
+    -- 1.0.5.6 (Fehlerbericht: "Schriftgroesse im Chat aendern springt nach
+    -- einiger Zeit zurueck"): die Groesse aus dem Menue des Reiters setzte
+    -- das Spiel, wir beim naechsten Anlegen (Fluesterfenster, neuer Reiter)
+    -- wieder unsere. Jetzt gilt die gewaehlte als unsere Einstellung.
+    if _G.hooksecurefunc and _G.FCF_SetChatWindowFontSize then
+        _G.hooksecurefunc("FCF_SetChatWindowFontSize", function(self, cf, size)
+            size = size or (type(self) == "table" and self.value) or nil
+            if not size and type(cf) == "table" and cf.GetFont then size = select(2, cf:GetFont()) end
+            CH.TakeFontSize(size)
+        end)
     end
     -- Reiterwechsel: das Spiel faerbt die Reiter selbst neu, danach wir.
     for _, fn in ipairs({ "FCF_Tab_OnClick", "FCFDock_SelectWindow", "FCFTab_UpdateColors" }) do
@@ -1080,7 +1124,8 @@ K.Register({
             B:Section("Wo")
             B:Row({ type = "dropdown", label = "Infozeile steht", key = "infoPlace", disabled = off, items = {
                         { value = "chat",    text = "Unter dem Chat" },
-                        { value = "minimap", text = "Unter der Minikarte" } } },
+                        { value = "minimap", text = "Unter der Minikarte" },
+                        { value = "minimapTop", text = "Über der Minikarte" } } },
                   { type = "empty" })
             B:Note("Unter dem Chat legt sich die Eingabezeile beim Schreiben darüber. Unter der Minikarte bricht die Zeile um, wenn die Werte nicht nebeneinander passen.")
             B:Section("Was")

@@ -11106,6 +11106,24 @@ do
     Check(ok, "Namensplaketten: in Instanzen nur Namen (Spieleinstellung)" .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 1.0.5.6: Ampel in der Infozeile, Schriftgroesse aus dem Menue des Spiels bleibt.
+do
+    local CH = WeintCodex.UIChat
+    local K = WeintCodex.UIKit
+    local ok, err = pcall(function()
+        assert(CH.Tone("bags", 1) == "danger" and CH.Tone("bags", 5) == "warning" and CH.Tone("bags", 31) == "success", "Taschen")
+        assert(CH.Tone("dur", 10) == "danger" and CH.Tone("dur", 40) == "warning" and CH.Tone("dur", 90) == "success", "Haltbarkeit")
+        assert(CH.Tone("fps", 60) == "success" and CH.Tone("ms", 400) == "danger", "fps/ms")
+        assert(CH.Tone("dur", nil) == nil, "unbekannt bekommt keine Farbe")
+        local before = K.Get("chat", "fontSize")
+        CH.TakeFontSize(16)
+        assert(K.Get("chat", "fontSize") == 16, "Groesse aus dem Menue nicht uebernommen")
+        assert(CH.TakeFontSize("x") == false, "Unsinn uebernommen")
+        K.Set("chat", "fontSize", before)
+    end)
+    Check(ok, "Chat: Ampel in der Infozeile, Schriftgroesse bleibt" .. (ok and "" or (": " .. tostring(err))))
+end
+
 -- 1.0.5.5: Hilfe je Seite und Suche mit Schlagwoertern.
 do
     local H, O, D = WeintCodex.UIHelp, WeintCodex.UIOptions, WeintCodex.HelpData

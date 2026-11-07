@@ -114,7 +114,7 @@ P["actionbars/erfahrung"] = { title = "Aktionsleisten · Erfahrung", text = "Erf
 P["minimap/allgemein"] = { title = "Minikarte · Allgemein", text = "Form, Größe und Knöpfe der Minikarte.", words = "minimap karte" }
 P["minimap/layer"] = { title = "Minikarte · Layer", text = "Layer anzeigen und auf Klick um einen anderen Layer bitten.", words = "layer phase wechseln" }
 P["chat/allgemein"] = { title = "Chat · Allgemein", text = "Schriftgröße, Hintergrund, flache Reiter, Eingabezeile erst mit Enter.", words = "chat kopieren" }
-P["chat/info"] = { title = "Chat · Infozeile", text = "Zeile unter dem Chat mit Zeit, Gold, Koordinaten und mehr.", words = "info uhr gold koordinaten" }
+P["chat/info"] = { title = "Chat · Infozeile", text = "Zeile mit Zeit, Gold, Taschenplätzen, Haltbarkeit, Bildrate – unter dem Chat, unter oder über der Minikarte. Die Werte in Ampelfarben.", words = "info uhr gold koordinaten" }
 P["questarrow/allgemein"] = { title = "Questpfeil",
     text = "Pfeil zum nächsten Questziel, Zielmarke im Raum, Kompass.",
     words = "pfeil wegpunkt navi navigation route weg" }
