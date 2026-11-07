@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.0.5.3",
+        date    = "07.11.2026",
+        notes   = {
+            "|cff7C6CFFWarnung bei verkauftem Questgegenstand|r – verkaufst du etwas, das eine Quest in deinem Log braucht, nennt ein Fenster die Quest und bietet „Zurückkaufen“ an. Schalter unter Komfort → Händler.",
+        },
+    },
+    {
         version = "1.0.5.2",
         date    = "07.11.2026",
         notes   = {

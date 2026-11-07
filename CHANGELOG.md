@@ -9,6 +9,14 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.0.5.3] – 2026-11-07
+
+- Neu: `ui/questsell.lua` – nach einem Verkauf (Rückkaufliste,
+  `MERCHANT_UPDATE`) Warnung, wenn eine Quest im Log den Gegenstand braucht
+  (Questbestand Feld „Gegenstand“, sonst Questziele des Spiels), mit
+  „Zurückkaufen“ (`BuybackItem`). Vorher anhalten ginge nur über den Klick
+  des Spiels (Taint).
+
 ## [1.0.5.2] – 2026-11-07
 
 Datenstand vom 07.11.2026.
