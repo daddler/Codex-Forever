@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.0.5.8",
+        date    = "07.11.2026",
+        notes   = {
+            "|cff7C6CFFInfozeile über der Minikarte rechtsbündig|r – die Knöpfe der Minikarte oben links verdecken die Werte nicht mehr.",
+        },
+    },
+    {
         version = "1.0.5.7",
         date    = "07.11.2026",
         notes   = {

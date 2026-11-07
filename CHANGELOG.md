@@ -9,6 +9,10 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.0.5.8] – 2026-11-07
+
+- Infozeile: über der Minikarte rechtsbündig (`CH.FlowInfo`).
+
 ## [1.0.5.7] – 2026-11-07
 
 - Taschen: kein `CloseAllBags()` mehr beim Schließen per Kreuz/Esc; das
