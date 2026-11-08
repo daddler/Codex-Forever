@@ -92,6 +92,12 @@ settings always win.
 it registers the prefixes `BigWigs` and `D5` only to *listen* to pull and
 break timers of those addons; `/pull` uses the game's own countdown
 (`C_PartyInfo.DoCountdown`), `/break` stays local.
+**Eighth exception since 1.0.5.28, on request („Button zum Bug senden“,
+`ui/errors.lua`):** only on the player's click on „Melden & neu laden“ in
+the error window, the error is marked (`errors[i].report = "pending"`, plus
+client version, class, level, zone) and the UI reloads; the Companion reads
+it from the file and posts it to the bot (`POST /companion/bug-report`,
+forum `BUG_CHANNEL_ID`). The addon itself still sends nothing.
 Nothing else leaves the client, nothing goes to the
 internet; any further outward message needs the same explicit request.
 

@@ -25183,6 +25183,30 @@ do
     Check(ok, "Volk aus Forever" .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 1.0.5.28: Fehler melden - vormerken mit Bericht, Knopf nur mit Companion.
+do
+    local ER = WeintCodex.UIErrors
+    local oLive = _G.WeintCodex_CompanionLive
+    local ok, err = pcall(function()
+        local e = { key = "k", kind = "lua", msg = "x", count = 1 }
+        assert(ER.MarkReport({ e }) == 1 and e.report == "pending" and e.client and e.class, "nicht vorgemerkt")
+        assert(ER.MarkReport({ e }) == 0, "doppelt vorgemerkt")
+        _G.WeintCodex_CompanionLive = { writtenAt = 0, queue = {} }
+        assert(not ER.HasCompanion(), "leere Live-Datei als Companion gezaehlt")
+        _G.WeintCodex_CompanionLive = { writtenAt = 1700000000, queue = {} }
+        assert(ER.HasCompanion(), "Companion nicht erkannt")
+        assert(ER.Show({ e }) and ER.sendButton and ER.sendButton:IsShown(), "Melden-Knopf fehlt")
+        _G.WeintCodex_CompanionLive = { writtenAt = 0, queue = {} }
+        ER.Show({ e })
+        assert(not ER.sendButton:IsShown(), "Melden-Knopf ohne Companion")
+        K.ShowReport("Anderer Bericht", { "a" })
+        assert(not ER.sendButton:IsShown(), "Melden-Knopf in fremdem Bericht")
+        K.report:Hide()
+    end)
+    _G.WeintCodex_CompanionLive = oLive
+    Check(ok, "Fehler melden" .. (ok and "" or (": " .. tostring(err))))
+end
+
 if failures == 0 then
     print("BESTANDEN")
     os.exit(0)

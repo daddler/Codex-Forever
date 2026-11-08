@@ -59,6 +59,7 @@ local function Build()
     hint:SetPoint("TOPLEFT", title, "BOTTOMLEFT", 0, -4)
     hint:SetTextColor(unpack(C.textMuted))
     hint:SetText("Alles ist markiert: Strg+C kopiert. Esc schließt.")
+    f.hint = hint
 
     local box = CreateFrame("Frame", nil, f)
     box:SetPoint("TOPLEFT", f, "TOPLEFT", 14, -56)
@@ -113,6 +114,14 @@ function K.ShowReport(title, lines)
     report.text = text
     report.title:SetText(K.PlainText(title or "Bericht"))
     report.edit:SetText(text)
+    -- Fehlerfenster (ui/errors.lua) setzen Hinweis und Knopf selbst; jeder
+    -- andere Bericht bekommt den Standard zurueck.
+    if report.hint then report.hint:SetText("Alles ist markiert: Strg+C kopiert. Esc schließt.") end
+    if report._wcErrors then
+        report._wcErrors = nil
+        local ER = WeintCodex.UIErrors
+        if ER and ER.sendButton then ER.sendButton:Hide() end
+    end
     report:Show()
     if report.Raise then report:Raise() end
     report.edit:SetFocus()

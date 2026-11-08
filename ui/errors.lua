@@ -162,9 +162,75 @@ function ER.Lines(entries)
     return out
 end
 
+--------------------------------------------------
+-- Melden (1.0.5.28)
+--------------------------------------------------
+-- Wunsch des Projektinhabers: "Button zum Bug senden - der User klickt nur
+-- darauf, und der Report kommt bei mir an." Ein Addon schickt nichts ins
+-- Netz: "Melden" merkt den Fehler vor (e.report = "pending") und laedt neu -
+-- erst dann steht er in der Datei. Die Companion liest ihn dort und schickt
+-- ihn an den Bot (Discord, Forum "Fehlerberichte"). Mitgeschickt wird nur,
+-- was im Bericht steht: Fehlertext, Aufrufkette, Fassungen, Klasse, Stufe,
+-- Zone - kein Chat, kein Gold, nichts aus dem Spielstand.
+
+-- Laeuft eine Companion? Nur dann kommt ein Bericht an. Die Live-Datei ist
+-- im Auslieferungsstand leer; die Companion schreibt ihre Uhrzeit hinein.
+function ER.HasCompanion()
+    local live = _G.WeintCodex_CompanionLive
+    return type(live) == "table" and (tonumber(live.writtenAt) or 0) > 0
+end
+
+function ER.MarkReport(entries)
+    local v, b = Client()
+    local cls, lvl, zone = Who()
+    local n = 0
+    for _, e in ipairs(entries or {}) do
+        if e.report ~= "pending" then
+            e.report = "pending"
+            e.reportAt = _G.time and _G.time() or 0
+            e.client = v .. " (" .. b .. ")"
+            e.locale = _G.GetLocale and _G.GetLocale() or "?"
+            e.class, e.level, e.zone = cls, lvl, zone
+            n = n + 1
+        end
+    end
+    return n
+end
+
+local sendBtn
+local function SendButton(report)
+    if sendBtn then return sendBtn end
+    sendBtn = WeintCodex.CreateButton(report, {
+        text = "Melden & neu laden", kind = "primary", width = 170, height = 28,
+        tooltip = "Schickt den Fehler über die Companion an den Entwickler. Das Spiel lädt dafür einmal neu (wie /reload).",
+    })
+    sendBtn:SetPoint("BOTTOMLEFT", report, "BOTTOMLEFT", 14, 14)
+    WeintCodex.AttachReload(sendBtn, function()
+        ER.MarkReport(sendBtn.entries)
+    end)
+    ER.sendButton = sendBtn
+    return sendBtn
+end
+
+-- Freundlich zuerst, Technik darunter.
+ER.FRIENDLY = "Da ist bei WeintCodex etwas schiefgelaufen – dein Spiel läuft normal weiter."
 function ER.Show(entries, title)
     if not (K.ShowReport and entries and #entries > 0) then return false end
-    K.ShowReport(title or "WeintCodex-Fehler – Strg+C kopieren und an den Entwickler schicken", ER.Lines(entries))
+    local r = K.ShowReport(title or ER.FRIENDLY, ER.Lines(entries))
+    if r and WeintCodex.CreateButton then
+        local hasC = ER.HasCompanion()
+        local ok, btn = pcall(SendButton, r)
+        if ok and btn then
+            btn.entries = entries
+            btn:SetShown(hasC)
+        end
+        if r.hint then
+            r.hint:SetText(hasC
+                and "„Melden & neu laden“ schickt ihn dem Entwickler – das Spiel lädt dafür einmal neu. Du musst nichts kopieren."
+                or "Ohne Companion kann WeintCodex nichts selbst senden: Strg+C kopiert, dann im Discord unter #weintcodex-support posten.")
+        end
+        r._wcErrors = true
+    end
     return true
 end
 
@@ -175,7 +241,7 @@ function ER.ShowAll()
         print(WeintCodex.ColorText("accent", "[WeintCodex]") .. " Keine Fehler gespeichert.")
         return false
     end
-    return ER.Show(list, "Alle gespeicherten WeintCodex-Fehler (" .. #list .. ") – Strg+C kopieren")
+    return ER.Show(list, "Gespeicherte Fehler von WeintCodex (" .. #list .. ")")
 end
 
 function ER.Clear()
@@ -198,7 +264,7 @@ function ER.Announce(e)
         pending = nil
         ER.Show(list)
         print(WeintCodex.ColorText("accent", "[WeintCodex]")
-            .. " Ein Fehler ist aufgetreten – das Fenster zeigt ihn zum Kopieren. Alle: /wcui fehler")
+            .. " Kleiner Fehler im Addon – dein Spiel läuft weiter. Melden geht mit einem Klick im Fenster. Alle: /wcui fehler")
     end
     if _G.C_Timer and _G.C_Timer.After then _G.C_Timer.After(0.5, Flush) else Flush() end
 end
