@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.0.5.23",
+        date    = "08.11.2026",
+        notes   = {
+            "|cff7C6CFFTaschen durchsichtig|r – der Hintergrund des Taschenfensters lässt sich stufenlos bis ganz durchsichtig stellen; unter „Erweitert“ auch die leeren Plätze, Rand, Schatten und Überschrift.",
+        },
+    },
+    {
         version = "1.0.5.22",
         date    = "08.11.2026",
         notes   = {
