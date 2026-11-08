@@ -25106,6 +25106,26 @@ do
     Check(ok, "Sterbezeit" .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- Sicherung der Einstellungen (1.0.5.21): kaputte Hauptdatei -> zurueck.
+do
+    local oSD, oBK = WeintCodex_SavedData, _G.WeintCodex_Backup
+    local ok, err = pcall(function()
+        local sd = { ui = { a = { b = 1 } }, auction = { x = 1 }, saveProbe = 5, f = function() end }
+        Check(WeintCodex.WriteBackup(sd), "Sicherung: geschrieben")
+        local bk = _G.WeintCodex_Backup
+        Check(bk.data.ui.a.b == 1 and bk.data.auction == nil and bk.data.f == nil, "Sicherung: ohne grosse Sammlungen/Funktionen")
+        _G.WeintCodex_SavedData = { saveProbe = 1, ui = { neu = true } }
+        Check(not WeintCodex.RestoreBackup(), "Sicherung: geladener Stand bleibt")
+        _G.WeintCodex_SavedData = nil
+        Check(WeintCodex.RestoreBackup() and WeintCodex_SavedData.ui.a.b == 1, "Sicherung: fehlender Stand zurueck")
+        _G.WeintCodex_SavedData = { minimap = { angle = 1 } }
+        WeintCodex.RestoreBackup()
+        Check(WeintCodex_SavedData.minimap.angle == 1 and WeintCodex_SavedData.ui.a.b == 1, "Sicherung: ergaenzt, ueberschreibt nicht")
+    end)
+    _G.WeintCodex_SavedData, _G.WeintCodex_Backup = oSD, oBK
+    Check(ok, "Sicherung" .. (ok and "" or (": " .. tostring(err))))
+end
+
 if failures == 0 then
     print("BESTANDEN")
     os.exit(0)

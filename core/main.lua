@@ -278,6 +278,8 @@ local function OnEvent(self, event, addonName)
     -- irgendetwas fehlschlaegt.
     ------------------------------------------------------
 
+    WeintCodex.RestoreBackup()
+
     if not WeintCodex_SavedData then
         WeintCodex_SavedData = {
             raidData          = {},
@@ -388,6 +390,81 @@ end
 -- niemand etwas (erste Sitzung mit dieser Fassung) - "unbekannt", nicht
 -- "in Ordnung" und nicht "kaputt".
 
+--------------------------------------------------
+-- Sicherung der Einstellungen (1.0.5.21)
+--------------------------------------------------
+-- Gemeldet 08.11.2026: WeintCodex.lua liess sich nicht laden ("unexpected
+-- symbol"), das Spiel startete WeintCodex mit leeren Daten und schrieb
+-- diesen leeren Stand beim Neuladen zurueck - alle Einstellungen weg.
+-- Laedt die Datei nicht, kann kein Addon sie retten. Deshalb liegt eine
+-- Kopie in einer ANDEREN Datei: SavedVariablesPerCharacter
+-- (WTF/.../<Realm>/<Charakter>/SavedVariables/WeintCodex.lua). Ohne die
+-- grossen Sammlungen (Preise, Bestand, Fundorte, Messungen) - die kommen
+-- wieder, Einstellungen nicht.
+--
+-- Zurueckgeholt wird nur, wenn der Hauptstand fehlt: kein saveProbe (das
+-- schreibt jede Fassung ab 1.0.5.21 beim Abmelden). Ergaenzt wird nur, was
+-- fehlt - nie ueberschrieben.
+local BACKUP_SKIP = { auction = true, inventory = true, gather = true, bossShared = true,
+    bossLearn = true, errors = true, fishLog = true, beasts = true }
+WeintCodex.BACKUP_SKIP = BACKUP_SKIP
+
+local function Copy(v, depth)
+    if type(v) ~= "table" then
+        local t = type(v)
+        if t == "string" or t == "number" or t == "boolean" then return v end
+        return nil
+    end
+    if depth > 30 then return nil end
+    local out = {}
+    for k, x in pairs(v) do
+        local tk = type(k)
+        if tk == "string" or tk == "number" or tk == "boolean" then
+            local c = Copy(x, depth + 1)
+            if c ~= nil then out[k] = c end
+        end
+    end
+    return out
+end
+WeintCodex.CopyPlain = Copy
+
+function WeintCodex.WriteBackup(sd)
+    if type(sd) ~= "table" then return false end
+    local ok, data = pcall(function()
+        local out = {}
+        for k, v in pairs(sd) do
+            if type(k) == "string" and not BACKUP_SKIP[k] then
+                local c = Copy(v, 1)
+                if c ~= nil then out[k] = c end
+            end
+        end
+        return out
+    end)
+    if not ok then return false end
+    _G.WeintCodex_Backup = { at = time(), version = WeintCodex.Version, data = data }
+    return true
+end
+
+function WeintCodex.RestoreBackup()
+    local bk = _G.WeintCodex_Backup
+    if type(bk) ~= "table" or type(bk.data) ~= "table" then return false end
+    local sd = _G.WeintCodex_SavedData
+    if type(sd) == "table" and sd.saveProbe ~= nil then return false end
+    if type(sd) ~= "table" then
+        sd = {}
+        _G.WeintCodex_SavedData = sd
+    end
+    for k, v in pairs(bk.data) do
+        if sd[k] == nil then sd[k] = Copy(v, 1) end
+    end
+    WeintCodex.restoredBackup = bk.at
+    local when = type(bk.at) == "number" and date("%d.%m.%Y %H:%M", bk.at) or "?"
+    print(WeintCodex.AC .. "[WeintCodex]|r |cffF0A63ADie gespeicherten Daten fehlten|r"
+        .. " (Datei des Spiels nicht lesbar). Einstellungen aus der Sicherung vom "
+        .. when .. " zurückgeholt.")
+    return true
+end
+
 local SAVE_STALE_AFTER = 300   -- Sekunden; ein Neuladen dauert keine fuenf Minuten
 
 local saveHealth = "unknown"   -- "ok" | "failed" | "unknown"
@@ -401,6 +478,7 @@ saveProbe:SetScript("OnEvent", function(_, event, isInitialLogin, isReloadingUi)
     if not sd then return end
     if event == "PLAYER_LOGOUT" then
         sd.saveProbe = time()
+        WeintCodex.WriteBackup(sd)
         return
     end
     if not isReloadingUi then return end

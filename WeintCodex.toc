@@ -4,7 +4,7 @@
 ## Author: Fabian
 ## Version: 1.0.5.20
 ## SavedVariables: WeintCodex_SavedData, WeintCompanionDB, WeintCompanionInboxDB, WeintCodex_WhispersAccount
-## SavedVariablesPerCharacter: WeintCodex_Whispers
+## SavedVariablesPerCharacter: WeintCodex_Whispers, WeintCodex_Backup
 
 #
 # ZUR SCHNITTSTELLENNUMMER OBEN: SIE IST EINE VERMUTUNG, KEIN WISSEN.
