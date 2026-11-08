@@ -164,6 +164,7 @@ P["comfort/glitzern"] = { title = "Komfort · Glitzern", text = "Questgegenstän
 P["comfort/selten"] = { title = "Komfort · Seltene Gegner", text = "Meldung, wenn ein seltener Gegner in der Nähe ist.", words = "rare elite selten" }
 P["comfort/flugspiele"] = { title = "Komfort · Flugspiele", text = "Kleine Spiele auf Flugrouten, mit Bestenliste der Gilde.", words = "flug spiel" }
 P["comfort/auktion"] = { title = "Komfort · Auktionshaus", text = "Preise scannen und im Tooltip zeigen.", words = "ah preis preise scan" }
+P["comfort/post"] = { title = "Komfort · Post", text = "Am Briefkasten: alle oder ausgewählte Briefe öffnen, Posttasche mit allem auf einen Blick, Kontakte und Entwürfe beim Schreiben, Versandregeln für deine Twinks.", words = "post brief briefkasten mail postfach twink versand senden" }
 P["comfort/fluestern"] = { title = "Komfort · Flüstern", text = "Flüstern als eigenes Fenster wie ein Messenger.", words = "whisper flüstern nachricht" }
 P["comfort/danke"] = { title = "Komfort · Danke", text = "Fremden per Flüstern für Buffs danken – wann, wem und wie schnell.", words = "danke" }
 P["comfort/gespraeche"] = { title = "Komfort · Gespräche", text = "Gespräche mit NPCs und Questtexte im eigenen Stil.", words = "gossip dialog npc" }

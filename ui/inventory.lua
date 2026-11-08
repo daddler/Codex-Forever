@@ -300,7 +300,31 @@ function IV.SetExcluded(key, on)
     return true
 end
 
--- { { key, name, realm, class, bags, bank, worn, total, bankKnown }, ... }
+-- Post (1.0.5.29, ui/postal.lua): was im Postfach liegt, je Charakter. Nur
+-- am offenen Briefkasten gelesen; dazu, was WeintCodex selbst an einen
+-- eigenen Twink geschickt hat (IV.AddMail), bis dieser es abholt.
+function IV.SetMail(counts)
+    local c = Char(true)
+    if not c or type(counts) ~= "table" then return false end
+    c.mail = counts
+    c.mailAt = _G.time and _G.time() or 0
+    return true
+end
+
+function IV.AddMail(name, realm, id, count)
+    local st = IV.Store(true)
+    if not (st and type(id) == "number") then return false end
+    for _, c in pairs(st.chars) do
+        if c.name == name and (not realm or c.realm == realm) then
+            c.mail = c.mail or {}
+            c.mail[id] = (c.mail[id] or 0) + (count or 1)
+            return true
+        end
+    end
+    return false
+end
+
+-- { { key, name, realm, class, bags, bank, worn, mail, total, bankKnown }, ... }
 -- fuer einen Gegenstand; der eigene Charakter zuerst.
 function IV.Holders(id)
     local st = IV.Store(false)
@@ -313,10 +337,11 @@ function IV.Holders(id)
             local b = c.bags and c.bags[id] or 0
             local k = c.bank and c.bank[id] or 0
             local w = c.worn and c.worn[id] or 0
-            if b + k + w > 0 then
+            local m = c.mail and c.mail[id] or 0
+            if b + k + w + m > 0 then
                 out[#out + 1] = { key = key, name = c.name, realm = c.realm, class = c.class,
                     faction = (myFaction and c.faction and c.faction ~= myFaction) and c.faction or nil,
-                    bags = b, bank = k, worn = w, total = b + k + w, me = key == me }
+                    bags = b, bank = k, worn = w, mail = m, total = b + k + w + m, me = key == me }
             end
         end
     end
@@ -333,6 +358,7 @@ function IV.Where(h)
     if h.bags > 0 then parts[#parts + 1] = "Taschen " .. h.bags end
     if h.bank > 0 then parts[#parts + 1] = "Bank " .. h.bank end
     if h.worn > 0 then parts[#parts + 1] = "angelegt" end
+    if (h.mail or 0) > 0 then parts[#parts + 1] = "Post " .. h.mail end
     return table.concat(parts, " · ")
 end
 

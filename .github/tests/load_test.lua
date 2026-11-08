@@ -20012,10 +20012,10 @@ do
         end
         local order = table.concat(keys, ",")
         local pal = WeintCodex.UIPaladinBuffs.IsPaladin()
-        assert(order == "automatik,anzeigen,zeiger,rausda,automark,klickzauber,entfluchen,makros," .. (pal and "segen," or "") .. "ringe,pvp,boss,boss_bars,boss_sounds,boss_bosses,karte,questhilfe,sammeln,glitzern,selten,flugspiele,auktion,fluestern,danke,gespraeche",
+        assert(order == "automatik,anzeigen,zeiger,rausda,automark,klickzauber,entfluchen,makros," .. (pal and "segen," or "") .. "ringe,pvp,boss,boss_bars,boss_sounds,boss_bosses,karte,questhilfe,sammeln,glitzern,selten,flugspiele,auktion,post,fluestern,danke,gespraeche",
             "Reihenfolge: " .. order)
         local d = pal and 0 or -1
-        assert(O.PageIndex("comfort", "gespraeche") == 25 + d and O.PageIndex("comfort", "fluestern") == 23 + d, "Index nach Sortieren")
+        assert(O.PageIndex("comfort", "gespraeche") == 26 + d and O.PageIndex("comfort", "fluestern") == 24 + d, "Index nach Sortieren")
         for _, h in ipairs(WL.HELPERS) do
             local mod = K.Module(h.module)
             assert(mod and mod.group ~= "ui" or h.module == "groupframes", h.label .. ": haengt an einem Modul der Oberflaeche")
@@ -25205,6 +25205,84 @@ do
     end)
     _G.WeintCodex_CompanionLive = oLive
     Check(ok, "Fehler melden" .. (ok and "" or (": " .. tostring(err))))
+end
+
+-- 1.0.5.29: Post (ui/postal.lua) - Briefkasten lesen, abholen, Filter, Regeln.
+do
+    local PO = WeintCodex.UIPostal
+    local saved = {}
+    for _, n in ipairs({ "GetInboxNumItems", "GetInboxHeaderInfo", "GetInboxItem", "TakeInboxMoney", "TakeInboxItem",
+        "C_Container", "UnitName", "GetRealmName", "GetItemInfoInstant", "GetItemInfo", "UnitFactionGroup" }) do saved[n] = _G[n] end
+    local ok, err = pcall(function()
+        local mails = {
+            { sender = "Anna", subject = "Kräuter", money = 0, cod = 0, days = 20, items = { { "Friedensblume", 2447, 10 } } },
+            { sender = "Auktionshaus", subject = "Verkauft", money = 5000, cod = 0, days = 29, items = {} },
+            { sender = "Bob", subject = "Nachnahme", money = 0, cod = 100, days = 3, items = { { "Schwert", 25, 1 } } },
+        }
+        _G.GetInboxNumItems = function() return #mails end
+        _G.GetInboxHeaderInfo = function(i)
+            local m = mails[i]
+            return nil, nil, m.sender, m.subject, m.money, m.cod, m.days, #m.items, false, false, false, m.sender ~= "Auktionshaus", false
+        end
+        _G.GetInboxItem = function(i, j)
+            local it = mails[i] and mails[i].items[j]
+            if it then return it[1], it[2], "icon", it[3] end
+        end
+        _G.TakeInboxMoney = function(i) mails[i].money = 0 end
+        _G.TakeInboxItem = function(i, j) table.remove(mails[i].items, j) end
+        local c = PO.Scan()
+        assert(c.gold == 5000 and c.items[2447].count == 10 and c.items[25].cod, "Postfach falsch gelesen")
+        -- Filter
+        PO.filter.cod = true
+        assert(not PO.Matches(PO.Header(1)) and PO.Matches(PO.Header(3)), "Filter Nachnahme")
+        PO.filter.cod = false
+        PO.filter.text = "friedens"
+        assert(PO.Matches(PO.Header(1)) and not PO.Matches(PO.Header(2)), "Suche nach Anhang")
+        PO.filter.text = ""
+        -- Abholen: alles ausser Nachnahme
+        PO.mailOpen = true
+        PO.Run("Test", function() return "all" end)
+        local step = PO._Step
+        assert(step, "Schritt nicht erreichbar")
+        for _ = 1, 10 do if PO.Busy() then step() end end
+        assert(not PO.Busy(), "Schlange endet nicht")
+        assert(mails[2].money == 0 and #mails[1].items == 0 and #mails[3].items == 1, "Nachnahme angefasst oder nicht abgeholt")
+        PO.mailOpen = false
+        -- Regeln: Kraeuter an einen Twink, 20 behalten, keine Stapel teilen
+        _G.UnitName = function() return "Ich" end
+        _G.GetRealmName = function() return "Realm" end
+        _G.UnitFactionGroup = function() return "Alliance" end
+        local bagItems = {
+            { id = 2447, count = 20, classID = 7 }, { id = 2447, count = 20, classID = 7 }, { id = 2447, count = 5, classID = 7 },
+            { id = 99, count = 1, classID = 2, quality = 2, bound = true },
+        }
+        _G.C_Container = setmetatable({
+            GetContainerNumSlots = function(b) return b == 0 and #bagItems or 0 end,
+            GetContainerItemInfo = function(b, s) local it = bagItems[s] if b == 0 and it then
+                return { itemID = it.id, stackCount = it.count, isBound = it.bound, quality = it.quality or 1 } end end,
+        }, { __index = saved.C_Container })
+        _G.GetItemInfoInstant = function(id) for _, it in ipairs(bagItems) do if it.id == id then return id, nil, nil, nil, nil, it.classID end end end
+        _G.GetItemInfo = function(id) return "x", nil, nil, nil, nil, nil, nil, 20 end
+        local p = PO.Store()
+        local old = p.rules
+        p.rules = {}
+        assert(PO.AddRule({ kind = "trade", to = "Twink", keep = 20, scope = "account" }), "Regel nicht angelegt")
+        local plan, n = PO.Plan()
+        assert(n == 2 and plan.Twink and plan.Twink[1].count + plan.Twink[2].count == 25, "behalten falsch: " .. n)
+        p.rules = { { kind = "trade", to = "Twink", keep = 0, full = true, scope = "account", on = true } }
+        plan, n = PO.Plan()
+        assert(n == 2, "nur volle Stapel: " .. n)
+        p.rules = { { kind = "boe", to = "Twink", scope = "account", on = true } }
+        plan, n = PO.Plan()
+        assert(n == 0, "Seelengebundenes geplant")
+        p.rules = { { kind = "trade", to = "Ich", scope = "account", on = true } }
+        plan, n = PO.Plan()
+        assert(n == 0, "an sich selbst geplant")
+        p.rules = old
+        assert(#PO.SplitNames("A, B;C  A") == 3, "Namen trennen")
+    end)
+    for k, v in pairs(saved) do _G[k] = v end
+    Check(ok, "Post" .. (ok and "" or (": " .. tostring(err))))
 end
 
 if failures == 0 then
