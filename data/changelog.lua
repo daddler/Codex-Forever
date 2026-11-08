@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.0.5.20",
+        date    = "08.11.2026",
+        notes   = {
+            "|cff7C6CFFLehrer: welche Vorstufe fehlt|r – unter „Vorstufe fehlt“ steht jetzt bei jedem Zauber, was du zuerst lernen musst. Das ist nicht immer der Rang davor (Griff der Natur Rang 2 braucht auch Wucherwurzeln Rang 2).",
+        },
+    },
+    {
         version = "1.0.5.19",
         date    = "08.11.2026",
         notes   = {

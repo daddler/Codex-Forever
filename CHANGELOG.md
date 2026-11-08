@@ -9,6 +9,12 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.0.5.20] – 2026-11-08
+
+- Lehrer: Abschnitt „Vorstufe fehlt“ nennt je Zauber die fehlende Vorstufe
+  (`TR.NeedText`, `missingReq` aus `TR.Categorize`) – Griff der Natur Rang 2
+  braucht auch Wucherwurzeln Rang 2, sah aber nach falschem Rang aus.
+
 ## [1.0.5.19] – 2026-11-08
 
 - Auktionspreise teilen: `AS.Short` trennt an Bindestrich oder Leerzeichen –
