@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.0.5.26",
+        date    = "08.11.2026",
+        notes   = {
+            "|cff7C6CFF/wcui questhilfe|r – die Prüfung der Questhilfe auf der Karte hat ihren eigenen Befehl; /wcui quests bleibt bei der Questliste.",
+        },
+    },
+    {
         version = "1.0.5.25",
         date    = "08.11.2026",
         notes   = {
