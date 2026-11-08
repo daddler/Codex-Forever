@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.0.5.24",
+        date    = "08.11.2026",
+        notes   = {
+            "|cff7C6CFFQuests in Dun Morogh|r – die Questhilfe zeigt dort wieder alle Questgeber auf Karte und Minikarte; vorher fehlten fast alle.",
+        },
+    },
+    {
         version = "1.0.5.23",
         date    = "08.11.2026",
         notes   = {

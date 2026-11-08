@@ -9,6 +9,11 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.0.5.24] – 2026-11-08
+
+- Questhilfe: `import_questdb.py` liest Lagen auch als CBOR-Liste (Gebiet 1 =
+  Dun Morogh); `data/questdb.lua` neu erzeugt – Dun Morogh 115 statt 5 Quests.
+
 ## [1.0.5.23] – 2026-11-08
 
 - Taschen: `bgAlpha`, `slotAlpha`, `showBorder`, `showShadow`, `showTitle`
