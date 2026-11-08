@@ -1475,6 +1475,24 @@ do
         for _, e in ipairs(QH.ForMap(1429)) do if e.kind == "avail" then giver = e end end
         assert(#giver.quests == 2, "graue Quest nicht dazu")
         assert(#QH.ForMap(1411) == 1, "Abgabe auf zweiter Karte fehlt")
+        -- 1.0.5.25: Angebote des Spiels (C_QuestLine) kommen dazu, nie doppelt.
+        do
+            local oQL = G.C_QuestLine
+            G.C_QuestLine = { GetAvailableQuestLines = function(m)
+                if m ~= 1429 then return {} end
+                return { { questID = 7777, questName = "Vom Spiel", x = 0.3, y = 0.4 },
+                         { questID = 2, questName = "Schon im Bestand", x = 0.9, y = 0.9 } }
+            end }
+            QH.Refresh()
+            local game, dup = 0, 0
+            for _, e in ipairs(QH.ForMap(1429)) do
+                if e.game then game = game + 1 if e.quests[1] == 2 then dup = dup + 1 end end
+            end
+            assert(game == 1 and dup == 0, "Angebote des Spiels: " .. game .. "/" .. dup)
+            assert(QH.gameNames[7777] == "Vom Spiel", "Name aus dem Spiel fehlt")
+            G.C_QuestLine = oQL
+            QH.Refresh()
+        end
         -- Filterleiste und Symbole auf der Karte
         local hadMap = G.WorldMapFrame
         local wm = type(hadMap) == "table" and hadMap or CreateFrame("Frame")

@@ -415,6 +415,50 @@ function QH.TargetSpots(questID, mapID, fn)
     return n
 end
 
+--------------------------------------------------
+-- Angebote des Spiels selbst (1.0.5.25)
+--------------------------------------------------
+-- Wunsch: "Alles, was die Minikarte anzeigt, will ich vorher schon auf der
+-- Karte sehen." Die "!" der Minikarte kommen vom Spiel (C_QuestLine). Dieselbe
+-- Abfrage fuer die offene Karte: was das Spiel dort anbietet, mit Lage. Es
+-- ergaenzt den Bestand - eine Quest, die der Bestand schon zeigt, kommt nicht
+-- doppelt. Fehlt die Abfrage, bleibt es beim Bestand.
+QH.gameNames = {}
+QH.gameStats = { asked = 0, got = 0, api = nil }
+function QH.GameOffers(mapID)
+    local ql = _G.C_QuestLine
+    local out = {}
+    if not (ql and ql.GetAvailableQuestLines) then QH.gameStats.api = false return out end
+    QH.gameStats.api = true
+    -- Anfragen hoechstens einmal je Karte und Minute: die Antwort kommt als
+    -- QUESTLINE_UPDATE, das rechnet neu - und jede Rechnung fragte sonst
+    -- wieder (Schleife).
+    local now = _G.GetTime and K.Plain(_G.GetTime()) or 0
+    if type(now) ~= "number" then now = 0 end
+    QH.gameAsked = QH.gameAsked or {}
+    local last = QH.gameAsked[mapID]
+    if ql.RequestQuestLinesForMap and (not last or now - last > 60) then
+        QH.gameAsked[mapID] = now
+        pcall(ql.RequestQuestLinesForMap, mapID)
+    end
+    local ok, lines = pcall(ql.GetAvailableQuestLines, mapID)
+    QH.gameStats.asked = QH.gameStats.asked + 1
+    if not ok or type(lines) ~= "table" then return out end
+    for _, info in ipairs(lines) do
+        if type(info) == "table" then
+            local id = K.Plain(info.questID)
+            local x, y = K.Plain(info.x), K.Plain(info.y)
+            if type(id) == "number" and type(x) == "number" and type(y) == "number" and x > 0 and y > 0 then
+                local name = K.Plain(info.questName)
+                if type(name) == "string" and name ~= "" then QH.gameNames[id] = name end
+                out[#out + 1] = { id = id, x = x, y = y, hidden = K.Plain(info.isHidden) == true }
+            end
+        end
+    end
+    QH.gameStats.got = #out
+    return out
+end
+
 local forMap = {}
 QH.stats = { built = 0, avail = 0, turnin = 0, target = 0, book = 0 }
 
@@ -528,6 +572,19 @@ function QH.ForMap(mapID)
             end
         end
     end
+    if wantA then
+        local have = {}
+        for _, e in ipairs(out) do
+            if e.kind == "avail" then for _, id in ipairs(e.quests) do have[id] = true end end
+        end
+        for _, g in ipairs(QH.GameOffers(mapID)) do
+            if not have[g.id] and not log[g.id] and (not g.hidden or wantL) then
+                have[g.id] = true
+                Add(out, seen, "avail", 0, false, g.id, g.x, g.y, g.hidden)
+                out[#out].game = true
+            end
+        end
+    end
     out = QH.Cluster(out)
     -- 6.57.0.0: Buecher der Bibliothek, die noch fehlen (modules/library.lua).
     local LB = WeintCodex.Library
@@ -606,7 +663,7 @@ end
 
 local function QuestLine(id)
     local q = QH.Quest(id)
-    if not q then return "?" end
+    if not q then return QH.gameNames[id] or "?" end
     local lvl = q[2] or 0
     return (lvl > 0 and ("[" .. lvl .. "] ") or "") .. q[1]
 end
@@ -636,7 +693,7 @@ local function Tooltip(self)
     end
     local rec = e.obj and d.o[e.who] or d.n[e.who]
     local t, n, m = C.textBright, C.textNormal, C.textMuted
-    gt:SetText(QH.Name(rec) or "?", t[1], t[2], t[3])
+    gt:SetText(QH.Name(rec) or (e.game and "Questgeber") or "?", t[1], t[2], t[3])
     local head = QH.KIND_TEXT[e.kind] or "Quest"
     if e.kind == "target" then
         head = ({ slay = "Gegner", loot = "Beute", object = "Gegenstand in der Welt" })[e.sub or "slay"] or head
@@ -684,7 +741,11 @@ local function Tooltip(self)
     else
         gt:AddLine("Klick: diese Quest verfolgen · Rechtsklick: lösen", m[1], m[2], m[3], true)
     end
-    gt:AddLine("Unbestätigt – Wissensstand der Community.", m[1], m[2], m[3], true)
+    if e.game then
+        gt:AddLine("Angabe des Spiels.", m[1], m[2], m[3], true)
+    else
+        gt:AddLine("Unbestätigt – Wissensstand der Community.", m[1], m[2], m[3], true)
+    end
     gt:Show()
 end
 
@@ -695,7 +756,7 @@ function QH.GuideTo(e)
     local rec = e.obj and d.o[e.who] or d.n[e.who]
     local quests = e.quests
     QA.SetCustom({ map = e.map, x = e.x, y = e.y,
-        title = "Questgeber: " .. (QH.Name(rec) or "?"),
+        title = "Questgeber: " .. (QH.Name(rec) or (e.game and QH.gameNames[quests[1]]) or "?"),
         done = function()
             for _, id in ipairs(quests) do if log[id] then return true end end
             return false
@@ -1233,7 +1294,7 @@ local function Refresh()
 end
 QH.Refresh = Refresh
 
-local REFRESH = { "QUEST_LOG_UPDATE", "QUEST_ACCEPTED", "QUEST_TURNED_IN", "QUEST_REMOVED", "PLAYER_LEVEL_UP",
+local REFRESH = { "QUESTLINE_UPDATE", "QUEST_LOG_UPDATE", "QUEST_ACCEPTED", "QUEST_TURNED_IN", "QUEST_REMOVED", "PLAYER_LEVEL_UP",
                   "SUPER_TRACKING_CHANGED" }
 local pending = false
 local ev = CreateFrame("Frame")
@@ -1342,6 +1403,9 @@ function QH.Diagnose()
     local list = QH.ForMap(mapID)
     local kinds = {}
     for _, e in ipairs(list) do kinds[e.kind] = (kinds[e.kind] or 0) + 1 end
+    local gs = QH.gameStats
+    say(string.format("Angebote des Spiels (C_QuestLine): %s · zuletzt %d", gs.api == false and "Abfrage fehlt"
+        or (gs.api and "da" or "noch nicht gefragt"), gs.got or 0))
     say(string.format("Symbole: neu %d, Abgabe %d, Ziele %d · zuletzt gezeichnet Karte %s: %d",
         kinds.avail or 0, kinds.turnin or 0, kinds.target or 0, tostring(shownMap), shownCount))
     return out
