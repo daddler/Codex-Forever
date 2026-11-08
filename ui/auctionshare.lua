@@ -132,8 +132,15 @@ local E, D = AS.E, AS.D
 -- Absender
 --------------------------------------------------
 
-local function Squash(r) return (r:gsub("[%s%-]", "")) end
-local function Short(name) return type(name) == "string" and (name:match("^([^%-]+)") or name) or "?" end
+-- 1.0.5.19 (Bericht: "Preise von Mobec Donnerbräu erbeten" viermal, nie
+-- etwas gekommen): der Absender kam als "Name Realm" mit Leerzeichen statt
+-- "Name-Realm". Short() liess den Realm dran, und beim Gefragten erkannte
+-- IsMe() die Bitte nie als seine - er sendete nie. Der Name endet jetzt an
+-- Bindestrich ODER Leerzeichen; ein fremder Realm bleibt nur, was hinter
+-- einem Bindestrich steht (ob der zweite Teil ein Realm ist, ist nicht
+-- gemessen - so wird kein Absender faelschlich verworfen).
+local function Squash(r) return (r:gsub("[%s%-']", "")) end
+local function Short(name) return type(name) == "string" and (name:match("^([^%-%s]+)") or name) or "?" end
 AS.Short = Short
 
 -- Von einem anderen Realm (verbundene Realms teilen Kanaele, nicht das

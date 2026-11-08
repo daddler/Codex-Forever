@@ -11173,6 +11173,21 @@ do
     Check(ok, "Namensplaketten: in Instanzen nur Namen (Spieleinstellung)" .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 1.0.5.19: Absender "Name Realm" (Leerzeichen) - die Bitte um Preise muss
+-- beim Gefragten als seine erkannt werden.
+do
+    local AS = WeintCodex.UIAuctionShare
+    local oN = _G.UnitName
+    local ok, err = pcall(function()
+        _G.UnitName = function() return "Mobec" end
+        assert(AS.Short("Mobec Donnerbräu") == "Mobec" and AS.Short("Mobec-Donnerbräu") == "Mobec", "Name nicht abgetrennt")
+        assert(AS.IsMe("Mobec Donnerbräu") == true, "Bitte mit Leerzeichen nicht als eigene erkannt")
+        assert(AS.IsMe("Anna Donnerbräu") == false, "fremde Bitte als eigene erkannt")
+    end)
+    _G.UnitName = oN
+    Check(ok, "Auktionspreise teilen: Absender mit Leerzeichen erkannt" .. (ok and "" or (": " .. tostring(err))))
+end
+
 -- 1.0.5.18: Essen eigene Seite - allgemeine Sperren (ruhige Orte, Wo,
 -- erst mit Gegner, Erinnerungen aus) gelten fuers Essen nicht mehr.
 do

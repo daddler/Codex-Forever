@@ -508,13 +508,22 @@ local function Stop()
     Progress()
 end
 
-local function Finish(full)
+local function Finish(full, closed)
     local s = scan
     if not s then return end
     Stop()
     local n = Count(s.price)
     if n == 0 then
         Log(s.via .. ": nichts erhalten")
+        -- 1.0.5.19 (Bericht eines Spielers: "Vollscan angefragt, Auktionshaus
+        -- geschlossen, nichts erhalten" - sah aus wie ein Fehler): zu frueh
+        -- geschlossen ist kein Fehler; sagen, was zu tun ist.
+        if closed then
+            AP.last = { ok = false, via = s.via, at = Time(), why = "abgebrochen – Auktionshaus geschlossen, bevor das Spiel die Preise geschickt hat" }
+            Say("Auktionshaus: Scan abgebrochen – das Fenster wurde geschlossen. Der Vollscan braucht bis zu "
+                .. AP.REPLICATE_WAIT .. " Sekunden; lass das Auktionshaus so lange offen.")
+            return
+        end
         AP.last = { ok = false, via = s.via, at = Time() }
         Say("Auktionshaus: keine Preise erhalten. Versuch es gleich noch einmal; /wcui auktion zeigt, was passiert ist.")
         return
@@ -934,7 +943,7 @@ local function OnEvent(_, event, arg)
         AP.open = nil
         if scan then
             Log("Auktionshaus geschlossen")
-            Finish(false)
+            Finish(false, true)
         end
         AP.side = nil
         SetAHEvents(false)
