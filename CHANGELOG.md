@@ -9,6 +9,13 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.0.5.21] – 2026-11-08
+
+- Sicherung der Einstellungen in `WeintCodex_Backup` (SavedVariablesPerCharacter,
+  zweite Datei): beim Abmelden ohne grosse Sammlungen geschrieben, beim Laden
+  zurueckgeholt, wenn der Hauptstand fehlt (`saveProbe` nil) – nur ergaenzt.
+  Anlass: kaputte `WeintCodex.lua` („unexpected symbol“), alle Einstellungen weg.
+
 ## [1.0.5.20] – 2026-11-08
 
 - Lehrer: Abschnitt „Vorstufe fehlt“ nennt je Zauber die fehlende Vorstufe

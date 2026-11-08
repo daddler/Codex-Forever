@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.0.5.21",
+        date    = "08.11.2026",
+        notes   = {
+            "|cff7C6CFFSicherung deiner Einstellungen|r – kann das Spiel die Datei von WeintCodex nicht lesen, sind deine Einstellungen nicht mehr weg: WeintCodex holt sie aus einer zweiten Sicherung zurück und sagt es im Chat. Die Sicherung entsteht ab jetzt bei jedem Abmelden.",
+        },
+    },
+    {
         version = "1.0.5.20",
         date    = "08.11.2026",
         notes   = {
