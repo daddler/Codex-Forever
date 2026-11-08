@@ -1290,6 +1290,63 @@ QH.Apply = Apply
 -- Bericht und Seite
 --------------------------------------------------
 
+-- 1.0.5.25 (Bericht: "auf der grossen Karte keine Quests", Rotkammgebirge,
+-- Stufe 24, nichts gemacht - offline mit denselben Daten 20 "!"): was das
+-- Spiel hier wirklich antwortet. /wcui quests, Karte offen oder zu.
+function QH.Diagnose()
+    local out = {}
+    local function say(s) out[#out + 1] = s end
+    local qm = QM()
+    local shown = qm and qm.CurrentMap and qm.CurrentMap()
+    local best = K.BestMap and K.BestMap()
+    local me = QH.Me()
+    say(string.format("Questhilfe %s · Neue %s · Graue %s · Feste %s", QH.Active() and "an" or "AUS",
+        tostring(Get("qhAvail")), tostring(Get("qhLow")), tostring(Get("qhEvents"))))
+    say(string.format("Karte offen: %s · Spieler auf Karte: %s · Stufe %s Volk %s Klasse %s Grau %s",
+        tostring(shown), tostring(best), tostring(me.level), tostring(me.race), tostring(me.class), tostring(me.gray)))
+    local ql = _G.C_QuestLog
+    local f = ql and ql.IsQuestFlaggedCompleted or _G.IsQuestFlaggedCompleted
+    local raw = "fehlt"
+    if f then
+        local ok, v = pcall(f, 92)
+        raw = ok and (type(v) .. " " .. tostring(K.Plain(v))) or ("Fehler " .. tostring(v))
+    end
+    say("Erledigt-Abfrage (Quest 92): " .. raw .. " · Questlog gelesen: " .. tostring(QH.ReadLog()))
+    local mapID = shown or best
+    if type(mapID) ~= "number" then say("Keine Karte bekannt.") return out end
+    local d = Data()
+    local why, total = {}, 0
+    local function count(k) why[k] = (why[k] or 0) + 1 end
+    for id, rawq in pairs(d.q) do
+        local q = QH.Parse(rawq)
+        local here = false
+        for _, npc in ipairs(q[6] or {}) do
+            if QH.Places(d.n[npc], mapID, function() end) > 0 then here = true break end
+        end
+        if here then
+            total = total + 1
+            local offer = QH.Offer(id, q, me)
+            if offer then count(offer)
+            elseif log[id] then count("im Log")
+            elseif (q[3] or 0) > (me.level or 0) then count("Stufe zu niedrig")
+            elseif not Bit(q[4], me.race or 0) or not Bit(q[5], me.class or 0) then count("Volk/Klasse")
+            elseif QH.Done(id) == true then count("erledigt")
+            elseif QH.Done(id) == nil then count("erledigt unbekannt")
+            else count("Voraussetzung/Sperre") end
+        end
+    end
+    local parts = {}
+    for k, v in pairs(why) do parts[#parts + 1] = k .. " " .. v end
+    table.sort(parts)
+    say(string.format("Karte %d: %d Quests mit Geber hier – %s", mapID, total, table.concat(parts, ", ")))
+    local list = QH.ForMap(mapID)
+    local kinds = {}
+    for _, e in ipairs(list) do kinds[e.kind] = (kinds[e.kind] or 0) + 1 end
+    say(string.format("Symbole: neu %d, Abgabe %d, Ziele %d · zuletzt gezeichnet Karte %s: %d",
+        kinds.avail or 0, kinds.turnin or 0, kinds.target or 0, tostring(shownMap), shownCount))
+    return out
+end
+
 function QH.StatusLines()
     local d = Data()
     local nq = 0
