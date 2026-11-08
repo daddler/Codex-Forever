@@ -22,6 +22,14 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.0.5.19",
+        date    = "08.11.2026",
+        notes   = {
+            "|cff7C6CFFAuktionspreise in der Gilde|r – die Bitte um frischere Preise kommt jetzt beim Gefragten an; vorher wurde sie bei manchen Namen nie beantwortet.",
+            "|cff7C6CFFVollscan abgebrochen|r – wird das Auktionshaus zu früh geschlossen, sagt WeintCodex das klar und wie lange es offen bleiben muss.",
+        },
+    },
+    {
         version = "1.0.5.18",
         date    = "07.11.2026",
         notes   = {

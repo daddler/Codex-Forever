@@ -9,6 +9,13 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.0.5.19] – 2026-11-08
+
+- Auktionspreise teilen: `AS.Short` trennt an Bindestrich oder Leerzeichen –
+  Absender kamen als „Name Realm“, `IsMe` erkannte die Bitte („W“) nie.
+- Vollscan: zu früh geschlossen = „abgebrochen“ mit Hinweis, nicht „keine
+  Preise erhalten“.
+
 ## [1.0.5.18] – 2026-11-07
 
 - Erinnerungen: Seite „Essen“ (`foodWhere`, `foodResting`, `foodOnTarget`,
