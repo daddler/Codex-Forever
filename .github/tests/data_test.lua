@@ -1337,6 +1337,15 @@ for n = 1, 5 do
     Check(data and data:sub(1, 4) == "OggS" and not data:find("\128theora", 1, true), "Zaehlung: count_" .. n .. ".ogg vorhanden, nur Ton")
 end
 
+-- Questhilfe (1.0.5.24): Dun Morogh (Gebiet 1) kam als CBOR-Liste und fiel
+-- beim Import weg - Sten Stoutarm muss auf der Karte 1426 stehen.
+do
+    local f = io.open(ROOT .. "/data/questdb.lua", "r")
+    local data = f and f:read("*a") or ""
+    if f then f:close() end
+    Check(data:find('[658] = "Sten Stoutarm\\t1426:', 1, true) ~= nil, "Questhilfe: Questgeber in Dun Morogh vorhanden")
+end
+
 if failures == 0 then
     print("BESTANDEN")
     os.exit(0)

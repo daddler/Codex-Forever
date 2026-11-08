@@ -151,6 +151,11 @@ def pick(points, n):
 
 def spawns_by_map(spawns, zmap, n):
     out = {}
+    # 1.0.5.24: eine Lua-Tabelle nur mit Schluessel 1 (Gebiet 1 = Dun Morogh)
+    # kommt als CBOR-LISTE an, nicht als Zuordnung - bis dahin fiel damit
+    # fast jeder NPC in Dun Morogh weg (Bericht: keine "!" in Dun Morogh).
+    if isinstance(spawns, list):
+        spawns = {i + 1: v for i, v in enumerate(spawns) if v is not None}
     for area, pts in (spawns.items() if isinstance(spawns, dict) else []):
         ui = zmap.get(int(area))
         if not ui:
