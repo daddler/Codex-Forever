@@ -104,6 +104,22 @@ function K.DifficultyColor(level, player)
     return GC.diffTrivial
 end
 
+-- Volk als klassische Nummer (1..11), wie sie Questdaten und Lehrerbestand
+-- benutzen. 1.0.5.27 (Bericht /wcui questhilfe: "Volk 95"): Forever nennt
+-- als dritten Wert von UnitRace eigene Nummern - dann zaehlt der Name des
+-- Volks (zweiter Wert). Unbekannt bleibt nil, nie geraten.
+K.RACE_IDS = { Human = 1, Orc = 2, Dwarf = 3, NightElf = 4, Scourge = 5, Undead = 5, Tauren = 6,
+    Gnome = 7, Troll = 8, Goblin = 9, BloodElf = 10, Draenei = 11 }
+function K.ClassicRace(unit)
+    if not _G.UnitRace then return nil end
+    local ok, _, file, id = pcall(_G.UnitRace, unit or "player")
+    if not ok then return nil end
+    file, id = K.Plain(file), K.Plain(id)
+    if type(file) == "string" and K.RACE_IDS[file] then return K.RACE_IDS[file] end
+    if type(id) == "number" and id >= 1 and id <= 11 then return id end
+    return nil
+end
+
 function K.Plain(v)
     if K.IsSecret(v) then return nil end
     return v

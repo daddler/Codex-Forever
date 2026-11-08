@@ -25165,6 +25165,24 @@ do
     Check(ok, "Taschen-Aussehen" .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 1.0.5.27: Forever nennt eigene Volksnummern ("Volk 95") - Name zaehlt.
+do
+    local QH = WeintCodex.UIQuestHelper
+    local oR, oF = _G.UnitRace, _G.UnitFactionGroup
+    local ok, err = pcall(function()
+        _G.UnitRace = function() return "Mensch", "Human", 95 end
+        assert(K.ClassicRace("player") == 1, "Volk 95/Human nicht als 1 erkannt")
+        _G.UnitRace = function() return "Neu", "Unbekannt", 95 end
+        _G.UnitFactionGroup = function() return "Alliance" end
+        assert(K.ClassicRace("player") == nil, "unbekanntes Volk geraten")
+        local me = QH.Me()
+        assert(me.race == nil and me.faction == "Alliance", "Fraktion fehlt")
+        assert(QH.RaceOK(77, me) == true and QH.RaceOK(178, me) == false, "Fraktion statt Volk falsch")
+    end)
+    _G.UnitRace, _G.UnitFactionGroup = oR, oF
+    Check(ok, "Volk aus Forever" .. (ok and "" or (": " .. tostring(err))))
+end
+
 if failures == 0 then
     print("BESTANDEN")
     os.exit(0)

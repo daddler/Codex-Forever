@@ -97,7 +97,8 @@ end
 local function PlayerState()
     local class = _G.UnitClass and select(2, _G.UnitClass("player"))
     local className = _G.UnitClass and _G.UnitClass("player")
-    local race = _G.UnitRace and select(3, _G.UnitRace("player"))
+    local K = WeintCodex.UIKit
+    local race = K and K.ClassicRace and K.ClassicRace("player")
     local faction = _G.UnitFactionGroup and _G.UnitFactionGroup("player")
     local level = Plain(_G.UnitLevel and _G.UnitLevel("player"))
     local money = Plain(_G.GetMoney and _G.GetMoney())

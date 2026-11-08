@@ -120,9 +120,22 @@ local function Bit(mask, n)
     return math.floor(mask / b) % 2 == 1
 end
 
+-- Volk passt: ueber die klassische Nummer, sonst - Volk unbekannt - ob die
+-- Quest irgendein Volk der eigenen Fraktion zulaesst (1.0.5.27).
+QH.FACTION_RACES = { Alliance = { 1, 3, 4, 7, 11 }, Horde = { 2, 5, 6, 8, 10 } }
+function QH.RaceOK(mask, me)
+    if not mask or mask == 0 then return true end
+    if me.race then return Bit(mask, me.race) end
+    for _, r in ipairs(QH.FACTION_RACES[me.faction or ""] or {}) do
+        if Bit(mask, r) then return true end
+    end
+    return false
+end
+
 function QH.Me()
     local lvl = _G.UnitLevel and K.Plain(_G.UnitLevel("player"))
-    local race = _G.UnitRace and K.Plain(select(3, _G.UnitRace("player")))
+    local race = K.ClassicRace("player")
+    local fac = _G.UnitFactionGroup and K.Plain(_G.UnitFactionGroup("player"))
     local class = _G.UnitClass and K.Plain(select(3, _G.UnitClass("player")))
     local gray = QH.GRAY_DIFF
     if _G.UnitQuestTrivialLevelRange then
@@ -131,6 +144,7 @@ function QH.Me()
     end
     return { level = type(lvl) == "number" and lvl or nil,
              race = type(race) == "number" and race or nil,
+             faction = (fac == "Alliance" or fac == "Horde") and fac or nil,
              class = type(class) == "number" and class or nil, gray = gray }
 end
 
@@ -180,7 +194,7 @@ QH.ABOVE = 10
 
 -- "avail", "low" oder nil: kann ich die Quest annehmen?
 function QH.Offer(id, q, me)
-    if not (me.level and me.race and me.class) then return nil end
+    if not (me.level and (me.race or me.faction) and me.class) then return nil end
     if log[id] then return nil end
     if (q[3] or 0) > me.level then return nil end
     -- 1.0.0.8 (Bericht: "in Ironforge viele Quests auf Stufe 60, ich bin 6"):
@@ -188,7 +202,7 @@ function QH.Offer(id, q, me)
     -- ist, ist ein Loch in den Daten, kein Angebot. Wie Questie ab Werk
     -- (hoechstens die eigene Stufe): mehr als QH.ABOVE Stufen darueber nie.
     if (q[2] or 0) > me.level + QH.ABOVE then return nil end
-    if not Bit(q[4], me.race) or not Bit(q[5], me.class) then return nil end
+    if not QH.RaceOK(q[4], me) or not Bit(q[5], me.class) then return nil end
     -- 1.0.0.3 (Bericht zum Start: "viele Quests auf der Minikarte, die noch
     -- nicht angenommen werden koennen"): wie Questie auch Hoechststufe,
     -- Beruf, Ruf und Zauber. Was der Client nicht beantworten kann (Ruf,
@@ -1390,7 +1404,7 @@ function QH.Diagnose()
             if offer then count(offer)
             elseif log[id] then count("im Log")
             elseif (q[3] or 0) > (me.level or 0) then count("Stufe zu niedrig")
-            elseif not Bit(q[4], me.race or 0) or not Bit(q[5], me.class or 0) then count("Volk/Klasse")
+            elseif not QH.RaceOK(q[4], me) or not Bit(q[5], me.class or 0) then count("Volk/Klasse")
             elseif QH.Done(id) == true then count("erledigt")
             elseif QH.Done(id) == nil then count("erledigt unbekannt")
             else count("Voraussetzung/Sperre") end
