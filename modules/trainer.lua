@@ -132,7 +132,7 @@ local SOON = 2   -- "naechste Stufen": bis zwei Stufen ueber der eigenen
 
 function TR.Categorize(state)
     state = state or PlayerState()
-    local out = { sections = {}, total = {} }
+    local out = { sections = {}, total = {}, missingReq = {} }
     for _, s in ipairs(TR.SECTIONS) do out.sections[s.key] = {} ; out.total[s.key] = 0 end
     if not (state.class and state.level) then return out end
     for _, sp in ipairs(T.Spells(state.class, state.race, state.faction)) do
@@ -148,7 +148,11 @@ function TR.Categorize(state)
         else
             local ok = true
             for _, req in ipairs(sp.requiredIds or {}) do
-                if not KnownOrReplaced(state.class, req) then ok = false break end
+                if not KnownOrReplaced(state.class, req) then
+                    ok = false
+                    out.missingReq[sp.id] = req   -- welche Vorstufe genau
+                    break
+                end
             end
             key = ok and "now" or "missing"
         end
@@ -420,9 +424,11 @@ local function SpellRow(body, y, w, sp, opts)
     local label = name or ("Zauber " .. sp.id)
     local nm = WeintCodex.Label(row, label, { size = 12, color = opts.dim and "textDim" or "textNormal",
         font = WeintCodex.Fonts.sansMedium })
-    nm:SetPoint("LEFT", ic, "RIGHT", 8, sub and 6 or 0)
-    nm:SetPoint("RIGHT", cost, "LEFT", -10, sub and 6 or 0)
+    local hasSub = sub or opts.need
+    nm:SetPoint("LEFT", ic, "RIGHT", 8, hasSub and 6 or 0)
+    nm:SetPoint("RIGHT", cost, "LEFT", -10, hasSub and 6 or 0)
     nm:SetWordWrap(false)
+    if opts.need then sub = (sub and (sub .. " · ") or "") .. opts.need end
     if sub then
         local rk = WeintCodex.Label(row, sub, { size = 10, color = "textFaint" })
         rk:SetPoint("TOPLEFT", nm, "BOTTOMLEFT", 0, -1)
@@ -462,8 +468,18 @@ local function SpellRow(body, y, w, sp, opts)
     return y - ROW_H
 end
 
+-- Welche Vorstufe fehlt, als Zeile unter dem Zauber ("erst Wucherwurzeln
+-- (Rang 2)") - die Vorstufe ist nicht immer der Rang davor: Griff der
+-- Natur Rang 2 braucht auch Wucherwurzeln Rang 2 (Feedback 1.0.5.19).
+function TR.NeedText(req)
+    if not req then return nil end
+    local name, sub = TR.SpellInfo(req)
+    if not name then return nil end
+    return "erst " .. name .. (sub and (" (" .. sub .. ")") or "")
+end
+
 local SECTION_NOTE = {
-    missing = "Erst die Vorstufe lernen – der Lehrer bietet diesen Rang sonst nicht an.",
+    missing = "Erst die Vorstufe lernen – das kann auch ein anderer Zauber sein. Der Lehrer zeigt diesen Rang sonst nicht an.",
     talent  = "Der Lehrer lehrt das erst, wenn du das Talent dazu hast.",
     pet     = "Lehrt der Tierausbilder deinem Begleiter. Ob er es schon kann, weiß nur der Tierausbilder.",
 }
@@ -525,7 +541,9 @@ local function DrawSpells(body, w, cat, state)
                         note = "Mit deinem Gold reicht es nicht mehr bis hierher (der Reihe nach gekauft)."
                     end
                 end
-                y = SpellRow(body, y, w, sp, { dim = sec.key == "known", costColor = costColor, note = note })
+                local need
+                if sec.key == "missing" then need = TR.NeedText(cat.missingReq[sp.id]) end
+                y = SpellRow(body, y, w, sp, { dim = sec.key == "known", costColor = costColor, note = note, need = need })
             end
             y = y - 10
         end
