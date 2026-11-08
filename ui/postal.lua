@@ -40,7 +40,7 @@ WeintCodex.UIPostal = {}
 local PO = WeintCodex.UIPostal
 
 PO.DEFAULTS = {
-    postOn = true,          -- Posteingang: Knoepfe, Haken, Tooltip, Filter
+    postOn = false,         -- ab Werk aus (Wunsch); an: Knoepfe, Haken, Tooltip, Filter
     postSpeed = 0.5,        -- Sekunden zwischen zwei Schritten beim Oeffnen
     postSummary = true,     -- Zusammenfassung im Chat
     postBag = true,         -- Posttasche neben dem Briefkasten

@@ -25230,6 +25230,7 @@ do
         end
         _G.TakeInboxMoney = function(i) mails[i].money = 0 end
         _G.TakeInboxItem = function(i, j) table.remove(mails[i].items, j) end
+        assert(K.Get("comfort", "postOn") == false and not PO.Active(), "Post ab Werk an")
         local c = PO.Scan()
         assert(c.gold == 5000 and c.items[2447].count == 10 and c.items[25].cod, "Postfach falsch gelesen")
         -- Filter
