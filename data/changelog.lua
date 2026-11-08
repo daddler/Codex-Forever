@@ -22,6 +22,14 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.0.5.29",
+        date    = "08.11.2026",
+        notes   = {
+            "|cff7C6CFFPost|r – neu unter Komfort → Handel & Gespräche (ab Werk aus): alle oder ausgewählte Briefe öffnen, Suche und Filter, Posttasche mit allem auf einen Blick, Kontakte und Entwürfe beim Schreiben, Versandregeln für deine Twinks.",
+            "|cff7C6CFFBestand|r – der Tooltip zeigt auch, was im Postfach deiner Charaktere liegt.",
+        },
+    },
+    {
         version = "1.0.5.28",
         date    = "08.11.2026",
         notes   = {

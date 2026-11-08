@@ -9,6 +9,12 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.0.5.29] – 2026-11-08
+
+- Neu `ui/postal.lua` (Komfortseite „Post“, ab Werk aus): Posteingang,
+  Posttasche, Schreiben, Versandregeln – Verhalten nach Kerzo Postal Suite,
+  eigener Code (Vorlage ohne Lizenz). Post im Bestand (`IV.SetMail`/`AddMail`).
+
 ## [1.0.5.28] – 2026-11-08
 
 - Fehlerfenster freundlich (`ER.FRIENDLY`), Knopf „Melden & neu laden“
