@@ -22,6 +22,14 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.0.5.27",
+        date    = "08.11.2026",
+        notes   = {
+            "|cff7C6CFFQuests auf der Karte|r – die Questhilfe zeigt auf der großen Karte und der Minikarte wieder alle Questgeber. Forever nennt dein Volk mit einer neuen Nummer, daran scheiterte jede Quest.",
+            "|cff7C6CFFLehrer|r – Zauber nur für dein Volk werden wieder richtig erkannt.",
+        },
+    },
+    {
         version = "1.0.5.26",
         date    = "08.11.2026",
         notes   = {
