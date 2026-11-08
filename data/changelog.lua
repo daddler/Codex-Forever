@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.0.5.22",
+        date    = "08.11.2026",
+        notes   = {
+            "|cff7C6CFFRuhe und Kampf mit mehr Wahl|r – Begleiter, Mikromenü und Taschen mit eigenem Regler, unter „Erweitert“ jede Leiste einzeln, und „Nur der Kampf zählt“: dann treten Rahmen und Leisten auch mit Ziel zurück. 0 % heißt außerhalb des Kampfes weg.",
+        },
+    },
+    {
         version = "1.0.5.21",
         date    = "08.11.2026",
         notes   = {

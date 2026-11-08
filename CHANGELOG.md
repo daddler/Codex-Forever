@@ -9,6 +9,12 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.0.5.22] – 2026-11-08
+
+- Ruhe und Kampf: `presenceCombatOnly`, `fade_pet`, `fade_micro`, je Leiste
+  `fade_bar_<Name>` („all“ = folgt `fade_bars`, `P.BarFade`); Leisten einzeln
+  als Elemente `bar_<Name>`.
+
 ## [1.0.5.21] – 2026-11-08
 
 - Sicherung der Einstellungen in `WeintCodex_Backup` (SavedVariablesPerCharacter,
