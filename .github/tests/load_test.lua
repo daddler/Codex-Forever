@@ -25136,6 +25136,17 @@ do
     Check(ok, "Sicherung" .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- Taschen: Hintergrund und Plaetze einstellbar (1.0.5.23).
+do
+    local BG = WeintCodex.UIBags
+    local ok, err = pcall(function()
+        assert(type(BG.ApplyLook) == "function", "ApplyLook fehlt")
+        assert(K.Get("bags", "bgAlpha") == 100 and K.Get("bags", "showBorder") == true, "Taschen-Aussehen: falsche Voreinstellung")
+        BG.ApplyLook()
+    end)
+    Check(ok, "Taschen-Aussehen" .. (ok and "" or (": " .. tostring(err))))
+end
+
 if failures == 0 then
     print("BESTANDEN")
     os.exit(0)

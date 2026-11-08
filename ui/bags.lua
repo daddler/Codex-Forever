@@ -50,6 +50,13 @@ local defaults = {
     -- 6.125.1.0 (Wunsch: "fuer jetzt optional einschaltbar - nach der
     -- Beta wird alles aktiviert"): ab Werk aus.
     categories = false,
+    -- 1.0.5.23 (Wunsch: "Taschen transparenter im Hintergrund einstellen,
+    -- mehr Optionen"): Deckkraft von Fenster und Plaetzen, Rand, Schatten.
+    bgAlpha    = 100,
+    slotAlpha  = 100,
+    showBorder = true,
+    showShadow = true,
+    showTitle  = true,
 }
 -- Die Kategorien in Reihenfolge. `classes`: Gegenstandsklassen des Spiels
 -- (C_Item.GetItemInfoInstant). Abgeschaltete fallen in "Verschiedenes".
@@ -958,8 +965,26 @@ function BG.RefreshCooldowns()
     end
 end
 
+-- Aussehen des Fensters nach den Einstellungen (1.0.5.23).
+function BG.ApplyLook()
+    if not win then return end
+    local a = math.max(0, math.min(100, tonumber(Opt("bgAlpha")) or 100)) / 100
+    if win.look then
+        win.look.alpha = (C.bgDark[4] or 1) * a
+        if K.PaintKachel then K.PaintKachel(win.look) end
+    end
+    if win.edge and win.edge.SetShown then win.edge:SetShown(Opt("showBorder") ~= false) end
+    if win.glow and win.glow.SetShown then win.glow:SetShown(Opt("showShadow") ~= false and a > 0) end
+    if win.titleText then win.titleText:SetShown(Opt("showTitle") ~= false) end
+    local sa = math.max(0, math.min(100, tonumber(Opt("slotAlpha")) or 100)) / 100
+    for _, s in ipairs(slots) do
+        if s.d and s.d.bg then s.d.bg:SetAlpha(sa) end
+    end
+end
+
 function BG.Refresh()
     if not win or not win:IsShown() then return end
+    BG.ApplyLook()
     if Opt("categories") then return BG.RefreshCategories() end
     for _, hd in ipairs(catHeads) do hd:Hide() end
     EnsurePool()
@@ -1117,8 +1142,9 @@ local function Build()
     -- 6.122.3.0 (Beta-Test: "Taschen auch Holzoptik, aber nicht so krass"):
     -- Holz gedaempft (shade), Rand wie das Aussehen.
     local edge = K.Border(win, 1, C.border[1], C.border[2], C.border[3], 1, "BORDER")
-    K.LookFill(bg, C.bgDark[4] or 1, edge, { C.border[1], C.border[2], C.border[3], 1 }, 0.55)
-    K.Glow(win, { spread = 10, shadow = true })
+    win.look = K.LookFill(bg, C.bgDark[4] or 1, edge, { C.border[1], C.border[2], C.border[3], 1 }, 0.55)
+    win.bgTex, win.edge = bg, edge
+    win.glow = K.Glow(win, { spread = 10, shadow = true })
     if type(_G.UISpecialFrames) == "table" then table.insert(_G.UISpecialFrames, "WeintCodexBags") end
 
     local title = K.NewText(win)
@@ -1126,6 +1152,7 @@ local function Build()
     title:SetTextColor(unpack(C.textBright))
     title:SetPoint("TOPLEFT", win, "TOPLEFT", 12, -12)
     title:SetText("Taschen")
+    win.titleText = title
 
     local close = CreateFrame("Button", nil, win)
     close:SetSize(24, 22)
@@ -1384,7 +1411,17 @@ K.Register({
             B:Row({ type = "toggle", label = "Gegenstandsstufe auf Ausrüstung", key = "itemLevel",
                     description = "Nennt das Spiel keine Stufe, bleibt das Feld leer – nie 0." },
                   { type = "toggle", label = "Rand in Qualitätsfarbe", key = "qualityBorder" })
+            local pct = function(v) return string.format("%d %%", v) end
             B:Row({ type = "toggle", label = "Graue Gegenstände abdunkeln", key = "dimJunk" },
+                  { type = "slider", label = "Hintergrund", key = "bgAlpha", min = 0, max = 100, step = 5, format = pct,
+                    description = "Wie durchsichtig das Fenster ist – 0 % zeigt nur noch die Gegenstände." })
+            B:Advanced()
+            B:Section("Aussehen")
+            B:Row({ type = "slider", label = "Leere Plätze", key = "slotAlpha", min = 0, max = 100, step = 5, format = pct },
+                  { type = "empty" })
+            B:Row({ type = "toggle", label = "Rand", key = "showBorder" },
+                  { type = "toggle", label = "Schatten", key = "showShadow" })
+            B:Row({ type = "toggle", label = "Überschrift „Taschen“", key = "showTitle" },
                   { type = "empty" })
             B:Note("Die Bank bleibt die des Spiels. Öffnen mit der Taschentaste (B) oder einem Klick auf den Rucksack.")
         end },
