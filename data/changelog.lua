@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.0.5.28",
+        date    = "08.11.2026",
+        notes   = {
+            "|cff7C6CFFFehler mit einem Klick melden|r – das Fehlerfenster sagt jetzt verständlich, was los ist, und hat den Knopf „Melden & neu laden“: mit der Companion landet der Fehler direkt beim Entwickler, ohne Kopieren.",
+        },
+    },
+    {
         version = "1.0.5.27",
         date    = "08.11.2026",
         notes   = {

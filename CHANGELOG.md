@@ -9,6 +9,12 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.0.5.28] – 2026-11-08
+
+- Fehlerfenster freundlich (`ER.FRIENDLY`), Knopf „Melden & neu laden“
+  (`ER.MarkReport`, `WeintCodex.AttachReload`) nur mit Companion
+  (`ER.HasCompanion`); Companion sendet an `POST /companion/bug-report`.
+
 ## [1.0.5.27] – 2026-11-08
 
 - `K.ClassicRace`: Volk über den Namen (Forever nennt z. B. 95 statt 1),
