@@ -9,6 +9,12 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.0.5.25] – 2026-11-08
+
+- Questhilfe: Angebote des Spiels (`C_QuestLine.GetAvailableQuestLines`) als
+  „!“ auf der Weltkarte, ergänzend zum Bestand, nie doppelt (`QH.GameOffers`).
+- `/wcui quests`: Diagnose je Karte (`QH.Diagnose`).
+
 ## [1.0.5.24] – 2026-11-08
 
 - Questhilfe: `import_questdb.py` liest Lagen auch als CBOR-Liste (Gebiet 1 =
