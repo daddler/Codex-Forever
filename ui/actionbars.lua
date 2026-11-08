@@ -1127,7 +1127,19 @@ local function Enable()
     K.AfterCombat(Place)
     K.AfterCombat(Arrange)
     WeintCodex.UIPresence.Register("mainbar", Named(MAIN_BARS), "fade_mainbar")
-    WeintCodex.UIPresence.Register("bars", Named(OTHER_BARS), "fade_bars")
+    -- 1.0.5.22: jede weitere Leiste einzeln (Seite "Ruhe und Kampf").
+    local PR = WeintCodex.UIPresence
+    for _, b in ipairs(PR.BARS) do
+        local name = b.name
+        PR.Register("bar_" .. name, Named({ name }), function() return PR.BarFade(name) end)
+    end
+    PR.Register("micro", function()
+        local out = {}
+        for _, n in ipairs({ "MicroMenuContainer", "BagsBar" }) do
+            if type(_G[n]) == "table" then out[#out + 1] = _G[n] end
+        end
+        return out
+    end, "fade_micro")
     -- Verschieben ist Sache des Bearbeitungsmodus des Spiels. 6.3.0.4/.5
     -- haben die Leisten auch im Gestaltungsmodus verschoben - das Spiel
     -- stapelt Leiste 2, Haltungs- und Begleiterleiste aber im Kampf selbst

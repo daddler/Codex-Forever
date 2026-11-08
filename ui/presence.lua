@@ -40,12 +40,37 @@ P.DEFAULTS = {
     -- Leisten sind"): ab Werk sichtbar; bis dahin 0 = in Ruhe unsichtbar.
     fade_bars       = 100,   -- alle weiteren Aktionsleisten
     fade_damage     = 45,    -- Schadensanzeige
+    -- 1.0.5.22 (Wunsch: "mehr Optionen - alle Leisten aus oder einzelne,
+    -- Spielerrahmen weg ausserhalb des Kampfes"):
+    presenceCombatOnly = false, -- Ruhe = nur "nicht im Kampf" (Ziel/Leben egal)
+    fade_pet        = 35,    -- Begleiterrahmen (bis dahin mit dem Spieler)
+    fade_micro      = 100,   -- Mikromenue und Taschenleiste
 }
+-- Je weitere Leiste: "all" = wie "Weitere Leisten", sonst eine Zahl.
+P.BARS = {
+    { name = "MultiBarBottomLeft",  label = "Leiste 2 (unten links)" },
+    { name = "MultiBarBottomRight", label = "Leiste 3 (unten rechts)" },
+    { name = "MultiBarRight",       label = "Leiste 4 (rechts)" },
+    { name = "MultiBarLeft",        label = "Leiste 5 (rechts, zweite)" },
+    { name = "MultiBar5",           label = "Leiste 6" },
+    { name = "MultiBar6",           label = "Leiste 7" },
+    { name = "MultiBar7",           label = "Leiste 8" },
+    { name = "StanceBar",           label = "Haltungsleiste" },
+    { name = "PetActionBar",        label = "Begleiterleiste" },
+}
+for _, b in ipairs(P.BARS) do P.DEFAULTS["fade_bar_" .. b.name] = "all" end
 
 local function Opt(k)
     local v = K.Get("general", k)
     if v == nil then v = P.DEFAULTS[k] end
     return v
+end
+
+-- Deckkraft einer einzelnen Leiste in Ruhe: eigene Zahl oder die aller.
+function P.BarFade(name)
+    local v = tonumber(Opt("fade_bar_" .. name))
+    if v then return v end
+    return Opt("fade_bars")
 end
 
 local elements, order = {}, {}
@@ -137,6 +162,7 @@ function P.Compute()
     if K.InCombat() or K.Bool(_G.UnitAffectingCombat and _G.UnitAffectingCombat("player"), false) then
         return "kampf"
     end
+    if Opt("presenceCombatOnly") then return "ruhe" end
     if K.Bool(_G.UnitExists and _G.UnitExists("target"), false) then return "bereit" end
     -- Wer zaubert (Ruhestein, Verband), will seinen Zauberbalken sehen -
     -- er haengt am Spielerrahmen und traete sonst mit ihm zurueck.
@@ -157,7 +183,8 @@ end
 
 local function TargetAlpha(el)
     if Forced() or el.hover or not Opt("presence") or state ~= "ruhe" then return 1 end
-    local v = Opt(el.setting)
+    local v
+    if type(el.setting) == "function" then v = el.setting() else v = Opt(el.setting) end
     if type(v) ~= "number" then return 1 end
     return math.max(0, math.min(1, v / 100))
 end

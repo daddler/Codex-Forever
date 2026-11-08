@@ -223,12 +223,27 @@ K.Register({
                   { type = "slider", label = "Nachlauf", key = "presenceDelay", min = 0, max = 15, step = 1, disabled = off,
                     format = function(v) return string.format("%d s", v) end,
                     tooltip = "So lange bleibt nach dem Kampf alles sichtbar." })
-            B:Section("Deckkraft in Ruhe")
+            B:Row({ type = "toggle", label = "Nur der Kampf zählt", key = "presenceCombatOnly", disabled = off,
+                    description = "Auch mit Ziel und ohne volles Leben in Ruhe – sichtbar wird es erst im Kampf." },
+                  { type = "empty" })
+            B:Section("Deckkraft in Ruhe", "0 % = außerhalb des Kampfes weg.")
             B:Row({ type = "slider", label = "Spielerrahmen", key = "fade_player", min = 0, max = 100, step = 5, format = pct, disabled = off },
-                  { type = "slider", label = "Schadensanzeige", key = "fade_damage", min = 0, max = 100, step = 5, format = pct, disabled = off })
+                  { type = "slider", label = "Begleiter", key = "fade_pet", min = 0, max = 100, step = 5, format = pct, disabled = off })
             B:Row({ type = "slider", label = "Aktionsleiste 1", key = "fade_mainbar", min = 0, max = 100, step = 5, format = pct, disabled = off },
-                  { type = "slider", label = "Weitere Leisten", key = "fade_bars", min = 0, max = 100, step = 5, format = pct, disabled = off })
+                  { type = "slider", label = "Alle weiteren Leisten", key = "fade_bars", min = 0, max = 100, step = 5, format = pct, disabled = off })
+            B:Row({ type = "slider", label = "Mikromenü & Taschen", key = "fade_micro", min = 0, max = 100, step = 5, format = pct, disabled = off },
+                  { type = "slider", label = "Schadensanzeige", key = "fade_damage", min = 0, max = 100, step = 5, format = pct, disabled = off })
             B:Note("Ausgeblendete Leisten bleiben benutzbar: Tastenkürzel wirken immer, und die Maus zeigt sie wieder.")
+            B:Advanced()
+            B:Section("Leisten einzeln", "„Wie alle“ folgt dem Regler „Alle weiteren Leisten“.")
+            local items = { { value = "all", text = "Wie alle" } }
+            for _, n in ipairs({ 100, 75, 50, 25, 0 }) do items[#items + 1] = { value = tostring(n), text = n .. " %" } end
+            local bars = WeintCodex.UIPresence.BARS
+            for i = 1, #bars, 2 do
+                local a, b = bars[i], bars[i + 1]
+                B:Row({ type = "dropdown", label = a.label, key = "fade_bar_" .. a.name, items = items, disabled = off },
+                      b and { type = "dropdown", label = b.label, key = "fade_bar_" .. b.name, items = items, disabled = off } or { type = "empty" })
+            end
         end },
         -- 6.11.0.4: Profile je Charakter (ui/profiles.lua).
         { key = "profile", label = "Profile", build = function(B) WeintCodex.UIProfiles.BuildPage(B) end },

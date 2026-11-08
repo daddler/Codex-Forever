@@ -12356,8 +12356,15 @@ do
     local UF = WeintCodex.UIUnitFrames
     local DM = WeintCodex.UIDamageMeter
     local ok, err = pcall(function()
-        assert(P.elements.player and P.elements.mainbar and P.elements.bars and P.elements.damage,
-            "nicht alle Elemente angemeldet")
+        assert(P.elements.player and P.elements.pet and P.elements.mainbar and P.elements.bar_MultiBarRight
+            and P.elements.micro and P.elements.damage, "nicht alle Elemente angemeldet")
+        -- 1.0.5.22: einzelne Leiste folgt "alle", bis sie eine eigene Zahl hat.
+        K.Set("general", "fade_bars", 40)
+        assert(P.BarFade("MultiBarRight") == 40, "einzelne Leiste folgt nicht 'alle'")
+        K.Set("general", "fade_bar_MultiBarRight", "0")
+        assert(P.BarFade("MultiBarRight") == 0, "einzelne Leiste: eigene Zahl gilt nicht")
+        K.Set("general", "fade_bar_MultiBarRight", "all")
+        K.Set("general", "fade_bars", 100)
         local target, combat = false, false
         local oldExists, oldHealth, oldMax, oldCombat = _G.UnitExists, _G.UnitHealth, _G.UnitHealthMax, _G.InCombatLockdown
         local oldAffecting = _G.UnitAffectingCombat
@@ -12381,6 +12388,9 @@ do
         assert(P.Compute() == "bereit", "angeschlagen ist nicht Ruhe")
         _G.UnitHealth = function() return nil end
         assert(P.Compute() == "bereit", "unbekanntes Leben zaehlt nicht als voll")
+        K.Set("general", "presenceCombatOnly", true)
+        assert(P.Compute() == "ruhe", "nur Kampf zaehlt: angeschlagen trotzdem nicht Ruhe")
+        K.Set("general", "presenceCombatOnly", false)
         _G.UnitHealth = function() return 100 end
         P.Evaluate(true)
         P.Force("test", true)
