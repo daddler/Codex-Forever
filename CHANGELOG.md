@@ -13,7 +13,7 @@ nicht zusammen.
 
 - Questhilfe: Angebote des Spiels (`C_QuestLine.GetAvailableQuestLines`) als
   „!“ auf der Weltkarte, ergänzend zum Bestand, nie doppelt (`QH.GameOffers`).
-- `/wcui quests`: Diagnose je Karte (`QH.Diagnose`).
+- `/wcui questhilfe`: Diagnose je Karte (`QH.Diagnose`).
 
 ## [1.0.5.24] – 2026-11-08
 

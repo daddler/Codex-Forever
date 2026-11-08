@@ -1353,7 +1353,7 @@ QH.Apply = Apply
 
 -- 1.0.5.25 (Bericht: "auf der grossen Karte keine Quests", Rotkammgebirge,
 -- Stufe 24, nichts gemacht - offline mit denselben Daten 20 "!"): was das
--- Spiel hier wirklich antwortet. /wcui quests, Karte offen oder zu.
+-- Spiel hier wirklich antwortet. /wcui questhilfe, Karte offen oder zu.
 function QH.Diagnose()
     local out = {}
     local function say(s) out[#out + 1] = s end

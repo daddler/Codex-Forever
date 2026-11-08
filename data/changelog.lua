@@ -26,7 +26,7 @@ WeintCodex_ChangelogData = {
         date    = "08.11.2026",
         notes   = {
             "|cff7C6CFFQuests auf der großen Karte|r – was das Spiel auf der Minikarte als Questgeber zeigt, steht jetzt auch auf der Weltkarte, sobald du ein Land öffnest.",
-            "|cff7C6CFF/wcui quests|r – sagt bei offener Karte, warum welche Quest gezeigt wird oder nicht.",
+            "|cff7C6CFF/wcui questhilfe|r – sagt bei offener Karte, warum welche Quest gezeigt wird oder nicht.",
         },
     },
     {

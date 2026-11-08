@@ -1784,7 +1784,7 @@ SlashCmdList["WEINTCODEXUI"] = function(msg)
         K.ProfileRun(30, function(lines) for _, line in ipairs(lines) do say(line) end end)
         return
     end
-    if msg == "quests" or msg == "questhilfe" then
+    if msg == "questhilfe" or msg == "questkarte" then
         for _, line in ipairs(WeintCodex.UIQuestHelper.Diagnose()) do
             print(WeintCodex.ColorText("accent", "[WeintCodex]") .. " " .. line)
         end
