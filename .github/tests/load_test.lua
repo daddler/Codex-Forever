@@ -25289,6 +25289,21 @@ do
         for _, e in ipairs(PO.ContactEntries()) do if e.text == "Favoriten" then hasFav = true end end
         assert(hasFav, "Favoriten im Menü")
         assert(PO.ToggleFav("Freundin") == false and not PO.IsFav("Freundin"), "Favorit entfernen")
+        PO.ToggleFav("Freundin")
+        PO.ShowView("contacts")
+        PO.view = "contacts" -- ohne SendMailFrame in der Attrappe
+        local seen = false
+        for _, l in ipairs(PO.ViewLines()) do if l.text == "Freundin" then seen = true end end
+        assert(seen, "Favorit in der Kontaktansicht")
+        PO.editing = true
+        PO.DrawView()
+        PO.ToggleSection("alts")
+        assert(PO.ContactSections()[2].hidden, "Bereich ausblenden")
+        PO.ToggleSection("alts")
+        PO.ShowView("drafts")
+        PO.ShowView(nil)
+        assert(PO.view == nil and PO.editing == false, "Zurück")
+        PO.ToggleFav("Freundin")
     end)
     for k, v in pairs(saved) do _G[k] = v end
     Check(ok, "Post" .. (ok and "" or (": " .. tostring(err))))

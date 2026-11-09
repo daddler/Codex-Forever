@@ -77,6 +77,7 @@ function PO.Store()
     p.history = p.history or {}
     p.recent = p.recent or {}
     p.favs = p.favs or {}
+    p.hidden = p.hidden or {}
     p.drafts = p.drafts or {}
     p.sent = p.sent or {}
     p.rules = p.rules or {}
@@ -440,7 +441,7 @@ end
 
 -- Alles, was die Post-Hilfe mitbringt, steht in einer Leiste NEBEN dem
 -- Postfenster – nie darüber (überlappte Felder und Knöpfe des Spiels).
-PO.SIDE_W, PO.SIDE_BTN = 196, 176
+PO.SIDE_W, PO.SIDE_BTN, PO.VIEW_W = 196, 176, 300
 local side
 function PO.BuildSide()
     if side then return side end
@@ -877,6 +878,8 @@ function PO.BNetFriends()
             and (type(proj) == "nil" or type(g.wowProjectID) == "nil" or g.wowProjectID == proj)
             and (type(g.factionName) == "nil" or not fac or g.factionName == fac) then
             local n = PO.MailName(g.characterName, g.realmName)
+            -- Post geht nur auf dem eigenen Realm: fremde Realms weglassen.
+            if n and n:find("-", 1, true) then n = nil end
             if n and not seen[n] then
                 seen[n] = true
                 out[#out + 1] = { name = n, who = acc.accountName }
@@ -904,39 +907,67 @@ function PO.ToggleFav(name)
 end
 
 PO.CONTACT_MAX = 10
+PO.SECTIONS = {
+    { key = "favs",   title = "Favoriten" },
+    { key = "alts",   title = "Eigene Twinks" },
+    { key = "friends", title = "Freunde" },
+    { key = "bnet",   title = "Battle.net – online in WoW" },
+    { key = "recent", title = "Zuletzt angeschrieben" },
+}
+
+-- Abschnitte der Kontaktliste: { key, title, hidden, items = { {name, label} } }.
+function PO.ContactSections()
+    local p = PO.Store()
+    local lists = {
+        favs = p and p.favs or {},
+        alts = PO.Alts(),
+        friends = PO.Friends(),
+        bnet = PO.BNetFriends(),
+        recent = {},
+    }
+    for i, n in ipairs(p and p.recent or {}) do if i <= 8 then lists.recent[#lists.recent + 1] = n end end
+    local out = {}
+    for _, sec in ipairs(PO.SECTIONS) do
+        local items = {}
+        for _, n in ipairs(lists[sec.key]) do
+            if type(n) == "table" then
+                local who = type(n.who) == "string" and n.who ~= "" and n.who or nil
+                items[#items + 1] = { name = n.name, label = n.name, who = who }
+            else
+                items[#items + 1] = { name = n, label = n }
+            end
+        end
+        out[#out + 1] = { key = sec.key, title = sec.title, items = items,
+            hidden = p and p.hidden[sec.key] and true or false }
+    end
+    return out
+end
+
+-- Flache Liste (Menue-Form) - fuer Pruefungen und die alte Darstellung.
 function PO.ContactEntries()
     local out = {}
-    local function pick(n) return function() if _G.SendMailNameEditBox then _G.SendMailNameEditBox:SetText(n) end end end
-    local function section(title, list, label)
-        if #list == 0 then return end
-        out[#out + 1] = { text = title, header = true }
-        for i, n in ipairs(list) do
-            if i > PO.CONTACT_MAX then
-                out[#out + 1] = { text = "  … und " .. (#list - PO.CONTACT_MAX) .. " weitere", header = true }
-                break
+    for _, sec in ipairs(PO.ContactSections()) do
+        if not sec.hidden and #sec.items > 0 then
+            out[#out + 1] = { text = sec.title, header = true }
+            for i, it in ipairs(sec.items) do
+                if i > PO.CONTACT_MAX then break end
+                out[#out + 1] = { text = it.label, name = it.name }
             end
-            local name = type(n) == "table" and n.name or n
-            out[#out + 1] = { text = label and label(n) or name, onClick = pick(name) }
         end
     end
-    local p = PO.Store()
-    local typed = _G.SendMailNameEditBox and PO.MailName(_G.SendMailNameEditBox:GetText())
-    if typed then
-        local fav = PO.IsFav(typed)
-        out[#out + 1] = { text = (fav and "Favorit entfernen: " or "Als Favorit merken: ") .. typed,
-            onClick = function() PO.ToggleFav(typed) end }
-    end
-    section("Favoriten", p and p.favs or {})
-    section("Eigene Twinks", PO.Alts())
-    section("Freunde", PO.Friends())
-    section("Battle.net (online in WoW)", PO.BNetFriends(), function(e)
-        return type(e.who) == "string" and e.who ~= "" and (e.name .. "  (" .. e.who .. ")") or e.name
-    end)
-    local recent = {}
-    for i, n in ipairs(p and p.recent or {}) do if i <= 8 then recent[#recent + 1] = n end end
-    section("Zuletzt angeschrieben", recent)
-    if #out == 0 then out[1] = { text = "Noch keine Kontakte – Namen ins Feld „An“ schreiben und hier merken.", header = true } end
     return out
+end
+
+function PO.RemoveRecent(name)
+    local p = PO.Store()
+    if not p then return end
+    for i = #p.recent, 1, -1 do if p.recent[i] == name then table.remove(p.recent, i) end end
+end
+
+function PO.ToggleSection(key)
+    local p = PO.Store()
+    if not p then return end
+    p.hidden[key] = not p.hidden[key] or nil
 end
 
 function PO.DraftEntries()
@@ -1153,6 +1184,7 @@ function PO.BuildRulesBar()
     local W = PO.SIDE_BTN
     -- Kind von „Post versenden“: sichtbar nur auf dessen Reiter.
     local host = CreateFrame("Frame", nil, sf)
+    sd.compose = host
     host:SetPoint("TOPLEFT", sd, "TOPLEFT", 10, -30)
     host:SetPoint("BOTTOMRIGHT", sd, "BOTTOMRIGHT", -10, 10)
     host:SetFrameLevel((sd:GetFrameLevel() or 1) + 5)
@@ -1174,9 +1206,9 @@ function PO.BuildRulesBar()
     end)
     rulesBar.preview:SetPoint("TOPLEFT", rulesBar.send, "BOTTOMLEFT", 0, -4)
 
-    rulesBar.contacts = Btn(host, "Kontakte", W, function(self) PO.Menu(self, PO.ContactEntries()) end)
+    rulesBar.contacts = Btn(host, "Kontakte", W, function() PO.ShowView("contacts") end)
     rulesBar.contacts:SetPoint("TOPLEFT", host, "TOPLEFT", 0, 0)
-    rulesBar.drafts = Btn(host, "Entwürfe", W, function(self) PO.Menu(self, PO.DraftEntries()) end)
+    rulesBar.drafts = Btn(host, "Entwürfe", W, function() PO.ShowView("drafts") end)
     rulesBar.drafts:SetPoint("TOPLEFT", rulesBar.contacts, "BOTTOMLEFT", 0, -4)
     rulesBar.multi = Btn(host, "An mehrere", W, function()
         local names = PO.SplitNames(_G.SendMailNameEditBox and _G.SendMailNameEditBox:GetText())
@@ -1190,6 +1222,228 @@ function PO.BuildRulesBar()
     rulesBar.sent:SetPoint("TOPLEFT", rulesBar.multi, "BOTTOMLEFT", 0, -4)
     PO.rulesBar = rulesBar
     return rulesBar
+end
+
+--------------------------------------------------
+-- Ansichten in der Seitenleiste (Kontakte, Entwürfe) mit „Zurück“
+--------------------------------------------------
+
+PO.ROW_H = 22
+PO.view, PO.editing = nil, false
+local view
+
+local function SetName(n)
+    if _G.SendMailNameEditBox and n then _G.SendMailNameEditBox:SetText(n) end
+end
+
+function PO.BuildView()
+    if view then return view end
+    local sd, sf = PO.BuildSide(), _G.SendMailFrame
+    if not (sd and type(sf) == "table") then return nil end
+    view = CreateFrame("Frame", "WeintCodexPostView", sf)
+    view:SetPoint("TOPLEFT", sd, "TOPLEFT", 0, 0)
+    view:SetPoint("BOTTOMRIGHT", sd, "BOTTOMRIGHT", 0, 0)
+    view:SetFrameLevel((sd:GetFrameLevel() or 1) + 6)
+    view.back = Btn(view, "‹ Zurück", 84, function() PO.ShowView(nil) end, "Zurück zur Post-Hilfe.")
+    view.back:SetPoint("TOPLEFT", view, "TOPLEFT", 10, -8)
+    view.edit = Btn(view, "Bearbeiten", 92, function()
+        PO.editing = not PO.editing
+        PO.DrawView()
+    end, "Favoriten hinzufügen/entfernen, Bereiche ein- und ausblenden.")
+    view.edit:SetPoint("TOPRIGHT", view, "TOPRIGHT", -10, -8)
+    view.title = K.NewText(view, 13)
+    view.title:SetPoint("TOPLEFT", view.back, "BOTTOMLEFT", 0, -10)
+    view.title:SetTextColor(unpack(C.gold))
+
+    local add = CreateFrame("EditBox", nil, view, "InputBoxTemplate")
+    add:SetSize(PO.VIEW_W - 90, 20)
+    add:SetAutoFocus(false)
+    add:SetScript("OnEnterPressed", function(self) PO.AddFromBox() end)
+    add:SetScript("OnEscapePressed", function(self) self:SetText("") self:ClearFocus() end)
+    view.add = add
+    view.addBtn = Btn(view, "Hinzufügen", 70, function() PO.AddFromBox() end)
+    view.addBtn:SetPoint("LEFT", add, "RIGHT", 6, 0)
+    view.rows = {}
+    view:Hide()
+    -- Reiter gewechselt oder Post zu: zurück zur Leiste.
+    view:SetScript("OnHide", function() if PO.view then PO.ShowView(nil) end end)
+    PO.viewFrame = view
+    return view
+end
+
+function PO.AddFromBox()
+    if not view then return end
+    local n = PO.MailName(view.add:GetText())
+    if not n then return end
+    if PO.view == "contacts" then
+        if not PO.IsFav(n) then PO.ToggleFav(n) end
+    end
+    view.add:SetText("")
+    view.add:ClearFocus()
+    PO.DrawView()
+end
+
+local function Row(i)
+    local r = view.rows[i]
+    if r then return r end
+    r = CreateFrame("Button", nil, view)
+    r:SetHeight(PO.ROW_H)
+    r.bg = r:CreateTexture(nil, "BACKGROUND")
+    r.bg:SetAllPoints(r)
+    local hl = r:CreateTexture(nil, "HIGHLIGHT")
+    hl:SetAllPoints(r)
+    hl:SetColorTexture(1, 1, 1, 0.08)
+    r.text = K.NewText(r, 12)
+    r.text:SetPoint("LEFT", r, "LEFT", 8, 0)
+    r.sub = K.NewText(r, 10)
+    r.sub:SetPoint("LEFT", r.text, "RIGHT", 6, 0)
+    r.sub:SetTextColor(unpack(C.textMuted))
+    r.act = Btn(r, "", 26, nil)
+    r.act:SetHeight(18)
+    r.act:SetPoint("RIGHT", r, "RIGHT", -4, 0)
+    r.act2 = Btn(r, "", 26, nil)
+    r.act2:SetHeight(18)
+    r.act2:SetPoint("RIGHT", r.act, "LEFT", -3, 0)
+    view.rows[i] = r
+    return r
+end
+
+local function SetAct(b, text, tip, fn)
+    if not fn then b:Hide() return end
+    if b.SetText then b:SetText(text) end
+    b.tooltipText = tip
+    b:SetScript("OnClick", function() fn() PO.DrawView() end)
+    b:Show()
+end
+
+-- Zeilen fuer die aktuelle Ansicht: { kind = "head"|"item"|"note", ... }.
+function PO.ViewLines()
+    local lines = {}
+    if PO.view == "contacts" then
+        for _, sec in ipairs(PO.ContactSections()) do
+            if PO.editing then
+                lines[#lines + 1] = { kind = "head", text = sec.title, dim = sec.hidden,
+                    act = { sec.hidden and "Zeigen" or "Aus", sec.hidden and "Bereich wieder zeigen" or "Bereich ausblenden",
+                        function() PO.ToggleSection(sec.key) end } }
+                if not sec.hidden then
+                    for _, it in ipairs(sec.items) do
+                        local fav = PO.IsFav(it.name)
+                        local a1, a2
+                        if sec.key == "favs" then
+                            a1 = { "×", "Aus den Favoriten nehmen", function() PO.ToggleFav(it.name) end }
+                        else
+                            a1 = { fav and "−" or "+", fav and "Aus den Favoriten nehmen" or "Zu den Favoriten",
+                                function() PO.ToggleFav(it.name) end }
+                            if sec.key == "recent" then
+                                a2 = { "×", "Aus „Zuletzt“ entfernen", function() PO.RemoveRecent(it.name) end }
+                            end
+                        end
+                        lines[#lines + 1] = { kind = "item", text = it.label, sub = it.who, act = a1, act2 = a2 }
+                    end
+                    if #sec.items == 0 then lines[#lines + 1] = { kind = "note", text = "leer" } end
+                end
+            elseif not sec.hidden and #sec.items > 0 then
+                lines[#lines + 1] = { kind = "head", text = sec.title }
+                for _, it in ipairs(sec.items) do
+                    local n = it.name
+                    lines[#lines + 1] = { kind = "item", text = it.label, sub = it.who,
+                        onClick = function() SetName(n) PO.ShowView(nil) end }
+                end
+            end
+        end
+        if #lines == 0 then
+            lines[1] = { kind = "note", text = "Noch keine Kontakte. Über „Bearbeiten“ Namen als Favorit eintragen." }
+        end
+    elseif PO.view == "drafts" then
+        local p = PO.Store()
+        lines[#lines + 1] = { kind = "item", text = "+ Aktuellen Brief speichern", onClick = function() PO.SaveDraft() end }
+        for i, d in ipairs(p and p.drafts or {}) do
+            local s = (d.subject ~= "" and d.subject or "(ohne Betreff)")
+            local idx = i
+            lines[#lines + 1] = { kind = "item", text = WeintCodex.Truncate and WeintCodex.Truncate(s, 26) or s,
+                sub = d.to ~= "" and ("→ " .. d.to) or nil,
+                onClick = not PO.editing and function() PO.LoadDraft(d) PO.ShowView(nil) end or nil,
+                act = PO.editing and { "×", "Entwurf löschen", function() table.remove(p.drafts, idx) end } or nil }
+        end
+        if not (p and #p.drafts > 0) then lines[#lines + 1] = { kind = "note", text = "Noch keine Entwürfe." } end
+    end
+    return lines
+end
+
+function PO.DrawView()
+    if not (view and PO.view) then return end
+    view.title:SetText(PO.view == "contacts" and "Kontakte" or "Entwürfe")
+    if view.edit.SetText then view.edit:SetText(PO.editing and "Fertig" or "Bearbeiten") end
+    local showAdd = PO.editing and PO.view == "contacts"
+    view.add:SetShown(showAdd)
+    view.addBtn:SetShown(showAdd)
+    local y = -60
+    if showAdd then
+        view.add:ClearAllPoints()
+        view.add:SetPoint("TOPLEFT", view, "TOPLEFT", 16, y)
+        y = y - 28
+    end
+    for _, r in ipairs(view.rows) do r:Hide() end
+    local lines = PO.ViewLines()
+    local maxRows = math.floor(((view:GetHeight() or 420) + y - 10) / PO.ROW_H)
+    if maxRows < 1 then maxRows = 16 end
+    local n = 0
+    for i, l in ipairs(lines) do
+        if n >= maxRows then
+            local r = Row(n + 1)
+            -- Platz zu Ende: sagen, was fehlt – nie still abschneiden.
+            r.text:SetText("… " .. (#lines - n) .. " weitere – Bereiche ausblenden")
+            r.text:SetTextColor(unpack(C.textMuted))
+            r.sub:SetText("") r.act:Hide() r.act2:Hide()
+            r.bg:SetColorTexture(0, 0, 0, 0)
+            r:SetScript("OnClick", nil)
+            r:Show()
+            break
+        end
+        n = n + 1
+        local r = Row(n)
+        r:ClearAllPoints()
+        r:SetPoint("TOPLEFT", view, "TOPLEFT", 8, y)
+        r:SetPoint("RIGHT", view, "RIGHT", -8, 0)
+        y = y - PO.ROW_H
+        r.text:SetText(l.text)
+        r.sub:SetText(l.sub or "")
+        if l.kind == "head" then
+            r.text:SetTextColor(unpack(l.dim and C.textMuted or C.gold))
+            r.bg:SetColorTexture(1, 1, 1, 0.04)
+        elseif l.kind == "note" then
+            r.text:SetTextColor(unpack(C.textMuted))
+            r.bg:SetColorTexture(0, 0, 0, 0)
+        else
+            r.text:SetTextColor(unpack(C.textNormal))
+            r.bg:SetColorTexture(0, 0, 0, 0)
+        end
+        r:SetScript("OnClick", l.onClick)
+        SetAct(r.act, l.act and l.act[1], l.act and l.act[2], l.act and l.act[3])
+        SetAct(r.act2, l.act2 and l.act2[1], l.act2 and l.act2[2], l.act2 and l.act2[3])
+        r:Show()
+    end
+end
+
+function PO.ShowView(name)
+    PO.view = name
+    if not name then PO.editing = false end
+    local sd = PO.BuildSide()
+    local v = PO.BuildView()
+    if not (sd and v) then return end
+    local mf = _G.MailFrame
+    if name then
+        sd:SetSize(PO.VIEW_W, (mf and mf.GetHeight and mf:GetHeight()) or 424)
+        if sd.compose then sd.compose:Hide() end
+        sd.title:Hide()
+        v:Show()
+        PO.DrawView()
+    else
+        v:Hide()
+        sd:SetSize(PO.SIDE_W, 300)
+        if sd.compose then sd.compose:Show() end
+        sd.title:Show()
+    end
 end
 
 function PO.RefreshRules()
