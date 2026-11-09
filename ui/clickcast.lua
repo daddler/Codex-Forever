@@ -477,7 +477,12 @@ function CC.KeyMacro(b)
     local text
     if b.action == "spell" then
         local s = CC.SpellAttr(b)
-        if s and CC.IsFree(b) then return "/cast " .. s end
+        -- 1.0.5.30 (Bericht: "Machtwort: Schild per Klickzauber geht immer auf
+        -- den Priester selbst"): "/cast Name" ohne Ziel nahm das aktuelle
+        -- Ziel - ist das kein Freund oder die Selbstzauber-Taste (Alt)
+        -- gedrueckt, zaubert das Spiel auf dich selbst. Jetzt zuerst die
+        -- Einheit unter der Maus, dann das Ziel - ausdruecklich.
+        if s and CC.IsFree(b) then return "/cast [@mouseover,exists,nodead][@target,exists,nodead][] " .. s end
         text = s and ("/cast [@mouseover,exists] " .. s) or nil
     elseif b.action == "target" then
         text = "/target [@mouseover,exists]"

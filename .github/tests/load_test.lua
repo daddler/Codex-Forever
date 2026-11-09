@@ -10989,7 +10989,7 @@ do
         assert(CC.CanFree({ button = "Q" }) and CC.CanFree({ button = 4 }) and not CC.CanFree({ button = 1 })
             and not CC.CanFree({ button = 2 }), "Ueberall-Regel falsch")
         local fb = { button = 4, mod = "", action = "spell", spell = "Donnerknall", free = true }
-        assert(CC.KeyMacro(fb) == "/cast Donnerknall" and CC.BindingKey(fb) == "BUTTON4", "Ueberall-Makro/Taste falsch")
+        assert(CC.KeyMacro(fb) == "/cast [@mouseover,exists,nodead][@target,exists,nodead][] Donnerknall" and CC.BindingKey(fb) == "BUTTON4", "Ueberall-Makro/Taste falsch")
         d.button, d.mod = oB, oM
         local rep = CC.ClickReport()
         assert(type(rep) == "table" and #rep >= 3, "Klickbericht leer")
