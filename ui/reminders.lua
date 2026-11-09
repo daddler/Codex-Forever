@@ -1642,14 +1642,42 @@ function R.ClockHit(rule)
 end
 
 -- Unverteilte Talentpunkte, wie der Client sie nennt; nil = unbekannt.
+-- 1.0.5.35: der hoechste Wert aller Quellen - eine Quelle, die es gibt,
+-- aber immer 0 sagt, verdeckte vorher die anderen. Dritte Quelle: Stufe
+-- minus 9 minus verteilte Punkte der Baeume (Regel des klassischen Spiels).
+function R.SpentTalents()
+    if type(_G.GetNumTalentTabs) ~= "function" or type(_G.GetTalentTabInfo) ~= "function" then return nil end
+    local ok, tabs = pcall(_G.GetNumTalentTabs)
+    tabs = ok and K.Plain(tabs) or nil
+    if type(tabs) ~= "number" or tabs < 1 then return nil end
+    local sum = 0
+    for i = 1, tabs do
+        local ok2, a, b, c, d, e = pcall(_G.GetTalentTabInfo, i)
+        if not ok2 then return nil end
+        -- Classic: name, icon, pointsSpent; neuere: id, name, desc, icon, pointsSpent.
+        local n = K.Plain(c)
+        if type(n) ~= "number" then n = K.Plain(e) end
+        if type(n) ~= "number" then return nil end
+        sum = sum + n
+    end
+    return sum
+end
+
 function R.UnspentTalents()
+    local best
     for _, f in ipairs({ function() return _G.UnitCharacterPoints("player") end,
                          function() return _G.GetUnspentTalentPoints() end }) do
         local ok, n = pcall(f)
         n = ok and K.Plain(n) or nil
-        if type(n) == "number" then return n end
+        if type(n) == "number" and (not best or n > best) then best = n end
     end
-    return nil
+    local lvl = _G.UnitLevel and K.Plain(_G.UnitLevel("player"))
+    local spent = R.SpentTalents()
+    if type(lvl) == "number" and spent then
+        local n = math.max(0, lvl - 9) - spent
+        if not best or n > best then best = n end
+    end
+    return best
 end
 
 function R.TalentHit()
@@ -1681,6 +1709,13 @@ end
 function R.Active()
     local out = R.ActiveGeneral()
     if R.FoodAllowed(R.Fighting()) then R.BagBuffs(out, "food") end
+    -- 1.0.5.35 (Spieler: „Talentpunkt-Erinnerung funktioniert noch immer
+    -- nicht“): nur ihr eigener Schalter und kein Kampf - vorher schwieg sie
+    -- in Stadt und Gasthaus (dort levelt man ab) und unter „Wo“.
+    if not R.Fighting() then
+        local t = R.TalentHit()
+        if t then out[#out + 1] = t end
+    end
     return out
 end
 
@@ -1726,11 +1761,7 @@ function R.ActiveGeneral()
             if hit then out[#out + 1] = hit end
         end
     end
-    if not fighting then
-        if buffsNow then R.BagBuffs(out, "elixir") end
-        local t = R.TalentHit()
-        if t then out[#out + 1] = t end
-    end
+    if not fighting and buffsNow then R.BagBuffs(out, "elixir") end
     return out
 end
 

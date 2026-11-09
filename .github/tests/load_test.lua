@@ -25330,6 +25330,24 @@ do
 end
 end
 
+do
+    local R = WeintCodex.UIReminders
+    local keep = { _G.UnitCharacterPoints, _G.GetNumTalentTabs, _G.GetTalentTabInfo, _G.UnitLevel }
+    local ok, err = pcall(function()
+        _G.UnitCharacterPoints = function() return 0 end
+        _G.UnitLevel = function() return 13 end
+        _G.GetNumTalentTabs = function() return 3 end
+        _G.GetTalentTabInfo = function(i) return "Baum", 1, i == 1 and 2 or 0 end
+        assert(R.UnspentTalents() == 2, "Stufe 13, 2 verteilt: 2 frei")
+        _G.GetTalentTabInfo = function(i) return 100 + i, "Baum", "Text", 1, i == 1 and 4 or 0 end
+        assert(R.UnspentTalents() == 0, "alle verteilt (neue Form)")
+        _G.GetNumTalentTabs = nil
+        assert(R.UnspentTalents() == 0, "nur Client-Zahl")
+    end)
+    _G.UnitCharacterPoints, _G.GetNumTalentTabs, _G.GetTalentTabInfo, _G.UnitLevel = keep[1], keep[2], keep[3], keep[4]
+    Check(ok, "Erinnerung: Talentpunkte aus Stufe und Bäumen" .. (ok and "" or (": " .. tostring(err))))
+end
+
 if failures == 0 then
     print("BESTANDEN")
     os.exit(0)
