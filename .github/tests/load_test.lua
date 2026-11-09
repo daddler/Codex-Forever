@@ -25281,6 +25281,14 @@ do
         assert(n == 0, "an sich selbst geplant")
         p.rules = old
         assert(#PO.SplitNames("A, B;C  A") == 3, "Namen trennen")
+        local realm = _G.GetRealmName and _G.GetRealmName() or "X"
+        assert(PO.MailName("Aldora-" .. realm) == "Aldora", "eigener Realm weg")
+        assert(PO.MailName("Aldora", "Anderer Realm") == "Aldora-AndererRealm", "fremder Realm bleibt")
+        assert(PO.ToggleFav("Freundin") == true and PO.IsFav("Freundin"), "Favorit merken")
+        local hasFav = false
+        for _, e in ipairs(PO.ContactEntries()) do if e.text == "Favoriten" then hasFav = true end end
+        assert(hasFav, "Favoriten im Menü")
+        assert(PO.ToggleFav("Freundin") == false and not PO.IsFav("Freundin"), "Favorit entfernen")
     end)
     for k, v in pairs(saved) do _G[k] = v end
     Check(ok, "Post" .. (ok and "" or (": " .. tostring(err))))

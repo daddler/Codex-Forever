@@ -76,6 +76,7 @@ function PO.Store()
     local p = sd.postal
     p.history = p.history or {}
     p.recent = p.recent or {}
+    p.favs = p.favs or {}
     p.drafts = p.drafts or {}
     p.sent = p.sent or {}
     p.rules = p.rules or {}
@@ -821,27 +822,120 @@ function PO.Menu(anchor, entries)
         r:Show()
         y = y - 18
     end
-    menu:SetSize(200, -y + 6)
+    menu:SetSize(240, -y + 6)
     menu:ClearAllPoints()
-    menu:SetPoint("TOPLEFT", anchor, "BOTTOMLEFT", 0, -2)
+    if PO.side and PO.side:IsShown() then
+        menu:SetPoint("TOPLEFT", PO.side, "TOPRIGHT", 6, 0)
+    else
+        menu:SetPoint("TOPLEFT", anchor, "BOTTOMLEFT", 0, -2)
+    end
     menu:Show()
     return menu
 end
 
+-- Name ohne eigenen Realm ("Aldora-Realm" -> "Aldora"), fremder Realm bleibt.
+function PO.MailName(name, realm)
+    if type(name) ~= "string" or name == "" then return nil end
+    local mine = MyRealm()
+    local n, r = name:match("^([^%-]+)%-(.+)$")
+    if n then name, realm = n, r end
+    if type(realm) == "string" and realm ~= "" and mine and realm:gsub("%s", "") ~= tostring(mine):gsub("%s", "") then
+        return name .. "-" .. realm:gsub("%s", "")
+    end
+    return name
+end
+
+-- Freunde des Spiels (Name je Charakter), online zuerst.
+function PO.Friends()
+    local out = {}
+    local FL = _G.C_FriendList
+    if not (FL and FL.GetNumFriends and FL.GetFriendInfoByIndex) then return out end
+    local on, off = {}, {}
+    for i = 1, tonumber(FL.GetNumFriends()) or 0 do
+        local info = FL.GetFriendInfoByIndex(i)
+        local n = type(info) == "table" and PO.MailName(info.name)
+        if n then table.insert(info.connected and on or off, n) end
+    end
+    table.sort(on) table.sort(off)
+    for _, n in ipairs(on) do out[#out + 1] = n end
+    for _, n in ipairs(off) do out[#out + 1] = n end
+    return out
+end
+
+-- Battle.net-Freunde: den Charakter kennt der Client nur, solange sie in
+-- WoW (gleiches Spiel, gleiche Fraktion) online sind.
+function PO.BNetFriends()
+    local out, seen = {}, {}
+    local BN = _G.C_BattleNet
+    if not (BN and BN.GetFriendAccountInfo and _G.BNGetNumFriends) then return out end
+    local fac = _G.UnitFactionGroup and Plain(_G.UnitFactionGroup("player"))
+    local proj = _G.WOW_PROJECT_ID
+    for i = 1, tonumber((_G.BNGetNumFriends())) or 0 do
+        local acc = BN.GetFriendAccountInfo(i)
+        local g = type(acc) == "table" and acc.gameAccountInfo
+        if type(g) == "table" and g.clientProgram == "WoW" and g.isOnline
+            and (type(proj) == "nil" or type(g.wowProjectID) == "nil" or g.wowProjectID == proj)
+            and (type(g.factionName) == "nil" or not fac or g.factionName == fac) then
+            local n = PO.MailName(g.characterName, g.realmName)
+            if n and not seen[n] then
+                seen[n] = true
+                out[#out + 1] = { name = n, who = acc.accountName }
+            end
+        end
+    end
+    table.sort(out, function(a, b) return a.name < b.name end)
+    return out
+end
+
+function PO.IsFav(name)
+    local p = PO.Store()
+    for _, n in ipairs(p and p.favs or {}) do if n == name then return true end end
+    return false
+end
+
+function PO.ToggleFav(name)
+    local p = PO.Store()
+    name = PO.MailName(name)
+    if not (p and name) then return nil end
+    for i = #p.favs, 1, -1 do if p.favs[i] == name then table.remove(p.favs, i) return false end end
+    p.favs[#p.favs + 1] = name
+    table.sort(p.favs)
+    return true
+end
+
+PO.CONTACT_MAX = 10
 function PO.ContactEntries()
     local out = {}
     local function pick(n) return function() if _G.SendMailNameEditBox then _G.SendMailNameEditBox:SetText(n) end end end
-    local alts = PO.Alts()
-    if #alts > 0 then
-        out[#out + 1] = { text = "Eigene Twinks", header = true }
-        for _, n in ipairs(alts) do out[#out + 1] = { text = n, onClick = pick(n) } end
+    local function section(title, list, label)
+        if #list == 0 then return end
+        out[#out + 1] = { text = title, header = true }
+        for i, n in ipairs(list) do
+            if i > PO.CONTACT_MAX then
+                out[#out + 1] = { text = "  … und " .. (#list - PO.CONTACT_MAX) .. " weitere", header = true }
+                break
+            end
+            local name = type(n) == "table" and n.name or n
+            out[#out + 1] = { text = label and label(n) or name, onClick = pick(name) }
+        end
     end
     local p = PO.Store()
-    if p and #p.recent > 0 then
-        out[#out + 1] = { text = "Zuletzt angeschrieben", header = true }
-        for i, n in ipairs(p.recent) do if i <= 8 then out[#out + 1] = { text = n, onClick = pick(n) } end end
+    local typed = _G.SendMailNameEditBox and PO.MailName(_G.SendMailNameEditBox:GetText())
+    if typed then
+        local fav = PO.IsFav(typed)
+        out[#out + 1] = { text = (fav and "Favorit entfernen: " or "Als Favorit merken: ") .. typed,
+            onClick = function() PO.ToggleFav(typed) end }
     end
-    if #out == 0 then out[1] = { text = "Noch keine Kontakte", header = true } end
+    section("Favoriten", p and p.favs or {})
+    section("Eigene Twinks", PO.Alts())
+    section("Freunde", PO.Friends())
+    section("Battle.net (online in WoW)", PO.BNetFriends(), function(e)
+        return type(e.who) == "string" and e.who ~= "" and (e.name .. "  (" .. e.who .. ")") or e.name
+    end)
+    local recent = {}
+    for i, n in ipairs(p and p.recent or {}) do if i <= 8 then recent[#recent + 1] = n end end
+    section("Zuletzt angeschrieben", recent)
+    if #out == 0 then out[1] = { text = "Noch keine Kontakte – Namen ins Feld „An“ schreiben und hier merken.", header = true } end
     return out
 end
 
