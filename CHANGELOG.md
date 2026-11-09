@@ -9,6 +9,11 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.0.5.35] – 2026-11-09
+
+- Erinnerungen: Talentpunkte unabhängig von ruhigen Orten/„Wo“; Zahl = höchster Wert aus
+  `UnitCharacterPoints`, `GetUnspentTalentPoints` und Stufe − 9 − verteilte Punkte.
+
 ## [1.0.5.34] – 2026-11-09
 
 - Gespräche im Codex-Stil: Antwortzeilen mit Umbruch, Höhe geschätzt (`DL.RowHeight`, bis 4 Zeilen).

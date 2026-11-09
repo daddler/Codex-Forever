@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.0.5.35",
+        date    = "09.11.2026",
+        notes   = {
+            "|cff7C6CFFTalentpunkt-Erinnerung|r – meldet sich jetzt auch in Stadt und Gasthaus und zählt freie Punkte zuverlässiger.",
+        },
+    },
+    {
         version = "1.0.5.34",
         date    = "09.11.2026",
         notes   = {
