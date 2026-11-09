@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.0.5.32",
+        date    = "09.11.2026",
+        notes   = {
+            "|cff7C6CFFKontakte in der Post|r – neben deinen Twinks jetzt auch Favoriten, Freunde und Battle.net-Freunde, die gerade in WoW sind.",
+        },
+    },
+    {
         version = "1.0.5.31",
         date    = "09.11.2026",
         notes   = {

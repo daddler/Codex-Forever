@@ -9,6 +9,11 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.0.5.32] – 2026-11-09
+
+- Post-Kontakte: Favoriten (`postal.favs`, über das Feld „An“ merken),
+  Freunde (`C_FriendList`), Battle.net-Freunde online in WoW; je Bereich höchstens 10.
+
 ## [1.0.5.31] – 2026-11-09
 
 - Post: alle Knöpfe, Suche und Filter in einer Leiste „Post-Hilfe“ neben dem
