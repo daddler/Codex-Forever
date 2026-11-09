@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.0.5.31",
+        date    = "09.11.2026",
+        notes   = {
+            "|cff7C6CFFPost-Hilfe neben dem Postfenster|r – Knöpfe, Suche und Filter stehen in einer eigenen Leiste rechts, nichts überdeckt mehr das Fenster.",
+        },
+    },
+    {
         version = "1.0.5.30",
         date    = "09.11.2026",
         notes   = {
