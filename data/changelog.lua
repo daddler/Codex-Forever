@@ -22,6 +22,14 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.0.5.36",
+        date    = "09.11.2026",
+        notes   = {
+            "|cff7C6CFFLehrer auf neuem Stand|r – Zauber, Stufen und Kosten neu abgeglichen; neue Zauber für Druide, Paladin und Schurke, Weggefallenes entfernt.",
+            "|cff7C6CFFTeleport & Portale|r – Magier sehen unter Lehrer, welche Teleports und Portale es gibt und welcher Portallehrer sie lehrt, mit Karte und Pfeil. Dazu Teleport: Dalaran.",
+        },
+    },
+    {
         version = "1.0.5.35",
         date    = "09.11.2026",
         notes   = {

@@ -9,6 +9,14 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.0.5.36] – 2026-11-09
+
+- Lehrer: `data/trainer.lua` abgeglichen mit What's Training 11.4.0 (901 Preise, 5 Stufen,
+  10 neu, 18 weg); gegengeprüft mit Naowh Forever (Client-Build 1.60.1): Stufen gleich.
+- Lehrer: Reiter „Teleport & Portale“ (nur Magier), Portallehrer aus der Questie-Datenbank
+  (`data/portaltrainers.lua`), Karte und Pfeil; Teleport: Dalaran ohne bekannten Lehrer.
+- Erinnerung „Segen“ (Paladin) ohne Rettung/Licht – nicht mehr beim Lehrer.
+
 ## [1.0.5.35] – 2026-11-09
 
 - Erinnerungen: Talentpunkte unabhängig von ruhigen Orten/„Wo“; Zahl = höchster Wert aus
