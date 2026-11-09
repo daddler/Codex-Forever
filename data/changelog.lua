@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.0.5.30",
+        date    = "09.11.2026",
+        notes   = {
+            "|cff7C6CFFKlickzauber „überall“|r – Zauber wie Machtwort: Schild gehen auf die Einheit unter der Maus oder dein Ziel, nicht mehr auf dich selbst.",
+        },
+    },
+    {
         version = "1.0.5.29",
         date    = "08.11.2026",
         notes   = {

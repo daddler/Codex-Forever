@@ -9,6 +9,11 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.0.5.30] – 2026-11-09
+
+- Klickzauber „überall“: Makro `/cast [@mouseover,exists,nodead][@target,exists,nodead][] Name`
+  statt `/cast Name` – ohne Ziel oder mit Alt ging es auf den Spieler.
+
 ## [1.0.5.29] – 2026-11-08
 
 - Neu `ui/postal.lua` (Komfortseite „Post“, ab Werk aus): Posteingang,
