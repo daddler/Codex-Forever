@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.0.5.38",
+        date    = "09.11.2026",
+        notes   = {
+            "|cff7C6CFFKarten für neue Dungeons|r – Dalaran, Ruinen von Lordaeron, Hall of Thanes und Ausgrabungsstätte zeigen auf der Weltkarte (M) eine Karte, gezeichnet von Santiago Reyes (Atlas de Azeroth: Forever).",
+        },
+    },
+    {
         version = "1.0.5.37",
         date    = "09.11.2026",
         notes   = {

@@ -68,6 +68,23 @@ local function Layout()
     if not (view and view:IsShown()) then return end
     local w, h = K.Plain(view.port:GetWidth()), K.Plain(view.port:GetHeight())
     if type(w) ~= "number" or type(h) ~= "number" or w <= 0 or h <= 0 then return end
+    local fl = view.map and view.floor and view.map.floors[view.floor]
+    if fl and fl.files then
+        -- 1.0.5.38: gezeichnete Karte, 1024 breit, in zwei Bildern (512 + 256 Zeilen).
+        local ph = fl.h or 684
+        local s = math.min(w / 1024, (h - 16) / ph)
+        view.page:SetSize(1024 * s, ph * s)
+        local a, b = view.tiles[1], view.tiles[2]
+        a:SetSize(1024 * s, 512 * s)
+        a:ClearAllPoints()
+        a:SetPoint("TOPLEFT", view.page, "TOPLEFT", 0, 0)
+        a:SetTexCoord(0, 1, 0, 1)
+        b:SetSize(1024 * s, (ph - 512) * s)
+        b:ClearAllPoints()
+        b:SetPoint("TOPLEFT", view.page, "TOPLEFT", 0, -512 * s)
+        b:SetTexCoord(0, 1, 0, (ph - 512) / 256)
+        return
+    end
     local s = math.min(w / DM.PIC_W, h / DM.PIC_H)
     view.page:SetSize(DM.PIC_W * s, DM.PIC_H * s)
     for i, t in ipairs(view.tiles) do
@@ -89,10 +106,19 @@ function DM.ShowFloor(i)
     DM.floorOf[id] = i
     view.floor = i
     local f = m.floors[i]
+    local list = f.files or f.tiles
     for k, t in ipairs(view.tiles) do
-        local ok, res = pcall(t.SetTexture, t, f.tiles[k])
-        if not ok or res == false then return false end
+        if list[k] then
+            local ok, res = pcall(t.SetTexture, t, list[k])
+            if not ok or res == false then return false end
+            t:Show()
+        else
+            t:Hide()
+        end
     end
+    -- Nennung des Zeichners (Bedingung seiner Erlaubnis) unter der Karte.
+    view.credit:SetText(f.credit or "")
+    view.credit:SetShown(f.credit and true or false)
     view.title:SetText((f.name or m.name or "Dungeon") .. (n > 1 and ("   " .. i .. " / " .. n) or ""))
     view.prev:SetShown(n > 1)
     view.next:SetShown(n > 1)
@@ -136,6 +162,12 @@ local function Build(wm)
     f.page:SetPoint("CENTER")
     f.tiles = {}
     for i = 1, 12 do f.tiles[i] = f.page:CreateTexture(nil, "ARTWORK") end
+
+    f.credit = K.NewText(f, 10)
+    f.credit:SetPoint("BOTTOM", f, "BOTTOM", 0, 4)
+    local mt = C.textMuted or C.textNormal
+    f.credit:SetTextColor(mt[1], mt[2], mt[3])
+    f.credit:Hide()
 
     f.title = K.NewText(f, 13)
     f.title:SetPoint("TOP", f, "TOP", 0, -8)
@@ -201,7 +233,7 @@ end)
 -- Zeile auf der Seite "Karte" im Komfort (ui/mapentrances.lua ruft sie).
 function DM.BuildRows(B)
     B:Row({ type = "toggle", label = "Dungeonkarten", key = "dungeonMaps",
-            description = "In den klassischen Dungeons und Schlachtzügen zeigt die Weltkarte (M) die Karte der Instanz, mit Ebenen. Die Bilder liegen im Spiel; welche Karte zu welcher Instanz gehört, ist unbestätigt." },
+            description = "In Dungeons und Schlachtzügen zeigt die Weltkarte (M) die Karte der Instanz, mit Ebenen. Klassische Instanzen: Bilder aus dem Spiel. Neue Dungeons: Zeichnungen von Santiago Reyes (Atlas de Azeroth: Forever)." },
           { type = "empty" })
 end
 

@@ -22285,7 +22285,21 @@ do
         assert(D.SOURCE and D.SOURCE.kind == "community", "Herkunft fehlt")
         for id, m in pairs(D.MAPS) do
             assert(#m.floors > 0, "Instanz ohne Ebene " .. id)
-            for _, f in ipairs(m.floors) do assert(#f.tiles == 12, "Ebene ohne 12 Kacheln in " .. id) end
+            for _, f in ipairs(m.floors) do
+                if f.files then
+                    -- 1.0.5.38: gezeichnete Karte - zwei Bilder, die es geben muss, und die Nennung.
+                    assert(#f.files == 2 and type(f.h) == "number" and f.h > 512 and f.h <= 768, "Zeichnung falsch in " .. id)
+                    assert(type(f.credit) == "string" and f.credit:find("Santiago Reyes", 1, true), "Nennung des Zeichners fehlt in " .. id)
+                    for _, path in ipairs(f.files) do
+                        local rel = path:gsub("^Interface\\AddOns\\WeintCodex\\", ""):gsub("\\", "/") .. ".blp"
+                        local fh = io.open(ROOT .. "/" .. rel, "rb")
+                        assert(fh and fh:read(4) == "BLP2", "Bild fehlt: " .. rel)
+                        fh:close()
+                    end
+                else
+                    assert(#f.tiles == 12, "Ebene ohne 12 Kacheln in " .. id)
+                end
+            end
         end
         local oII, oGI, oWM = _G.IsInInstance, _G.GetInstanceInfo, _G.WorldMapFrame
         _G.WorldMapFrame = _G.WorldMapFrame or CreateFrame("Frame", "WorldMapFrame", UIParent)
@@ -22296,6 +22310,10 @@ do
         assert(DM.view.title:GetText():find("1 / 7", 1, true), "Ebene nicht genannt: " .. tostring(DM.view.title:GetText()))
         DM.ShowFloor(DM.view.floor + 1)
         assert(DM.floorOf[33] == 2, "Ebene nicht gewechselt")
+        _G.GetInstanceInfo = function() return "Lordaeron", "party", 1, "", 5, 0, false, 2999 end
+        assert(DM.Refresh() == true and DM.view:IsShown(), "gezeichnete Karte nicht gezeigt")
+        assert(DM.view.credit:IsShown() and DM.view.credit:GetText():find("Santiago Reyes", 1, true), "Nennung nicht gezeigt")
+        assert(DM.view.tiles[1]:IsShown() and DM.view.tiles[2]:IsShown() and not DM.view.tiles[3]:IsShown(), "falsche Kacheln")
         _G.GetInstanceInfo = function() return "Neu", "party", 1, "", 5, 0, false, 99999 end
         assert(DM.Refresh() == false and not DM.view:IsShown(), "Karte ohne Bestand gezeigt")
         _G.IsInInstance, _G.GetInstanceInfo, _G.WorldMapFrame = oII, oGI, oWM

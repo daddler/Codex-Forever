@@ -9,6 +9,14 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.0.5.38] – 2026-11-09
+
+- Dungeonkarten der neuen Forever-Dungeons (Dalaran 2 Ebenen, Ruinen von Lordaeron, Hall of
+  Thanes, Ausgrabungsstätte): Zeichnungen von Santiago Reyes – Atlas de Azeroth: Forever, mit
+  seiner Erlaubnis für Addons, Wasserzeichen unverändert, Nennung unter der Karte.
+  `data/dungeonmaps_forever.lua`, `media/dungeonmaps/` (DXT1, je Ebene 384 KB statt 1,4 MB,
+  `.github/scripts/make_dungeonmaps.py`).
+
 ## [1.0.5.37] – 2026-11-09
 
 - Berufe: Gelb/Grün/Grau von 23 Rezepten aus SkillUp Forever (Client-Build 1.60.1.70862),
