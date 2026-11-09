@@ -148,7 +148,7 @@ R.CLASS_BUFFS = {
                 { any = { 6117, 7302, 168 }, label = "Rüstung (Frost, Eis oder Magie)" } },
     PRIEST  = { { any = { 1243 } }, { any = { 588 } } },
     DRUID   = { { any = { 1126 } } },
-    PALADIN = { { any = { 19740, 19742, 20217, 1038, 19977 }, label = "Segen" },
+    PALADIN = { { any = { 19740, 19742, 20217 }, label = "Segen" },
                 { any = { 465, 7294, 19746, 19876, 19888, 19891 }, label = "Aura" } },
     WARLOCK = { { any = { 706, 687 }, label = "Dämonenrüstung oder Dämonenhaut" } },
     HUNTER  = { { any = { 13165, 13163, 5118, 13159, 20043, 13161 }, label = "Aspekt" } },
