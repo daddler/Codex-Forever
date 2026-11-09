@@ -22,6 +22,14 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.0.5.33",
+        date    = "09.11.2026",
+        notes   = {
+            "|cff7C6CFFKontakte und Entwürfe neben der Post|r – große Liste mit „Zurück“, über „Bearbeiten“ Favoriten eintragen, Bereiche ausblenden, Einträge löschen.",
+            "|cff7C6CFFQuestgegenstände in den Taschen|r – goldener Rand und das vertraute gelbe „!“.",
+        },
+    },
+    {
         version = "1.0.5.32",
         date    = "09.11.2026",
         notes   = {

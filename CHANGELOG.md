@@ -9,6 +9,13 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.0.5.33] – 2026-11-09
+
+- Post: Kontakte/Entwürfe als Ansicht in der Seitenleiste (`PO.ShowView`), „Zurück“,
+  „Bearbeiten“ (Favoriten, Bereiche aus/ein `postal.hidden`, Zuletzt/Entwürfe löschen);
+  Battle.net nur noch eigener Realm.
+- Taschen: Questgegenstände mit goldenem Rand und gelbem „!“ (`GameColors.questBang`).
+
 ## [1.0.5.32] – 2026-11-09
 
 - Post-Kontakte: Favoriten (`postal.favs`, über das Feld „An“ merken),
