@@ -9,6 +9,11 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.0.5.34] – 2026-11-09
+
+- Gespräche im Codex-Stil: Antwortzeilen mit Umbruch, Höhe geschätzt (`DL.RowHeight`, bis 4 Zeilen).
+- Plaketten: Titel freundlicher NPCs unter dem Namen (`NP.NpcTitle`, Zeile 2 der Tooltipdaten).
+
 ## [1.0.5.33] – 2026-11-09
 
 - Post: Kontakte/Entwürfe als Ansicht in der Seitenleiste (`PO.ShowView`), „Zurück“,

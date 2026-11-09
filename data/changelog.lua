@@ -22,6 +22,14 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.0.5.34",
+        date    = "09.11.2026",
+        notes   = {
+            "|cff7C6CFFLange Antworten im Gespräch|r – brechen jetzt um und werden nicht mehr abgeschnitten.",
+            "|cff7C6CFFTitel freundlicher NPCs|r – unter dem Namen steht wieder, was sie sind, z. B. „<Kräuterkundelehrerin>“.",
+        },
+    },
+    {
         version = "1.0.5.33",
         date    = "09.11.2026",
         notes   = {

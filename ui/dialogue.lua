@@ -221,6 +221,17 @@ local function SetButton(b, text, enabled)
     b:Show()
 end
 
+-- Hoehe einer Antwortzeile: geschaetzt aus Text und Breite (wie
+-- WeintCodex.Paragraph), nie vom Client gelesen - Test und Spiel gleich.
+DL.ROW_LINE = 19
+function DL.RowHeight(text, tag, winW)
+    local w = (tonumber(winW) or 640) - 36 - 62 - 12 - (tag and tag ~= "" and 80 or 0)
+    local cols = math.max(10, math.floor(w / (15 * 0.5)))
+    local lines = WeintCodex.EstimateLines(text or "", cols)
+    if lines > 4 then lines = 4 end
+    return math.max(34, lines * DL.ROW_LINE + 14)
+end
+
 local function Row(i)
     local r = rows[i]
     if r then return r end
@@ -265,7 +276,10 @@ local function Row(i)
     r.tag:SetJustifyH("RIGHT")
     r.label:SetPoint("RIGHT", r.tag, "LEFT", -10, 0)
     r.label:SetJustifyH("LEFT")
-    r.label:SetWordWrap(false)
+    -- 1.0.5.34 (Spieler: „Antwortmöglichkeiten werden abgeschnitten“):
+    -- lange Antworten brechen um, die Zeile wächst mit.
+    r.label:SetWordWrap(true)
+    if r.label.SetJustifyV then r.label:SetJustifyV("MIDDLE") end
     r:SetScript("OnEnter", function(self) self.hl:Show() self.bar:Show() end)
     r:SetScript("OnLeave", function(self) self.hl:Hide() self.bar:Hide() end)
     r:SetScript("OnClick", function(self) DL.Pick(self.index) end)
@@ -838,8 +852,11 @@ function DL.Draw(c)
         r:ClearAllPoints()
         r:SetPoint("TOPLEFT", win, "TOPLEFT", 18, -y)
         r:SetPoint("RIGHT", win, "RIGHT", -18, 0)
+        local h = DL.RowHeight(l.text, look.tag, win:GetWidth())
+        r:SetHeight(h)
+        r.label:SetHeight(h - 8)
         r:Show()
-        y = y + 38
+        y = y + h + 4
     end
     for i = #DL.list + 1, #rows do rows[i]:Hide() end
 
