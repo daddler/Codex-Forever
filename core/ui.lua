@@ -213,6 +213,8 @@ WeintCodex.Colors = C
 --------------------------------------------------
 
 WeintCodex.GameColors = {
+    -- Gelb des Quest-„!“ im Spiel (Questgegenstand in den Taschen).
+    questBang      = {1.000, 0.820, 0.000, 1.0},
     -- 1.0.5.9: Stufe nach Schwierigkeit, Farben wie im klassischen Spiel.
     diffImpossible = {1.000, 0.100, 0.100, 1.0},
     diffHard       = {1.000, 0.500, 0.250, 1.0},

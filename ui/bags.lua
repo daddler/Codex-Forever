@@ -297,11 +297,11 @@ local function CreateSlot()
     d.ilvl:SetPoint("TOPLEFT", btn, "TOPLEFT", 2, -2)
     d.quality = K.Border(top, 1, 1, 1, 1, 1, "OVERLAY")
     d.quality:SetShown(false)
-    -- Questgegenstand: Rand in Gold und „!“ oben rechts (startet eine Quest).
+    -- Questgegenstand: Rand in Gold und ein gelbes „!“ oben rechts – vertraut aus dem Spiel.
     d.quest = K.NewText(top, 14)
     d.quest:SetPoint("TOPRIGHT", btn, "TOPRIGHT", -2, -1)
     d.quest:SetText("!")
-    d.quest:SetTextColor(unpack(C.gold))
+    d.quest:SetTextColor(unpack(WeintCodex.GameColors.questBang))
     d.quest:Hide()
     -- Der Steinrahmen des Knopfs weg; das Symbol beschnitten und auf die
     -- volle Flaeche gezogen. Die Maske der Vorlage ist fuer 37 px gebaut;
@@ -550,7 +550,7 @@ local function PaintSlot(s, bag, slot)
     local q = info and info.quality
     local isQuest, starts = false, false
     if info and BG.QuestInfo then isQuest, starts = BG.QuestInfo(bag, slot) end
-    d.quest:SetShown(starts and true or false)
+    d.quest:SetShown(isQuest and true or false)
     if isQuest then
         local g = C.gold
         d.quality:SetColor(g[1], g[2], g[3], 1)
