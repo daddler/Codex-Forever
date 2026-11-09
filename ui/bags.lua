@@ -297,6 +297,12 @@ local function CreateSlot()
     d.ilvl:SetPoint("TOPLEFT", btn, "TOPLEFT", 2, -2)
     d.quality = K.Border(top, 1, 1, 1, 1, 1, "OVERLAY")
     d.quality:SetShown(false)
+    -- Questgegenstand: Rand in Gold und „!“ oben rechts (startet eine Quest).
+    d.quest = K.NewText(top, 14)
+    d.quest:SetPoint("TOPRIGHT", btn, "TOPRIGHT", -2, -1)
+    d.quest:SetText("!")
+    d.quest:SetTextColor(unpack(C.gold))
+    d.quest:Hide()
     -- Der Steinrahmen des Knopfs weg; das Symbol beschnitten und auf die
     -- volle Flaeche gezogen. Die Maske der Vorlage ist fuer 37 px gebaut;
     -- auf einem anders grossen Knopf blieb das Symbol in 6.0.0.3 im Spiel
@@ -542,7 +548,14 @@ local function PaintSlot(s, bag, slot)
     end
 
     local q = info and info.quality
-    if Opt("qualityBorder") and type(q) == "number" and q >= 2 and _G.C_Item and _G.C_Item.GetItemQualityColor then
+    local isQuest, starts = false, false
+    if info and BG.QuestInfo then isQuest, starts = BG.QuestInfo(bag, slot) end
+    d.quest:SetShown(starts and true or false)
+    if isQuest then
+        local g = C.gold
+        d.quality:SetColor(g[1], g[2], g[3], 1)
+        d.quality:SetShown(true)
+    elseif Opt("qualityBorder") and type(q) == "number" and q >= 2 and _G.C_Item and _G.C_Item.GetItemQualityColor then
         local r, g, b = _G.C_Item.GetItemQualityColor(q)
         if type(r) == "number" then
             d.quality:SetColor(r, g, b, 1)
@@ -596,6 +609,17 @@ local function ItemClass(id)
     local ok, _, _, _, _, _, classID = pcall(f, id)
     classID = ok and K.Plain(classID) or nil
     return type(classID) == "number" and classID or nil
+end
+
+-- Questgegenstand? Und startet er eine Quest (Quest-ID, noch nicht aktiv)?
+function BG.QuestInfo(bag, slot)
+    local cc = _G.C_Container
+    if not (cc and cc.GetContainerItemQuestInfo) then return false, false end
+    local ok, q = pcall(cc.GetContainerItemQuestInfo, bag, slot)
+    if not (ok and type(q) == "table") then return false, false end
+    local id = K.Plain(q.questID)
+    local starts = type(id) == "number" and K.Plain(q.isActive) ~= true
+    return (K.Plain(q.isQuestItem) == true or type(id) == "number"), starts
 end
 
 local function QuestItem(bag, slot)
