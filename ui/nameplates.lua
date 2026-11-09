@@ -200,6 +200,7 @@ local defaults = {
     friendlyHealth = false,
     friendlyClassColor = true,
     friendlyNameSize = 12,
+    friendlyTitle = true,   -- 1.0.5.34: Titel des NPCs unter dem Namen
     friendlyColor = K.ColorDefault("friendly"),
 }
 
@@ -1282,6 +1283,51 @@ function NP.PvPMark(p, unit)
     return true
 end
 
+-- Titel eines freundlichen NPCs („<Kräuterkundelehrerin>“) unter dem
+-- Namen - die Plakette ersetzt den Namen des Spiels samt Titel (1.0.5.34).
+-- Gelesen aus Zeile 2 der Tooltipdaten, einmal je NPC gemerkt.
+NP.titleCache = {}
+-- Eigene Tabelle statt Feld an der Plakette (Felder der Plakette gehören dem Rahmen).
+NP.titleText = setmetatable({}, { __mode = "k" })
+function NP.NpcTitle(unit)
+    if K.Bool(_G.UnitIsPlayer and _G.UnitIsPlayer(unit), true) then return nil end
+    local guid = _G.UnitGUID and K.Plain(_G.UnitGUID(unit))
+    local npc = type(guid) == "string" and guid:match("^%a+%-%d+%-%d+%-%d+%-%d+%-(%d+)")
+    if npc and NP.titleCache[npc] ~= nil then return NP.titleCache[npc] or nil end
+    local TI = _G.C_TooltipInfo
+    if not (TI and TI.GetUnit) then return nil end
+    local ok, info = pcall(TI.GetUnit, unit)
+    if not (ok and type(info) == "table" and type(info.lines) == "table") then return nil end
+    local line = info.lines[2]
+    local text = line and K.Plain(line.leftText)
+    local title = false
+    if type(text) == "string" and text ~= "" and not text:find("%d")
+        and not text:find("^Stufe") and not text:find("^Level") then
+        title = text
+    end
+    if npc then NP.titleCache[npc] = title end
+    return title or nil
+end
+
+function NP.FriendlyTitle(p, unit, r, g, b)
+    local title = S.friendlyTitle ~= false and NP.NpcTitle(unit)
+    if not title then
+        if NP.titleText[p] then NP.titleText[p]:Hide() end
+        return
+    end
+    if not NP.titleText[p] then
+        NP.titleText[p] = K.NewText(p, math.max(8, (S.friendlyNameSize or 12) - 2))
+        NP.titleText[p]:SetJustifyH("CENTER")
+    end
+    local st = NP.titleText[p]
+    K.SetFont(st, math.max(8, (S.friendlyNameSize or 12) - 2))
+    st:ClearAllPoints()
+    st:SetPoint("TOP", p.texts.top, "BOTTOM", 0, -1)
+    st:SetText("<" .. title .. ">")
+    st:SetTextColor(r, g, b, 0.85)
+    st:Show()
+end
+
 local function FillTexts(p, onlyHealth)
     local unit = p.unit
     if not unit then return end
@@ -1301,8 +1347,10 @@ local function FillTexts(p, onlyHealth)
         end
         t:SetTextColor(r, g, b, 1)
         t:Show()
+        NP.FriendlyTitle(p, unit, r, g, b)
         return
     end
+    if NP.titleText[p] then NP.titleText[p]:Hide() end
     local pctText, numText
     -- Ohne neue Tabelle: FillTexts laeuft bei jedem UNIT_HEALTH (6.14.0.2,
     -- /wcui speicher: Plaketten 11 KB/s).

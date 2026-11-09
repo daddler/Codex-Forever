@@ -25307,6 +25307,27 @@ do
     end)
     for k, v in pairs(saved) do _G[k] = v end
     Check(ok, "Post" .. (ok and "" or (": " .. tostring(err))))
+
+do
+    local NP = WeintCodex.UINameplates
+    local saved = { _G.C_TooltipInfo, _G.UnitGUID, _G.UnitIsPlayer }
+    local ok, err = pcall(function()
+        _G.UnitIsPlayer = function() return false end
+        _G.UnitGUID = function() return "Creature-0-3110-0-47-5566-0000A" end
+        _G.C_TooltipInfo = { GetUnit = function() return { lines = {
+            { leftText = "Tannysa" }, { leftText = "Kräuterkundelehrerin" }, { leftText = "Stufe 35" } } } end }
+        NP.titleCache = {}
+        assert(NP.NpcTitle("nameplate1") == "Kräuterkundelehrerin", "Titel gelesen")
+        _G.UnitGUID = function() return "Creature-0-3110-0-47-7788-0000A" end
+        _G.C_TooltipInfo = { GetUnit = function() return { lines = { { leftText = "Wache" }, { leftText = "Stufe 30" } } } end }
+        assert(NP.NpcTitle("nameplate1") == nil, "Stufe ist kein Titel")
+        _G.UnitIsPlayer = function() return true end
+        assert(NP.NpcTitle("nameplate1") == nil, "Spieler ohne Titel")
+    end)
+    _G.C_TooltipInfo, _G.UnitGUID, _G.UnitIsPlayer = saved[1], saved[2], saved[3]
+    NP.titleCache = {}
+    Check(ok, "Plaketten: Titel freundlicher NPCs" .. (ok and "" or (": " .. tostring(err))))
+end
 end
 
 if failures == 0 then
