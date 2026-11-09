@@ -840,6 +840,12 @@ function TR.PortalSpells(state)
             end
         end
     end
+    for _, e in ipairs(WeintCodex.TrainerData.PORTAL_EXTRA or {}) do
+        if e.faction == state.faction then
+            out[#out + 1] = { id = e.id, level = e.level, cost = nil, where = e.where,
+                known = TR.Known(e.id) and true or false }
+        end
+    end
     table.sort(out, function(a, b) if a.level ~= b.level then return a.level < b.level end return a.id < b.id end)
     return out
 end
@@ -951,7 +957,8 @@ function TR.DrawPortals()
         local ready = not sp.known and state.level and state.level >= sp.level
         local tag = sp.known and { "Gelernt", "textDim" } or ready and { "Lernbar", "successBright" }
             or { "ab Stufe " .. sp.level, "textMuted" }
-        y = SpellRow(f.SpellBody, y, sw - 14, sp, { dim = sp.known, noSelect = true,
+        if sp.where and not sp.known then tag = { "Lehrer unbekannt", "warningBright" } end
+        y = SpellRow(f.SpellBody, y, sw - 14, sp, { dim = sp.known, noSelect = true, note = sp.where,
             costColor = (not ready and not sp.known) and "textFaint" or nil })
         local fs = Keep(WeintCodex.Label(f.SpellBody, tag[1], { size = 10, color = tag[2], justify = "RIGHT" }))
         fs:SetPoint("TOPRIGHT", f.SpellBody, "TOPRIGHT", -80, y + ROW_H - 7)

@@ -25358,7 +25358,7 @@ do
         TR.Show("portals")
         assert(TR.view == "portals", "Reiter gewählt")
         TR.DrawPortals()
-        assert(TR.lastPortals.spells == 6, "Allianz: 3 Teleports + 3 Portale, gezählt " .. tostring(TR.lastPortals.spells))
+        assert(TR.lastPortals.spells == 7, "Allianz: 3 Teleports + 3 Portale + Dalaran, gezählt " .. tostring(TR.lastPortals.spells))
         assert(TR.lastPortals.trainers == 3 and TR.portalRows == 3, "drei Portallehrer der Allianz")
         _G.UnitFactionGroup = function() return "Horde", "Horde" end
         TR.DrawPortals()

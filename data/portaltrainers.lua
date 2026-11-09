@@ -24,3 +24,12 @@ WeintCodex.TrainerData.PORTAL_TRAINERS = {
     { npc = 2492, name = "Lexington Mortaim", faction = "Horde",    map = 1458, x = 84.19, y = 15.58 }, -- Unterstadt
     { npc = 5957, name = "Birgitte Cranston", faction = "Horde",    map = 1456, x = 22.5,  y = 16.91 }, -- Donnerfels
 }
+
+-- Teleports, die nicht beim Portallehrer stehen (1.0.5.36). Teleport:
+-- Dalaran (1297659) ist neu in Forever: Allianz, ab Stufe 50, in den
+-- Trainingsdaten von Naowh Forever (Client-Build 1.60.1) und SKTools ohne
+-- Preis, bei ShortestPath ohne Ziel. WO man ihn lernt, nennt keine Quelle -
+-- also kein Lehrer und keine Kosten (unbekannt, nicht 0).
+WeintCodex.TrainerData.PORTAL_EXTRA = {
+    { id = 1297659, level = 50, faction = "Alliance", where = "Wo du ihn lernst, ist nicht bekannt (vermutlich über eine Quest)." },
+}
