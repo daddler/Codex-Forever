@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.0.5.37",
+        date    = "09.11.2026",
+        notes   = {
+            "|cff7C6CFFBerufe: Farbschwellen korrigiert|r – 23 Rezepte, vor allem beim Kochen, zeigen jetzt die richtigen Stufen für Gelb, Grün und Grau.",
+        },
+    },
+    {
         version = "1.0.5.36",
         date    = "09.11.2026",
         notes   = {

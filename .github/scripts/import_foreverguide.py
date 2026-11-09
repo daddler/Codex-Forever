@@ -111,6 +111,39 @@ PROFESSION_DE = {
 report = []
 
 
+
+# 1.0.5.37: Gelb/Gruen/Grau aus SkillUp Forever (Thresholds.lua, Client-Build
+# 1.60.1.70862, neuer als der Stand von ForeverGuide) fuer die Rezepte, deren
+# Gelb oder Grau abwich - bei uns teils unmoeglich (Gelb unter der Lernstufe).
+# Nur Fakten (Zahlen), kein Code; SkillUp ist GPL-3.0.
+THRESHOLD_FIX = {
+    3918: (20, 30, 40),  # Rough Blasting Powder
+    15628: (205, 207, 210),  # Pet Bombling
+    1248668: (295, 297, 300),  # Enchant 2H Weapon - Strength
+    1249957: (30, 37, 45),  # Peace Tea
+    1249958: (105, 115, 125),  # Royal Tea
+    1249963: (30, 37, 45),  # Venomous Smoothie
+    1249964: (105, 112, 120),  # Slimy Smoothie
+    1249968: (255, 262, 270),  # Wicked Smoothie
+    1250142: (230, 237, 245),  # Savory Stag Sliders
+    1250143: (280, 295, 310),  # Soaring Pamplona
+    1250145: (280, 295, 310),  # Savory Turtle Stew
+    1250147: (280, 295, 310),  # Bear Bruscitti
+    1250148: (280, 295, 310),  # Steaming Stag Steak
+    1250149: (280, 295, 310),  # Swiftstrike Steak
+    1250150: (280, 295, 310),  # Raging Raptor Ribs
+    1250152: (280, 295, 310),  # Prehistoric Pulled Raptor
+    1250153: (230, 237, 245),  # Raptor Rouladen
+    1250157: (80, 87, 95),  # Breakfast Omelette
+    1250158: (280, 295, 310),  # Clam Linguine
+    1262978: (145, 147, 150),  # Cookie's Feast
+    1270633: (30, 37, 45),  # Skywall Souffle
+    1270635: (40, 47, 55),  # Pincer Bites
+    1283400: (95, 100, 105),  # Journeyman Campfire
+    1291341: (205, 212, 220),  # Expert Campfire
+    1294054: (295, 297, 300),  # Enchant Gloves - Lotus Claw
+}
+
 def say(line=""):
     report.append(line)
 
@@ -544,7 +577,11 @@ def build_professions(fg):
                 names[int(r["i"])] = pname[int(r["i"])]
             st = r.get("st") or "s"
             sec = secs[int(r["sec"]) - 1] if isinstance(r.get("sec"), (int, float)) and 0 < int(r["sec"]) <= len(secs) else "-"
-            lines.append(" ".join([f("s"), f("i"), f("l"), f("y"), f("g"), f("x"), st, flags or "-",
+            y, g, x = f("y"), f("g"), f("x")
+            fix = THRESHOLD_FIX.get(int(r["s"]))
+            if fix:
+                y, g, x = (str(v) for v in fix)
+            lines.append(" ".join([f("s"), f("i"), f("l"), y, g, x, st, flags or "-",
                                    f("src"), f("mf")]) + "|" + ",".join(pairs) + "|" + r["n"])
         lines.sort(key=lambda s: (int(s.split()[2]) if s.split()[2] != "-" else 999, s.split("|")[2]))
         raw[key] = lines

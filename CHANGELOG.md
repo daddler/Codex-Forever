@@ -9,6 +9,11 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.0.5.37] – 2026-11-09
+
+- Berufe: Gelb/Grün/Grau von 23 Rezepten aus SkillUp Forever (Client-Build 1.60.1.70862),
+  als `THRESHOLD_FIX` in `import_foreverguide.py`; Lernstufen und Grün-Rundung unverändert.
+
 ## [1.0.5.36] – 2026-11-09
 
 - Lehrer: `data/trainer.lua` abgeglichen mit What's Training 11.4.0 (901 Preise, 5 Stufen,
