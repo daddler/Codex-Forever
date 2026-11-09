@@ -437,30 +437,58 @@ local function Btn(parent, text, w, onClick, tip)
     return b
 end
 
+-- Alles, was die Post-Hilfe mitbringt, steht in einer Leiste NEBEN dem
+-- Postfenster – nie darüber (überlappte Felder und Knöpfe des Spiels).
+PO.SIDE_W, PO.SIDE_BTN = 196, 176
+local side
+function PO.BuildSide()
+    if side then return side end
+    local mf = _G.MailFrame
+    if type(mf) ~= "table" then return nil end
+    side = CreateFrame("Frame", "WeintCodexPostSide", mf)
+    side:SetSize(PO.SIDE_W, 300)
+    side:SetPoint("TOPLEFT", mf, "TOPRIGHT", 6, 0)
+    side:EnableMouse(true)
+    K.Kachel(side, { shadow = 6 })
+    side.title = K.NewText(side, 12)
+    side.title:SetPoint("TOPLEFT", side, "TOPLEFT", 10, -10)
+    side.title:SetTextColor(unpack(C.gold))
+    side.title:SetText("Post-Hilfe")
+    PO.side = side
+    return side
+end
+
 function PO.BuildBar()
     if bar then return bar end
     local inbox = _G.InboxFrame
-    if type(inbox) ~= "table" then return nil end
+    local sd = PO.BuildSide()
+    if type(inbox) ~= "table" or not sd then return nil end
+    -- Kind des Posteingangs: sichtbar nur auf dessen Reiter.
     bar = CreateFrame("Frame", "WeintCodexPostBar", inbox)
-    bar:SetSize(330, 52)
-    bar:SetPoint("BOTTOMLEFT", inbox, "TOPLEFT", 8, -2)
-    bar:SetFrameLevel((inbox:GetFrameLevel() or 1) + 10)
+    bar:SetPoint("TOPLEFT", sd, "TOPLEFT", 10, -30)
+    bar:SetPoint("BOTTOMRIGHT", sd, "BOTTOMRIGHT", -10, 10)
+    bar:SetFrameLevel((sd:GetFrameLevel() or 1) + 5)
+    local W = PO.SIDE_BTN
 
-    bar.all = Btn(bar, "Alle öffnen", 96, function() PO.OpenAll() end,
+    bar.all = Btn(bar, "Alle öffnen", W, function() PO.OpenAll() end,
         "Nimmt Gold und Gegenstände aus allen Briefen – Nachnahme nie.")
     bar.all:SetPoint("TOPLEFT", bar, "TOPLEFT", 0, 0)
-    bar.sel = Btn(bar, "Ausgewählte", 96, function() PO.OpenSelected() end,
+    bar.sel = Btn(bar, "Ausgewählte", W, function() PO.OpenSelected() end,
         "Nur die Briefe mit Haken.")
-    bar.sel:SetPoint("LEFT", bar.all, "RIGHT", 4, 0)
-    bar.stop = Btn(bar, "Stopp", 56, function() PO.Stop("angehalten") end)
-    bar.stop:SetPoint("LEFT", bar.sel, "RIGHT", 4, 0)
-    bar.bag = Btn(bar, "Posttasche", 80, function() PO.ShowPostBag() end,
+    bar.sel:SetPoint("TOPLEFT", bar.all, "BOTTOMLEFT", 0, -4)
+    bar.stop = Btn(bar, "Stopp", W, function() PO.Stop("angehalten") end)
+    bar.stop:SetPoint("TOPLEFT", bar.sel, "BOTTOMLEFT", 0, -4)
+    bar.bag = Btn(bar, "Posttasche", W, function() PO.ShowPostBag() end,
         "Alles im Postfach auf einen Blick, abholen per Klick.")
-    bar.bag:SetPoint("LEFT", bar.stop, "RIGHT", 4, 0)
+    bar.bag:SetPoint("TOPLEFT", bar.stop, "BOTTOMLEFT", 0, -4)
 
+    bar.searchLabel = K.NewText(bar, 10)
+    bar.searchLabel:SetPoint("TOPLEFT", bar.bag, "BOTTOMLEFT", 0, -12)
+    bar.searchLabel:SetTextColor(unpack(C.textMuted))
+    bar.searchLabel:SetText("Suchen und filtern")
     local search = CreateFrame("EditBox", nil, bar, "InputBoxTemplate")
-    search:SetSize(110, 18)
-    search:SetPoint("TOPLEFT", bar.all, "BOTTOMLEFT", 6, -6)
+    search:SetSize(W - 6, 18)
+    search:SetPoint("TOPLEFT", bar.searchLabel, "BOTTOMLEFT", 6, -4)
     search:SetAutoFocus(false)
     search:SetScript("OnTextChanged", function(self)
         PO.filter.text = self:GetText() or ""
@@ -469,13 +497,13 @@ function PO.BuildBar()
     search:SetScript("OnEscapePressed", function(self) self:SetText("") self:ClearFocus() end)
     bar.search = search
 
-    local prev = search
     bar.chips = {}
-    for _, f in ipairs({ { "unread", "Ungelesen" }, { "attach", "Anhang" }, { "cod", "Nachnahme" }, { "system", "System" } }) do
+    for i, f in ipairs({ { "unread", "Ungelesen" }, { "attach", "Anhang" }, { "cod", "Nachnahme" }, { "system", "System" } }) do
         local key = f[1]
-        local chip = Btn(bar, f[2], 64, nil)
+        local chip = Btn(bar, f[2], (W - 4) / 2, nil)
         chip:SetHeight(18)
-        chip:SetPoint("LEFT", prev, "RIGHT", prev == search and 8 or 3, 0)
+        local col, row = (i - 1) % 2, math.floor((i - 1) / 2)
+        chip:SetPoint("TOPLEFT", search, "BOTTOMLEFT", -6 + col * (W / 2 + 2), -6 - row * 22)
         chip:SetScript("OnClick", function(self)
             PO.filter[key] = not PO.filter[key]
             self:SetAlpha(PO.filter[key] and 1 or 0.6)
@@ -483,17 +511,17 @@ function PO.BuildBar()
         end)
         chip:SetAlpha(0.6)
         bar.chips[key] = chip
-        prev = chip
     end
 
     bar.status = K.NewText(bar, 10)
-    bar.status:SetPoint("TOPRIGHT", bar, "TOPRIGHT", 0, -4)
+    bar.status:SetPoint("BOTTOMLEFT", bar, "BOTTOMLEFT", 0, 0)
     bar.status:SetTextColor(unpack(C.textMuted))
     PO.bar = bar
     return bar
 end
 
 function PO.Refresh()
+    if side then side:SetShown(Active()) end
     if not bar then return end
     local busy = PO.Busy()
     local nsel = 0
@@ -530,7 +558,8 @@ function PO.BuildBag()
     if type(mf) ~= "table" then return nil end
     bag = CreateFrame("Frame", "WeintCodexPostBag", mf)
     bag:SetSize(PO.BAG_COLS * (PO.BAG_SLOT + 4) + 20, 330)
-    bag:SetPoint("TOPLEFT", mf, "TOPRIGHT", 6, 0)
+    local sd = PO.BuildSide()
+    bag:SetPoint("TOPLEFT", sd or mf, "TOPRIGHT", 6, 0)
     bag:EnableMouse(true)
     K.Kachel(bag, { shadow = 6 })
     bag.title = K.NewText(bag, 13)
@@ -1025,41 +1054,46 @@ local rulesBar
 function PO.BuildRulesBar()
     if rulesBar then return rulesBar end
     local sf = _G.SendMailFrame
-    if type(sf) ~= "table" then return nil end
-    rulesBar = CreateFrame("Frame", nil, sf)
-    rulesBar:SetSize(330, 26)
-    rulesBar:SetPoint("BOTTOMLEFT", sf, "TOPLEFT", 8, -2)
-    rulesBar:SetFrameLevel((sf:GetFrameLevel() or 1) + 10)
+    local sd = PO.BuildSide()
+    if type(sf) ~= "table" or not sd then return nil end
+    local W = PO.SIDE_BTN
+    -- Kind von „Post versenden“: sichtbar nur auf dessen Reiter.
+    local host = CreateFrame("Frame", nil, sf)
+    host:SetPoint("TOPLEFT", sd, "TOPLEFT", 10, -30)
+    host:SetPoint("BOTTOMRIGHT", sd, "BOTTOMRIGHT", -10, 10)
+    host:SetFrameLevel((sd:GetFrameLevel() or 1) + 5)
+    rulesBar = CreateFrame("Frame", nil, host)
+    rulesBar:SetSize(W, 84)
+    rulesBar:SetPoint("TOPLEFT", host, "TOPLEFT", 0, -130)
     rulesBar.text = K.NewText(rulesBar, 11)
-    rulesBar.text:SetPoint("LEFT", rulesBar, "LEFT", 0, 0)
+    rulesBar.text:SetPoint("TOPLEFT", rulesBar, "TOPLEFT", 0, 0)
     rulesBar.text:SetTextColor(unpack(C.gold))
-    rulesBar.send = Btn(rulesBar, "Senden", 70, function()
+    rulesBar.send = Btn(rulesBar, "Nach Regeln senden", W, function()
         local to, got = PO.SendNextRuleLetter()
         if to then Say(string.format("Versandregel: %d Stapel an %s gesendet.", got, to))
         else Say(tostring(got)) end
         if _G.C_Timer and _G.C_Timer.After then _G.C_Timer.After(1, PO.RefreshRules) end
     end, "Sendet den nächsten Brief nach deinen Regeln – ein Brief je Klick.")
-    rulesBar.send:SetPoint("LEFT", rulesBar.text, "RIGHT", 8, 0)
-    rulesBar.preview = Btn(rulesBar, "Vorschau", 70, function()
+    rulesBar.send:SetPoint("TOPLEFT", rulesBar.text, "BOTTOMLEFT", 0, -6)
+    rulesBar.preview = Btn(rulesBar, "Vorschau", W, function()
         if K.ShowReport then K.ShowReport("Versandregeln – Vorschau", PO.PlanLines()) end
     end)
-    rulesBar.preview:SetPoint("LEFT", rulesBar.send, "RIGHT", 4, 0)
+    rulesBar.preview:SetPoint("TOPLEFT", rulesBar.send, "BOTTOMLEFT", 0, -4)
 
-    -- Kontakte und Entwuerfe gehoeren auch hierher.
-    rulesBar.contacts = Btn(sf, "Kontakte", 70, function(self) PO.Menu(self, PO.ContactEntries()) end)
-    rulesBar.contacts:SetPoint("TOPLEFT", sf, "TOPRIGHT", -150, -28)
-    rulesBar.drafts = Btn(sf, "Entwürfe", 70, function(self) PO.Menu(self, PO.DraftEntries()) end)
-    rulesBar.drafts:SetPoint("LEFT", rulesBar.contacts, "RIGHT", 4, 0)
-    rulesBar.multi = Btn(sf, "An mehrere", 80, function()
+    rulesBar.contacts = Btn(host, "Kontakte", W, function(self) PO.Menu(self, PO.ContactEntries()) end)
+    rulesBar.contacts:SetPoint("TOPLEFT", host, "TOPLEFT", 0, 0)
+    rulesBar.drafts = Btn(host, "Entwürfe", W, function(self) PO.Menu(self, PO.DraftEntries()) end)
+    rulesBar.drafts:SetPoint("TOPLEFT", rulesBar.contacts, "BOTTOMLEFT", 0, -4)
+    rulesBar.multi = Btn(host, "An mehrere", W, function()
         local names = PO.SplitNames(_G.SendMailNameEditBox and _G.SendMailNameEditBox:GetText())
         local ok, msg = PO.SendMulti(names)
         Say(msg)
     end, "Namen durch Komma getrennt ins Feld „An“ schreiben – derselbe Brief (ohne Anhänge) an jeden.")
-    rulesBar.multi:SetPoint("TOP", rulesBar.contacts, "BOTTOM", 0, -4)
-    rulesBar.sent = Btn(sf, "Gesendet", 70, function()
+    rulesBar.multi:SetPoint("TOPLEFT", rulesBar.drafts, "BOTTOMLEFT", 0, -4)
+    rulesBar.sent = Btn(host, "Gesendet", W, function()
         if K.ShowReport then K.ShowReport("Post – Gesendet", PO.SentLines()) end
     end)
-    rulesBar.sent:SetPoint("LEFT", rulesBar.multi, "RIGHT", 4, 0)
+    rulesBar.sent:SetPoint("TOPLEFT", rulesBar.multi, "BOTTOMLEFT", 0, -4)
     PO.rulesBar = rulesBar
     return rulesBar
 end
