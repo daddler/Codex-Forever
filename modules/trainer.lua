@@ -370,6 +370,7 @@ local function BuildPage()
     f.SpellCard = spellCard
     local st = WeintCodex.Label(spellCard, "Zauber", { size = 14, color = "textBright", font = WeintCodex.Fonts.sansSemi })
     st:SetPoint("TOPLEFT", spellCard, "TOPLEFT", 20, -16)
+    f.SpellTitle = st
     f.KnownButton = WeintCodex.CreateButton(spellCard, { kind = "ghost", text = "Gelernte zeigen", height = 24,
         size = 11, padding = 20, radius = 0, onClick = function()
             showKnown = not showKnown
@@ -387,6 +388,7 @@ local function BuildPage()
     f.WeaponCard = weaponCard
     local wt = WeintCodex.Label(weaponCard, "Waffenfertigkeiten", { size = 14, color = "textBright", font = WeintCodex.Fonts.sansSemi })
     wt:SetPoint("TOPLEFT", weaponCard, "TOPLEFT", 20, -16)
+    f.WeaponTitle = wt
     f.WeaponScroll, f.WeaponBody = WeintCodex.CreateScrollArea(weaponCard, 20, -46, 300, 260, true)
 
     -- Aendert sich die Breite (Fenster gezogen, Detailbereich auf/zu),
@@ -731,8 +733,10 @@ TR.view = "spells"
 function TR.Show(view)
     local BL = WeintCodex.Beasts
     local hunter = BL and BL.IsHunter and BL.IsHunter() or false
-    if view == "quests" or view == "spells" or (view == "beasts" and hunter) then TR.view = view end
+    local mage = TR.IsMage()
+    if view == "quests" or view == "spells" or (view == "beasts" and hunter) or (view == "portals" and mage) then TR.view = view end
     if TR.view == "beasts" and not hunter then TR.view = "spells" end
+    if TR.view == "portals" and not mage then TR.view = "spells" end
     local nav = WeintCodex.Navigation
     local items = {
         { label = "Zauber und Waffen", onClick = function() TR.view = "spells" TR.DrawView() end },
@@ -741,8 +745,11 @@ function TR.Show(view)
     if hunter then
         items[3] = { label = "Wildtierkunde", onClick = function() TR.view = "beasts" TR.DrawView() end }
     end
+    if mage then
+        items[#items + 1] = { label = "Teleport & Portale", onClick = function() TR.view = "portals" TR.DrawView() end }
+    end
     nav.BuildSidebar("Lehrer", items)
-    nav.ActivateIndex(TR.view == "beasts" and 3 or TR.view == "quests" and 2 or 1)
+    nav.ActivateIndex((TR.view == "beasts" or TR.view == "portals") and 3 or TR.view == "quests" and 2 or 1)
 end
 
 function TR.DrawView()
@@ -750,6 +757,8 @@ function TR.DrawView()
     local BL = WeintCodex.Beasts
     if TR.view == "beasts" and BL and BL.Draw then
         BL.Draw()
+    elseif TR.view == "portals" then
+        TR.DrawPortals()
     elseif TR.view == "quests" and CQ and CQ.Draw then
         CQ.Draw()
     else
@@ -763,6 +772,12 @@ function TR.DrawSpells()
     local f = BuildPage()
     f:Show()
     WeintCodex.SetBreadcrumb("Lehrer", "Zauber und Waffen")
+    f.SpellTitle:SetText("Zauber")
+    f.WeaponTitle:SetText("Waffenfertigkeiten")
+    f.KnownButton:Show()
+    f.Bill:Show()
+    f.SpellScroll:ClearAllPoints()
+    f.SpellScroll:SetPoint("TOPLEFT", f.SpellCard, "TOPLEFT", 20, -(46 + BILL_H + 10))
 
     local state = PlayerState()
     local cat = TR.Categorize(state)
@@ -801,6 +816,160 @@ function TR.DrawSpells()
     f.drawnWidth = total
 end
 
+--------------------------------------------------
+-- Teleport & Portale (1.0.5.36, nur Magier)
+--------------------------------------------------
+-- Welche Zauber: die Magierzauber mit `faction` im Lehrerbestand (Stufe,
+-- Kosten). Wer sie lehrt und wo: data/portaltrainers.lua.
+
+function TR.IsMage()
+    if not _G.UnitClass then return false end
+    local _, class = _G.UnitClass("player")
+    return class == "MAGE"
+end
+
+-- { id, level, cost, known, kind = "teleport"|"portal" } der eigenen Fraktion, nach Stufe.
+function TR.PortalSpells(state)
+    local out = {}
+    local data = WeintCodex.TrainerData and WeintCodex.TrainerData.CLASSES and WeintCodex.TrainerData.CLASSES.MAGE
+    if not (data and state and state.faction) then return out end
+    for lvl, list in pairs(data.spells or {}) do
+        for _, sp in ipairs(list) do
+            if sp.faction == state.faction then
+                out[#out + 1] = { id = sp.id, level = lvl, cost = sp.cost, known = TR.Known(sp.id) and true or false }
+            end
+        end
+    end
+    table.sort(out, function(a, b) if a.level ~= b.level then return a.level < b.level end return a.id < b.id end)
+    return out
+end
+
+function TR.PortalTrainers(state)
+    local out = {}
+    local list = WeintCodex.TrainerData and WeintCodex.TrainerData.PORTAL_TRAINERS or {}
+    for _, n in ipairs(list) do
+        if state and n.faction == state.faction then out[#out + 1] = n end
+    end
+    -- Naechster zuerst, wenn die eigene Lage auf derselben Karte bekannt ist.
+    local QM = WeintCodex.QuestMap
+    local here = _G.C_Map and _G.C_Map.GetBestMapForUnit and Plain(_G.C_Map.GetBestMapForUnit("player"))
+    if type(here) == "number" then
+        table.sort(out, function(a, b)
+            if (a.map == here) ~= (b.map == here) then return a.map == here end
+            return a.name < b.name
+        end)
+    end
+    return out
+end
+
+local function PortalTrainerRow(body, y, w, n)
+    local row = Keep(CreateFrame("Frame", nil, body))
+    row:SetHeight(40)
+    row:SetPoint("TOPLEFT", body, "TOPLEFT", 0, y)
+    row:SetWidth(w)
+    local zone = WeintCodex.QuestMap and WeintCodex.QuestMap.MapName and WeintCodex.QuestMap.MapName(n.map)
+    local nm = WeintCodex.Label(row, n.name, { size = 12, color = "textNormal", font = WeintCodex.Fonts.sansMedium })
+    nm:SetPoint("TOPLEFT", row, "TOPLEFT", 2, -4)
+    local sub = WeintCodex.Label(row, (zone or ("Karte " .. n.map)) .. string.format("  ·  %.1f, %.1f", n.x, n.y),
+        { size = 10, color = "textFaint" })
+    sub:SetPoint("TOPLEFT", nm, "BOTTOMLEFT", 0, -2)
+    local arrow = WeintCodex.CreateButton(row, { kind = "primary", text = "Pfeil", height = 22, size = 10,
+        padding = 16, radius = 0, onClick = function() TR.GuideToTrainer(n, "Teleport & Portale") end })
+    arrow:SetPoint("RIGHT", row, "RIGHT", -4, 0)
+    local QM = WeintCodex.QuestMap
+    if QM and QM.Show then
+        local b = WeintCodex.CreateButton(row, { kind = "secondary", text = "Karte", height = 22, size = 10,
+            padding = 16, radius = 0, onClick = function()
+                QM.Show({ map = n.map, x = n.x / 100, y = n.y / 100, who = n.name }, nil, "Lehrt: Teleport & Portale")
+            end })
+        WeintCodex.DrawSlimBorder(b, "accentDim", 1, 1)
+        b:SetPoint("RIGHT", arrow, "LEFT", -6, 0)
+    end
+    TR.portalRows = (TR.portalRows or 0) + 1
+    return y - 44
+end
+
+function TR.DrawPortals()
+    local cp = WeintCodex.ContentPanel
+    for _, child in pairs({ cp:GetChildren() }) do child:Hide() end
+    local f = BuildPage()
+    f:Show()
+    WeintCodex.SetBreadcrumb("Lehrer", "Teleport & Portale")
+    if f.Head and f.Head.Title then f.Head.Title:SetText("Lehrer · Teleport & Portale") end
+    f.SpellTitle:SetText("Teleport & Portale")
+    f.WeaponTitle:SetText("Wo du sie lernst")
+    f.KnownButton:Hide()
+    f.Bill:Hide()
+    f.SpellScroll:ClearAllPoints()
+    f.SpellScroll:SetPoint("TOPLEFT", f.SpellCard, "TOPLEFT", 20, -46)
+
+    local state = PlayerState()
+    local spells = TR.PortalSpells(state)
+    local trainers = TR.PortalTrainers(state)
+    WeintCodex.Navigation.SetInspector({
+        { type = "header", text = "Teleport & Portale" },
+        { type = "card", lines = {
+            "Teleports und Portale lehrt nicht der Klassenlehrer,",
+            "sondern ein Portallehrer in den Hauptstädten deiner",
+            "Fraktion. „Pfeil“ setzt den Questpfeil hin.",
+        }},
+        { type = "divider" },
+        { type = "header", text = "Woher das stammt" },
+        { type = "card", lines = {
+            "Unbestätigt: Stufen und Kosten aus dem Lehrerbestand,",
+            "Lehrer und Lage aus der Beta-Datenbank. Dass jeder",
+            "Portallehrer alles lehrt, ist die Regel aus Classic.",
+            "Ob du etwas schon kannst, sagt dein Client.",
+        }},
+    })
+
+    local total = Plain(f:GetWidth())
+    if type(total) == "number" and total > 400 then
+        f.SpellCard:SetWidth(math.floor((total - 2 * WeintCodex.Metrics.PAD_X - WeintCodex.Metrics.GAP) * 0.56))
+    end
+    local sw = (Plain(f.SpellCard:GetWidth()) or 460) - 40
+    local ww = (Plain(f.WeaponCard:GetWidth()) or 340) - 40
+    local sh = (Plain(f.SpellCard:GetHeight()) or 360) - 62
+    local wh = (Plain(f.WeaponCard:GetHeight()) or 360) - 62
+    f.SpellScroll:SetSize(sw, math.max(60, sh))
+    f.SpellBody:SetWidth(sw - 10)
+    f.WeaponScroll:SetSize(ww, math.max(60, wh))
+    f.WeaponBody:SetWidth(ww - 10)
+
+    ClearRows()
+    TR.drawnRows, TR.mapButtons, TR.portalRows = 0, 0, 0
+    local y = 0
+    if #spells == 0 then
+        local fs = Keep(WeintCodex.Label(f.SpellBody, state.faction and "Für deine Fraktion ist nichts hinterlegt."
+            or "Deine Fraktion meldet der Client gerade nicht.", { size = 12, color = "textMuted" }))
+        fs:SetPoint("TOPLEFT", f.SpellBody, "TOPLEFT", 0, -4)
+        y = -30
+    end
+    local lastLevel
+    for _, sp in ipairs(spells) do
+        if sp.level ~= lastLevel then y = LevelHead(f.SpellBody, y, sp.level) lastLevel = sp.level end
+        local ready = not sp.known and state.level and state.level >= sp.level
+        local tag = sp.known and { "Gelernt", "textDim" } or ready and { "Lernbar", "successBright" }
+            or { "ab Stufe " .. sp.level, "textMuted" }
+        y = SpellRow(f.SpellBody, y, sw - 14, sp, { dim = sp.known, noSelect = true,
+            costColor = (not ready and not sp.known) and "textFaint" or nil })
+        local fs = Keep(WeintCodex.Label(f.SpellBody, tag[1], { size = 10, color = tag[2], justify = "RIGHT" }))
+        fs:SetPoint("TOPRIGHT", f.SpellBody, "TOPRIGHT", -80, y + ROW_H - 7)
+    end
+    f.SpellBody:SetHeight(math.max(1, -y))
+
+    local wy = 0
+    for _, n in ipairs(trainers) do wy = PortalTrainerRow(f.WeaponBody, wy, ww - 14, n) end
+    if #trainers == 0 then
+        local fs = Keep(WeintCodex.Label(f.WeaponBody, "Kein Portallehrer deiner Fraktion bekannt.", { size = 11, color = "textFaint" }))
+        fs:SetPoint("TOPLEFT", f.WeaponBody, "TOPLEFT", 0, -4)
+        wy = -24
+    end
+    f.WeaponBody:SetHeight(math.max(1, -wy))
+    f.drawnWidth = total
+    TR.lastPortals = { spells = #spells, trainers = #trainers }
+end
+
 function TR.ShowKnown(v) showKnown = v and true or false end
 function TR.Page() return page end
 
@@ -816,7 +985,12 @@ local function Redraw()
     local main = WeintCodex.MainFrame
     if type(main) == "table" and main.IsShown and not main:IsShown() then return end
     redrawQueued = true
-    local function run() redrawQueued = false if page and page:IsShown() then TR.DrawSpells() end end
+    local function run()
+        redrawQueued = false
+        if page and page:IsShown() then
+            if TR.view == "portals" then TR.DrawPortals() else TR.DrawSpells() end
+        end
+    end
     if _G.C_Timer and _G.C_Timer.After then _G.C_Timer.After(0.2, run) else run() end
 end
 TR.Redraw = Redraw

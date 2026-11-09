@@ -113,6 +113,8 @@ local SUBTABS = {
     klassenquests = { tab = "lehrer", sub = "quests" },
     -- Wildtierkunde als dritter Reiter unter Lehrer (nur Jaeger).
     wildtierkunde = { tab = "lehrer", sub = "beasts" },
+    -- 1.0.5.36: Teleport & Portale als Reiter unter Lehrer (nur Magier).
+    portale = { tab = "lehrer", sub = "portals" },
     -- 6.61.1.0: Kalender als Gruppe unter Raidplanung.
     kalender = { tab = "anmeldung", sub = "kalender" },
 }

@@ -25348,6 +25348,29 @@ do
     Check(ok, "Erinnerung: Talentpunkte aus Stufe und Bäumen" .. (ok and "" or (": " .. tostring(err))))
 end
 
+do
+    local TR = WeintCodex.Trainer
+    local keep = { _G.UnitClass, _G.UnitFactionGroup }
+    local ok, err = pcall(function()
+        _G.UnitClass = function() return "Magier", "MAGE", 8 end
+        _G.UnitFactionGroup = function() return "Alliance", "Allianz" end
+        assert(TR.IsMage(), "Magier erkannt")
+        TR.Show("portals")
+        assert(TR.view == "portals", "Reiter gewählt")
+        TR.DrawPortals()
+        assert(TR.lastPortals.spells == 6, "Allianz: 3 Teleports + 3 Portale, gezählt " .. tostring(TR.lastPortals.spells))
+        assert(TR.lastPortals.trainers == 3 and TR.portalRows == 3, "drei Portallehrer der Allianz")
+        _G.UnitFactionGroup = function() return "Horde", "Horde" end
+        TR.DrawPortals()
+        assert(TR.lastPortals.spells == 6 and TR.lastPortals.trainers == 3, "Horde ebenso")
+        _G.UnitClass = function() return "Krieger", "WARRIOR", 1 end
+        TR.Show("portals")
+        assert(TR.view == "spells", "kein Reiter für Nicht-Magier")
+    end)
+    _G.UnitClass, _G.UnitFactionGroup = keep[1], keep[2]
+    Check(ok, "Lehrer: Teleport & Portale (nur Magier, Lehrer mit Pfeil)" .. (ok and "" or (": " .. tostring(err))))
+end
+
 if failures == 0 then
     print("BESTANDEN")
     os.exit(0)

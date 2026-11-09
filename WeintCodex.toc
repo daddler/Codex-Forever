@@ -102,6 +102,8 @@ data/classthemes.lua
 data/specs.lua
 # Was der Klassenlehrer lehrt (6.6.0.0); gelesen von modules/trainer.lua.
 data/trainer.lua
+# Portallehrer der Magier (1.0.5.36); gelesen von modules/trainer.lua.
+data/portaltrainers.lua
 # Rezepte und Lehrer der Berufe (6.14.0.0, erzeugt); gelesen von modules/professions.lua.
 data/professions.lua
 # Abgleich der Schwellen und Raenge (1.9.0.0, erzeugt); gelesen von modules/professions.lua.
