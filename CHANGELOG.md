@@ -9,6 +9,12 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.0.5.44] – 2026-11-10
+
+- Klickzauber „überall“: hilfreiche Zauber (`C_Spell.IsSpellHelpful`/`IsHelpfulSpell`) nur auf
+  Freunde – Maus, Ziel, Ziel des Ziels, dann selbst. Vorher nahm `@target,exists` auch Gegner,
+  und das Spiel legte das Schild auf den Priester.
+
 ## [1.0.5.43] – 2026-11-10
 
 - Speicher nach `/wcui speicher`: Abklingzeitmanager liest Uhren nur nach Ereignis/alle 2 s,

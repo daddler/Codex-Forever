@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.0.5.44",
+        date    = "10.11.2026",
+        notes   = {
+            "|cff7C6CFFKlickzauber „überall“ treffen Freunde|r – hilfreiche Zauber wie Machtwort: Schild gehen auf die Einheit unter der Maus, dein Ziel oder dessen Ziel, nicht mehr auf dich, nur weil du einen Gegner im Ziel hast.",
+        },
+    },
+    {
         version = "1.0.5.43",
         date    = "10.11.2026",
         notes   = {
