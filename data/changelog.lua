@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.0.5.39",
+        date    = "10.11.2026",
+        notes   = {
+            "|cff7C6CFFTalentpunkt-Erinnerung|r – kommt jetzt nach jedem Stufenaufstieg, sobald du aus dem Kampf bist, überall und auch ohne die übrigen Erinnerungen. Ein Klick blendet sie aus.",
+        },
+    },
+    {
         version = "1.0.5.38",
         date    = "09.11.2026",
         notes   = {

@@ -9,6 +9,11 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.0.5.39] – 2026-11-10
+
+- Talentpunkte: eigene Kachel `WeintCodexTalentNote`, wenn das Modul Erinnerungen aus ist;
+  neue Stufe aus `PLAYER_LEVEL_UP` (`R.levelHint`), Nachprüfung nach 1 und 3 s; nie im Kampf.
+
 ## [1.0.5.38] – 2026-11-09
 
 - Dungeonkarten der neuen Forever-Dungeons (Dalaran 2 Ebenen, Ruinen von Lordaeron, Hall of
