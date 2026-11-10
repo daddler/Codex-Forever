@@ -250,7 +250,18 @@ function CC.ApplyTo(f, list)
         if kind and not CC.IsKey(b) and not CC.IsFree(b) and not (b.action == "spell" and not b.spell)
            and not (b.action == "macro" and not b.macro) then
             local t = b.mod .. "type" .. CC.Suffix(b.button)
-            if b.action == "target" and b.mod ~= "" then
+            if b.action == "spell" and b.mod ~= "" then
+                -- 1.0.5.45 (gemessen mit /wcui klick: "alt-RightButton ->
+                -- type=spell", Schild landete trotzdem beim Priester): mit
+                -- gedrueckter Selbstzauber-Taste (ab Werk Alt) zaubert das
+                -- Spiel auf dich, auch wenn der Rahmen eine Einheit hat.
+                -- Mit Zusatztaste daher als Makro mit ausdruecklichem Ziel -
+                -- ein Klick auf den Rahmen macht dessen Einheit zu @mouseover.
+                local m = b.mod .. "macrotext" .. CC.Suffix(b.button)
+                f:SetAttribute(t, "macro")
+                f:SetAttribute(m, "/cast [@mouseover,exists] " .. CC.SpellAttr(b))
+                keys[#keys + 1] = m
+            elseif b.action == "target" and b.mod ~= "" then
                 -- 1.0.2.7: mit Zusatztaste ueber ein Makro (die Aktion
                 -- "target" fuehrt das Spiel mit Zusatztaste nicht aus).
                 local m = b.mod .. "macrotext" .. CC.Suffix(b.button)

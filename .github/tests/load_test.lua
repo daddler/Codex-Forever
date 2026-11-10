@@ -3700,7 +3700,7 @@ do
         local attrs = {}
         f.SetAttribute = function(_, k, v) attrs[k] = v end
         CC.ApplyTo(f, CC.Effective())
-        assert(attrs["ctrl-type1"] == "spell" and attrs["ctrl-spell1"] == "Magiebannung"
+        assert(attrs["ctrl-type1"] == "macro" and attrs["ctrl-spell1"] == "Magiebannung"
             and attrs["ctrl-spell2"] == "Krankheit aufheben", "nicht auf dem Rahmen")
         -- Eigene Belegung gewinnt.
         mine[1] = { button = 1, mod = "ctrl-", action = "spell", spell = "Erneuerung" }
@@ -6995,7 +6995,7 @@ do
         CC.draft.button, CC.draft.mod = 2, ""
         assert(CC.Pick("spell", "Erneuerung"), "zweite Belegung nicht angelegt")
         for _, f in ipairs(frames) do
-            assert(f:GetAttribute("shift-type1") == "spell" and f:GetAttribute("shift-spell1") == "Blitzheilung",
+            assert(f:GetAttribute("shift-type1") == "macro" and f:GetAttribute("shift-spell1") == "Blitzheilung",
                 "Umschalt + Links nicht belegt")
             assert(f:GetAttribute("type2") == "spell" and f:GetAttribute("spell2") == "Erneuerung",
                 "Rechts nicht belegt")
@@ -7025,8 +7025,10 @@ do
         assert(CC.Capture("Button7", true, "alt-") and CC.draft.button == 7 and CC.draft.mod == "alt-",
             "Fläche hat die Maustaste nicht übernommen")
         CC.Pick("spell", "Heilen")
-        assert(f1:GetAttribute("alt-type-Button7") == "spell" and f1:GetAttribute("alt-spell-Button7") == "Heilen",
+        assert(f1:GetAttribute("alt-type-Button7") == "macro" and f1:GetAttribute("alt-spell-Button7") == "Heilen",
             "Maustaste 7 nicht als -Button7 belegt")
+        -- 1.0.5.45: mit Zusatztaste ausdruecklich auf den Rahmen (Alt = Selbstzauber).
+        assert(f1:GetAttribute("alt-macrotext-Button7") == "/cast [@mouseover,exists] Heilen", "Alt-Zauber ohne ausdrueckliches Ziel")
         assert(CC.Capture("3", false, "shift-") and CC.draft.button == "3", "Tastatur-Taste nicht übernommen")
         CC.Pick("spell", "Erneuerung")
         assert(binds["SHIFT-3"] == "WeintCodexClickKey1", "Taste nicht auf den Mouseover-Knopf gelegt")
@@ -7124,7 +7126,7 @@ do
             and menu.current == nil, "Rangliste oeffnet nicht am Symbol")
         assert(f1:GetAttribute("alt-type3") == nil, "Taste belegt, bevor ein Rang gewaehlt ist")
         menu.pick("")
-        assert(f1:GetAttribute("alt-type3") == "spell" and f1:GetAttribute("alt-spell3") == "Geringes Heilen",
+        assert(f1:GetAttribute("alt-type3") == "macro" and f1:GetAttribute("alt-spell3") == "Geringes Heilen",
             "Klick in der Tafel belegt die Taste nicht")
         picker.Sync()
         assert(picker.tiles[3].ring.top:IsShown() and not picker.tiles[4].ring.top:IsShown(), "Belegung in der Tafel nicht markiert")
