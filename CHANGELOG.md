@@ -9,6 +9,12 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.0.5.45] – 2026-11-10
+
+- Klickzauber auf Rahmen mit Zusatztaste: `type=macro` mit `/cast [@mouseover,exists] Zauber`
+  statt `type=spell` – gemessen (`/wcui klick`): Alt + Rechts auf den Gruppenrahmen ging mit
+  Selbstzauber-Taste Alt und autoSelfCast auf den Priester.
+
 ## [1.0.5.44] – 2026-11-10
 
 - Klickzauber „überall“: hilfreiche Zauber (`C_Spell.IsSpellHelpful`/`IsHelpfulSpell`) nur auf

@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.0.5.45",
+        date    = "10.11.2026",
+        notes   = {
+            "|cff7C6CFFKlickzauber mit Alt treffen den Rahmen|r – ein Zauber mit Zusatztaste auf einem Gruppenrahmen geht auf das angeklickte Mitglied, auch wenn Alt im Spiel die Selbstzauber-Taste ist.",
+        },
+    },
+    {
         version = "1.0.5.44",
         date    = "10.11.2026",
         notes   = {
