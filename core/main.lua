@@ -12,9 +12,9 @@ WeintCodex = WeintCodex or {}
 -- "v" plus diese Zahl sein. Die CI prueft alle vier gegeneinander und
 -- bricht sonst ab - siehe .github/scripts/release_notes.py und
 -- docs/development/releases.md.
-WeintCodex.Version = "1.0.5.42"
+WeintCodex.Version = "1.0.5.43"
 
--- /wcui speicher (1.0.5.42): Messhuelle fuer Teile, die vor ui/kit.lua
+-- /wcui speicher (1.0.5.43): Messhuelle fuer Teile, die vor ui/kit.lua
 -- laden (core, modules) oder bisher ohne Messung liefen. Kostet ohne
 -- laufende Messung eine Abfrage; gezaehlt wird in UIKit.prof. Nur um
 -- Behandler, die einmal gesetzt werden - eine Huelle je Takt waere Muell.

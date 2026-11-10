@@ -2,7 +2,7 @@
 ## Title: |cff7C6CFFWeintCodex|r
 ## Notes: Raid Guide & Intelligence System — Forever Edition
 ## Author: Fabian
-## Version: 1.0.5.42
+## Version: 1.0.5.43
 ## SavedVariables: WeintCodex_SavedData, WeintCompanionDB, WeintCompanionInboxDB, WeintCodex_WhispersAccount
 ## SavedVariablesPerCharacter: WeintCodex_Whispers, WeintCodex_Backup
 
@@ -102,7 +102,7 @@ data/classthemes.lua
 data/specs.lua
 # Was der Klassenlehrer lehrt (6.6.0.0); gelesen von modules/trainer.lua.
 data/trainer.lua
-# Portallehrer der Magier (1.0.5.42); gelesen von modules/trainer.lua.
+# Portallehrer der Magier (1.0.5.43); gelesen von modules/trainer.lua.
 data/portaltrainers.lua
 # Rezepte und Lehrer der Berufe (6.14.0.0, erzeugt); gelesen von modules/professions.lua.
 data/professions.lua
@@ -116,7 +116,7 @@ data/beasts.lua
 data/loot.lua
 # NPC-Nummer und deutscher Name je Boss des Kompendiums (erzeugt, 1.10.10.0)
 data/boss_npcs.lua
-# Bosse der neuen Forever-Dungeons (1.0.5.42); gelesen von ui/nameplates.lua.
+# Bosse der neuen Forever-Dungeons (1.0.5.43); gelesen von ui/nameplates.lua.
 data/boss_npcs_forever.lua
 # Seltene Gegner (6.16.0.0, erzeugt); gelesen von ui/rares.lua.
 data/rares.lua
@@ -130,7 +130,7 @@ data/vendorprices.lua
 data/mapreveal.lua
 # Dungeonkarten: Bildnummern des Clients je Instanz (6.79.3.0, erzeugt, aus OpenMap - MIT).
 data/dungeonmaps.lua
-# Karten der neuen Forever-Dungeons (Santiago Reyes, 1.0.5.42).
+# Karten der neuen Forever-Dungeons (Santiago Reyes, 1.0.5.43).
 data/dungeonmaps_forever.lua
 # Geistheiler und Uebergaenge auf der Weltkarte (6.21.0.0, erzeugt); gelesen von ui/mapmarks.lua.
 data/mapmarks.lua

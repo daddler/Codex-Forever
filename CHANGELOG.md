@@ -9,6 +9,13 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.0.5.43] – 2026-11-10
+
+- Speicher nach `/wcui speicher`: Abklingzeitmanager liest Uhren nur nach Ereignis/alle 2 s,
+  ordnet nur bei Änderung an; Bestand gebündelt (2 s, nie im Kampf); `GG.Frames` gemerkt;
+  Erfahrungsbalken ohne Mausabfrage je Bild; Minikarte/Chat-Infozeile nur in Bewegung bzw.
+  bei Ereignissen; Bosskämpfe prüfen Nicht-Bosse einmal je GUID.
+
 ## [1.0.5.42] – 2026-11-10
 
 - `/wcui speicher`: 131 bisher ungemessene Ereignis-/Takt-Behandler über `WeintCodex.Measured`

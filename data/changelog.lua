@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.0.5.43",
+        date    = "10.11.2026",
+        notes   = {
+            "|cff7C6CFFWeniger Speicher und Rechenzeit|r – Abklingzeiten, Bestand, Gruppenwerkzeuge, Erfahrungsbalken, Minikarte, Chat-Infozeile und Bosskämpfe arbeiten deutlich sparsamer.",
+        },
+    },
+    {
         version = "1.0.5.42",
         date    = "10.11.2026",
         notes   = {
