@@ -25441,6 +25441,17 @@ do
         PT.Draw("gilde")
         PT.book = nil
         PT.Draw("gilde")
+        -- Suche auf der Übersicht: Rezept -> wer es kann.
+        local hits = PT.GuildSearch((a.name or ""):sub(1, 6))
+        local found = false
+        for _, h in ipairs(hits) do
+            if h.r == a then for _, x in ipairs(h.who) do if x.name == "Testa" then found = true end end end
+        end
+        assert(found, "Übersichtssuche findet Testa nicht")
+        PT.bookQuery = (a.name or ""):sub(1, 6)
+        PT.Draw("gilde")
+        assert(PT.lastSearch and PT.lastSearch.rows >= 1, "Übersichtssuche zeichnet nichts")
+        PT.bookQuery = ""
         g.Testa = keep
     end)
     PT.book, PT.bookSel = nil, nil

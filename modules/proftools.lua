@@ -1190,7 +1190,11 @@ function PT.DrawBook(body, w)
     local f, b = page, PT.book
     f.Title:SetText(b.name .. " · " .. PRO.ProfName(b.key))
     f.Action:SetText("‹ Zurück")
-    f.Action.run = function() PT.book = nil PT.Draw("gilde") end
+    f.Action.run = function()
+        PT.book, PT.bookSel, PT.bookQuery = nil, nil, ""
+        if bookSearch then bookSearch:SetText("") end
+        PT.Draw("gilde")
+    end
     f.Action:Show()
     SearchBox(f):Show()
     local list = PT.BookList(b, PT.bookQuery)
@@ -1217,13 +1221,77 @@ function PT.DrawBook(body, w)
     return y
 end
 
+-- 1.0.5.40: Suche über alle (eigene Charaktere und Gilde): Rezept -> wer.
+PT.SEARCH_MAX = 60
+function PT.GuildSearch(query)
+    local q = (query or ""):lower()
+    local out = {}
+    if q == "" then return out end
+    local sd = SD()
+    local g = PT.Guild() or {}
+    for _, p in ipairs(P and P.PROFS or {}) do
+        local who = {}
+        for char, m in pairs(sd and sd.professions or {}) do
+            if type(m) == "table" and m.scanned and m.scanned[p.key] and m.known then
+                who[#who + 1] = { name = char:match("^([^-]+)") or char, known = m.known, char = char, own = true }
+            end
+        end
+        for name, profs in pairs(g) do
+            local e = profs[p.key]
+            if e and e.known then who[#who + 1] = { name = name, known = e.known, rank = e.rank, max = e.max, at = e.at } end
+        end
+        if #who > 0 then
+            for _, r in ipairs(PRO.Recipes(p.key)) do
+                local name = PRO.RecipeName(r) or r.name or ""
+                if name:lower():find(q, 1, true) or (r.name or ""):lower():find(q, 1, true) then
+                    local names = {}
+                    for _, x in ipairs(who) do if x.known[r.spell] then names[#names + 1] = x end end
+                    if #names > 0 then out[#out + 1] = { r = r, name = name, key = p.key, who = names } end
+                end
+            end
+        end
+    end
+    table.sort(out, function(a, b) return a.name < b.name end)
+    return out
+end
+
+function PT.DrawGuildSearch(body, w, query)
+    local list = PT.GuildSearch(query)
+    local y = Note(body, 0, w, #list == 0 and ("Niemand, den WeintCodex kennt, kann ein Rezept mit „" .. query .. "“.")
+        or (#list .. (#list == 1 and " Rezept" or " Rezepte") .. " mit „" .. query .. "“ – darunter, wer es kann (Klick öffnet dessen Rezeptbuch)."))
+    for i, x in ipairs(list) do
+        if i > PT.SEARCH_MAX then
+            y = Note(body, y, w, "… und " .. (#list - PT.SEARCH_MAX) .. " weitere – genauer suchen.")
+            break
+        end
+        y = Row(body, y, w, x.name, PRO.ProfName(x.key), { recipe = x.r, onClick = function()
+            PT.bookSel = (PT.bookSel ~= x.r) and x.r or nil
+            PT.Draw("gilde")
+        end })
+        for _, who in ipairs(x.who) do
+            local key = x.key
+            y = Row(body, y, w, who.name .. (who.own and "  (dein Charakter)" or ""), "›",
+                { indent = 24, tone = "textMuted", onClick = function()
+                    PT.OpenBook({ name = who.name, key = key, char = who.char, rank = who.rank, max = who.max, at = who.at })
+                end })
+        end
+    end
+    PT.lastSearch = { query = query, rows = #list }
+    return y
+end
+
 function PT.DrawGuild(body, w)
     local classes = PT.ClassMap()
     local y = 0
     local g = PT.Guild() or {}
     local f = page
     if PT.book then return PT.DrawBook(body, w) end
-    if bookSearch then bookSearch:Hide() end
+    SearchBox(f):Show()
+    if PT.bookQuery ~= "" then
+        f.Title:SetText("Berufe der Gilde")
+        f.Action:Hide()
+        return PT.DrawGuildSearch(body, w, PT.bookQuery)
+    end
     f.Title:SetText("Berufe der Gilde")
     f.Action:SetText(PT.Sharing() and "Teilen: an" or "Teilen: aus")
     f.Action.run = function() PT.SetSharing(not PT.Sharing()) PT.Draw("gilde") end
@@ -1891,7 +1959,7 @@ function PT.Draw(key)
     if key == "merkliste" and PT.selItem and nav and nav.SetInspector then
         nav.SetInspector(PT.ItemBlocks(PT.selItem))
     end
-    if key == "gilde" and PT.book and PT.bookSel and PRO.RecipeInspector and nav and nav.SetInspector then
+    if key == "gilde" and PT.bookSel and PRO.RecipeInspector and nav and nav.SetInspector then
         nav.SetInspector(PRO.RecipeInspector(PT.bookSel))
     end
     PT.FitBar(f)
