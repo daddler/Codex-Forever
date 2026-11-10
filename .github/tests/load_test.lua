@@ -10994,6 +10994,13 @@ do
             and not CC.CanFree({ button = 2 }), "Ueberall-Regel falsch")
         local fb = { button = 4, mod = "", action = "spell", spell = "Donnerknall", free = true }
         assert(CC.KeyMacro(fb) == "/cast [@mouseover,exists,nodead][@target,exists,nodead][] Donnerknall" and CC.BindingKey(fb) == "BUTTON4", "Ueberall-Makro/Taste falsch")
+        -- 1.0.5.44: hilfreiche Zauber nur auf Freunde (Schild ging auf den Priester).
+        local oH = _G.IsHelpfulSpell
+        _G.IsHelpfulSpell = function(n) return n == "Machtwort: Schild" end
+        local sb = { button = 4, mod = "", action = "spell", spell = "Machtwort: Schild", free = true }
+        assert(CC.KeyMacro(sb) == "/cast [@mouseover,help,nodead][@target,help,nodead][@targettarget,help,nodead][] Machtwort: Schild", "Schild darf nicht auf Gegner-Ziel")
+        assert(CC.KeyMacro(fb):find("@target,exists", 1, true), "Schaden bleibt beim Ziel")
+        _G.IsHelpfulSpell = oH
         d.button, d.mod = oB, oM
         local rep = CC.ClickReport()
         assert(type(rep) == "table" and #rep >= 3, "Klickbericht leer")

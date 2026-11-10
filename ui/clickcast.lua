@@ -473,6 +473,15 @@ function CC.KeysIntact()
     return true
 end
 
+-- Hilfreich? Nur was der Client sagt; ohne Antwort false (alte Regel).
+function CC.IsHelpful(name)
+    if type(name) ~= "string" then return false end
+    local f = (_G.C_Spell and _G.C_Spell.IsSpellHelpful) or _G.IsHelpfulSpell
+    if type(f) ~= "function" then return false end
+    local ok, v = pcall(f, name)
+    return ok and K.Bool(v, false) == true
+end
+
 function CC.KeyMacro(b)
     local text
     if b.action == "spell" then
@@ -482,7 +491,17 @@ function CC.KeyMacro(b)
         -- Ziel - ist das kein Freund oder die Selbstzauber-Taste (Alt)
         -- gedrueckt, zaubert das Spiel auf dich selbst. Jetzt zuerst die
         -- Einheit unter der Maus, dann das Ziel - ausdruecklich.
-        if s and CC.IsFree(b) then return "/cast [@mouseover,exists,nodead][@target,exists,nodead][] " .. s end
+        -- 1.0.5.44 (Bericht: "geht immer noch nur auf sich selbst"):
+        -- "@target,exists" nahm auch einen Gegner als Ziel - ein hilfreicher
+        -- Zauber auf einen Gegner landet beim Spiel auf dir. Sagt der Client,
+        -- dass der Zauber hilfreich ist, zaehlen nur Freunde: Maus, Ziel,
+        -- Ziel des Ziels (der Gegner schlaegt meist den Tank), zuletzt du.
+        if s and CC.IsFree(b) then
+            if CC.IsHelpful(b.spell) then
+                return "/cast [@mouseover,help,nodead][@target,help,nodead][@targettarget,help,nodead][] " .. s
+            end
+            return "/cast [@mouseover,exists,nodead][@target,exists,nodead][] " .. s
+        end
         text = s and ("/cast [@mouseover,exists] " .. s) or nil
     elseif b.action == "target" then
         text = "/target [@mouseover,exists]"
