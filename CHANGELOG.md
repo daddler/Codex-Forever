@@ -9,6 +9,11 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.0.5.41] – 2026-11-10
+
+- Plaketten: Bosse zusätzlich per Namensabgleich, nur in Instanzen (`NP.BossNames`,
+  `NP.IsBossName`): Dungeonseiten mit Zweitnamen, Kompendium de/en, neue Dungeons.
+
 ## [1.0.5.40] – 2026-11-10
 
 - Berufe der Gilde: Rezeptbuch je Person (`PT.OpenBook`, Suche, Details rechts) und

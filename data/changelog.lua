@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.0.5.41",
+        date    = "10.11.2026",
+        notes   = {
+            "|cff7C6CFFBosse am Namen erkannt|r – in Dungeons tragen Bosse die Bossfarbe jetzt auch, wenn das Spiel sie nicht als Boss meldet: über ihren Namen, z. B. in der Versunkenen Stadt und auf der Terrasse der Former.",
+        },
+    },
+    {
         version = "1.0.5.40",
         date    = "10.11.2026",
         notes   = {
