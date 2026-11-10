@@ -103,9 +103,12 @@ local function ReadBags(list, into)
                 local id, count = Plain(info.itemID), Plain(info.stackCount)
                 if type(id) == "number" then
                     into[id] = (into[id] or 0) + (type(count) == "number" and count or 1)
-                    local link = Str(info.hyperlink)
-                    local nm = link and link:match("%[(.-)%]")
-                    if nm and st then st.names[id] = nm end
+                    -- 1.0.5.43: den Namen nur, wenn er noch fehlt (Text je Platz = Abfall).
+                    if st and not st.names[id] then
+                        local link = Str(info.hyperlink)
+                        local nm = link and link:match("%[(.-)%]")
+                        if nm then st.names[id] = nm end
+                    end
                 end
             end
         end
@@ -486,16 +489,45 @@ ev:SetScript("OnEvent", WeintCodex.Measured("Bestand", function(_, event)
         return
     elseif event == "PLAYERBANKSLOTS_CHANGED" then
         IV.ScanBank()
+    elseif event == "PLAYER_REGEN_ENABLED" then
+        if not IV.bagsDirty then return end
+        IV.ScanSoon()
+        return
     else                                  -- BAG_UPDATE_DELAYED, PLAYER_EQUIPMENT_CHANGED, PLAYER_ENTERING_WORLD
-        IV.ScanBags()
-        if IV.bankOpen then IV.ScanBank() end
+        -- 1.0.5.43 (/wcui speicher: 40 KB/s): nicht bei jedem Taschen-
+        -- ereignis alles lesen (jeder Platz = eine neue Tabelle des Clients),
+        -- sondern gebuendelt nach 2 s und nie im Kampf.
+        IV.ScanSoon()
+        return
     end
     local BG = WeintCodex.Bags
     if BG and BG.Redraw then BG.Redraw() end
 end))
 IV.events = ev
 
-local EVENTS = { "PLAYER_MONEY", "BAG_UPDATE_DELAYED", "PLAYER_EQUIPMENT_CHANGED", "PLAYER_ENTERING_WORLD",
+IV.SCAN_DELAY = 2
+function IV.ScanSoon()
+    IV.bagsDirty = true
+    if K and K.InCombat and K.InCombat() then return end   -- nach dem Kampf (PLAYER_REGEN_ENABLED)
+    if IV.scanQueued then return end
+    local function run()
+        IV.scanQueued = nil
+        if K and K.InCombat and K.InCombat() then return end
+        IV.bagsDirty = nil
+        IV.ScanBags()
+        if IV.bankOpen then IV.ScanBank() end
+        local BG = WeintCodex.Bags
+        if BG and BG.Redraw then BG.Redraw() end
+    end
+    if _G.C_Timer and _G.C_Timer.After then
+        IV.scanQueued = true
+        _G.C_Timer.After(IV.SCAN_DELAY, run)
+    else
+        run()
+    end
+end
+
+local EVENTS = { "PLAYER_MONEY", "BAG_UPDATE_DELAYED", "PLAYER_EQUIPMENT_CHANGED", "PLAYER_ENTERING_WORLD", "PLAYER_REGEN_ENABLED",
     "BANKFRAME_OPENED", "BANKFRAME_CLOSED", "PLAYERBANKSLOTS_CHANGED" }
 
 local function Apply()

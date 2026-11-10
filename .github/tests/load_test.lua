@@ -5949,10 +5949,12 @@ do
         assert(XB.Mode() == "rep" and f:IsShown() and f.bar:GetValue() == 1500, "Ruf auf Hoechststufe fehlt")
         -- Nur bei Maus darueber.
         K.Set("actionbars", "xpShow", "mouseover")
-        f.IsMouseOver = function() return false end
+        -- 1.0.5.43: Maus über OnEnter/OnLeave statt Abfrage je Bild.
+        f:GetScript("OnLeave")(f)
         for _ = 1, 10 do XB._fadeStep(nil, 0.1) end
         assert(f:GetAlpha() == 0, "Balken bleibt ohne Maus sichtbar")
-        f.IsMouseOver = function() return true end
+        f:GetScript("OnEnter")(f)
+        if _G.GameTooltip then _G.GameTooltip:Hide() end
         for _ = 1, 10 do XB._fadeStep(nil, 0.1) end
         assert(f:GetAlpha() == 1, "Maus holt den Balken nicht zurueck")
         K.Set("actionbars", "xpShow", nil)
@@ -6236,8 +6238,10 @@ do
         local oldBox = _G.CompactPartyFrame
         _G.CompactPartyFrame = box
         local seen = false
+        GG.ForgetFrames()   -- 1.0.5.43: gemerkt bis zur naechsten Gruppenaenderung
         for _, x in ipairs(GG.Frames()) do if x == odd then seen = true end end
         assert(seen, "Rahmen im Behaelter nicht gefunden")
+        assert(GG.Frames() == GG.Frames(), "Liste nicht gemerkt")
         _G.CompactPartyFrame = oldBox
         local lines = table.concat(GG.Inspect(), " | ")
         assert(lines:find("gefunden", 1, true), "/wcui gruppe ohne Auskunft: " .. lines)

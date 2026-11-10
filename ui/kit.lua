@@ -830,7 +830,8 @@ function K.ProfileReport(secs)
     -- 1.0.5.42: was dauerhaft gehalten wird - am Ende, nach der Messung.
     local okH, held = pcall(K.HeldReport)
     local function AddHeld()
-        if okH and type(held) == "table" then for _, l in ipairs(held) do out[#out + 1] = l end end
+        if okH and type(held) == "table" then for _, l in ipairs(held) do out[#out + 1] = l end
+        else out[#out + 1] = "Schätzung der gehaltenen Daten fehlgeschlagen: " .. tostring(held) end
     end
     if #list == 0 then
         out[#out + 1] = "Kein gemessener Teil lief."

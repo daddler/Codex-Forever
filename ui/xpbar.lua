@@ -311,9 +311,7 @@ local fadeAlpha = 1
 local fader = CreateFrame("Frame")
 
 local function Over()
-    if not frame then return false end
-    local ok, v = pcall(frame.IsMouseOver, frame, 6, -6, -6, 6)
-    return ok and K.Bool(v, false) or false
+    return frame and frame._over and true or false
 end
 
 -- Laeuft nur, solange "nur bei Maus darueber" gilt.
@@ -327,7 +325,9 @@ local function FadeStep(_, elapsed)
     if fadeAcc < XB.FADE_TICK then return end
     elapsed, fadeAcc = fadeAcc, 0
     local target = (Over() or frame._unlock) and 1 or 0
-    if fadeAlpha == target then return end
+    -- 1.0.5.43 (/wcui speicher: 100 Aufrufe/s): am Ziel angekommen, ruht
+    -- der Takt; Maus rein/raus (OnEnter/OnLeave) weckt ihn wieder.
+    if fadeAlpha == target then fader:SetScript("OnUpdate", nil) return end
     local step = (elapsed or 0.1) * 6
     if fadeAlpha < target then fadeAlpha = math.min(target, fadeAlpha + step)
     elseif fadeAlpha > target then fadeAlpha = math.max(target, fadeAlpha - step) end
@@ -335,6 +335,9 @@ local function FadeStep(_, elapsed)
 end
 FadeStep = K.Measured("Erfahrungsbalken", FadeStep)
 XB._fadeStep = FadeStep
+function XB.KickFade()
+    if Opt("show") == "mouseover" then fader:SetScript("OnUpdate", FadeStep) end
+end
 
 --------------------------------------------------
 -- Tooltip
@@ -439,10 +442,11 @@ local function Build()
     frame.text = K.NewText(frame.bar, 10, "OVERLAY")
     frame.text:SetPoint("CENTER", frame, "CENTER", 0, 0)
     frame:EnableMouse(true)
-    frame:SetScript("OnEnter", function(self) self._over = true XB.Update() ShowTooltip(self) end)
-    frame:SetScript("OnLeave", function(self) self._over = false XB.Update() if _G.GameTooltip then _G.GameTooltip:Hide() end end)
+    frame:SetScript("OnEnter", function(self) self._over = true XB.KickFade() XB.Update() ShowTooltip(self) end)
+    frame:SetScript("OnLeave", function(self) self._over = false XB.KickFade() XB.Update() if _G.GameTooltip then _G.GameTooltip:Hide() end end)
     frame.WCShowForUnlock = function(self, on)
         self._unlock = on and true or nil
+        XB.KickFade()
         XB.Update()
     end
 end

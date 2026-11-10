@@ -82,12 +82,37 @@ end
 -- nur, wenn sich die gerundete Lage bzw. die Minute geaendert hat - vorher
 -- zwei Mal je Sekunde neu formatiert, auch im Stehen.
 local lastXY, lastMin = nil, nil
-local function UpdateTexts()
+-- 1.0.5.43 (/wcui speicher: Minikarte 3,2 KB/s): der Takt fragt die Lage
+-- nur, wenn der Spieler sich bewegt (jede Abfrage = eine neue Tabelle des
+-- Clients), und den Gebietsnamen nur bei den Gebietsereignissen.
+local function Moving()
+    if not _G.GetUnitSpeed then return true end
+    local ok, v = pcall(_G.GetUnitSpeed, "player")
+    v = ok and K.Plain(v) or nil
+    return type(v) ~= "number" or v > 0
+end
+
+local function UpdateTexts(fromTick)
     if not frame then return end
-    if Opt("zoneText") and _G.GetMinimapZoneText then
+    if fromTick then
+        if Opt("coords") and lastXY ~= nil and not Moving() then
+            -- steht still: Koordinaten bleiben, nur die Uhr
+        elseif Opt("coords") then
+            fromTick = "coords"
+        end
+    end
+    if fromTick == true then
+        local minute = _G.time and math.floor(_G.time() / 60)
+        if Opt("clock") and (minute ~= lastMin or not minute) then
+            lastMin = minute
+            clock:SetText(date("%H:%M"))
+        end
+        return
+    end
+    if fromTick ~= "coords" and Opt("zoneText") and _G.GetMinimapZoneText then
         zone:SetText(_G.GetMinimapZoneText())
         zone:Show()
-    else
+    elseif fromTick ~= "coords" then
         zone:Hide()
     end
     if Opt("coords") then
@@ -932,7 +957,7 @@ local function Enable()
         if acc < 0.5 then return end
         scanAcc = scanAcc + acc
         acc = 0
-        UpdateTexts()
+        UpdateTexts(true)
         -- Fremde Koordinaten entstehen oft erst nach dem Laden: in der
         -- ersten Minute alle fuenf Sekunden nachsehen, danach nicht mehr.
         if scans < 12 and scanAcc >= 5 then

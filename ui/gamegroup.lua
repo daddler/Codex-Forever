@@ -44,7 +44,24 @@ GG.state = "nicht verwendet"
 
 -- Die Rahmen des Spiels, die gerade existieren (sie entstehen erst, wenn
 -- eine Gruppe sie braucht).
+-- 1.0.5.43 (/wcui speicher): die Suche legt je Aufruf Tabellen und eine
+-- Liste aller Kinder an - und Gruppenwerkzeuge fragen alle 0,5 s. Darum
+-- gemerkt, bis sich die Gruppe aendert oder 3 s vergangen sind. Die Liste
+-- gehoert GG: Aufrufer duerfen sie nicht veraendern.
+GG.FRAMES_TTL = 3
+local framesCache, framesAt
+local cacheEv = CreateFrame("Frame")
+for _, e in ipairs({ "GROUP_ROSTER_UPDATE", "PLAYER_ENTERING_WORLD" }) do pcall(cacheEv.RegisterEvent, cacheEv, e) end
+cacheEv:SetScript("OnEvent", function() framesCache = nil end)
 function GG.Frames()
+    local now = _G.GetTime and K.Plain(_G.GetTime()) or nil
+    if framesCache and type(now) == "number" and framesAt and now - framesAt < GG.FRAMES_TTL then return framesCache end
+    framesCache, framesAt = GG.FramesNow(), now
+    return framesCache
+end
+function GG.ForgetFrames() framesCache = nil end
+
+function GG.FramesNow()
     local out, seen = {}, {}
     local function add(f)
         if type(f) == "table" and not seen[f] and f.GetObjectType
@@ -310,7 +327,7 @@ end
 
 function GG.StyleAll()
     local n = 0
-    for _, f in ipairs(GG.Frames()) do
+    for _, f in ipairs(GG.FramesNow()) do
         if GG.Style(f) then n = n + 1 end
     end
     GG.count = n
@@ -395,7 +412,7 @@ end
 -- /wcui gruppe
 function GG.Inspect()
     local out = { "Gruppenrahmen: " .. (GG.active and "des Spiels im WeintCodex-Stil" or "eigene von WeintCodex") }
-    local frames = GG.Frames()
+    local frames = GG.FramesNow()
     local n = 0
     for _ in pairs(styled) do n = n + 1 end
     out[#out + 1] = string.format("Rahmen des Spiels gefunden: %d, im WeintCodex-Stil: %d, Haken ins Spiel: %d",

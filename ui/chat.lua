@@ -674,7 +674,10 @@ local function Set(cell, text)
     cell:SetWidth((type(w) == "number" and w or 40) + 12)
 end
 
-function CH.UpdateInfoBar()
+-- 1.0.5.43 (/wcui speicher: Chat-Infozeile 2,7 KB/s): der Sekundentakt
+-- erneuert nur, was sich laufend aendert (Uhr, fps, ms, Lage); Gold,
+-- Taschen, Ruestung und Gilde nur bei ihren Ereignissen.
+function CH.UpdateInfoBar(tick)
     if not info then return end
     local dim = WeintCodex.ColorText
     local h
@@ -683,6 +686,7 @@ function CH.UpdateInfoBar()
         if ok then h = t end
     end
     Set(info.clock, h or "–")
+    if tick then return CH.UpdateInfoLive(dim) end
     Set(info.money, Money())
     local free = FreeSlots()
     Set(info.bags, free and (dim("textDim", "Taschen ") .. dim(CH.Tone("bags", free), tostring(free)))
@@ -694,23 +698,45 @@ function CH.UpdateInfoBar()
     else
         Set(info.dur, dim("textDim", "Rüstung ") .. "–")
     end
+    if Opt("infoGuild") then
+        local on = CH.GuildOnline()
+        Set(info.guild, dim("textDim", "Gilde ") .. (on and tostring(on) or "–"))
+    end
+    CH.coordsSet, CH.lastFps, CH.lastLat = nil, false, false   -- volle Runde: alles neu
+    CH.UpdateInfoLive(dim)
+end
+
+CH.lastFps, CH.lastLat = nil, nil
+function CH.UpdateInfoLive(dim)
     local fps = K.Plain(_G.GetFramerate and _G.GetFramerate())
-    Set(info.fps, type(fps) == "number" and (dim(CH.Tone("fps", fps), string.format("%d", math.floor(fps + 0.5)))
-        .. dim("textDim", " fps")) or "–")
+    if type(fps) == "number" then fps = math.floor(fps + 0.5) end
+    -- Texte nur bauen, wenn sich die Zahl geaendert hat.
+    if fps ~= CH.lastFps then
+        CH.lastFps = fps
+        Set(info.fps, type(fps) == "number" and (dim(CH.Tone("fps", fps), tostring(fps)) .. dim("textDim", " fps")) or "–")
+    end
     local lat
     if _G.GetNetStats then
         local ok, _, _, home, world = pcall(_G.GetNetStats)
         home, world = ok and K.Plain(home) or nil, ok and K.Plain(world) or nil
         lat = type(world) == "number" and world or (type(home) == "number" and home or nil)
     end
-    Set(info.ms, type(lat) == "number" and (dim(CH.Tone("ms", lat), tostring(lat)) .. dim("textDim", " ms")) or "–")
-    if Opt("infoCoords") then
-        local x, y = CH.Coords()
-        Set(info.coords, x and string.format("%.1f, %.1f", x, y) or "–")
+    if lat ~= CH.lastLat then
+        CH.lastLat = lat
+        Set(info.ms, type(lat) == "number" and (dim(CH.Tone("ms", lat), tostring(lat)) .. dim("textDim", " ms")) or "–")
     end
-    if Opt("infoGuild") then
-        local on = CH.GuildOnline()
-        Set(info.guild, dim("textDim", "Gilde ") .. (on and tostring(on) or "–"))
+    if Opt("infoCoords") then
+        local moving = true
+        if _G.GetUnitSpeed then
+            local ok, v = pcall(_G.GetUnitSpeed, "player")
+            v = ok and K.Plain(v) or nil
+            moving = type(v) ~= "number" or v > 0
+        end
+        if moving or not CH.coordsSet then
+            CH.coordsSet = true
+            local x, y = CH.Coords()
+            Set(info.coords, x and string.format("%.1f, %.1f", x, y) or "–")
+        end
     end
     CH.FlowInfo()
 end
@@ -831,7 +857,7 @@ local function BuildInfoBar()
             acc = acc + (el or 0)
             if acc < 1 then return end
             acc = 0
-            CH.UpdateInfoBar()
+            CH.UpdateInfoBar(true)
             -- 6.26.5.0 (Beta-Test: "beim Einloggen ist die untere Leiste
             -- manchmal weg, bis ich zweimal Enter druecke"): beim Einloggen
             -- hat die Eingabezeile kurz den Fokus, und das Ende davon meldet
@@ -839,7 +865,7 @@ local function BuildInfoBar()
             -- Zeile wirklich noch geschrieben wird.
             CH.UpdateEditState()
         end))
-        for _, e in ipairs({ "PLAYER_MONEY", "BAG_UPDATE", "UPDATE_INVENTORY_DURABILITY", "PLAYER_ENTERING_WORLD",
+        for _, e in ipairs({ "PLAYER_MONEY", "BAG_UPDATE_DELAYED", "UPDATE_INVENTORY_DURABILITY", "PLAYER_ENTERING_WORLD", "ZONE_CHANGED_NEW_AREA",
             "GUILD_ROSTER_UPDATE" }) do
             pcall(info.RegisterEvent, info, e)
         end

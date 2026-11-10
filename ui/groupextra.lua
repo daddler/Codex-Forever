@@ -333,10 +333,8 @@ function GX.UpdateTargetBar(f)
     -- sonst gerechnet, wenn lesbar; sonst leer - nie geraten.
     local okP = false
     if _G.UnitHealthPercent and _G.CurveConstants and _G.CurveConstants.ScaleTo100 then
-        okP = pcall(function()
-            local v = _G.UnitHealthPercent(tu, true, _G.CurveConstants.ScaleTo100)
-            b.pct:SetFormattedText("%.0f%%", v)
-        end)
+        local okV, v = pcall(_G.UnitHealthPercent, tu, true, _G.CurveConstants.ScaleTo100)
+        if okV then okP = pcall(b.pct.SetFormattedText, b.pct, "%.0f%%", v) end
     end
     if not okP then
         local h, m = K.Plain(hp), K.Plain(mx)
@@ -365,6 +363,12 @@ function GX.Lines()
     return out
 end
 
+-- 1.0.5.43: ohne neue Funktion je Rahmen und Takt.
+function GX.UpdateOne(f, what)
+    if what ~= "buffs" then GX.UpdateTarget(f) GX.UpdateTargetBar(f) end
+    if what ~= "targets" then GX.UpdateBuffs(f) end
+end
+
 function GX.UpdateAll(what)
     if not K.IsActive(KEY) then
         for _, o in pairs(over) do o:Hide() end
@@ -375,10 +379,7 @@ function GX.UpdateAll(what)
         -- Neue Zusaetze an Rahmen des Spiels nur ausserhalb des Kampfes anlegen.
         if over[f] or not fight then
         Over(f):Show()
-        local ok, err = pcall(function()
-            if what ~= "buffs" then GX.UpdateTarget(f) GX.UpdateTargetBar(f) end
-            if what ~= "targets" then GX.UpdateBuffs(f) end
-        end)
+        local ok, err = pcall(GX.UpdateOne, f, what)
         if not ok then GX.lastErr = tostring(err) end
         end
     end

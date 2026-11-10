@@ -1071,6 +1071,12 @@ local function Arrange(row, n, s, slot)
     if per <= 0 or per > n then per = math.max(1, n) end
     local lines = math.max(1, math.ceil(n / per))
     local vert = OC.RowOpt(slot, "vertical") and true or false
+    -- 1.0.5.43 (/wcui speicher: 3,6 ms/s): nur neu anordnen, wenn sich
+    -- etwas geaendert hat - nicht bei jedem Takt.
+    local L = row._lay
+    if L and L.n == n and L.s == s and L.gap == gap and L.per == per and L.vert == vert then return end
+    if not L then L = {} row._lay = L end
+    L.n, L.s, L.gap, L.per, L.vert = n, s, gap, per, vert
     local long, short = per * s + (per - 1) * gap, lines * s + (lines - 1) * gap
     if vert then row:SetSize(math.max(s, short), math.max(s, long)) else row:SetSize(math.max(s, long), math.max(s, short)) end
     for i = 1, n do
@@ -1100,6 +1106,8 @@ local function Clock(b, id)
         if ok then start, duration = s, d end
     end
     local d = Plain(duration)
+    local s0 = Plain(start)
+    b._start = type(s0) == "number" and s0 or nil
     local onGCD = K.Bool(gcd, false) or (type(d) == "number" and d > 0 and d <= 1.5)
     if type(d) == "number" and (d <= 0 or onGCD) then
         b.cd:Clear()
@@ -1212,7 +1220,22 @@ local function DrawSpells(row, slot, size, show)
             b.icon:SetTexture(e.tex)
             if b.cd.SetHideCountdownNumbers then b.cd:SetHideCountdownNumbers(not numbers) end
             local st, rawD
-            if e.item then st = OC.ItemClock(b, e.id) else st, rawD = Clock(b, e.id) end
+            -- 1.0.5.43: die Uhr des Spiels nur nach einem Ereignis fragen
+            -- (jede Abfrage legt beim Client neue Tabellen an). Dazwischen
+            -- reicht die gemerkte Endzeit; die Uhr am Symbol laeuft allein.
+            -- Geheim (im Kampf, b._st = nil): bis zum naechsten Ereignis
+            -- schaetzt OC.Estimate weiter unten, wie zuvor.
+            if not OC.clockDirty and b._spell == e.key then
+                if b._st == "cd" and type(b._endAt) == "number" and Now() >= b._endAt then b.cd:Clear() b._st = "ready" end
+                st = b._st
+            else
+                if e.item then st = OC.ItemClock(b, e.id) else st, rawD = Clock(b, e.id) end
+                b._spell, b._st, b._endAt = e.key, st, nil
+                if st == "ready" then b._endAt = math.huge
+                elseif st == "cd" and type(rawD) == "number" and type(b._start) == "number" then
+                    b._endAt = b._start + rawD
+                end
+            end
             OC.Learn(e.name, rawD)
             -- Geheim (im Kampf): selbst mitgerechnet
             if st == nil and not e.item then st = OC.Estimate(e) end
@@ -1342,12 +1365,19 @@ function OC.Refresh()
     if BT and BT.Update then pcall(BT.Update) end
 end
 
-local acc = 0
+local acc, since = 0, 0
+OC.CLOCK_EVERY = 2      -- die Uhren des Spiels ohne Ereignis spaetestens so oft neu lesen
+local clockAcc = 0
 local function Tick(_, el)
-    acc = acc + (el or 0)
-    if acc < 0.5 then return end
-    acc = 0
+    el = el or 0
+    acc, since, clockAcc = acc + el, since + el, clockAcc + el
+    if not ((OC.pending and since >= 0.1) or acc >= 0.5) then return end
+    if clockAcc >= OC.CLOCK_EVERY then OC.clockDirty = true end
+    acc, since = 0, 0
+    OC.pending = nil
     if OC.Active() then OC.Update() end
+    if OC.clockDirty then clockAcc = 0 end
+    OC.clockDirty = nil
 end
 
 --------------------------------------------------
@@ -1445,7 +1475,11 @@ local function OnEvent(_, event, a1, a2, a3)
     elseif event == "SPELLS_CHANGED" or event == "LEARNED_SPELL_IN_TAB" or event == "PLAYER_ENTERING_WORLD" then
         if K.InCombat() then OC.dirty = true else OC.Scan() end
     end
-    if OC.Active() then OC.Update() end
+    -- 1.0.5.43: SPELL_UPDATE_COOLDOWN kommt im Kampf viele Male je
+    -- Sekunde - nicht jedes Mal alles neu zeichnen, sondern beim naechsten
+    -- Bild hoechstens alle 0,1 s.
+    OC.clockDirty = true
+    OC.pending = true
 end
 
 local function NewRow(key, label, name)

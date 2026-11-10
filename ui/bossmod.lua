@@ -1243,12 +1243,24 @@ function BM.CodexBoss(unit)
 end
 
 -- Kampf beginnen, wenn diese Einheit ein kaempfender Boss des Kompendiums ist.
+BM.notBoss, BM.notBossN = {}, 0
 function BM.CodexEngage(unit)
     if BM.fight then return nil end
     if not (_G.UnitAffectingCombat and K.Bool(_G.UnitAffectingCombat(unit), false)) then return nil end
     if not (_G.UnitCanAttack and K.Bool(_G.UnitCanAttack("player", unit), false)) then return nil end
+    -- 1.0.5.43 (/wcui speicher): Bedrohung und Plaketten melden dieselben
+    -- Gegner viele Male - wer kein Boss ist, wird nur einmal nachgesehen.
+    local g0 = _G.UnitGUID and Plain(_G.UnitGUID(unit))
+    if type(g0) == "string" and BM.notBoss[g0] then return nil end
     local e, guid = BM.CodexBoss(unit)
-    if not e then return nil end
+    if not e then
+        if type(g0) == "string" then
+            BM.notBossN = BM.notBossN + 1
+            if BM.notBossN > 2000 then BM.notBoss, BM.notBossN = {}, 0 end
+            BM.notBoss[g0] = true
+        end
+        return nil
+    end
     local n = _G.UnitName and Plain(_G.UnitName(unit))
     BM.stats.codex = (BM.stats.codex or 0) + 1
     BM.fight = { name = type(n) == "string" and n or e.de or e.en, start = Now(), src = "codex",
