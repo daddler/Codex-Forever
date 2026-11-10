@@ -91,6 +91,6 @@ end
 
 local ev = CreateFrame("Frame")
 ev:RegisterEvent("PLAYER_REGEN_DISABLED")
-ev:SetScript("OnEvent", function()
+ev:SetScript("OnEvent", WeintCodex.Measured("Testmodus", function()
     if on then T.Set(false) end
-end)
+end))

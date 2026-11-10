@@ -547,7 +547,7 @@ for _, e in ipairs({ "PLAYER_EQUIPMENT_CHANGED", "UNIT_INVENTORY_CHANGED", "PLAY
                      "SPELL_DATA_LOAD_RESULT" }) do
     pcall(ev.RegisterEvent, ev, e)
 end
-ev:SetScript("OnEvent", function() EN.dirty = true end)
+ev:SetScript("OnEvent", WeintCodex.Measured("Verzauberungen", function() EN.dirty = true end))
 
 local gen = K.Module and K.Module("general")
 if gen and gen.defaults and gen.defaults.enchantHint == nil then gen.defaults.enchantHint = true end

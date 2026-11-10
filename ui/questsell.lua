@@ -194,7 +194,7 @@ end
 
 local ev = CreateFrame("Frame")
 for _, e in ipairs({ "MERCHANT_SHOW", "MERCHANT_UPDATE", "MERCHANT_CLOSED" }) do pcall(ev.RegisterEvent, ev, e) end
-ev:SetScript("OnEvent", function(_, event)
+ev:SetScript("OnEvent", WeintCodex.Measured("Questgegenstände verkaufen", function(_, event)
     if event == "MERCHANT_SHOW" then
         QS.lastCount = _G.GetNumBuybackItems and Plain(_G.GetNumBuybackItems()) or nil
         QS.topLink = QS.lastCount and _G.GetBuybackItemLink and Plain(_G.GetBuybackItemLink(QS.lastCount)) or nil
@@ -206,7 +206,7 @@ ev:SetScript("OnEvent", function(_, event)
         QS.lastCount, QS.topLink = nil, nil
         if win then win:Hide() end
     end
-end)
+end))
 QS.events = ev
 
 local mod = K.Module(KEY)

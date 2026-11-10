@@ -449,7 +449,7 @@ for _, e in ipairs({ "PLAYER_LOGIN", "TAXIMAP_OPENED", "PLAYER_CONTROL_LOST", "P
     pcall(ev.RegisterEvent, ev, e)
 end
 local hooked = false
-ev:SetScript("OnEvent", function(_, event)
+ev:SetScript("OnEvent", WeintCodex.Measured("Flugzeit", function(_, event)
     if event == "PLAYER_LOGIN" then
         if not hooked and _G.hooksecurefunc and _G.TakeTaxiNode then
             hooked = true
@@ -467,7 +467,7 @@ ev:SetScript("OnEvent", function(_, event)
     elseif event == "PLAYER_CONTROL_GAINED" then
         if flight and not OnTaxi() then FT.Land() end
     end
-end)
+end))
 
 --------------------------------------------------
 -- Einstellungen: auf der Komfortseite "Karte"

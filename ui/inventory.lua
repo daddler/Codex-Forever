@@ -474,7 +474,7 @@ end
 --------------------------------------------------
 
 local ev = CreateFrame("Frame")
-ev:SetScript("OnEvent", function(_, event)
+ev:SetScript("OnEvent", WeintCodex.Measured("Bestand", function(_, event)
     if event == "BANKFRAME_OPENED" then
         IV.bankOpen = true
         IV.ScanBank()
@@ -492,7 +492,7 @@ ev:SetScript("OnEvent", function(_, event)
     end
     local BG = WeintCodex.Bags
     if BG and BG.Redraw then BG.Redraw() end
-end)
+end))
 IV.events = ev
 
 local EVENTS = { "PLAYER_MONEY", "BAG_UPDATE_DELAYED", "PLAYER_EQUIPMENT_CHANGED", "PLAYER_ENTERING_WORLD",
@@ -558,4 +558,4 @@ end)
 
 local boot = CreateFrame("Frame")
 boot:RegisterEvent("PLAYER_LOGIN")
-boot:SetScript("OnEvent", function() Apply() end)
+boot:SetScript("OnEvent", WeintCodex.Measured("Bestand", function() Apply() end))

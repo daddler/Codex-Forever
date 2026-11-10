@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.0.5.42",
+        date    = "10.11.2026",
+        notes   = {
+            "|cff7C6CFF/wcui speicher misst mehr|r – auch die neuen Funktionen (Post, Bosskämpfe, Flugspiele, Gespräche …), zeigt, was viel Zeit kostet und was WeintCodex dauerhaft hält, und öffnet das Ergebnis zum Kopieren.",
+        },
+    },
+    {
         version = "1.0.5.41",
         date    = "10.11.2026",
         notes   = {

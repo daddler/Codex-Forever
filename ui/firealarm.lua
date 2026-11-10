@@ -314,7 +314,7 @@ end))
 FA.ticker = ticker
 
 local ev = CreateFrame("Frame")
-ev:SetScript("OnEvent", function(_, event)
+ev:SetScript("OnEvent", WeintCodex.Measured("Raus da", function(_, event)
     if event == "PLAYER_REGEN_DISABLED" then
         FA.Reset()
         local v = FA.Mine()
@@ -325,7 +325,7 @@ ev:SetScript("OnEvent", function(_, event)
         FA.Check()
         ticker:Hide()
     end
-end)
+end))
 
 --------------------------------------------------
 -- Ausserhalb des Kampfes: Leben sinkt wiederholt
@@ -436,7 +436,7 @@ function FA.OnUnitCombat(unit, action)
 end
 
 local cev = CreateFrame("Frame")
-cev:SetScript("OnEvent", function(_, _, unit, action) FA.OnUnitCombat(unit, action) end)
+cev:SetScript("OnEvent", WeintCodex.Measured("Raus da", function(_, _, unit, action) FA.OnUnitCombat(unit, action) end))
 FA.combatEvents = cev
 
 local outTicker = CreateFrame("Frame")
@@ -537,5 +537,5 @@ end)
 -- Beim Einloggen einmal anwenden (fehlte bis 6.25.1.0).
 local boot = CreateFrame("Frame")
 boot:RegisterEvent("PLAYER_LOGIN")
-boot:SetScript("OnEvent", function() Apply() end)
+boot:SetScript("OnEvent", WeintCodex.Measured("Raus da", function() Apply() end))
 FA.boot = boot

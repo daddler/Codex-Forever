@@ -846,7 +846,7 @@ end
 local ev = CreateFrame("Frame")
 BT.events = ev
 ev:RegisterEvent("PLAYER_LOGIN")
-ev:SetScript("OnEvent", function(_, event, a1)
+ev:SetScript("OnEvent", WeintCodex.Measured("Ausmisten", function(_, event, a1)
     if event == "PLAYER_LOGIN" then
         BT.HookTooltips()
         HookBagFrames()
@@ -882,7 +882,7 @@ ev:SetScript("OnEvent", function(_, event, a1)
         BT.dirty = true
         if BT.lootOpen then BT.Refresh() end
     end
-end)
+end))
 
 -- Standardwerte gleich beim Laden; Schalter auf der Komfortseite "Sammeln".
 do

@@ -467,16 +467,16 @@ end
 -- Neu gelernt (Lehrer, Stufe): neu anwenden, solange der Schalter an ist.
 local ev = CreateFrame("Frame")
 for _, e in ipairs({ "SPELLS_CHANGED", "LEARNED_SPELL_IN_TAB" }) do pcall(ev.RegisterEvent, ev, e) end
-ev:SetScript("OnEvent", function()
+ev:SetScript("OnEvent", WeintCodex.Measured("Entfluchen", function()
     if Opt("clickDispel") and CC.Apply then CC.Apply() end
-end)
+end))
 
 -- Felder: Debuffs, Gruppe, Kampfende.
 local bev = CreateFrame("Frame")
 for _, e in ipairs({ "UNIT_AURA", "GROUP_ROSTER_UPDATE", "PLAYER_REGEN_ENABLED", "PLAYER_ENTERING_WORLD", "SPELLS_CHANGED" }) do
     pcall(bev.RegisterEvent, bev, e)
 end
-bev:SetScript("OnEvent", function(_, event, unit)
+bev:SetScript("OnEvent", WeintCodex.Measured("Entfluchen", function(_, event, unit)
     if event == "UNIT_AURA" then DP.OnAura(unit) return end
     if event == "PLAYER_REGEN_ENABLED" then
         if pendingApply then DP.ApplyBar() else DP.PaintAll() end
@@ -485,7 +485,7 @@ bev:SetScript("OnEvent", function(_, event, unit)
     if event == "PLAYER_ENTERING_WORLD" then DP.ApplyBar() DP.Warn(false) return end
     if event == "SPELLS_CHANGED" then DP.ApplyBar() return end
     DP.PaintAll()
-end)
+end))
 K.Listen(function(kind, module, key)
     if kind ~= "setting" then return end
     if module == KEY and type(key) == "string" and (key:find("ispel", 1, true) or key:sub(1, 5) == "click") then

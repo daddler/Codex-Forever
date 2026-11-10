@@ -1144,7 +1144,7 @@ end
 local hooked = false
 local ev = CreateFrame("Frame")
 ev:RegisterEvent("PLAYER_ENTERING_WORLD")
-ev:SetScript("OnEvent", function(_, _, isInitialLogin, isReloadingUi)
+ev:SetScript("OnEvent", WeintCodex.Measured("Willkommen", function(_, _, isInitialLogin, isReloadingUi)
     -- Nur das erste PLAYER_ENTERING_WORLD einer Sitzung traegt eins der
     -- beiden Flags; Zonenwechsel tragen keins.
     if not (isInitialLogin or isReloadingUi) then return end
@@ -1172,4 +1172,4 @@ ev:SetScript("OnEvent", function(_, _, isInitialLogin, isReloadingUi)
     if _G.C_Timer and _G.C_Timer.After then
         _G.C_Timer.After(1.5, WL.MaybeAsk)
     end
-end)
+end))

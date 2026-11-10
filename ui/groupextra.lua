@@ -390,15 +390,15 @@ for _, e in ipairs({ "GROUP_ROSTER_UPDATE", "PLAYER_ENTERING_WORLD", "PLAYER_TAR
     pcall(ev.RegisterEvent, ev, e)
 end
 local dirtyT, dirtyB = true, true
-ev:SetScript("OnEvent", function(_, event, unit)
+ev:SetScript("OnEvent", WeintCodex.Measured("Gruppenwerkzeuge+", function(_, event, unit)
     if event == "UNIT_TARGET" or event == "PLAYER_TARGET_CHANGED" then dirtyT = true
     elseif event == "UNIT_AURA" then dirtyB = true
     else dirtyT, dirtyB = true, true end
-end)
+end))
 GX.events = ev
 local acc = 0
 local tick = CreateFrame("Frame")
-tick:SetScript("OnUpdate", function(_, el)
+tick:SetScript("OnUpdate", WeintCodex.Measured("Gruppenwerkzeuge+", function(_, el)
     acc = acc + (el or 0)
     if acc < 0.5 then return end
     acc = 0
@@ -412,7 +412,7 @@ tick:SetScript("OnUpdate", function(_, el)
     local what = (dirtyT and dirtyB) and nil or (dirtyT and "targets" or "buffs")
     dirtyT, dirtyB = false, false
     GX.UpdateAll(what)
-end)
+end))
 GX.tick = tick
 
 K.Listen(function(kind, key)

@@ -680,11 +680,11 @@ end
 local scanner = CreateFrame("Frame")
 scanner:RegisterEvent("GUILDBANKFRAME_OPENED")
 scanner:RegisterEvent("GUILDBANKBAGSLOTS_CHANGED")
-scanner:SetScript("OnEvent", function(self, event, ...)
+scanner:SetScript("OnEvent", WeintCodex.Measured("Materialien", function(self, event, ...)
     if event == "GUILDBANKFRAME_OPENED" or event == "GUILDBANKBAGSLOTS_CHANGED" then
         ScanCurrentTab()
     end
-end)
+end))
 
 --------------------------------------------------
 -- Export-String Generatoren für Discord-Bot

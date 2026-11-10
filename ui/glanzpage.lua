@@ -67,5 +67,5 @@ end
 do
     local ev = CreateFrame("Frame")
     ev:RegisterEvent("PLAYER_LOGIN")
-    ev:SetScript("OnEvent", function() pcall(GZ.Migrate) GZ.ApplyAll() end)
+    ev:SetScript("OnEvent", WeintCodex.Measured("Glanz: Seite", function() pcall(GZ.Migrate) GZ.ApplyAll() end))
 end

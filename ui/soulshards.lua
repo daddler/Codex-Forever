@@ -141,7 +141,7 @@ SS.events = ev
 for _, e in ipairs({ "PLAYER_LOGIN", "BAG_UPDATE_DELAYED", "PLAYER_REGEN_ENABLED", "ADDON_ACTION_BLOCKED" }) do
     pcall(ev.RegisterEvent, ev, e)
 end
-ev:SetScript("OnEvent", function(_, event, addon, fn)
+ev:SetScript("OnEvent", WeintCodex.Measured("Seelensplitter", function(_, event, addon, fn)
     if event == "ADDON_ACTION_BLOCKED" then
         if SS.trying or Plain(fn) == "DeleteCursorItem()" or Plain(fn) == "DeleteCursorItem" then
             if Plain(addon) == "WeintCodex" or SS.trying then
@@ -152,7 +152,7 @@ ev:SetScript("OnEvent", function(_, event, addon, fn)
         return
     end
     SS.Check()
-end)
+end))
 
 --------------------------------------------------
 -- Einstellungen: Komfort -> Automatik, nur fuer Hexenmeister
@@ -195,7 +195,7 @@ function SS.Hint()
 end
 local hev = CreateFrame("Frame")
 pcall(hev.RegisterEvent, hev, "PLAYER_ENTERING_WORLD")
-hev:SetScript("OnEvent", function()
+hev:SetScript("OnEvent", WeintCodex.Measured("Seelensplitter", function()
     hev:UnregisterAllEvents()
     if _G.C_Timer and _G.C_Timer.After then _G.C_Timer.After(8, SS.Hint) else SS.Hint() end
-end)
+end))

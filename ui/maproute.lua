@@ -510,9 +510,9 @@ function MP.EnsureDriver()
 end
 
 local ev = CreateFrame("Frame")
-ev:SetScript("OnEvent", function(_, event, name)
+ev:SetScript("OnEvent", WeintCodex.Measured("Karte: Route", function(_, event, name)
     if event == "ADDON_LOADED" and name == "Blizzard_WorldMap" then MP.EnsureDriver() end
-end)
+end))
 pcall(ev.RegisterEvent, ev, "ADDON_LOADED")
 -- Schon geladen (Weltkarte gehoert bei manchen Clients zum Grundbestand).
 if _G.WorldMapFrame then MP.EnsureDriver() end

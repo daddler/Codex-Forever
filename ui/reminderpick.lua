@@ -310,10 +310,10 @@ end
 -- Vor dem Kampf (PLAYER_REGEN_DISABLED kommt vor der Sperre): alles weg.
 local ev = CreateFrame("Frame")
 pcall(ev.RegisterEvent, ev, "PLAYER_REGEN_DISABLED")
-ev:SetScript("OnEvent", function()
+ev:SetScript("OnEvent", WeintCodex.Measured("Erinnerungen: Auswahl", function()
     for _, b in ipairs(lines) do Disarm(b) b:Hide() end
     if ring then ring:Hide() end
-end)
+end))
 
 local mod = K.Module(KEY)
 if mod then

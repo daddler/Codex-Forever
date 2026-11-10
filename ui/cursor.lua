@@ -195,9 +195,9 @@ local ev = CreateFrame("Frame")
 for _, e in ipairs({ "PLAYER_ENTERING_WORLD", "PLAYER_REGEN_DISABLED", "PLAYER_REGEN_ENABLED" }) do
     pcall(ev.RegisterEvent, ev, e)
 end
-ev:SetScript("OnEvent", function(_, event)
+ev:SetScript("OnEvent", WeintCodex.Measured("Mauszeiger", function(_, event)
     if event == "PLAYER_ENTERING_WORLD" then CU.Apply() else CU.ApplyCursor() end
-end)
+end))
 CU.events = ev
 
 K.Listen(function(kind, key)

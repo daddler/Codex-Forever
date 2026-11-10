@@ -1725,14 +1725,14 @@ WeintCodex.DungeonPages.pendingItems = pendingItems
 local itemEvents = CreateFrame("Frame")
 WeintCodex.DungeonPages.itemEvents = itemEvents
 itemEvents:RegisterEvent("GET_ITEM_INFO_RECEIVED")
-itemEvents:SetScript("OnEvent", function(_, _, itemID)
+itemEvents:SetScript("OnEvent", WeintCodex.Measured("Dungeonseiten", function(_, _, itemID)
     local list = pendingItems[itemID]
     if not list then return end
     pendingItems[itemID] = nil
     for _, row in ipairs(list) do
         if row:IsShown() then PaintItemRow(row) end
     end
-end)
+end))
 
 -- Eine Gegenstandszeile: Bild, Name in Qualitaetsfarbe, Platz rechts.
 -- `chance` (1.4.0.0): Dropchance in ganzen Prozent, nil = unbekannt (dann
@@ -2228,9 +2228,9 @@ WeintCodex.DungeonPages.questEvents = questEvents
 for _, ev in ipairs({ "QUEST_LOG_UPDATE", "QUEST_ACCEPTED", "QUEST_TURNED_IN", "QUEST_REMOVED", "PLAYER_LEVEL_UP" }) do
     pcall(questEvents.RegisterEvent, questEvents, ev)
 end
-questEvents:SetScript("OnEvent", function()
+questEvents:SetScript("OnEvent", WeintCodex.Measured("Dungeonseiten", function()
     if #questMarks > 0 or questSummary then WeintCodex.DungeonPages.RepaintQuests() end
-end)
+end))
 
 -- JEDE QUEST IN IHRER KACHEL (6.5.1.1, Beta-Test: "die Quests sind
 -- nacheinander weg, man erkennt nicht, wann eine neue beginnt"): eine

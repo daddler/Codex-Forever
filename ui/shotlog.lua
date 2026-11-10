@@ -92,7 +92,7 @@ for _, e in ipairs({ "PLAYER_REGEN_DISABLED", "PLAYER_REGEN_ENABLED", "START_AUT
                      "UNIT_HEALTH", "PLAYER_SOFT_ENEMY_CHANGED", "PLAYER_SOFT_INTERACT_CHANGED" }) do
     pcall(ev.RegisterEvent, ev, e)
 end
-ev:SetScript("OnEvent", function(_, event, a1, a2, a3, a4)
+ev:SetScript("OnEvent", WeintCodex.Measured("Schussprotokoll", function(_, event, a1, a2, a3, a4)
     if event == "PLAYER_REGEN_DISABLED" then SL.Begin() return end
     if event == "PLAYER_REGEN_ENABLED" then SL.End() return end
     if not cur then return end
@@ -145,7 +145,7 @@ ev:SetScript("OnEvent", function(_, event, a1, a2, a3, a4)
                         UNIT_SPELLCAST_FAILED = "gescheitert", UNIT_SPELLCAST_INTERRUPTED = "unterbrochen" })[event]
         SL.Add("Zauber " .. what .. ": " .. SpellName(id))
     end
-end)
+end))
 
 -- 6.61.21.0: "Ziel: keins" war mehrdeutig - im Kampf ist der Name eines
 -- Gegners oft geheim. Jetzt: gibt es ein Ziel, Freund/Feind, tot, Name

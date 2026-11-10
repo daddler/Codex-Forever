@@ -670,12 +670,12 @@ for _, e in ipairs({ "QUEST_TURNED_IN", "QUEST_ACCEPTED", "QUEST_REMOVED", "QUES
                      "QUEST_DATA_LOAD_RESULT", "PLAYER_LEVEL_UP" }) do
     pcall(ev.RegisterEvent, ev, e)
 end
-ev:SetScript("OnEvent", function(_, event, id)
+ev:SetScript("OnEvent", WeintCodex.Measured("classquests", function(_, event, id)
     if event == "QUEST_DATA_LOAD_RESULT" then
         id = Plain(id)
         if not pending[id] then return end
         pending[id] = nil
     end
     CQ.Redraw()
-end)
+end))
 CQ.events = ev

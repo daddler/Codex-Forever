@@ -196,7 +196,7 @@ if not WeintCodex.MainFrame then
 
                                 frame:RegisterEvent("PLAYER_LOGIN")
 
-                                frame:SetScript("OnEvent", function()
+                                frame:SetScript("OnEvent", WeintCodex.Measured("minimap", function()
 
                                 DBIcon:Register(
                                     "WeintCodex",
@@ -204,7 +204,7 @@ if not WeintCodex.MainFrame then
                                     GetDB()
                                 )
 
-                                end)
+                                end))
 
 ----------------------------------------------------------
 -- Sichtbarkeit

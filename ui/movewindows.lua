@@ -403,7 +403,7 @@ local ev = CreateFrame("Frame")
 ev:RegisterEvent("PLAYER_LOGIN")
 ev:RegisterEvent("ADDON_LOADED")
 ev:RegisterEvent("PLAYER_REGEN_ENABLED")
-ev:SetScript("OnEvent", function(_, event)
+ev:SetScript("OnEvent", WeintCodex.Measured("Fenster verschieben", function(_, event)
     if event == "PLAYER_LOGIN" then
         MW.Start()
     elseif event == "ADDON_LOADED" then
@@ -412,5 +412,5 @@ ev:SetScript("OnEvent", function(_, event)
     elseif event == "PLAYER_REGEN_ENABLED" then
         if MW.active then MW.Flush() end
     end
-end)
+end))
 MW.events = ev

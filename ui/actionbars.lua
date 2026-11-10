@@ -1310,11 +1310,11 @@ ccEv:RegisterEvent("PLAYER_TARGET_CHANGED")
 ccEv:RegisterEvent("ACTIONBAR_SLOT_CHANGED")
 ccEv:RegisterEvent("ACTIONBAR_PAGE_CHANGED")
 ccEv:RegisterEvent("UPDATE_BONUS_ACTIONBAR")
-ccEv:SetScript("OnEvent", function()
+ccEv:SetScript("OnEvent", WeintCodex.Measured("Aktionsleisten", function()
     if not K.IsActive(KEY) then return end
     local ok, err = pcall(AB.UpdateCC)
     if not ok then K.Report("aktionsleisten", err) end
-end)
+end))
 
 local function px(v) return string.format("%d px", v) end
 

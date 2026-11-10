@@ -210,13 +210,13 @@ function BG.Recheck(event)
     BG.busy = BG.INTERACT[event] == true or BG.AnyOpen()
     BG.SetUseMode(not BG.busy)
 end
-interactEv:SetScript("OnEvent", function(_, event)
+interactEv:SetScript("OnEvent", WeintCodex.Measured("Taschen", function(_, event)
     BG.Recheck(event)
     -- Fenster oeffnen/schliessen sich oft erst nach dem Ereignis: nachsehen.
     if _G.C_Timer and _G.C_Timer.After then
         _G.C_Timer.After(0.2, function() BG.Recheck(event) end)
     end
-end)
+end))
 BG.interactEv = interactEv
 
 -- 6.61.5.0 (Fehlerbericht: "Blockiert: WeintCodexBags:Show()/Hide()" beim
@@ -256,9 +256,9 @@ end
 local combatEv = CreateFrame("Frame")
 pcall(combatEv.RegisterEvent, combatEv, "PLAYER_REGEN_DISABLED")
 pcall(combatEv.RegisterEvent, combatEv, "PLAYER_REGEN_ENABLED")
-combatEv:SetScript("OnEvent", function(_, event)
+combatEv:SetScript("OnEvent", WeintCodex.Measured("Taschen", function(_, event)
     if event == "PLAYER_REGEN_DISABLED" then BG.Unhook() else BG.Rehook() end
-end)
+end))
 BG.combatEv = combatEv
 
 -- Platz des geschuetzten Knopfs setzen - nur ausserhalb des Kampfes.
@@ -370,12 +370,12 @@ BG.lockLog = {}
 local blockEv = CreateFrame("Frame")
 blockEv:RegisterEvent("ADDON_ACTION_FORBIDDEN")
 blockEv:RegisterEvent("ADDON_ACTION_BLOCKED")
-blockEv:SetScript("OnEvent", function(_, event, addon, func)
+blockEv:SetScript("OnEvent", WeintCodex.Measured("Taschen", function(_, event, addon, func)
     if K.Plain(addon) ~= "WeintCodex" then return end
     local b = BG.lockLog
     b[#b + 1] = string.format("%s %s: %s", _G.date and _G.date("%H:%M:%S") or "", event, tostring(K.Plain(func)))
     while #b > 10 do table.remove(b, 1) end
-end)
+end))
 
 -- 6.103.0.0 (Fehlerbericht: BankFrame.currentBankPage, MailFrame.selectedTab
 -- und .activeSubFrame "tainted (WeintCodex)" - Ursache unbekannt): ein
@@ -408,19 +408,19 @@ function BG.TaintScan(why)
         end
     end
 end
-watchEv:SetScript("OnEvent", function(_, event, kind)
+watchEv:SetScript("OnEvent", WeintCodex.Measured("Taschen", function(_, event, kind)
     local r = BG.recentEv
     r[#r + 1] = Stamp() .. " " .. event .. (type(K.Plain(kind)) == "number" and ("/" .. K.Plain(kind)) or "")
     while #r > 6 do table.remove(r, 1) end
     BG.TaintScan(event)
-end)
+end))
 local watchT = 0
-watchEv:SetScript("OnUpdate", function(_, el)
+watchEv:SetScript("OnUpdate", WeintCodex.Measured("Taschen", function(_, el)
     watchT = watchT + (el or 0)
     if watchT < 0.5 then return end
     watchT = 0
     BG.TaintScan("takt")
-end)
+end))
 
 local function TaintedKeys(t, label, out, limit)
     local isv = _G.issecurevariable

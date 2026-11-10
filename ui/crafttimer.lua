@@ -188,7 +188,7 @@ for _, e in ipairs({ "PLAYER_LOGIN", "UNIT_SPELLCAST_START", "UNIT_SPELLCAST_SUC
     pcall(ev.RegisterEvent, ev, e)
 end
 local hooked = false
-ev:SetScript("OnEvent", function(_, event, unit)
+ev:SetScript("OnEvent", WeintCodex.Measured("Herstellzeit", function(_, event, unit)
     if event == "PLAYER_LOGIN" then
         if not hooked and _G.hooksecurefunc then
             hooked = true
@@ -207,7 +207,7 @@ ev:SetScript("OnEvent", function(_, event, unit)
     elseif event == "UNIT_SPELLCAST_START" then CT.OnStart(unit)
     elseif event == "UNIT_SPELLCAST_SUCCEEDED" then CT.OnDone(unit)
     else CT.OnBreak(unit) end
-end)
+end))
 
 --------------------------------------------------
 -- Einstellungen: auf der Komfortseite "Sammeln"

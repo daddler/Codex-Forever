@@ -199,10 +199,10 @@ for _, e in ipairs({ "BANKFRAME_OPENED", "BANKFRAME_CLOSED", "BAG_UPDATE_DELAYED
     "PLAYER_INTERACTION_MANAGER_FRAME_SHOW", "PLAYER_INTERACTION_MANAGER_FRAME_HIDE" }) do
     pcall(ev.RegisterEvent, ev, e)
 end
-ev:SetScript("OnEvent", function()
+ev:SetScript("OnEvent", WeintCodex.Measured("Bank-Kategorien", function()
     if _G.C_Timer and _G.C_Timer.After then
         _G.C_Timer.After(0, function() pcall(GB.Refresh) end)
     else
         pcall(GB.Refresh)
     end
-end)
+end))

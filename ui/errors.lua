@@ -321,7 +321,7 @@ local ev = CreateFrame("Frame")
 for _, e in ipairs({ "PLAYER_LOGIN", "ADDON_ACTION_BLOCKED", "ADDON_ACTION_FORBIDDEN" }) do
     pcall(ev.RegisterEvent, ev, e)
 end
-ev:SetScript("OnEvent", function(_, event, addon, func)
+ev:SetScript("OnEvent", WeintCodex.Measured("Fehlerfenster", function(_, event, addon, func)
     if event == "PLAYER_LOGIN" then
         -- Spaeter geladene Fehlerfaenger (BugGrabber) uebernehmen den Weg
         -- oft ohne Weiterreichen: davor haengen.
@@ -332,5 +332,5 @@ ev:SetScript("OnEvent", function(_, event, addon, func)
     local msg = (event == "ADDON_ACTION_FORBIDDEN" and "Verboten: " or "Blockiert: ") .. tostring(func or "?")
     local stack = _G.debugstack and _G.debugstack(2) or ""
     ER.Announce(ER.Record("blocked", msg, stack, ER.Extra(func, stack)))
-end)
+end))
 ER.events = ev

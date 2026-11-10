@@ -169,4 +169,4 @@ function FL.OnEvent(_, event, ...)
         lootCounted = false
     end
 end
-ev:SetScript("OnEvent", FL.OnEvent)
+ev:SetScript("OnEvent", WeintCodex.Measured("fishlog", FL.OnEvent))

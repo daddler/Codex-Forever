@@ -191,14 +191,14 @@ end
 
 local ev = CreateFrame("Frame")
 ev:RegisterEvent("PLAYER_LEVEL_UP")
-ev:SetScript("OnEvent", function(_, _, level)
+ev:SetScript("OnEvent", WeintCodex.Measured("Stufenaufstieg", function(_, _, level)
     if not LU.Active() then return end
     if _G.C_Timer and _G.C_Timer.After then
         _G.C_Timer.After(LU.DELAY, function() LU.OnLevelUp(level) end)
     else
         LU.OnLevelUp(level)
     end
-end)
+end))
 LU.events = ev
 
 -- ZAHL AM KNOPF (6.26.10.0, Beta-Test: "wenn ich neue Zauber erlernen
@@ -279,7 +279,7 @@ for _, e in ipairs({ "PLAYER_ENTERING_WORLD", "PLAYER_LEVEL_UP", "LEARNED_SPELL_
                      "LEARNED_SPELL_IN_TAB", "SPELLS_CHANGED", "TRAINER_CLOSED" }) do
     pcall(bev.RegisterEvent, bev, e)
 end
-bev:SetScript("OnEvent", function()
+bev:SetScript("OnEvent", WeintCodex.Measured("Stufenaufstieg", function()
     local mf = WeintCodex.MainFrame
     -- Am Aufruf, nicht am OnShow: dort haengt das weiche Einblenden, das
     -- zuletzt gesetzt sein muss (core/ui.lua).
@@ -289,7 +289,7 @@ bev:SetScript("OnEvent", function()
         _G.hooksecurefunc(mf, "SetShown", function(_, on) if on then LU.MarkSeen() end end)
     end
     LU.QueueBadges()
-end)
+end))
 LU.badgeEvents = bev
 K.Listen(function(kind, key)
     if (kind == "active" or kind == "setting") and key == KEY then LU.QueueBadges() end

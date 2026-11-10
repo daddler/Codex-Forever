@@ -1245,7 +1245,7 @@ end
 local keeper = CreateFrame("Frame")
 keeper:RegisterEvent("PLAYER_LOGIN")
 keeper:RegisterEvent("PLAYER_LOGOUT")
-keeper:SetScript("OnEvent", function(_, event)
+keeper:SetScript("OnEvent", WeintCodex.Measured("Flüstern", function(_, event)
     if event == "PLAYER_LOGIN" then
         local ok, err = pcall(MS.Restore)
         if not ok then K.Report("flüstern", err) end
@@ -1253,7 +1253,7 @@ keeper:SetScript("OnEvent", function(_, event)
         _G.WeintCodex_WhispersAccount = MS.Snapshot()
         _G.WeintCodex_Whispers = nil
     end
-end)
+end))
 
 --------------------------------------------------
 -- Ereignisse

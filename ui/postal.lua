@@ -258,14 +258,14 @@ PO._Step = Step
 local driver = CreateFrame("Frame")
 driver:Hide()
 local acc = 0
-driver:SetScript("OnUpdate", function(self, el)
+driver:SetScript("OnUpdate", WeintCodex.Measured("Post", function(self, el)
     acc = acc + (el or 0)
     if acc < (tonumber(Opt("postSpeed")) or 0.5) then return end
     acc = 0
     local ok = pcall(Step)
     if not ok then PO.Stop("Fehler beim Abholen") end
     if PO.progress then PO.progress() end
-end)
+end))
 
 function PO.Run(label, want)
     if queue then return false end
@@ -1010,7 +1010,7 @@ end
 
 local multiTick = CreateFrame("Frame")
 local macc = 0
-multiTick:SetScript("OnUpdate", function(_, el)
+multiTick:SetScript("OnUpdate", WeintCodex.Measured("Post", function(_, el)
     if not multi then return end
     macc = macc + (el or 0)
     if macc < 1.2 then return end
@@ -1025,7 +1025,7 @@ multiTick:SetScript("OnUpdate", function(_, el)
     end
     if multi.money > 0 and _G.SetSendMailMoney then pcall(_G.SetSendMailMoney, multi.money) end
     if _G.SendMail then pcall(_G.SendMail, n, multi.subject, multi.body) end
-end)
+end))
 
 --------------------------------------------------
 -- Versandregeln
@@ -1527,7 +1527,7 @@ local ev = CreateFrame("Frame")
 for _, e in ipairs({ "MAIL_SHOW", "MAIL_CLOSED", "MAIL_INBOX_UPDATE", "BAG_UPDATE_DELAYED", "MAIL_SEND_SUCCESS" }) do
     pcall(ev.RegisterEvent, ev, e)
 end
-ev:SetScript("OnEvent", function(_, event)
+ev:SetScript("OnEvent", WeintCodex.Measured("Post", function(_, event)
     if event == "MAIL_SHOW" then return OnMailShow() end
     if event == "MAIL_CLOSED" then
         PO.mailOpen = false
@@ -1542,7 +1542,7 @@ ev:SetScript("OnEvent", function(_, event)
         if queue then acc = 99 end
     end
     if Active() then PO.Refresh() end
-end)
+end))
 PO.events = ev
 
 if _G.hooksecurefunc then

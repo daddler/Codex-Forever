@@ -287,13 +287,13 @@ end
 -- Neu erkundet: neu pruefen und zeichnen.
 local ev = CreateFrame("Frame")
 MR.events = ev
-ev:SetScript("OnEvent", function(_, event, name)
+ev:SetScript("OnEvent", WeintCodex.Measured("Karte: aufdecken", function(_, event, name)
     if event == "ADDON_LOADED" then
         if name == "Blizzard_WorldMap" and MR.Active() then EnsureDriver() end
         return
     end
     MR.Forget()
-end)
+end))
 
 local function Apply()
     MR.Forget()

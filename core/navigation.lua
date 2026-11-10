@@ -2172,7 +2172,7 @@ end
 
 local itemInfoWatcher = CreateFrame("Frame")
 itemInfoWatcher:RegisterEvent("GET_ITEM_INFO_RECEIVED")
-itemInfoWatcher:SetScript("OnEvent", function(_, _, itemId)
+itemInfoWatcher:SetScript("OnEvent", WeintCodex.Measured("Navigation", function(_, _, itemId)
     local rows = itemId and pendingItemRows[itemId]
     if not rows then return end
 
@@ -2184,7 +2184,7 @@ itemInfoWatcher:SetScript("OnEvent", function(_, _, itemId)
             ApplyItemDisplay(row)
         end
     end
-end)
+end))
 
 local function CreateItemRow(parent, item, width, offsetY)
     local row = CreateFrame("Button", nil, parent)

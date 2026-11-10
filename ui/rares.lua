@@ -330,14 +330,14 @@ end
 local combatEv = CreateFrame("Frame")
 pcall(combatEv.RegisterEvent, combatEv, "PLAYER_REGEN_DISABLED")
 pcall(combatEv.RegisterEvent, combatEv, "PLAYER_REGEN_ENABLED")
-combatEv:SetScript("OnEvent", function(_, event)
+combatEv:SetScript("OnEvent", WeintCodex.Measured("rares", function(_, event)
     if event == "PLAYER_REGEN_DISABLED" then
         RA.DisarmForCombat()
     elseif clickBtn and toast and toast:IsShown() and toast:GetAlpha() > 0 and clickBtn._name then
         clickBtn:SetAttribute("type1", "macro")
         RA.ArmClick(clickBtn._name)
     end
-end)
+end))
 RA.combatEv = combatEv
 
 function RA.FillToast(title, sub)

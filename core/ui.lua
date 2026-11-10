@@ -2668,10 +2668,10 @@ function WeintCodex.AttachReload(button, onClick)
         end)
         local waiter = CreateFrame("Frame")
         waiter:RegisterEvent("PLAYER_REGEN_ENABLED")
-        waiter:SetScript("OnEvent", function(self)
+        waiter:SetScript("OnEvent", WeintCodex.Measured("Grundgerüst", function(self)
             self:UnregisterAllEvents()
             WeintCodex.AttachReload(button, onClick)
-        end)
+        end))
         return nil
     end
 
@@ -2763,9 +2763,9 @@ end
 local combatWatch = CreateFrame("Frame")
 pcall(combatWatch.RegisterEvent, combatWatch, "PLAYER_REGEN_DISABLED")
 pcall(combatWatch.RegisterEvent, combatWatch, "PLAYER_REGEN_ENABLED")
-combatWatch:SetScript("OnEvent", function(_, event)
+combatWatch:SetScript("OnEvent", WeintCodex.Measured("Grundgerüst", function(_, event)
     WeintCodex.DetachAll(event == "PLAYER_REGEN_DISABLED")
-end)
+end))
 
 WeintCodex.SetSolidBg = SetSolidBg
 WeintCodex.DrawBorder = DrawBorder
@@ -2844,7 +2844,7 @@ WeintCodex.FADE_IN, WeintCodex.FADE_OUT = 0.2, 0.18
 local fades = {}        -- [Fenster] = { t, dir }
 local fader = CreateFrame("Frame")
 fader:Hide()
-fader:SetScript("OnUpdate", function(self, el)
+fader:SetScript("OnUpdate", WeintCodex.Measured("Grundgerüst", function(self, el)
     local any = false
     for f, st in pairs(fades) do
         st.t = st.t + (el or 0)
@@ -2864,7 +2864,7 @@ fader:SetScript("OnUpdate", function(self, el)
         end
     end
     if not any and next(fades) == nil then self:Hide() end
-end)
+end))
 WeintCodex.fades, WeintCodex.fader = fades, fader
 
 function WeintCodex.FadeIn(f)
@@ -2934,7 +2934,7 @@ do
     for _, e in ipairs({ "PLAYER_LOGIN", "UI_SCALE_CHANGED", "DISPLAY_SIZE_CHANGED" }) do
         pcall(fit.RegisterEvent, fit, e)
     end
-    fit:SetScript("OnEvent", function() ApplySavedWindow() end)
+    fit:SetScript("OnEvent", WeintCodex.Measured("Grundgerüst", function() ApplySavedWindow() end))
 end
 
 --------------------------------------------------

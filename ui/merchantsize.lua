@@ -246,14 +246,14 @@ end
 -- MerchantFrame_Update vorbereiten - und danach noch einmal aufbauen.
 local ev = CreateFrame("Frame")
 pcall(ev.RegisterEvent, ev, "MERCHANT_SHOW")
-ev:SetScript("OnEvent", function()
+ev:SetScript("OnEvent", WeintCodex.Measured("Händlergröße", function()
     if not MS.Active() then return end
     MS.Start()
     if not hooked then return end
     MS.Apply()
     MS.Prepare()
     Refresh()
-end)
+end))
 
 -- Jede Aenderung der Groesse oder Seite laeuft ueber MerchantFrame_Update;
 -- die Zahl je Seite muss davor stimmen. Ein Haken danach setzt sie fuer den

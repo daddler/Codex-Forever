@@ -422,7 +422,7 @@ local function StartHealthTracking()
     end)
 end
 
-trackerFrame:SetScript("OnEvent", function(_, event, ...)
+trackerFrame:SetScript("OnEvent", WeintCodex.Measured("Kampferfassung", function(_, event, ...)
     -- Vararg vor dem pcall in Locals kopieren: "..." ist innerhalb der
     -- pcall-Closure unten nicht mehr gueltig (eigener Funktionskontext,
     -- kein eigener Vararg).
@@ -507,7 +507,7 @@ trackerFrame:SetScript("OnEvent", function(_, event, ...)
         -- Tracking ist ein Komfort-Feature, niemals das restliche Addon
         -- mitreissen, wenn hier etwas Unerwartetes passiert.
     end
-end)
+end))
 
 -- --------------------------------------------------
 -- Oeffentliche Abfrage

@@ -1032,13 +1032,13 @@ end)
 do
     local boot = CreateFrame("Frame")
     boot:RegisterEvent("PLAYER_LOGIN")
-    boot:SetScript("OnEvent", function() ES.ApplyScaleChoice() end)
+    boot:SetScript("OnEvent", WeintCodex.Measured("Einrichtung", function() ES.ApplyScaleChoice() end))
 end
 
 local ev = CreateFrame("Frame")
 ev:RegisterEvent("PLAYER_ENTERING_WORLD")
 for _, e in ipairs({ "DISPLAY_SIZE_CHANGED", "UI_SCALE_CHANGED" }) do pcall(ev.RegisterEvent, ev, e) end
-ev:SetScript("OnEvent", function(_, event, isInitialLogin, isReloadingUi)
+ev:SetScript("OnEvent", WeintCodex.Measured("Einrichtung", function(_, event, isInitialLogin, isReloadingUi)
     if event ~= "PLAYER_ENTERING_WORLD" then
         if _G.C_Timer and _G.C_Timer.After then _G.C_Timer.After(1, ES.CheckWide) end
         return
@@ -1051,4 +1051,4 @@ ev:SetScript("OnEvent", function(_, event, isInitialLogin, isReloadingUi)
     if _G.C_Timer and _G.C_Timer.After then _G.C_Timer.After(3, ES.Verify) end
     if isReloadingUi then return end
     if _G.C_Timer and _G.C_Timer.After then _G.C_Timer.After(2, ES.MaybeAsk) end
-end)
+end))

@@ -882,7 +882,7 @@ local ev = CreateFrame("Frame")
 for _, e in ipairs({ "PLAYER_TARGET_CHANGED", "UNIT_SPELLCAST_SUCCEEDED", "CRAFT_SHOW", "CRAFT_UPDATE" }) do
     pcall(ev.RegisterEvent, ev, e)
 end
-ev:SetScript("OnEvent", function(_, event, unit, _, spellID)
+ev:SetScript("OnEvent", WeintCodex.Measured("Wildtierkunde", function(_, event, unit, _, spellID)
     if not BL.IsHunter() then return end
     if event == "PLAYER_TARGET_CHANGED" then
         if BL.RecordTarget("target") then BL.Redraw() end
@@ -894,5 +894,5 @@ ev:SetScript("OnEvent", function(_, event, unit, _, spellID)
     else
         if BL.ReadTraining() then BL.Redraw() end
     end
-end)
+end))
 BL.events = ev

@@ -278,7 +278,7 @@ end
 
 local frame = CreateFrame("Frame")
 local function Listen(name) pcall(frame.RegisterEvent, frame, name) end
-frame:SetScript("OnEvent", function(_, event, unit, _, spellId)
+frame:SetScript("OnEvent", WeintCodex.Measured("Zeit bis Tod", function(_, event, unit, _, spellId)
     if event == "PLAYER_REGEN_ENABLED" then
         -- Nach dem Kampf: Verlauf und abgelaufene DoTs weg.
         wipe(hist) histCount = 0
@@ -293,7 +293,7 @@ frame:SetScript("OnEvent", function(_, event, unit, _, spellId)
     else
         TD.OnCast(spellId)
     end
-end)
+end))
 Listen("UNIT_SPELLCAST_SUCCEEDED")
 Listen("UNIT_SPELLCAST_CHANNEL_START")
 Listen("PLAYER_REGEN_ENABLED")

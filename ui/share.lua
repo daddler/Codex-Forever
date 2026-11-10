@@ -485,7 +485,7 @@ do
     local ev = CreateFrame("Frame")
     ev:RegisterEvent("PLAYER_ENTERING_WORLD")
     ev:RegisterEvent("PLAYER_LOGOUT")
-    ev:SetScript("OnEvent", function(self, event)
+    ev:SetScript("OnEvent", WeintCodex.Measured("Teilen", function(self, event)
         if event == "PLAYER_LOGOUT" then
             pcall(SH.RememberBars)
         else
@@ -493,7 +493,7 @@ do
             if _G.C_Timer and _G.C_Timer.After then _G.C_Timer.After(3, function() pcall(SH.OnLogin) end)
             else pcall(SH.OnLogin) end
         end
-    end)
+    end))
     SH.events = ev
 end
 

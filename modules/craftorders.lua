@@ -321,10 +321,10 @@ function CO.ShowIfNew()
         if InCombatLockdown and InCombatLockdown() then
             local waiter = CreateFrame("Frame")
             waiter:RegisterEvent("PLAYER_REGEN_ENABLED")
-            waiter:SetScript("OnEvent", function(self)
+            waiter:SetScript("OnEvent", WeintCodex.Measured("craftorders", function(self)
                 self:UnregisterAllEvents()
                 CO.Show()
-            end)
+            end))
             return
         end
         CO.Show()

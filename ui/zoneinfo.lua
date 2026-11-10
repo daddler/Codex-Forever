@@ -249,5 +249,5 @@ end)
 
 local boot = CreateFrame("Frame")
 boot:RegisterEvent("PLAYER_LOGIN")
-boot:SetScript("OnEvent", function() Apply() end)
+boot:SetScript("OnEvent", WeintCodex.Measured("zoneinfo", function() Apply() end))
 ZI.boot = boot

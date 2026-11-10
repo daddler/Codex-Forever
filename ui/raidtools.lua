@@ -587,4 +587,4 @@ end)
 
 local boot = CreateFrame("Frame")
 boot:RegisterEvent("PLAYER_LOGIN")
-boot:SetScript("OnEvent", function() RT.Start() end)
+boot:SetScript("OnEvent", WeintCodex.Measured("raidtools", function() RT.Start() end))

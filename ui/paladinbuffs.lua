@@ -765,7 +765,7 @@ end
 do
     local login = CreateFrame("Frame")
     login:RegisterEvent("PLAYER_LOGIN")
-    login:SetScript("OnEvent", function() PB.DropPageIfNotPaladin() end)
+    login:SetScript("OnEvent", WeintCodex.Measured("paladinbuffs", function() PB.DropPageIfNotPaladin() end))
 end
 
 _G.BINDING_NAME_CLICK_WeintCodexBlessButton_LeftButton = "Segen verteilen (Paladin)"

@@ -1151,7 +1151,7 @@ function RT.CheckBind()
     end
     return false
 end
-events:SetScript("OnEvent", function(_, event, unit, arg2, spell, sender)
+events:SetScript("OnEvent", WeintCodex.Measured("route", function(_, event, unit, arg2, spell, sender)
     if event == "CHAT_MSG_ADDON" then return RT.OnAddon(unit, arg2, spell, sender) end
     if event == "GROUP_ROSTER_UPDATE" then return RT.Ask("group") end
     if event == "TAXIMAP_OPENED" then RT.LearnTaxi() RT.LearnHere()
@@ -1169,7 +1169,7 @@ events:SetScript("OnEvent", function(_, event, unit, arg2, spell, sender)
     elseif event == "PLAYER_CHANNEL_START" or event == "PLAYER_ENTERING_WORLD" then
         RT.CheckBind()
     end
-end)
+end))
 
 --------------------------------------------------
 -- Abfahrtszeiten teilen (6.32.0.0, auf Wunsch des Spielers)

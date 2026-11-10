@@ -12,7 +12,19 @@ WeintCodex = WeintCodex or {}
 -- "v" plus diese Zahl sein. Die CI prueft alle vier gegeneinander und
 -- bricht sonst ab - siehe .github/scripts/release_notes.py und
 -- docs/development/releases.md.
-WeintCodex.Version = "1.0.5.41"
+WeintCodex.Version = "1.0.5.42"
+
+-- /wcui speicher (1.0.5.42): Messhuelle fuer Teile, die vor ui/kit.lua
+-- laden (core, modules) oder bisher ohne Messung liefen. Kostet ohne
+-- laufende Messung eine Abfrage; gezaehlt wird in UIKit.prof. Nur um
+-- Behandler, die einmal gesetzt werden - eine Huelle je Takt waere Muell.
+function WeintCodex.Measured(name, fn)
+    return function(...)
+        local K = WeintCodex.UIKit
+        if not (K and K.prof and K.prof.on and K.MeasureCall) then return fn(...) end
+        return K.MeasureCall(name, fn, ...)
+    end
+end
 
 SLASH_WEINTCODEX1 = "/wc"
 SLASH_WEINTCODEX2 = "/weintcodex"
@@ -473,7 +485,7 @@ function WeintCodex.SaveHealth() return saveHealth end
 local saveProbe = CreateFrame("Frame")
 saveProbe:RegisterEvent("PLAYER_LOGOUT")
 saveProbe:RegisterEvent("PLAYER_ENTERING_WORLD")
-saveProbe:SetScript("OnEvent", function(_, event, isInitialLogin, isReloadingUi)
+saveProbe:SetScript("OnEvent", WeintCodex.Measured("Start", function(_, event, isInitialLogin, isReloadingUi)
     local sd = WeintCodex.SavedData
     if not sd then return end
     if event == "PLAYER_LOGOUT" then
@@ -494,9 +506,9 @@ saveProbe:SetScript("OnEvent", function(_, event, isInitialLogin, isReloadingUi)
     else
         saveHealth = "ok"
     end
-end)
+end))
 
 local loader = CreateFrame("Frame")
 loader:RegisterEvent("ADDON_LOADED")
 loader:RegisterEvent("PLAYER_LOGIN")
-loader:SetScript("OnEvent", OnEvent)
+loader:SetScript("OnEvent", WeintCodex.Measured("Start", OnEvent))

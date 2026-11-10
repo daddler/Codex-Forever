@@ -1236,7 +1236,7 @@ end
 
 local fader = CreateFrame("Frame")
 fader:Hide()
-fader:SetScript("OnUpdate", function(self, el)
+fader:SetScript("OnUpdate", WeintCodex.Measured("Gespräche", function(self, el)
     local f = DL.fade
     local up = _G.UIParent
     f.t = f.t + (el or 0)
@@ -1246,7 +1246,7 @@ fader:SetScript("OnUpdate", function(self, el)
     -- Was nicht mitblendet, verschwindet auf halbem Weg.
     if DL.fade.on and k >= 0.5 then DL.HideExtras() end
     if k >= 1 then self:Hide() end
-end)
+end))
 DL.fader = fader
 
 -- Ein Dialog des Spiels erscheint. Die Warnung zu Testeinstellungen kam
@@ -1334,7 +1334,7 @@ end
 local watch = CreateFrame("Frame")
 watch:Hide()
 watch.t, watch.gone, watch.hadNpc = 0, 0, false
-watch:SetScript("OnUpdate", function(self, el)
+watch:SetScript("OnUpdate", WeintCodex.Measured("Gespräche", function(self, el)
     self.t = self.t + (el or 0)
     if self.t < DL.WATCH_TICK then return end
     local step = self.t
@@ -1355,7 +1355,7 @@ watch:SetScript("OnUpdate", function(self, el)
             DL.FadeBack(false)
         end
     end
-end)
+end))
 function DL.Watch()
     watch.t, watch.gone = 0, 0
     watch.hadNpc = NpcThere()
@@ -1373,7 +1373,7 @@ local STATE = {
 }
 
 local ev = CreateFrame("Frame")
-ev:SetScript("OnEvent", function(_, event)
+ev:SetScript("OnEvent", WeintCodex.Measured("Gespräche", function(_, event)
     if event == "PLAYER_REGEN_DISABLED" then DL.FadeBack(true) return end
     if not DL.Active() then return end
     local st = STATE[event]
@@ -1385,7 +1385,7 @@ ev:SetScript("OnEvent", function(_, event)
     elseif event == "QUEST_FINISHED" then
         if DL.state and DL.state ~= "gossip" then DL.state = nil if win then win:Hide() end end
     end
-end)
+end))
 DL.events = ev
 
 local function Apply()
@@ -1581,7 +1581,7 @@ function DL.Boot()
     end
     Apply()
 end
-boot:SetScript("OnEvent", function() DL.Boot() end)
+boot:SetScript("OnEvent", WeintCodex.Measured("Gespräche", function() DL.Boot() end))
 
 --------------------------------------------------
 -- 6.129.0.0 (Beta-Test: "Die Muenze wird nicht angezeigt" - im Questfenster
@@ -1631,10 +1631,10 @@ do
     local qev = CreateFrame("Frame")
     pcall(qev.RegisterEvent, qev, "QUEST_COMPLETE")
     pcall(qev.RegisterEvent, qev, "QUEST_DETAIL")
-    qev:SetScript("OnEvent", function()
+    qev:SetScript("OnEvent", WeintCodex.Measured("Gespräche", function()
         if not (_G.C_Timer and _G.C_Timer.After) then return DL.MarkGameRewards() end
         _G.C_Timer.After(0.1, function()
             if DL.MarkGameRewards() then _G.C_Timer.After(0.6, DL.MarkGameRewards) end
         end)
-    end)
+    end))
 end

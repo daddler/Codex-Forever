@@ -550,11 +550,11 @@ end
 do
     local ev = CreateFrame("Frame")
     ev:RegisterEvent("PLAYER_ENTERING_WORLD")
-    ev:SetScript("OnEvent", function(_, _, isInitialLogin, isReloadingUi)
+    ev:SetScript("OnEvent", WeintCodex.Measured("Profile", function(_, _, isInitialLogin, isReloadingUi)
         if not (isInitialLogin or isReloadingUi) then return end
         -- "Spaeter" endet mit dem Einloggen.
         if isInitialLogin then later = false end
         -- Nach dem Willkommen und dem Hinweis auf ein Update (1,5 s).
         if _G.C_Timer and _G.C_Timer.After then _G.C_Timer.After(2.5, PR.MaybeAsk) end
-    end)
+    end))
 end

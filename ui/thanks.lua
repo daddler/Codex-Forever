@@ -816,7 +816,7 @@ pcall(ev.RegisterEvent, ev, "ADDON_ACTION_BLOCKED")
 pcall(ev.RegisterEvent, ev, "ADDON_ACTION_FORBIDDEN")
 pcall(ev.RegisterEvent, ev, "CHAT_MSG_WHISPER_INFORM")
 pcall(ev.RegisterEvent, ev, "CHAT_MSG_SYSTEM")
-ev:SetScript("OnEvent", function(_, event, a1, a2)
+ev:SetScript("OnEvent", WeintCodex.Measured("Danke-Fenster", function(_, event, a1, a2)
     if event == "UNIT_AURA" then
         if a1 == "player" then pcall(TH.OnAura, a2) end
     elseif event == "PLAYER_LOGIN" then
@@ -846,7 +846,7 @@ ev:SetScript("OnEvent", function(_, event, a1, a2)
     else
         TH.OnBlocked(a1)
     end
-end)
+end))
 
 function TH.StatusLine()
     return string.format("Danke für Buffs: %s · gedankt %d× · %s%s",

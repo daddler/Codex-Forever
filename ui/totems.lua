@@ -192,13 +192,13 @@ function TT.Enable()
     pcall(ev.RegisterEvent, ev, "PLAYER_ENTERING_WORLD")
     pcall(ev.RegisterEvent, ev, "PLAYER_REGEN_DISABLED")
     pcall(ev.RegisterEvent, ev, "PLAYER_REGEN_ENABLED")
-    ev:SetScript("OnEvent", function(_, event)
+    ev:SetScript("OnEvent", WeintCodex.Measured("totems", function(_, event)
         if event == "PLAYER_REGEN_DISABLED" then
             -- Gleich gesperrt: alle Plaetze stehen, leere unsichtbar.
             for _, b in ipairs(buttons) do b:Show() end
         end
         TT.Update()
-    end)
+    end))
     TT.events = ev
     ticker:Show()
     TT.Update()
@@ -208,9 +208,9 @@ end
 local boot = CreateFrame("Frame")
 boot:RegisterEvent("PLAYER_LOGIN")
 boot:RegisterEvent("PLAYER_ENTERING_WORLD")
-boot:SetScript("OnEvent", function()
+boot:SetScript("OnEvent", WeintCodex.Measured("totems", function()
     if K.InCombat() then K.AfterCombat(TT.Enable) else TT.Enable() end
-end)
+end))
 TT.boot = boot
 
 -- Fuer /wcui prüfen: gebaut? und was der Client zu den Plaetzen sagt.

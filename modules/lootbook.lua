@@ -1038,10 +1038,10 @@ end
 -- malen (gebuendelt, nie je Ereignis eine ganze Zeichnung).
 local ev = CreateFrame("Frame")
 pcall(ev.RegisterEvent, ev, "GET_ITEM_INFO_RECEIVED")
-ev:SetScript("OnEvent", function(_, _, itemID)
+ev:SetScript("OnEvent", WeintCodex.Measured("Beute", function(_, _, itemID)
     itemID = Plain(itemID)
     if not pending[itemID] then return end
     pending[itemID] = nil
     if page and page:IsShown() then LB.Redraw() end
-end)
+end))
 LB.events = ev

@@ -437,10 +437,10 @@ end))
 MK.mmTicker = mmTicker
 
 local ev = CreateFrame("Frame")
-ev:SetScript("OnEvent", function(_, event, name)
+ev:SetScript("OnEvent", WeintCodex.Measured("Karte: Geistheiler, Übergänge", function(_, event, name)
     if event == "ADDON_LOADED" and name ~= "Blizzard_WorldMap" then return end
     if MK.Active() then EnsureDriver() end
-end)
+end))
 
 local function Apply()
     MK.Forget()

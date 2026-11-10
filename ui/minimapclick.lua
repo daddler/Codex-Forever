@@ -67,5 +67,5 @@ end
 
 local boot = CreateFrame("Frame")
 boot:RegisterEvent("PLAYER_LOGIN")
-boot:SetScript("OnEvent", function() MC.Hook() end)
+boot:SetScript("OnEvent", WeintCodex.Measured("Minikarte: Klick", function() MC.Hook() end))
 MC.boot = boot

@@ -314,7 +314,7 @@ pcall(ev.RegisterEvent, ev, "CHAT_MSG_LOOT")
 pcall(ev.RegisterEvent, ev, "START_LOOT_ROLL")
 pcall(ev.RegisterEvent, ev, "PLAYER_LOGIN")
 pcall(ev.RegisterEvent, ev, "PLAYER_ENTERING_WORLD")
-ev:SetScript("OnEvent", function(_, event, a1)
+ev:SetScript("OnEvent", WeintCodex.Measured("Würfe in der Gruppe", function(_, event, a1)
     if event == "PLAYER_LOGIN" then RW.BuildPatterns() return end
     if event == "PLAYER_ENTERING_WORLD" then
         wipe(RW.items)
@@ -335,7 +335,7 @@ ev:SetScript("OnEvent", function(_, event, a1)
     end
     Build():Show()
     RW.Refresh()
-end)
+end))
 RW.ev = ev
 
 local mod = K.Module(KEY)

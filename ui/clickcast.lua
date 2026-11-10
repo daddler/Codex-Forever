@@ -1226,7 +1226,7 @@ for _, e in ipairs({ "PLAYER_ENTERING_WORLD", "GROUP_ROSTER_UPDATE", "UPDATE_BIN
                      "PLAYER_REGEN_DISABLED", "PLAYER_REGEN_ENABLED" }) do
     pcall(ev.RegisterEvent, ev, e)
 end
-ev:SetScript("OnEvent", function(_, event)
+ev:SetScript("OnEvent", WeintCodex.Measured("Klickzauber", function(_, event)
     if event == "PLAYER_ENTERING_WORLD" then
         CC.Apply()
         -- Nach dem Laden der Tastenbelegung noch einmal (siehe CC.KeysIntact).
@@ -1242,4 +1242,4 @@ ev:SetScript("OnEvent", function(_, event)
     if event == "PLAYER_REGEN_ENABLED" then CC.WheelSync() return end
     local GG = WeintCodex.UIGameGroup
     if not (GG and GG.active) then ApplySoon() end
-end)
+end))

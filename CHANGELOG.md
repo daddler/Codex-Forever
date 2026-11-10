@@ -9,6 +9,12 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.0.5.42] – 2026-11-10
+
+- `/wcui speicher`: 131 bisher ungemessene Ereignis-/Takt-Behandler über `WeintCodex.Measured`
+  (core/main.lua, auch für core/modules), Top 25 statt 12, „Meiste Zeit“, geschätzte Größe
+  der gespeicherten Daten und Datentabellen (`K.HeldReport`), Ergebnis im Kopierfenster.
+
 ## [1.0.5.41] – 2026-11-10
 
 - Plaketten: Bosse zusätzlich per Namensabgleich, nur in Instanzen (`NP.BossNames`,

@@ -75,7 +75,7 @@ end
 local ev = CreateFrame("Frame")
 for _, e in ipairs({ "PLAYER_LOGIN", "PLAYER_EQUIPMENT_CHANGED" }) do pcall(ev.RegisterEvent, ev, e) end
 local hooked = false
-ev:SetScript("OnEvent", function(_, event)
+ev:SetScript("OnEvent", WeintCodex.Measured("Gegenstandsstufe", function(_, event)
     if event == "PLAYER_LOGIN" and not hooked then
         local cf = _G.CharacterFrame
         if type(cf) == "table" and cf.HookScript then
@@ -84,5 +84,5 @@ ev:SetScript("OnEvent", function(_, event)
         end
     end
     CI.Update()
-end)
+end))
 CI.events = ev

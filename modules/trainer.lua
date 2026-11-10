@@ -1007,8 +1007,8 @@ for _, e in ipairs({ "PLAYER_LEVEL_UP", "LEARNED_SPELL_IN_SKILL_LINE", "SPELLS_C
                      "SKILL_LINES_CHANGED", "SPELL_DATA_LOAD_RESULT" }) do
     pcall(ev.RegisterEvent, ev, e)
 end
-ev:SetScript("OnEvent", function(_, event, id)
+ev:SetScript("OnEvent", WeintCodex.Measured("Lehrer", function(_, event, id)
     if event == "SPELL_DATA_LOAD_RESULT" and not pending[id] then return end
     Redraw()
-end)
+end))
 TR.events = ev

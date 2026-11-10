@@ -650,7 +650,7 @@ for _, e in ipairs({ "PLAYER_ENTERING_WORLD", "ZONE_CHANGED_NEW_AREA", "ARENA_PR
                      "PLAYER_TARGET_CHANGED", "PLAYER_FOCUS_CHANGED" }) do
     pcall(ev.RegisterEvent, ev, e)
 end
-ev:SetScript("OnEvent", function(_, event, unit, _, spellID)
+ev:SetScript("OnEvent", WeintCodex.Measured("PvP", function(_, event, unit, _, spellID)
     if not K.IsActive(KEY) then return end
     if event == "PLAYER_ENTERING_WORLD" or event == "ZONE_CHANGED_NEW_AREA" then
         wipe(PV.healerGuids)
@@ -683,19 +683,19 @@ ev:SetScript("OnEvent", function(_, event, unit, _, spellID)
         if i and arena and arena:IsShown() then PV.UpdateArenaUnit(tonumber(i)) end
         if bg and bg:IsShown() then PV.BgHealth() end
     end
-end)
+end))
 PV.ev = ev
 
 -- Punktetafel alle 5 s neu anfordern, solange man im Schlachtfeld ist.
 local tick = CreateFrame("Frame")
-tick:SetScript("OnUpdate", function(self, el)
+tick:SetScript("OnUpdate", WeintCodex.Measured("PvP", function(self, el)
     self.acc = (self.acc or 0) + (el or 0)
     if self.acc < 5 then return end
     self.acc = 0
     if Opt("pvpBg") and InstanceKind() == "pvp" and _G.RequestBattlefieldScoreData then
         pcall(_G.RequestBattlefieldScoreData)
     end
-end)
+end))
 
 --------------------------------------------------
 -- Einstellungen

@@ -105,12 +105,12 @@ SP.WATCH = WATCH
 local again = 0
 local later = CreateFrame("Frame")
 later:Hide()
-later:SetScript("OnUpdate", function(self, el)
+later:SetScript("OnUpdate", WeintCodex.Measured("sparkles", function(self, el)
     again = again - (el or 0)
     if again > 0 then return end
     self:Hide()
     SP.ApplyLoot()
-end)
+end))
 function SP.ApplyLater(delay) again = delay or 1 later:Show() end
 
 --------------------------------------------------
@@ -210,13 +210,13 @@ for i = 1, SP.GLINTS do
 end
 SP.glow = glow
 local clock = 0
-glow:SetScript("OnUpdate", function(self, el)
+glow:SetScript("OnUpdate", WeintCodex.Measured("sparkles", function(self, el)
     clock = clock + (el or 0)
     for _, t in ipairs(self.dots) do
         local s = math.sin(clock * 3 + t.phase)
         t:SetAlpha(s > 0 and s or 0)
     end
-end)
+end))
 
 local function Paint(blocked)
     local c = blocked and C.textMuted or C.warningBright
@@ -355,7 +355,7 @@ local ev = CreateFrame("Frame")
 ev:RegisterEvent("PLAYER_LOGIN")
 ev:RegisterEvent("PLAYER_REGEN_DISABLED")
 pcall(ev.RegisterEvent, ev, "CVAR_UPDATE")
-ev:SetScript("OnEvent", function(_, event, name)
+ev:SetScript("OnEvent", WeintCodex.Measured("sparkles", function(_, event, name)
     if event == "PLAYER_LOGIN" then
         SP.Apply()
         SP.ApplyLater(5)
@@ -369,7 +369,7 @@ ev:SetScript("OnEvent", function(_, event, name)
     elseif SP.LootActive() and type(name) == "string" and WATCH[name:lower()] then
         SP.ApplyLater(1)
     end
-end)
+end))
 SP.events = ev
 
 -- Was jetzt vor dir steht (6.30.9.0): fuer /wcui prüfen, damit ein Bericht

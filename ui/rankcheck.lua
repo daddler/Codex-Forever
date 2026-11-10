@@ -240,11 +240,11 @@ for _, e in ipairs({ "PLAYER_ENTERING_WORLD", "LEARNED_SPELL_IN_TAB", "SPELLS_CH
                      "ACTIONBAR_SLOT_CHANGED", "PLAYER_REGEN_ENABLED" }) do
     pcall(ev.RegisterEvent, ev, e)
 end
-ev:SetScript("OnEvent", function(_, event)
+ev:SetScript("OnEvent", WeintCodex.Measured("Ränge prüfen", function(_, event)
     -- Neu gelernt: "Spaeter" gilt nicht mehr.
     if event == "LEARNED_SPELL_IN_TAB" then later = false end
     RC.Queue()
-end)
+end))
 RC.ev = ev
 
 local mod = K.Module(KEY)

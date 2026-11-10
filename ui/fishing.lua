@@ -352,7 +352,7 @@ for _, e in ipairs({ "PLAYER_LOGIN", "PLAYER_ENTERING_WORLD", "PLAYER_LOGOUT", "
                      "PLAYER_SOFT_INTERACT_CHANGED", "LOOT_OPENED", "LOOT_CLOSED" }) do
     pcall(ev.RegisterEvent, ev, e)
 end
-ev:SetScript("OnEvent", OnEvent)
+ev:SetScript("OnEvent", WeintCodex.Measured("Angeln", OnEvent))
 FI.OnEvent = OnEvent
 
 --------------------------------------------------

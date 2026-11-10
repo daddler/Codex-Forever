@@ -1394,9 +1394,9 @@ end
 do
     local ev = CreateFrame("Frame")
     pcall(ev.RegisterEvent, ev, "UI_ERROR_MESSAGE")
-    ev:SetScript("OnEvent", function(_, _, _, msg)
+    ev:SetScript("OnEvent", WeintCodex.Measured("Erinnerungen", function(_, _, _, msg)
         if R.OnUIError(msg) and R.Schedule then R.Schedule(true, false, false) end
-    end)
+    end))
 end
 
 -- Genau dieser Name (ohne Gross/Klein), kein Teilwort: "Staerke" einer
@@ -2452,7 +2452,7 @@ for _, e in ipairs({ "PLAYER_ENTERING_WORLD", "PLAYER_LEVEL_UP", "PLAYER_REGEN_E
                      "CHARACTER_POINTS_CHANGED", "PLAYER_TALENT_UPDATE", "SPELLS_CHANGED" }) do
     pcall(talentEv.RegisterEvent, talentEv, e)
 end
-talentEv:SetScript("OnEvent", function(_, event, arg1)
+talentEv:SetScript("OnEvent", WeintCodex.Measured("Erinnerungen", function(_, event, arg1)
     if event == "PLAYER_LEVEL_UP" then
         local lvl = K.Plain(arg1)
         if type(lvl) == "number" then R.levelHint = lvl end
@@ -2467,4 +2467,4 @@ talentEv:SetScript("OnEvent", function(_, event, arg1)
         _G.C_Timer.After(1, function() pcall(R.UpdateTalentNote) end)
         _G.C_Timer.After(3, function() pcall(R.UpdateTalentNote) end)
     end
-end)
+end))

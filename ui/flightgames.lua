@@ -1209,12 +1209,12 @@ end
 local sendFrame = CreateFrame("Frame")
 sendFrame:Hide()
 local fgAcc = 0
-sendFrame:SetScript("OnUpdate", function(self, el)
+sendFrame:SetScript("OnUpdate", WeintCodex.Measured("Flugspiele", function(self, el)
     fgAcc = fgAcc + (el or 0)
     if fgAcc < 0.25 then return end
     fgAcc = 0
     if FG.SendNext(Clock()) then self:Hide() end
-end)
+end))
 FG.sendFrame = sendFrame
 
 -- Antwort auf "q": hoechstens einmal je FG.ANSWER_GAP s, hoechstens
@@ -2020,7 +2020,7 @@ FG.events = ev
 for _, e in ipairs({ "PLAYER_CONTROL_LOST", "PLAYER_CONTROL_GAINED", "PLAYER_ENTERING_WORLD", "CHAT_MSG_ADDON", "GUILD_ROSTER_UPDATE" }) do
     pcall(ev.RegisterEvent, ev, e)
 end
-ev:SetScript("OnEvent", function(_, event, a, b, c, d)
+ev:SetScript("OnEvent", WeintCodex.Measured("Flugspiele", function(_, event, a, b, c, d)
     if event == "CHAT_MSG_ADDON" then
         if a == FG.PREFIX then pcall(FG.OnAddonMessage, a, b, c, d) end
         return
@@ -2043,7 +2043,7 @@ ev:SetScript("OnEvent", function(_, event, a, b, c, d)
     else
         if later then later(0.5, function() pcall(FG.Landing) end) else pcall(FG.Landing) end
     end
-end)
+end))
 
 --------------------------------------------------
 -- Seite im Komfort

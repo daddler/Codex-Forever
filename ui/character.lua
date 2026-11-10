@@ -665,7 +665,7 @@ function CS.Header(f)
     h:SetScript("OnShow", function() h.Update() end)
     h:SetScript("OnHide", function() Replaced(h, 1) end)
     h:RegisterEvent("PLAYER_LEVEL_UP")
-    h:SetScript("OnEvent", function(_, _, level) h.Update(K.Plain(level)) end)
+    h:SetScript("OnEvent", WeintCodex.Measured("Charakterfenster", function(_, _, level) h.Update(K.Plain(level)) end))
     h.Update()
     CS.KeepHeaderLevel(h)
     CS.head = h

@@ -221,14 +221,14 @@ end
 local ev = CreateFrame("Frame")
 DM.events = ev
 for _, e in ipairs({ "PLAYER_LOGIN", "ADDON_LOADED", "PLAYER_ENTERING_WORLD" }) do pcall(ev.RegisterEvent, ev, e) end
-ev:SetScript("OnEvent", function(_, event)
+ev:SetScript("OnEvent", WeintCodex.Measured("Dungeonkarten", function(_, event)
     DM.Hook()
     if event == "PLAYER_ENTERING_WORLD" then
         hiddenFor = nil
         local wm = _G.WorldMapFrame
         if type(wm) == "table" and wm.IsShown and wm:IsShown() then pcall(DM.Refresh) end
     end
-end)
+end))
 
 -- Zeile auf der Seite "Karte" im Komfort (ui/mapentrances.lua ruft sie).
 function DM.BuildRows(B)

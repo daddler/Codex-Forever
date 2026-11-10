@@ -1076,9 +1076,9 @@ end
 
 local combatEvents = CreateFrame("Frame")
 combatEvents:RegisterEvent("PLAYER_REGEN_DISABLED")
-combatEvents:SetScript("OnEvent", function()
+combatEvents:SetScript("OnEvent", WeintCodex.Measured("Bearbeitungsmodus", function()
     if strip and strip:IsShown() then strip:Hide() end
-end)
+end))
 
 function E.StripShown() return strip ~= nil and strip:IsShown() end
 function E.StripButton() return strip and strip.back end   -- fuer den Prueflauf
@@ -1110,10 +1110,10 @@ end
 local hookEvents = CreateFrame("Frame")
 hookEvents:RegisterEvent("PLAYER_LOGIN")
 hookEvents:RegisterEvent("ADDON_LOADED")
-hookEvents:SetScript("OnEvent", function(self, event, name)
+hookEvents:SetScript("OnEvent", WeintCodex.Measured("Bearbeitungsmodus", function(self, event, name)
     if event == "ADDON_LOADED" and name ~= "Blizzard_EditMode" then return end
     if E.HookGame() then self:UnregisterAllEvents() end
-end)
+end))
 
 K.Listen(function(kind, a)
     if kind == "unlock" then

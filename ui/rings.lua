@@ -831,10 +831,10 @@ for _, e in ipairs({ "PLAYER_LOGIN", "PLAYER_REGEN_ENABLED", "SPELLS_CHANGED", "
     "NEW_MOUNT_ADDED", "COMPANION_LEARNED", "LEARNED_SPELL_IN_TAB" }) do
     pcall(ev.RegisterEvent, ev, e)
 end
-ev:SetScript("OnEvent", function(_, event)
+ev:SetScript("OnEvent", WeintCodex.Measured("Ringe", function(_, event)
     if event == "PLAYER_REGEN_ENABLED" and not pending then return end
     RG.Schedule()
-end)
+end))
 
 function RG.StatusLine()
     local list = RG.List()

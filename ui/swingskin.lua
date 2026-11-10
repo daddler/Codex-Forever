@@ -166,7 +166,7 @@ local ev = CreateFrame("Frame")
 for _, e in ipairs({ "PLAYER_ENTER_COMBAT", "START_AUTOREPEAT_SPELL", "PLAYER_REGEN_DISABLED", "PLAYER_ENTERING_WORLD" }) do
     pcall(ev.RegisterEvent, ev, e)
 end
-ev:SetScript("OnEvent", Soon)
+ev:SetScript("OnEvent", WeintCodex.Measured("Schlagtimer", Soon))
 
 function SW.StatusLine()
     return string.format("Schwungtimer: %s · gefunden %d Balken · gesucht %d×%s",

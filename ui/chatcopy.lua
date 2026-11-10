@@ -133,7 +133,7 @@ CC.events = ev
 for _, e in ipairs({ "PLAYER_LOGIN", "UPDATE_CHAT_WINDOWS", "UPDATE_FLOATING_CHAT_WINDOWS" }) do
     pcall(ev.RegisterEvent, ev, e)
 end
-ev:SetScript("OnEvent", function() pcall(CC.Apply) end)
+ev:SetScript("OnEvent", WeintCodex.Measured("Chat kopieren", function() pcall(CC.Apply) end))
 
 local mod = K.Module(KEY)
 if mod then

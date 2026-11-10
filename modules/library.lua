@@ -312,5 +312,5 @@ end
 
 local ev = CreateFrame("Frame")
 ev:RegisterEvent("PLAYER_LOGIN")
-ev:SetScript("OnEvent", function() LB.Hook() end)
+ev:SetScript("OnEvent", WeintCodex.Measured("Bibliothek", function() LB.Hook() end))
 LB.events = ev

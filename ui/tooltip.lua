@@ -149,9 +149,9 @@ end
 
 local boot = CreateFrame("Frame")
 boot:RegisterEvent("PLAYER_LOGIN")
-boot:SetScript("OnEvent", function()
+boot:SetScript("OnEvent", WeintCodex.Measured("Tooltip", function()
     if K.UIEnabled() then
         local ok, err = pcall(T.Enable)
         if not ok then K.Report("tooltip", err) end
     end
-end)
+end))

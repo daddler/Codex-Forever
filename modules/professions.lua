@@ -1189,7 +1189,7 @@ end
 -- Wie oft jedes Ereignis kam (fuer /wcui pruefen: hat das Spiel das
 -- Berufsfenster ueberhaupt gemeldet?).
 PRO.eventCount = {}
-ev:SetScript("OnEvent", function(_, event, id)
+ev:SetScript("OnEvent", WeintCodex.Measured("Berufe", function(_, event, id)
     PRO.eventCount[event] = (PRO.eventCount[event] or 0) + 1
     if event == "PLAYER_LOGIN" or event == "SKILL_LINES_CHANGED" then pcall(PRO.RememberSkills) end
     if event == "PLAYER_LOGIN" then
@@ -1210,5 +1210,5 @@ ev:SetScript("OnEvent", function(_, event, id)
     end
     if event == "SPELL_DATA_LOAD_RESULT" and not pending[id] then return end
     Redraw()
-end)
+end))
 PRO.events = ev

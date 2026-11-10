@@ -2679,18 +2679,18 @@ local function Enable()
         "PLAYER_TARGET_CHANGED", "GROUP_ROSTER_UPDATE" }) do
         pcall(threatEv.RegisterEvent, threatEv, e)
     end
-    threatEv:SetScript("OnEvent", function()
+    threatEv:SetScript("OnEvent", WeintCodex.Measured("Schadensanzeige", function()
         if DM.ShowsThreat() then DM.RefreshSoon() end
-    end)
+    end))
     DM.threatEvents = threatEv
     -- Auren der Gruppe (6.6.2.1): eigener Rahmen, weil UNIT_AURA sehr oft
     -- kommt (auch fuer Plaketten) und nichts neu zeichnen soll.
     local auraEv = CreateFrame("Frame")
     pcall(auraEv.RegisterEvent, auraEv, "UNIT_AURA")
     pcall(auraEv.RegisterEvent, auraEv, "GROUP_ROSTER_UPDATE")
-    auraEv:SetScript("OnEvent", function(_, event, unit)
+    auraEv:SetScript("OnEvent", WeintCodex.Measured("Schadensanzeige", function(_, event, unit)
         if event == "UNIT_AURA" then DM.AuraChanged(unit) else DM.SnapAll() end
-    end)
+    end))
     DM.auraEvents = auraEv
     ev:SetScript("OnEvent", K.Measured("Schadensanzeige", function(_, event)
         if event == "PLAYER_REGEN_DISABLED" then

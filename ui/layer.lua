@@ -289,7 +289,7 @@ for _, e in ipairs({ "PLAYER_LOGIN", "PLAYER_ENTERING_WORLD", "ZONE_CHANGED_NEW_
                      "GROUP_JOINED", "GROUP_LEFT", "ADDON_ACTION_BLOCKED", "ADDON_ACTION_FORBIDDEN" }) do
     pcall(ev.RegisterEvent, ev, e)
 end
-ev:SetScript("OnEvent", function(_, event, a1)
+ev:SetScript("OnEvent", WeintCodex.Measured("Layer wechseln", function(_, event, a1)
     if event == "PLAYER_LOGIN" then
         if _G.C_ChatInfo and _G.C_ChatInfo.RegisterAddonMessagePrefix then
             pcall(_G.C_ChatInfo.RegisterAddonMessagePrefix, LY.PREFIX)
@@ -322,7 +322,7 @@ ev:SetScript("OnEvent", function(_, event, a1)
     elseif LY.sending then
         blocked = true
     end
-end)
+end))
 
 --------------------------------------------------
 -- Einstellungen: Seite "Layer" der Minikarte
@@ -351,7 +351,7 @@ end
 -- Waehrend einer Bitte: Restzeit im Schild, und Bescheid, wenn sie ablaeuft.
 local tick = CreateFrame("Frame")
 LY.tick = tick
-tick:SetScript("OnUpdate", function(self, el)
+tick:SetScript("OnUpdate", WeintCodex.Measured("Layer wechseln", function(self, el)
     self.acc = (self.acc or 0) + (el or 0)
     if self.acc < 1 then return end
     self.acc = 0
@@ -362,7 +362,7 @@ tick:SetScript("OnUpdate", function(self, el)
         Say("Keine Einladung in " .. LY.ASK_TTL .. " s – vermutlich hostet gerade niemand mit LayerSwap in deiner Zone. Später noch einmal versuchen.")
     end
     LY.Paint()
-end)
+end))
 
 K.Listen(function(kind, key)
     if (kind == "active" or kind == "setting") and key == KEY then

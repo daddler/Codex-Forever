@@ -224,11 +224,11 @@ function GT.OnLife(event)
     end
 end
 
-ev:SetScript("OnEvent", function(_, event, addon)
+ev:SetScript("OnEvent", WeintCodex.Measured("Suche wechseln", function(_, event, addon)
     if event == "PLAYER_DEAD" or event == "PLAYER_ALIVE" or event == "PLAYER_UNGHOST" then GT.OnLife(event) return end
     if event == "ADDON_ACTION_BLOCKED" or event == "ADDON_ACTION_FORBIDDEN" then GT.OnBlocked(addon)
     elseif event == "PLAYER_LOGIN" then GT.HookMenu() end
-end)
+end))
 pcall(ev.RegisterEvent, ev, "PLAYER_LOGIN")
 for _, e in ipairs({ "PLAYER_DEAD", "PLAYER_ALIVE", "PLAYER_UNGHOST" }) do pcall(ev.RegisterEvent, ev, e) end
 

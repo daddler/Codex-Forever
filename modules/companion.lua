@@ -1059,10 +1059,10 @@ sheetWatcher:RegisterEvent("SKILL_LINES_CHANGED")
 pcall(sheetWatcher.RegisterEvent, sheetWatcher, "PLAYER_SPECIALIZATION_CHANGED")
 pcall(sheetWatcher.RegisterEvent, sheetWatcher, "ACTIVE_TALENT_GROUP_CHANGED")
 
-sheetWatcher:SetScript("OnEvent", function(_, event)
+sheetWatcher:SetScript("OnEvent", WeintCodex.Measured("companion", function(_, event)
 
     -- Beim ersten Betreten der Welt braucht der Client laenger, bis
     -- Item-Infos im Cache stehen.
     ScheduleCharacterSheet(event == "PLAYER_ENTERING_WORLD" and 8 or 3)
 
-end)
+end))

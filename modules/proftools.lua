@@ -2013,12 +2013,12 @@ local sender = CreateFrame("Frame")
 sender:Hide()
 PT.sender = sender
 local acc = 0
-sender:SetScript("OnUpdate", function(self, el)
+sender:SetScript("OnUpdate", WeintCodex.Measured("Berufe-Werkzeuge", function(self, el)
     acc = acc + el
     if acc < 0.25 then return end
     acc = 0
     if PT.SendNext(_G.GetTime and _G.GetTime() or 0) then self:Hide() end
-end)
+end))
 
 function PT.ApplyShare()
     local cc = _G.C_ChatInfo
@@ -2036,7 +2036,7 @@ for _, e in ipairs({ "PLAYER_ENTERING_WORLD", "CHAT_MSG_ADDON", "UNIT_SPELLCAST_
 end
 local started = false
 local shareQueued = false
-ev:SetScript("OnEvent", function(_, event, a, b, c, d)
+ev:SetScript("OnEvent", WeintCodex.Measured("Berufe-Werkzeuge", function(_, event, a, b, c, d)
     if event == "CHAT_MSG_ADDON" then
         PT.OnAddonMessage(a, b, c, d)
     elseif event == "PLAYER_ENTERING_WORLD" then
@@ -2068,7 +2068,7 @@ ev:SetScript("OnEvent", function(_, event, a, b, c, d)
             _G.C_Timer.After(30, function() shareQueued = false PT.QueueOwn() PT.CheckCooldowns() end)
         end
     end
-end)
+end))
 
 --------------------------------------------------
 -- Weg am Berufsfenster
@@ -2286,7 +2286,7 @@ do
     end
     local queued = false
     pcall(sev.RegisterEvent, sev, "TRADE_SKILL_CLOSE")
-    sev:SetScript("OnEvent", function(_, event)
+    sev:SetScript("OnEvent", WeintCodex.Measured("Berufe-Werkzeuge", function(_, event)
         if event == "TRADE_SKILL_CLOSE" or event == "TRADE_SKILL_SHOW" then
             if event == "TRADE_SKILL_CLOSE" then PT.sideClosed = false return end
             PT.sideClosed = false
@@ -2295,7 +2295,7 @@ do
         queued = true
         local function run() queued = false PT.RefreshSide() end
         if _G.C_Timer and _G.C_Timer.After then _G.C_Timer.After(0.5, run) else run() end
-    end)
+    end))
 end
 
 --------------------------------------------------
@@ -2547,7 +2547,7 @@ do
     local mev = CreateFrame("Frame")
     for _, e in ipairs({ "MERCHANT_SHOW", "MERCHANT_UPDATE", "BAG_UPDATE_DELAYED" }) do pcall(mev.RegisterEvent, mev, e) end
     local hooked = false
-    mev:SetScript("OnEvent", function(_, event)
+    mev:SetScript("OnEvent", WeintCodex.Measured("Berufe-Werkzeuge", function(_, event)
         if not hooked and _G.hooksecurefunc and type(_G.MerchantFrame_UpdateMerchantInfo) == "function" then
             hooked = true
             _G.hooksecurefunc("MerchantFrame_UpdateMerchantInfo", function() pcall(PT.MarkMerchant) end)
@@ -2556,5 +2556,5 @@ do
         if event == "MERCHANT_SHOW" then pcall(PT.RecordMerchant) end
         if _G.C_Timer and _G.C_Timer.After then _G.C_Timer.After(0.1, function() pcall(PT.MarkMerchant) end)
         else pcall(PT.MarkMerchant) end
-    end)
+    end))
 end

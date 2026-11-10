@@ -760,6 +760,11 @@ local function Account(name, m0, t0, ...)
     return ...
 end
 
+function K.MeasureCall(name, fn, ...)
+    local m0, t0 = GcCount(), Clock()
+    return Account(name, m0, t0, fn(...))
+end
+
 function K.Measured(name, fn)
     return function(...)
         if not K.prof.on then return fn(...) end
@@ -822,17 +827,107 @@ function K.ProfileReport(secs)
         sum = sum + e.kb
     end
     table.sort(list, function(a, b) return a.e.kb > b.e.kb end)
+    -- 1.0.5.42: was dauerhaft gehalten wird - am Ende, nach der Messung.
+    local okH, held = pcall(K.HeldReport)
+    local function AddHeld()
+        if okH and type(held) == "table" then for _, l in ipairs(held) do out[#out + 1] = l end end
+    end
     if #list == 0 then
         out[#out + 1] = "Kein gemessener Teil lief."
+        AddHeld()
         return out
     end
     if not GcCount() then out[#out + 1] = "Speicher je Teil nicht messbar (collectgarbage fehlt) – nur Zeit." end
     out[#out + 1] = string.format("Gemessene Teile zusammen: %.1f KB/s", sum / secs)
-    for i = 1, math.min(12, #list) do
+    for i = 1, math.min(25, #list) do
         local e = list[i].e
         out[#out + 1] = string.format("%d. %s: %.1f KB/s, %.0f Aufrufe/s, %.2f ms/s", i, list[i].name,
             e.kb / secs, e.calls / secs, e.ms / secs)
     end
+    -- 1.0.5.42: auch die Teile, die viel Zeit, aber wenig Speicher brauchen.
+    table.sort(list, function(a, b) return a.e.ms > b.e.ms end)
+    local slow = {}
+    for i = 1, math.min(5, #list) do
+        local e = list[i].e
+        if e.ms / secs >= 0.05 then slow[#slow + 1] = string.format("%s %.2f ms/s", list[i].name, e.ms / secs) end
+    end
+    if #slow > 0 then out[#out + 1] = "Meiste Zeit: " .. table.concat(slow, ", ") end
+    AddHeld()
+    return out
+end
+
+-- Was WeintCodex dauerhaft haelt (1.0.5.42): Groesse der gespeicherten
+-- Daten (SavedVariables) und der Datentabellen, GESCHAETZT - Lua nennt die
+-- Groesse einer Tabelle nicht. Faustwerte von Lua 5.1: Tabelle 56 Byte,
+-- je Eintrag im Feldteil 16, im Streuteil 40, Text 25 + Laenge (jeder Text
+-- einmal). Geteilte Tabellen zaehlen beim Ersten. Begrenzte Schrittzahl,
+-- damit das Spiel nicht haengt.
+K.HELD_STEPS = 3000000
+function K.HeldSize(root, seen, budget)
+    if type(root) ~= "table" or seen[root] then return 0 end
+    local bytes, stack = 0, { root }
+    seen[root] = true
+    while #stack > 0 do
+        local t = table.remove(stack)
+        local n = #t
+        bytes = bytes + 56 + n * 16
+        for k, v in pairs(t) do
+            budget.left = budget.left - 1
+            if budget.left <= 0 then budget.cut = true return bytes end
+            if not (type(k) == "number" and k >= 1 and k <= n and k % 1 == 0) then bytes = bytes + 40 end
+            local x = k
+            for _ = 1, 2 do
+                local tx = type(x)
+                if tx == "string" then
+                    if not seen[x] then seen[x] = true bytes = bytes + 25 + #x end
+                elseif tx == "table" and not seen[x] then
+                    seen[x] = true
+                    stack[#stack + 1] = x
+                end
+                x = v
+            end
+        end
+    end
+    return bytes
+end
+
+function K.HeldReport()
+    local out, seen, budget = {}, {}, { left = K.HELD_STEPS }
+    local function top(title, list, max)
+        table.sort(list, function(a, b) return a[2] > b[2] end)
+        local sum = 0
+        for _, e in ipairs(list) do sum = sum + e[2] end
+        out[#out + 1] = string.format("%s: zusammen ~%.1f MB", title, sum / 1048576)
+        for i = 1, math.min(max, #list) do
+            if list[i][2] < 20480 then break end
+            out[#out + 1] = string.format("   %s: ~%.0f KB", list[i][1], list[i][2] / 1024)
+        end
+    end
+    -- Gespeicherte Daten: je Schluessel von WeintCodex_SavedData, dazu die
+    -- uebrigen gespeicherten Variablen.
+    local saved = {}
+    local sd = _G.WeintCodex_SavedData
+    if type(sd) == "table" then
+        seen[sd] = true
+        for k, v in pairs(sd) do
+            if type(v) == "table" then saved[#saved + 1] = { "SavedData." .. tostring(k), K.HeldSize(v, seen, budget) } end
+        end
+    end
+    for name, v in pairs(_G) do
+        if type(name) == "string" and type(v) == "table" and name ~= "WeintCodex_SavedData"
+           and (name:find("^WeintCodex_") or name:find("^WeintCompanion")) and name ~= "WeintCodex_Dungeons" then
+            saved[#saved + 1] = { name, K.HeldSize(v, seen, budget) }
+        end
+    end
+    top("Gespeicherte Daten (geschätzt)", saved, 12)
+    -- Datentabellen: die Teile von WeintCodex, die vor allem Daten sind.
+    local data = {}
+    if type(_G.WeintCodex_Dungeons) == "table" then data[#data + 1] = { "Dungeons", K.HeldSize(_G.WeintCodex_Dungeons, seen, budget) } end
+    for k, v in pairs(WeintCodex) do
+        if type(v) == "table" then data[#data + 1] = { "WeintCodex." .. tostring(k), K.HeldSize(v, seen, budget) } end
+    end
+    top("Daten und Teile des Addons (geschätzt)", data, 15)
+    if budget.cut then out[#out + 1] = "Schätzung abgebrochen (zu groß) – Werte sind Untergrenzen." end
     return out
 end
 
@@ -1478,7 +1573,7 @@ do
     local ev = CreateFrame("Frame")
     for _, e in ipairs({ "DISPLAY_SIZE_CHANGED", "UI_SCALE_CHANGED" }) do pcall(ev.RegisterEvent, ev, e) end
     local due
-    ev:SetScript("OnEvent", function()
+    ev:SetScript("OnEvent", WeintCodex.Measured("Grundlage", function()
         local now = (_G.GetTime and _G.GetTime()) or 0
         local first = due == nil
         due = now + 0.5
@@ -1490,7 +1585,7 @@ do
             K.RefitAll()
         end
         _G.C_Timer.After(0.55, check)
-    end)
+    end))
     K.refitEvents = ev
 end
 
@@ -2231,7 +2326,7 @@ local boot = CreateFrame("Frame")
 boot:RegisterEvent("PLAYER_LOGIN")
 boot:RegisterEvent("PLAYER_REGEN_ENABLED")
 boot:RegisterEvent("PLAYER_REGEN_DISABLED")
-boot:SetScript("OnEvent", function(_, event)
+boot:SetScript("OnEvent", WeintCodex.Measured("Grundlage", function(_, event)
     if event == "PLAYER_REGEN_DISABLED" then
         -- Entsperrt in den Kampf: die Flaechen verschwinden, statt einen
         -- geschuetzten Rahmen halb gezogen stehen zu lassen.
@@ -2255,4 +2350,4 @@ boot:SetScript("OnEvent", function(_, event)
         if K.WantsActive(key) then K.Activate(key) end
     end
     K.SweepProfile()
-end)
+end))

@@ -389,10 +389,10 @@ ME.EnsureDriver = EnsureDriver
 
 -- Die Weltkarte kann spaeter geladen werden (Blizzard_WorldMap).
 local ev = CreateFrame("Frame")
-ev:SetScript("OnEvent", function(_, event, name)
+ev:SetScript("OnEvent", WeintCodex.Measured("Karte: Eingänge", function(_, event, name)
     if event == "ADDON_LOADED" and name ~= "Blizzard_WorldMap" then return end
     if ME.Active() then EnsureDriver() end
-end)
+end))
 
 local function Apply()
     ME.Forget()

@@ -167,7 +167,7 @@ end
 
 TryRegisterEvent(lootFrame, "CHAT_MSG_LOOT")
 
-lootFrame:SetScript("OnEvent", function(_, event, message)
+lootFrame:SetScript("OnEvent", WeintCodex.Measured("Beute (Liste)", function(_, event, message)
     if type(message) ~= "string" then return end
 
     -- Vor dem teuren Pattern-Matching: gilt hier ueberhaupt geloggt zu
@@ -201,4 +201,4 @@ lootFrame:SetScript("OnEvent", function(_, event, message)
         end
 
     end
-end)
+end))

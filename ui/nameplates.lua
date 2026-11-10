@@ -2810,12 +2810,12 @@ function NP.DrawCombo(row, p, cur, max)
 end
 
 local comboEvents = CreateFrame("Frame")
-comboEvents:SetScript("OnEvent", function(_, event, unit)
+comboEvents:SetScript("OnEvent", WeintCodex.Measured("Plaketten", function(_, event, unit)
     if (event == "UNIT_POWER_UPDATE" or event == "UNIT_POWER_FREQUENT") and unit ~= "player" then return end
     -- Erst nach den Plaketten: die wissen nach PLAYER_TARGET_CHANGED/ADDED
     -- erst im selben Durchlauf, welche das Ziel ist.
     if _G.C_Timer and _G.C_Timer.After then _G.C_Timer.After(0, NP.UpdateCombo) else NP.UpdateCombo() end
-end)
+end))
 function NP.EnableCombo()
     for _, e in ipairs({ "PLAYER_TARGET_CHANGED", "UNIT_POWER_UPDATE", "UNIT_POWER_FREQUENT",
         "UPDATE_SHAPESHIFT_FORM", "NAME_PLATE_UNIT_ADDED", "NAME_PLATE_UNIT_REMOVED", "PLAYER_ENTERING_WORLD" }) do
@@ -2936,7 +2936,7 @@ end
 do
     local boot = CreateFrame("Frame")
     boot:RegisterEvent("PLAYER_LOGIN")
-    boot:SetScript("OnEvent", function() NP.ApplyOff() end)
+    boot:SetScript("OnEvent", WeintCodex.Measured("Plaketten", function() NP.ApplyOff() end))
 end
 K.Listen(function(kind, module, key)
     if kind == "setting" and module == KEY and (key == "offGamePlates" or key == "enabled") then NP.ApplyOff() end

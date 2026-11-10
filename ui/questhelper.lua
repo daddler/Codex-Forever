@@ -1312,7 +1312,7 @@ local REFRESH = { "QUESTLINE_UPDATE", "QUEST_LOG_UPDATE", "QUEST_ACCEPTED", "QUE
                   "SUPER_TRACKING_CHANGED" }
 local pending = false
 local ev = CreateFrame("Frame")
-ev:SetScript("OnEvent", function(_, event, name)
+ev:SetScript("OnEvent", WeintCodex.Measured("questhelper", function(_, event, name)
     if event == "ADDON_LOADED" then
         if name == "Blizzard_WorldMap" and QH.Active() then EnsureDriver() end
         return
@@ -1335,7 +1335,7 @@ ev:SetScript("OnEvent", function(_, event, name)
     local t = _G.C_Timer
     local function run() pending = false Refresh() end
     if t and t.After then t.After(0.2, run) else run() end
-end)
+end))
 ev:RegisterEvent("PLAYER_LOGIN")
 QH.events = ev
 

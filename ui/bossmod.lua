@@ -1985,7 +1985,7 @@ for _, e in ipairs({ "START_PLAYER_COUNTDOWN", "CANCEL_PLAYER_COUNTDOWN", "CHAT_
         "UNIT_THREAT_LIST_UPDATE", "NAME_PLATE_UNIT_ADDED", "UNIT_HEALTH" }) do
     pcall(ev.RegisterEvent, ev, e)
 end
-ev:SetScript("OnEvent", function(_, event, a1, a2, a3, a4, a5)
+ev:SetScript("OnEvent", WeintCodex.Measured("Bosskämpfe", function(_, event, a1, a2, a3, a4, a5)
     if event == "PLAYER_LOGIN" then
         local CI = _G.C_ChatInfo
         local reg = (CI and CI.RegisterAddonMessagePrefix) or _G.RegisterAddonMessagePrefix
@@ -2048,7 +2048,7 @@ ev:SetScript("OnEvent", function(_, event, a1, a2, a3, a4, a5)
     elseif event == "ENCOUNTER_WARNING" then
         BM.Warning(a1)
     end
-end)
+end))
 BM.ev = ev
 
 -- /pull und /break - nur, wenn kein anderes Addon (BigWigs, DBM) sie hat.

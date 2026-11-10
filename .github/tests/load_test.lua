@@ -25490,6 +25490,27 @@ do
     Check(ok, "Plaketten: Bosse der neuen Dungeons über ihre NPC-Nummer" .. (ok and "" or (": " .. tostring(err))))
 end
 
+do
+    local K = WeintCodex.UIKit
+    local ok, err = pcall(function()
+        local held = K.HeldReport()
+        assert(#held >= 2 and held[1]:find("Gespeicherte Daten", 1, true), "Abschnitt fehlt")
+        local joined = table.concat(held, "\n")
+        assert(joined:find("Daten und Teile des Addons", 1, true), "Datentabellen fehlen")
+        -- Gemessen werden jetzt auch Teile ohne eigene Messung (Post, Flugspiele, Bosse teilen …).
+        K.prof.on = true
+        local f = WeintCodex.Measured("Prüfteil", function(a) local t = {} for i = 1, 200 do t[i] = { i } end return a + 1 end)
+        assert(f(1) == 2, "Hülle verfälscht das Ergebnis")
+        K.prof.on = false
+        assert(K.prof.data["Prüfteil"] and K.prof.data["Prüfteil"].calls == 1, "Hülle zählt nicht")
+        K.prof.data["Prüfteil"] = nil
+        local src = io.open(ROOT .. "/ui/postal.lua"):read("*a")
+        assert(src:find('WeintCodex.Measured("Post"', 1, true), "Post nicht gemessen")
+    end)
+    K.prof.on = false
+    Check(ok, "/wcui speicher: neue Teile gemessen, gehaltene Daten geschätzt" .. (ok and "" or (": " .. tostring(err))))
+end
+
 if failures == 0 then
     print("BESTANDEN")
     os.exit(0)

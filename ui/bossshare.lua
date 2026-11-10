@@ -437,7 +437,7 @@ BS.ev = ev
 local loginAt
 pcall(ev.RegisterEvent, ev, "PLAYER_LOGIN")
 pcall(ev.RegisterEvent, ev, "CHAT_MSG_ADDON")
-ev:SetScript("OnEvent", function(_, event, a1, a2, a3, a4)
+ev:SetScript("OnEvent", WeintCodex.Measured("Bosskämpfe: teilen", function(_, event, a1, a2, a3, a4)
     if event == "PLAYER_LOGIN" then
         local cc = _G.C_ChatInfo
         local reg = (cc and cc.RegisterAddonMessagePrefix) or _G.RegisterAddonMessagePrefix
@@ -446,9 +446,9 @@ ev:SetScript("OnEvent", function(_, event, a1, a2, a3, a4)
         return
     end
     if event == "CHAT_MSG_ADDON" and a1 == BS.PREFIX then BS.OnMessage(a1, a2, a3, a4) end
-end)
+end))
 local acc, joined, shared = 0, false, false
-ev:SetScript("OnUpdate", function(_, el)
+ev:SetScript("OnUpdate", WeintCodex.Measured("Bosskämpfe: teilen", function(_, el)
     acc = acc + (el or 0)
     if acc < 0.25 then return end
     acc = 0
@@ -458,7 +458,7 @@ ev:SetScript("OnUpdate", function(_, el)
         if not shared and now - loginAt >= BS.LOGIN_DELAY then shared = true BS.ShareRecent() end
     end
     BS.SendNext(now)
-end)
+end))
 
 local mod = K.Module(KEY)
 if mod and mod.defaults.bossShare == nil then mod.defaults.bossShare = true end

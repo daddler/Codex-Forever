@@ -305,7 +305,7 @@ local watcher = CreateFrame("Frame")
 pcall(watcher.RegisterEvent, watcher, "INSPECT_READY")
 pcall(watcher.RegisterEvent, watcher, "GROUP_ROSTER_UPDATE")
 
-watcher:SetScript("OnEvent", function(_, event, guid)
+watcher:SetScript("OnEvent", WeintCodex.Measured("groupcheck", function(_, event, guid)
     if event == "GROUP_ROSTER_UPDATE" then
         -- Nur neu zeichnen, nicht neu pruefen: wer dazukommt, taucht als
         -- ungeprueft auf, und ein automatischer Inspektionslauf bei jedem
@@ -341,7 +341,7 @@ watcher:SetScript("OnEvent", function(_, event, guid)
             CompleteCurrent("fehlgeschlagen", nil)
         end
     end)
-end)
+end))
 
 --------------------------------------------------
 -- Lauf starten

@@ -163,7 +163,7 @@ function BS.Start()
     local ev = CreateFrame("Frame")
     pcall(ev.RegisterUnitEvent, ev, "UNIT_AURA", "player")
     pcall(ev.RegisterEvent, ev, "PLAYER_ENTERING_WORLD")
-    ev:SetScript("OnEvent", BS.Soon)
+    ev:SetScript("OnEvent", WeintCodex.Measured("Buffs", BS.Soon))
     BS.Scan()
 end
 
@@ -173,7 +173,7 @@ end
 local boot = CreateFrame("Frame")
 pcall(boot.RegisterEvent, boot, "PLAYER_LOGIN")
 pcall(boot.RegisterEvent, boot, "PLAYER_ENTERING_WORLD")
-boot:SetScript("OnEvent", function() BS.Start() BS.Soon() end)
+boot:SetScript("OnEvent", WeintCodex.Measured("Buffs", function() BS.Start() BS.Soon() end))
 
 function BS.StatusLine()
     local n = 0

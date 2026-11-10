@@ -131,12 +131,12 @@ local function Enable()
     -- Die Zielverfolgung laedt das Spiel womoeglich erst spaeter nach.
     local wait = CreateFrame("Frame")
     wait:RegisterEvent("ADDON_LOADED")
-    wait:SetScript("OnEvent", function(self, _, name)
+    wait:SetScript("OnEvent", WeintCodex.Measured("questtracker", function(self, _, name)
         if name == "Blizzard_ObjectiveTracker" and Tracker() and not panel then
             self:UnregisterAllEvents()
             Setup()
         end
-    end)
+    end))
 end
 
 function Setup()

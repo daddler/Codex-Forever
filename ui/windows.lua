@@ -2894,7 +2894,7 @@ end
 -- ein Fenster offen ist (die Taktgeber sind Kinder der Fenster).
 local clicks = CreateFrame("Frame")
 pcall(clicks.RegisterEvent, clicks, "GLOBAL_MOUSE_UP")
-clicks:SetScript("OnEvent", function() W.Wake() end)
+clicks:SetScript("OnEvent", WeintCodex.Measured("windows", function() W.Wake() end))
 
 local hookedShow = {}
 function W.HookAll()
@@ -2943,11 +2943,11 @@ end
 local boot = CreateFrame("Frame")
 boot:RegisterEvent("PLAYER_LOGIN")
 boot:RegisterEvent("ADDON_LOADED")
-boot:SetScript("OnEvent", function(_, event, name)
+boot:SetScript("OnEvent", WeintCodex.Measured("windows", function(_, event, name)
     if not K.UIEnabled() or not Opt("windowSkin") then return end
     if event == "ADDON_LOADED" and not (type(name) == "string" and name:find("^Blizzard_")) then return end
     -- Vor dem Anmelden gibt es nichts zu gestalten; PLAYER_LOGIN kommt noch.
     if event == "ADDON_LOADED" and not (_G.IsLoggedIn and K.Bool(_G.IsLoggedIn(), false)) then return end
     Run(W.Apply)
     W.HookAll()
-end)
+end))

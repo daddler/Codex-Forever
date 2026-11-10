@@ -1781,7 +1781,11 @@ SlashCmdList["WEINTCODEXUI"] = function(msg)
         local say = function(line) print(WeintCodex.ColorText("accent", "[WeintCodex]") .. " " .. line) end
         if K.prof.on then say("Die Messung läuft schon.") return end
         say("Messe 30 Sekunden, wer wie viel Speicher belegt – spiel einfach weiter, am aussagekräftigsten im Kampf.")
-        K.ProfileRun(30, function(lines) for _, line in ipairs(lines) do say(line) end end)
+        K.ProfileRun(30, function(lines)
+            for _, line in ipairs(lines) do say(line) end
+            -- 1.0.5.42: dasselbe im Fenster zum Kopieren (lange Ausgabe).
+            if K.ShowReport then pcall(K.ShowReport, "Speicher – Messung über 30 Sekunden", lines) end
+        end)
         return
     end
     if msg == "questhilfe" or msg == "questkarte" then

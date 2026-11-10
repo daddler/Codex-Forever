@@ -1494,7 +1494,7 @@ do
         pcall(ev.RegisterEvent, ev, e)
     end
     local queued = false
-    ev:SetScript("OnEvent", function(_, event, id)
+    ev:SetScript("OnEvent", WeintCodex.Measured("home", function(_, event, id)
         if event == "SPELL_DATA_LOAD_RESULT" then
             local TR = WeintCodex.Trainer
             if not (TR and TR.pending and TR.pending[id]) then return end
@@ -1512,5 +1512,5 @@ do
             end
         end
         if C_Timer and C_Timer.After then C_Timer.After(0.5, run) else run() end
-    end)
+    end))
 end

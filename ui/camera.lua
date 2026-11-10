@@ -54,7 +54,7 @@ end
 
 local ev = CreateFrame("Frame")
 pcall(ev.RegisterEvent, ev, "PLAYER_LOGIN")
-ev:SetScript("OnEvent", function() CA.Apply() end)
+ev:SetScript("OnEvent", WeintCodex.Measured("Kamera", function() CA.Apply() end))
 
 K.Listen(function(kind, key, sub)
     if key ~= KEY then return end

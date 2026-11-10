@@ -135,7 +135,7 @@ end)
 
 local ev = CreateFrame("Frame")
 ev:RegisterEvent("PLAYER_LOGIN")
-ev:SetScript("OnEvent", function()
+ev:SetScript("OnEvent", WeintCodex.Measured("Minikarten-Symbol", function()
     local ok, err = pcall(LN.Sync)
     if not ok then K.Report("symbol", err) end
-end)
+end))
