@@ -25421,6 +25421,32 @@ do
     Check(ok, "Erinnerung: Talentpunkte auch ohne Modul, nach Aufstieg, nie im Kampf" .. (ok and "" or (": " .. tostring(err))))
 end
 
+do
+    local PT, PRO = WeintCodex.ProfTools, WeintCodex.Professions
+    local ok, err = pcall(function()
+        local recipes = PRO.Recipes("alchemy")
+        assert(#recipes > 3, "keine Alchemierezepte")
+        local a, b = recipes[1], recipes[2]
+        local g = PT.Guild()
+        local keep = g.Testa
+        g.Testa = { alchemy = { rank = 120, max = 150, known = { [a.spell] = true, [b.spell] = true }, at = 1 } }
+        PT.book = nil
+        PT.Draw("gilde")
+        PT.OpenBook({ name = "Testa", key = "alchemy", rank = 120, max = 150 })
+        assert(PT.lastBook and PT.lastBook.rows == 2, "Buch zeigt nicht beide Rezepte")
+        local n = PT.BookList(PT.book, (a.name or ""):sub(1, 6))
+        assert(#n >= 1, "Suche findet nichts")
+        assert(#PT.BookList(PT.book, "gibtesnichtxyz") == 0, "Suche filtert nicht")
+        PT.bookSel = a
+        PT.Draw("gilde")
+        PT.book = nil
+        PT.Draw("gilde")
+        g.Testa = keep
+    end)
+    PT.book, PT.bookSel = nil, nil
+    Check(ok, "Berufe der Gilde: Rezeptbuch je Person mit Suche" .. (ok and "" or (": " .. tostring(err))))
+end
+
 if failures == 0 then
     print("BESTANDEN")
     os.exit(0)

@@ -1125,11 +1125,105 @@ function PT.ClassRGB(class)
     return nil
 end
 
+-- 1.0.5.40 (Wunsch: „auf den Beruf klicken und es öffnet sich das
+-- Berufebuch mit den Rezepten, die der Spieler kann“): Rezepte einer Person.
+PT.book, PT.bookQuery = nil, ""
+local bookSearch
+
+-- { spell = true } der Person in diesem Beruf, oder nil.
+function PT.BookKnown(b)
+    local sd = SD()
+    if b.char then
+        local m = sd and sd.professions and sd.professions[b.char]
+        return m and m.known
+    end
+    local e = (PT.Guild() or {})[b.name]
+    e = e and e[b.key]
+    return e and e.known
+end
+
+-- Rezepte der Person, nach Fertigkeit, gefiltert nach der Suche.
+function PT.BookList(b, query)
+    local known = PT.BookKnown(b) or {}
+    local q = (query or ""):lower()
+    local out = {}
+    for _, r in ipairs(PRO.Recipes(b.key)) do
+        if known[r.spell] then
+            local name = PRO.RecipeName(r) or r.name or ""
+            if q == "" or name:lower():find(q, 1, true) or (r.name or ""):lower():find(q, 1, true) then
+                out[#out + 1] = { r = r, name = name }
+            end
+        end
+    end
+    table.sort(out, function(a, c)
+        local la, lc = a.r.learn or a.r.yellow or 0, c.r.learn or c.r.yellow or 0
+        if la ~= lc then return la > lc end
+        return a.name < c.name
+    end)
+    return out
+end
+
+function PT.OpenBook(b)
+    PT.book, PT.bookQuery, PT.bookSel = b, "", nil
+    if bookSearch then bookSearch:SetText("") end
+    PT.Draw("gilde")
+end
+
+local function SearchBox(f)
+    if bookSearch then return bookSearch end
+    local eb = CreateFrame("EditBox", nil, f.Card, "InputBoxTemplate")
+    eb:SetSize(180, 20)
+    eb:SetAutoFocus(false)
+    eb:SetPoint("RIGHT", f.Action, "LEFT", -12, 0)
+    eb:SetScript("OnTextChanged", function(self, user)
+        if not user then return end
+        PT.bookQuery = self:GetText() or ""
+        PT.Draw("gilde")
+    end)
+    eb:SetScript("OnEscapePressed", function(self) self:ClearFocus() end)
+    bookSearch = eb
+    PT.bookSearch = eb
+    return eb
+end
+
+function PT.DrawBook(body, w)
+    local f, b = page, PT.book
+    f.Title:SetText(b.name .. " · " .. PRO.ProfName(b.key))
+    f.Action:SetText("‹ Zurück")
+    f.Action.run = function() PT.book = nil PT.Draw("gilde") end
+    f.Action:Show()
+    SearchBox(f):Show()
+    local list = PT.BookList(b, PT.bookQuery)
+    local y = 0
+    local known = PT.BookKnown(b)
+    if not known then
+        return Note(body, y, w, "Von " .. b.name .. " ist für diesen Beruf nichts mehr bekannt.")
+    end
+    local total = 0
+    for _ in pairs(known) do total = total + 1 end
+    y = Note(body, y, w, (PT.bookQuery ~= "" and (#list .. " Treffer für „" .. PT.bookQuery .. "“") or (#list .. " Rezepte"))
+        .. (b.rank and ("  ·  Fertigkeit " .. b.rank .. (b.max and (" / " .. b.max) or "")) or "")
+        .. ((b.at and _G.date) and ("  ·  Stand " .. _G.date("%d.%m. %H:%M", b.at)) or ""))
+    for _, x in ipairs(list) do
+        local lvl = x.r.learn or x.r.yellow
+        y = Row(body, y, w, x.name, lvl and ("Stufe " .. lvl) or "", { recipe = x.r, onClick = function()
+            -- Klick: Details des Rezepts (Reagenzien, wer es kann) rechts.
+            PT.bookSel = (PT.bookSel ~= x.r) and x.r or nil
+            PT.Draw("gilde")
+        end })
+    end
+    if #list == 0 and PT.bookQuery ~= "" then y = Note(body, y, w, "Kein Rezept passt zur Suche.") end
+    PT.lastBook = { name = b.name, key = b.key, rows = #list }
+    return y
+end
+
 function PT.DrawGuild(body, w)
     local classes = PT.ClassMap()
     local y = 0
     local g = PT.Guild() or {}
     local f = page
+    if PT.book then return PT.DrawBook(body, w) end
+    if bookSearch then bookSearch:Hide() end
     f.Title:SetText("Berufe der Gilde")
     f.Action:SetText(PT.Sharing() and "Teilen: an" or "Teilen: aus")
     f.Action.run = function() PT.SetSharing(not PT.Sharing()) PT.Draw("gilde") end
@@ -1146,7 +1240,7 @@ function PT.DrawGuild(body, w)
             if type(m) == "table" and m.scanned and m.scanned[p.key] then
                 local n = 0
                 for _, r in ipairs(PRO.Recipes(p.key)) do if m.known[r.spell] then n = n + 1 end end
-                people[#people + 1] = { name = char:match("^([^-]+)") or char, own = true, n = n }
+                people[#people + 1] = { name = char:match("^([^-]+)") or char, own = true, n = n, char = char }
             end
         end
         for name, profs in pairs(g) do
@@ -1163,8 +1257,12 @@ function PT.DrawGuild(body, w)
             y = Head(body, y, w, PRO.ProfName(p.key), #people == 1 and "1 Person" or (#people .. " Personen"))
             for _, x in ipairs(people) do
                 local right = (x.rank and (x.rank .. (x.max and (" / " .. x.max) or "")) or "") .. "   " .. x.n .. " Rezepte"
-                y = Row(body, y, w, x.name .. (x.own and "  (dein Charakter)" or ""), right,
-                    { tone = x.own and "textBright" or "textNormal", rgb = PT.ClassRGB(classes[x.name]) })
+                local key = p.key
+                y = Row(body, y, w, x.name .. (x.own and "  (dein Charakter)" or ""), right .. "   ›",
+                    { tone = x.own and "textBright" or "textNormal", rgb = PT.ClassRGB(classes[x.name]),
+                      hint = "Klick: Rezepte ansehen und durchsuchen",
+                      onClick = function() PT.OpenBook({ name = x.name, key = key, char = x.char,
+                          rank = x.rank, max = x.max, at = x.at }) end })
             end
             y = y - 8
         end
@@ -1792,6 +1890,9 @@ function PT.Draw(key)
     -- messen - er macht die Karte schmaler.
     if key == "merkliste" and PT.selItem and nav and nav.SetInspector then
         nav.SetInspector(PT.ItemBlocks(PT.selItem))
+    end
+    if key == "gilde" and PT.book and PT.bookSel and PRO.RecipeInspector and nav and nav.SetInspector then
+        nav.SetInspector(PRO.RecipeInspector(PT.bookSel))
     end
     PT.FitBar(f)
     for i, it in ipairs(PT.BAR_ITEMS) do if it.key == key and f.ToolBar then f.ToolBar:Select(i) end end
