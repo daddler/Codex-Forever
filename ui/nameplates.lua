@@ -1223,14 +1223,44 @@ end
 -- 1.0.5.40 (Feedback: „Bosse orange – bei den neuen Inis noch nicht“):
 -- Boss ist, was der Client so nennt (Stufe „??“, worldboss) ODER dessen
 -- NPC-Nummer im Bestand der Dungeonbosse steht (data/boss_npcs.lua,
--- data/boss_npcs_forever.lua).
+-- data/boss_npcs_forever.lua) ODER (1.0.5.41) dessen Name in einer
+-- Instanz einem bekannten Boss gleicht.
 function NP.IsBossNpc(unit)
     local NC = WeintCodex.UINpcColors
     local guid = _G.UnitGUID and _G.UnitGUID(unit)
     local id = NC and NC.NpcID and NC.NpcID(guid)
     if type(id) ~= "number" then return false end
     local a, b = WeintCodex.BossNpcs, WeintCodex.ForeverBossNpcs
-    return (a and a[id] or b and b[id]) and true or false
+    if (a and a[id]) or (b and b[id]) then return true end
+    return NP.IsBossName(unit)
+end
+
+-- Namensabgleich (1.0.5.41, Wunsch: „neben ?? und Weltboss ein
+-- Namensabgleich“): Namen aller Bosse aus dem Bestand - Dungeonseite
+-- (auch Zweitnamen), Kompendium deutsch/englisch, neue Dungeons. Nur in
+-- Instanzen: draußen tragen Allerweltsnamen („Plunder“, „Gill“) sonst die
+-- Bossfarbe.
+local bossNames
+function NP.BossNames()
+    if bossNames then return bossNames end
+    bossNames = {}
+    local function add(n) if type(n) == "string" and n ~= "" then bossNames[n:lower()] = true end end
+    for _, d in ipairs(_G.WeintCodex_Dungeons or {}) do
+        for _, bo in ipairs(type(d.bosses) == "table" and d.bosses or {}) do add(bo.name) add(bo.nameAlt) end
+    end
+    for _, v in pairs(WeintCodex.BossNpcs or {}) do add(v[3]) add(v[4]) end
+    for _, v in pairs(WeintCodex.ForeverBossNpcs or {}) do add(v[2]) end
+    return bossNames
+end
+
+function NP.IsBossName(unit)
+    local ok, inside = pcall(_G.IsInInstance or function() return false end)
+    if not ok or not K.Bool(inside, false) then return false end
+    local n = K.Plain(_G.UnitName and _G.UnitName(unit))
+    if type(n) ~= "string" or n == "" then
+        return false
+    end
+    return NP.BossNames()[n:lower()] and true or false
 end
 
 function NP.EliteKind(unit)

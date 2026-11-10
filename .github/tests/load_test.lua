@@ -25471,6 +25471,20 @@ do
         assert(not NP.IsBossNpc("nameplate1"), "gewöhnlicher NPC als Boss")
         _G.UnitGUID = function() return "Player-1-0ABC" end
         assert(not NP.IsBossNpc("nameplate1"), "Spieler als Boss")
+        -- 1.0.5.41: Namensabgleich, nur in Instanzen.
+        local oN, oI = _G.UnitName, _G.IsInInstance
+        _G.UnitGUID = function() return "Creature-0-3110-0-47-123456-0000ABCD" end
+        _G.UnitName = function() return "Zul'Alai" end
+        _G.IsInInstance = function() return true, "party" end
+        assert(NP.IsBossNpc("nameplate1"), "Boss über Namen nicht erkannt")
+        _G.UnitName = function() return "Infurnus" end
+        assert(NP.IsBossNpc("nameplate1"), "Zweitname nicht erkannt")
+        _G.UnitName = function() return "Gewöhnlicher Kobold" end
+        assert(not NP.IsBossNpc("nameplate1"), "fremder Name als Boss")
+        _G.UnitName = function() return "Zul'Alai" end
+        _G.IsInInstance = function() return false, "none" end
+        assert(not NP.IsBossNpc("nameplate1"), "Name draußen als Boss")
+        _G.UnitName, _G.IsInInstance = oN, oI
     end)
     _G.UnitGUID = keep
     Check(ok, "Plaketten: Bosse der neuen Dungeons über ihre NPC-Nummer" .. (ok and "" or (": " .. tostring(err))))
