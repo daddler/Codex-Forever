@@ -25389,6 +25389,38 @@ do
     Check(ok, "Lehrer: Teleport & Portale (nur Magier, Lehrer mit Pfeil)" .. (ok and "" or (": " .. tostring(err))))
 end
 
+do
+    local R, K = WeintCodex.UIReminders, WeintCodex.UIKit
+    local keep = { _G.UnitCharacterPoints, _G.GetNumTalentTabs, _G.GetTalentTabInfo, _G.UnitLevel, K.IsActive, K.InCombat }
+    local ok, err = pcall(function()
+        K.IsActive = function() return false end      -- Modul Erinnerungen aus
+        K.InCombat = function() return false end
+        _G.UnitCharacterPoints = function() return 0 end
+        _G.UnitLevel = function() return 11 end       -- Client noch auf der alten Stufe
+        _G.GetNumTalentTabs = function() return 3 end
+        _G.GetTalentTabInfo = function(i) return "Baum", 1, i == 1 and 2 or 0 end
+        R.fighting, R.noteDismissed = false, nil
+        R.talentEvents:GetScript("OnEvent")(R.talentEvents, "PLAYER_LEVEL_UP", 12)
+        local n = _G.WeintCodexTalentNote
+        assert(n and n:IsShown(), "keine Kachel nach dem Aufstieg")
+        assert(n.text:GetText() == "1 Talentpunkt zu vergeben", "falsche Zahl: " .. tostring(n.text:GetText()))
+        R.talentEvents:GetScript("OnEvent")(R.talentEvents, "PLAYER_REGEN_DISABLED")
+        assert(not n:IsShown(), "im Kampf gezeigt")
+        R.talentEvents:GetScript("OnEvent")(R.talentEvents, "PLAYER_REGEN_ENABLED")
+        assert(n:IsShown(), "nach dem Kampf nicht wieder da")
+        n:GetScript("OnClick")(n)
+        R.UpdateTalentNote()
+        assert(not n:IsShown(), "weggeklickt, aber wieder da")
+        _G.GetTalentTabInfo = function(i) return "Baum", 1, i == 1 and 3 or 0 end
+        R.UpdateTalentNote()
+        assert(not n:IsShown(), "verteilt, aber noch da")
+    end)
+    _G.UnitCharacterPoints, _G.GetNumTalentTabs, _G.GetTalentTabInfo, _G.UnitLevel, K.IsActive, K.InCombat =
+        keep[1], keep[2], keep[3], keep[4], keep[5], keep[6]
+    R.levelHint, R.fighting, R.noteDismissed = nil, false, nil
+    Check(ok, "Erinnerung: Talentpunkte auch ohne Modul, nach Aufstieg, nie im Kampf" .. (ok and "" or (": " .. tostring(err))))
+end
+
 if failures == 0 then
     print("BESTANDEN")
     os.exit(0)

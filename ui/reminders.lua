@@ -1672,6 +1672,9 @@ function R.UnspentTalents()
         if type(n) == "number" and (not best or n > best) then best = n end
     end
     local lvl = _G.UnitLevel and K.Plain(_G.UnitLevel("player"))
+    -- 1.0.5.39: direkt nach dem Aufstieg nennt UnitLevel oft noch die alte
+    -- Stufe - PLAYER_LEVEL_UP bringt die neue mit (R.levelHint).
+    if type(R.levelHint) == "number" and (type(lvl) ~= "number" or R.levelHint > lvl) then lvl = R.levelHint end
     local spent = R.SpentTalents()
     if type(lvl) == "number" and spent then
         local n = math.max(0, lvl - 9) - spent
@@ -2371,7 +2374,7 @@ K.Register({
             B:Row({ type = "toggle", label = "An ruhigen Orten ausblenden", key = "hideResting",
                     description = "In Städten und Gasthäusern (wo das Spiel „ruhend“ sagt) keine Erinnerung und kein Symbol." }, nil)
             B:Row({ type = "toggle", label = "Talentpunkte zu vergeben", key = "talentPoints",
-                    description = "Nach dem Stufenaufstieg: Erinnerung, solange ein Talentpunkt frei ist." },
+                    description = "Nach dem Stufenaufstieg, sobald du aus dem Kampf bist – überall, auch wenn die übrigen Erinnerungen aus sind. Klick blendet sie aus." },
                   { type = "toggle", label = "Buffs erst mit Gegner im Ziel", key = "buffsOnTarget",
                     description = "Fehlende Buffs erst, wenn du einen Gegner anvisierst. Essen stellst du auf seiner eigenen Seite ein. Waffe, Begleiter und Munition wie immer. Beim Angeln schweigen die Erinnerungen ohnehin." })
             B:Section("Aus der Tasche")
@@ -2390,3 +2393,78 @@ K.Register({
         end },
     },
 })
+
+
+--------------------------------------------------
+-- Talentpunkte: immer, auch ohne Erinnerungen (1.0.5.39)
+--------------------------------------------------
+-- Spieler: „Die Talentpunkt-Erinnerung soll immer außerhalb des Kampfes
+-- kommen … sobald ein Level up da ist und man aus dem Kampf ist.“ Läuft das
+-- Modul Erinnerungen, zeigt sein Banner die Zeile (R.Active). Läuft es
+-- nicht (ab Werk nur mit der Oberfläche an), zeigt eine eigene kleine
+-- Kachel oben in der Mitte dieselbe Zeile - nur ihr Schalter
+-- („Talentpunkte zu vergeben“) und der Kampf halten sie auf.
+
+R.levelHint = nil
+local note
+
+local function Note()
+    if note then return note end
+    note = CreateFrame("Button", "WeintCodexTalentNote", UIParent)
+    note:SetSize(240, 30)
+    note:SetPoint("TOP", UIParent, "TOP", 0, -140)
+    note:SetFrameStrata("MEDIUM")
+    K.Kachel(note, { shadow = 6 })
+    note.text = K.NewText(note, 13)
+    note.text:SetPoint("CENTER", note, "CENTER", 0, 0)
+    local g = C.gold or C.textBright
+    note.text:SetTextColor(g[1], g[2], g[3])
+    -- Klick blendet aus, bis sich die Zahl wieder ändert.
+    note:SetScript("OnClick", function(self) R.noteDismissed = self.count self:Hide() end)
+    note:Hide()
+    return note
+end
+
+function R.UpdateTalentNote()
+    if K.IsActive(KEY) then
+        if note then note:Hide() end
+        if R.UpdateBanner then R.UpdateBanner() end
+        return
+    end
+    local t = not R.Fighting() and R.TalentHit()
+    local n = t and R.UnspentTalents()
+    if not t or R.noteDismissed == n then
+        if note then note:Hide() end
+        if not t then R.noteDismissed = nil end
+        return
+    end
+    local f = Note()
+    f.count = n
+    f.text:SetText(t.text)
+    local w = K.Plain(f.text:GetStringWidth())
+    f:SetWidth(math.max(200, (type(w) == "number" and w or 180) + 40))
+    f:Show()
+end
+
+local talentEv = CreateFrame("Frame")
+R.talentEvents = talentEv
+for _, e in ipairs({ "PLAYER_ENTERING_WORLD", "PLAYER_LEVEL_UP", "PLAYER_REGEN_ENABLED", "PLAYER_REGEN_DISABLED",
+                     "CHARACTER_POINTS_CHANGED", "PLAYER_TALENT_UPDATE", "SPELLS_CHANGED" }) do
+    pcall(talentEv.RegisterEvent, talentEv, e)
+end
+talentEv:SetScript("OnEvent", function(_, event, arg1)
+    if event == "PLAYER_LEVEL_UP" then
+        local lvl = K.Plain(arg1)
+        if type(lvl) == "number" then R.levelHint = lvl end
+    elseif event == "PLAYER_REGEN_DISABLED" then
+        R.fighting = true
+    elseif event == "PLAYER_REGEN_ENABLED" then
+        R.fighting = false
+    end
+    pcall(R.UpdateTalentNote)
+    -- Der Client reicht Stufe und Punkte manchmal erst kurz danach nach.
+    if (event == "PLAYER_LEVEL_UP" or event == "PLAYER_REGEN_ENABLED") and _G.C_Timer and _G.C_Timer.After then
+        _G.C_Timer.After(1, function() pcall(R.UpdateTalentNote) end)
+        _G.C_Timer.After(3, function() pcall(R.UpdateTalentNote) end)
+    end
+end)
