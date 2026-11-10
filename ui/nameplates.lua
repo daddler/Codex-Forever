@@ -1220,10 +1220,23 @@ function NP.EliteIconX()
     end
     return x
 end
+-- 1.0.5.40 (Feedback: „Bosse orange – bei den neuen Inis noch nicht“):
+-- Boss ist, was der Client so nennt (Stufe „??“, worldboss) ODER dessen
+-- NPC-Nummer im Bestand der Dungeonbosse steht (data/boss_npcs.lua,
+-- data/boss_npcs_forever.lua).
+function NP.IsBossNpc(unit)
+    local NC = WeintCodex.UINpcColors
+    local guid = _G.UnitGUID and _G.UnitGUID(unit)
+    local id = NC and NC.NpcID and NC.NpcID(guid)
+    if type(id) ~= "number" then return false end
+    local a, b = WeintCodex.BossNpcs, WeintCodex.ForeverBossNpcs
+    return (a and a[id] or b and b[id]) and true or false
+end
+
 function NP.EliteKind(unit)
     local cls = K.Plain(_G.UnitClassification and _G.UnitClassification(unit))
     local lvl = K.Plain(_G.UnitLevel and _G.UnitLevel(unit))
-    if cls == "worldboss" or lvl == -1 then return "boss" end
+    if cls == "worldboss" or lvl == -1 or NP.IsBossNpc(unit) then return "boss" end
     if cls == "elite" or cls == "rareelite" then return "elite" end
     return nil
 end
@@ -1481,7 +1494,9 @@ local function BarColor(p)
 
     local cls = K.Plain(_G.UnitClassification and _G.UnitClassification(unit))
     local lvl = K.Plain(_G.UnitLevel and _G.UnitLevel(unit))
-    if cls == "worldboss" or lvl == -1 then return C3(S.boss) end
+    -- Nummer je Plakette einmal nachsehen (Farbe läuft bei jedem Treffer).
+    if p._bossUnit ~= p.unit then p._bossUnit, p._bossNpc = p.unit, NP.IsBossNpc(unit) end
+    if cls == "worldboss" or lvl == -1 or p._bossNpc then return C3(S.boss) end
     -- Zaubernde vor Elite: "muss unterbrochen werden" ist die dringendere
     -- Auskunft.
     if S.casterColoring and p._caster then return C3(S.caster) end
@@ -2203,6 +2218,7 @@ local function Attach(unit)
     p:ClearAllPoints()
     p:SetPoint("CENTER", nameplate, "CENTER", 0, 0)
     p.unit, p.nameplate = unit, nameplate
+    p._bossUnit = nil   -- 1.0.5.40: Bossnummer neu nachsehen (Plakette aus dem Vorrat)
     -- Welcher NPC (Kennung, Name, zaubert?) - einmal beim Erscheinen.
     local NC = WeintCodex.UINpcColors
     if NC and not friendly then NP.MeasuredIdentify(NC, p, unit) end

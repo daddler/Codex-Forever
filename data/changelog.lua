@@ -22,6 +22,14 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.0.5.40",
+        date    = "10.11.2026",
+        notes   = {
+            "|cff7C6CFFRezepte der Gilde|r – unter Berufe → Gilde öffnet ein Klick auf eine Person ihr Rezeptbuch, mit Suche. Das Suchfeld der Übersicht zeigt, wer in der Gilde ein Rezept kann.",
+            "|cff7C6CFFBosse der neuen Dungeons|r – Hall of Thanes, Ruinen von Lordaeron, Ausgrabungsstätte und Dalaran: die Namensplaketten zeigen sie jetzt in der Bossfarbe.",
+        },
+    },
+    {
         version = "1.0.5.39",
         date    = "10.11.2026",
         notes   = {

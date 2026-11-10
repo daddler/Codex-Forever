@@ -9,6 +9,13 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.0.5.40] – 2026-11-10
+
+- Berufe der Gilde: Rezeptbuch je Person (`PT.OpenBook`, Suche, Details rechts) und
+  Suche über alle auf der Übersicht (`PT.GuildSearch`).
+- Plaketten: Bosse auch über ihre NPC-Nummer (`NP.IsBossNpc`, `data/boss_npcs.lua` und
+  neu `data/boss_npcs_forever.lua`, 23 Bosse der neuen Dungeons aus der Questie-Datenbank).
+
 ## [1.0.5.39] – 2026-11-10
 
 - Talentpunkte: eigene Kachel `WeintCodexTalentNote`, wenn das Modul Erinnerungen aus ist;

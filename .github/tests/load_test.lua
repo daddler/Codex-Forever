@@ -25458,6 +25458,24 @@ do
     Check(ok, "Berufe der Gilde: Rezeptbuch je Person mit Suche" .. (ok and "" or (": " .. tostring(err))))
 end
 
+do
+    local NP = WeintCodex.UINameplates
+    local keep = _G.UnitGUID
+    local ok, err = pcall(function()
+        _G.UnitGUID = function() return "Creature-0-3110-0-47-261316-0000ABCD" end   -- Magmatus
+        assert(NP.IsBossNpc("nameplate1"), "Boss der neuen Dungeons nicht erkannt")
+        assert(NP.EliteKind("nameplate1") == "boss", "kein Bossrahmen")
+        _G.UnitGUID = function() return "Creature-0-3110-0-47-4829-0000ABCD" end     -- Aku'mai (Kompendium)
+        assert(NP.IsBossNpc("nameplate1"), "alter Boss nicht erkannt")
+        _G.UnitGUID = function() return "Creature-0-3110-0-47-99999-0000ABCD" end
+        assert(not NP.IsBossNpc("nameplate1"), "gewöhnlicher NPC als Boss")
+        _G.UnitGUID = function() return "Player-1-0ABC" end
+        assert(not NP.IsBossNpc("nameplate1"), "Spieler als Boss")
+    end)
+    _G.UnitGUID = keep
+    Check(ok, "Plaketten: Bosse der neuen Dungeons über ihre NPC-Nummer" .. (ok and "" or (": " .. tostring(err))))
+end
+
 if failures == 0 then
     print("BESTANDEN")
     os.exit(0)
