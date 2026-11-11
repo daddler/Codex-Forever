@@ -1258,12 +1258,32 @@ local function DrawTrainers(body, w, key, faction, max)
     local list, need = PRO.Trainers(key, faction, max)
     local y = 0
     local profName = PRO.ProfName(key)
+    -- 1.0.5.56 (Wunsch: "direkter Hinweis auf Raenge ohne Lehrer - zur Zeit
+    -- muss man herunterscrollen"): oben ein Satz, welche Raenge nicht der
+    -- Lehrer gibt; ist der naechste Rang einer davon, stehen sie ganz oben.
+    local books = PRO.RankBookLines(key)
+    local nextCap = tonumber(max) and (max + 75) or nil
+    local booksFirst = false
+    if #books > 0 then
+        local names = {}
+        for _, l in ipairs(books) do
+            names[#names + 1] = l.rank .. " (ab " .. tostring(l.req or "?") .. ")"
+            if nextCap and l.cap == nextCap then booksFirst = true end
+        end
+        y = Note(body, y, w, WeintCodex.ColorText("goldBright", table.concat(names, " und ")
+            .. " gibt es nicht beim Lehrer")
+            .. (booksFirst and " – dein nächster Rang, gleich hier darunter." or " – Buch bzw. Quest unter den Lehrern."))
+        if booksFirst then
+            y = PRO.DrawRankBooks(body, y, w, key)
+            y = SectionHead(body, y - 6, w, "Lehrer", "textMuted", nil, nil)
+        end
+    end
     if list[1] and list[1].next and PRO.RANK_CAP[need] then
         y = Note(body, y, w, WeintCodex.ColorText("successBright", "Grün") .. ": lehrt deinen nächsten Rang (bis "
             .. PRO.RANK_CAP[need] .. ")" .. (list[1].dist and " – der nächstgelegene steht oben." or "."))
     end
     for _, t in ipairs(list) do y = TrainerRow(body, y, w, t, profName) end
-    y = PRO.DrawRankBooks(body, y, w, key)
+    if not booksFirst then y = PRO.DrawRankBooks(body, y, w, key) end
     if #list == 0 then
         y = SectionHead(body, y, w, "Lehrer", "textMuted", 0,
             "Für diesen Beruf ist kein Lehrer deiner Fraktion hinterlegt.")
