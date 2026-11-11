@@ -9,6 +9,12 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.0.5.48] – 2026-11-11
+
+- Auftragsfenster: Eckmasken der Knöpfe in der Farbe der Fläche (vorher `bgDark` auf
+  `surface3` = dunkle Ecken); Annehmen/Erledigt primär, Ablehnen/Stornieren rot ohne Rand
+  (`CreateButton{ border = false }`); Fußleiste 4 px höher.
+
 ## [1.0.5.47] – 2026-11-11
 
 - Aufträge: Fenster nach jedem Einloggen/`/reload`, solange einer offen oder angenommen ist

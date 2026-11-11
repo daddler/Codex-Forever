@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.0.5.48",
+        date    = "11.11.2026",
+        notes   = {
+            "|cff7C6CFFRunde Knöpfe im Auftragsfenster|r – keine dunklen Ecken mehr; Annehmen und Erledigt in deiner Farbe, Ablehnen rot.",
+        },
+    },
+    {
         version = "1.0.5.47",
         date    = "11.11.2026",
         notes   = {
