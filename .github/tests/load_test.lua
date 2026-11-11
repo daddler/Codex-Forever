@@ -2312,12 +2312,18 @@ do
         st.chars["Everlook|Twink"] = { name = "Twink", realm = "Everlook", class = "MAGE", bags = { [100] = 9 }, bank = { [100] = 2 } }
         st.chars["Andere|Fremd"] = { name = "Fremd", realm = "Andere", class = "ROGUE", bags = { [100] = 9 } }
         local lines = IV.TooltipLines(100)
-        assert(lines and #lines == 3 and lines[1][1] == "Shooty" and lines[1][2]:find("^7")
-            and lines[1][2]:find("Bank 4", 1, true) and lines[2][1] == "Twink" and lines[2][2]:find("^11")
-            and lines[3][2] == "18", "Tooltip: " .. (lines and #lines or 0))
+        assert(lines and #lines == 4 and lines[1][1] == "Du (Shooty)" and lines[1][2]:find("^7")
+            and lines[1][2]:find("Bank 4", 1, true) and lines[2][1] == "Twinks" and lines[3][1] == "  Twink"
+            and lines[3][2]:find("^11") and lines[4][2] == "18", "Tooltip: " .. (lines and #lines or 0))
         K.Set("comfort", "invAllRealms", true)
         lines = IV.TooltipLines(100)
-        assert(#lines == 4 and lines[4][2] == "27", "anderer Realm fehlt trotz Wunsch")
+        assert(#lines == 5 and lines[5][2] == "27", "anderer Realm fehlt trotz Wunsch")
+        -- 1.0.5.46: nur ein Twink hat es - "Du" steht trotzdem da, mit nichts.
+        st.chars["Everlook|Twink"].bags[300] = 5
+        lines = IV.TooltipLines(300)
+        assert(lines[1][1] == "Du" and lines[1][2] == "nichts dabei" and lines[2][1] == "Twinks"
+            and lines[3][2]:find("Taschen 5", 1, true) and #lines == 3, "Twink-Bestand als eigener gezeigt")
+        st.chars["Everlook|Twink"].bags[300] = nil
         assert(IV.TooltipLines(999) == nil, "Zeile fuer einen Gegenstand, den keiner hat")
         -- Suche
         local rep = table.concat(IV.SearchReport("leinen"), "\n")
@@ -2381,7 +2387,7 @@ do
         gt.AddDoubleLine = function() added = added + 1 end
         IV.OnItem(gt, { id = 100 })
         gt.AddDoubleLine = old
-        assert(added == 4, "Tooltip-Zeilen: " .. added)
+        assert(added == 5, "Tooltip-Zeilen: " .. added)
         -- Tooltip aus, Bestand an: nichts im Tooltip.
         K.Set("comfort", "invTooltip", false)
         added = 0

@@ -300,6 +300,7 @@ function CO.Refresh()
 end
 
 function CO.Show()
+    print(WeintCodex.ColorText("accent", "[WeintCodex]") .. " " .. CO.StatusLine())
     EnsureFrame()
     frame:Show()
     local store = Store()
@@ -314,8 +315,41 @@ end
 -- Nach dem Einloggen: nur wenn ein noch nicht gezeigter Auftrag wartet.
 -- Kurz verzoegert, damit das Fenster nicht unter dem Ladebildschirm
 -- aufgeht; im Kampf erst danach.
+-- 1.0.5.46 (Bericht: "Auftrag kommt in Discord und Companion an, in
+-- Codex nicht - auch nach Reload keine Meldung"): nach jedem Einloggen
+-- eine Zeile im Chat, was von der Companion da ist - offene Auftraege
+-- beider Rollen, oder dass noch nie etwas kam. So sieht man, ob die
+-- Zustellung fehlt oder nur das Fenster.
+function CO.StatusLine()
+    local store = Store()
+    local crafter, mine = 0, 0
+    for _, o in ipairs(store.list) do
+        local st = CO.StatusOf(o)
+        if st == "open" or st == "accepted" then
+            if o.role == "crafter" then crafter = crafter + 1 else mine = mine + 1 end
+        end
+    end
+    if type(store.receivedAt) ~= "number" then
+        return "Aufträge: von der Companion noch nie etwas bekommen."
+    end
+    local when = _G.date and _G.date("%d.%m. %H:%M", store.receivedAt) or "?"
+    return "Aufträge (Stand " .. when .. "): " .. crafter .. " für dich zum Herstellen, "
+        .. mine .. " eigene Bestellungen – /wc aufträge"
+end
+
+function CO.Announce()
+    local store = Store()
+    local open = 0
+    for _, o in ipairs(store.list) do
+        local st = CO.StatusOf(o)
+        if st == "open" or st == "accepted" then open = open + 1 end
+    end
+    if open == 0 then return end
+    print(WeintCodex.ColorText("accent", "[WeintCodex]") .. " " .. CO.StatusLine())
+end
+
 function CO.ShowIfNew()
-    if #CO.Unseen() == 0 then return end
+    if #CO.Unseen() == 0 then CO.Announce() return end
 
     local function open()
         if InCombatLockdown and InCombatLockdown() then

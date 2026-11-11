@@ -386,13 +386,33 @@ function IV.TooltipLines(id)
     local hs = IV.Holders(id)
     if #hs == 0 then return nil end
     local _, _, myRealm = IV.Me()
-    local lines, total = {}, 0
-    for _, h in ipairs(hs) do
-        total = total + h.total
-        local r, g, b = ClassColor(h.class)
-        lines[#lines + 1] = { Label(h, myRealm), h.total .. "  (" .. IV.Where(h) .. ")", r, g, b }
+    -- 1.0.5.46 (Bericht: "Erze in der Bank angezeigt - das war ein Twink,
+    -- nicht der eingeloggte Charakter. Das MUSS differenziert werden"):
+    -- der eingeloggte Charakter steht immer zuerst und heisst "Du", auch
+    -- wenn er nichts hat - die Twinks darunter unter "Twinks".
+    local lines, total, mine = {}, 0, nil
+    for _, h in ipairs(hs) do if h.me then mine = h end end
+    if mine then
+        total = mine.total
+        lines[#lines + 1] = { "Du (" .. Label(mine, myRealm) .. ")", mine.total .. "  (" .. IV.Where(mine) .. ")",
+            ClassColor(mine.class) }
+    else
+        local c = Char(false)
+        local bankTxt = (c and c.bank) and "" or ", Bank unbekannt"
+        lines[#lines + 1] = { "Du", (c and c.bags) and ("nichts dabei" .. bankTxt) or "unbekannt",
+            ClassColor(c and c.class) }
     end
-    if #hs > 1 then lines[#lines + 1] = { "Alle Charaktere", tostring(total) } end
+    local twinks = 0
+    for _, h in ipairs(hs) do
+        if not h.me then
+            if twinks == 0 then lines[#lines + 1] = { "Twinks", "" } end
+            twinks = twinks + 1
+            total = total + h.total
+            local r, g, b = ClassColor(h.class)
+            lines[#lines + 1] = { "  " .. Label(h, myRealm), h.total .. "  (" .. IV.Where(h) .. ")", r, g, b }
+        end
+    end
+    if twinks > 0 and mine then lines[#lines + 1] = { "Alle Charaktere", tostring(total) } end
     return lines
 end
 
