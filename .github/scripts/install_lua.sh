@@ -2,13 +2,12 @@
 # Lua 5.1 (lua5.1, luac5.1) fuer die Prueflaeufe.
 # 1.0.5.50: die Paketquellen der GitHub-Server waren nicht aufloesbar
 # ("Temporary failure resolving 'azure.archive.ubuntu.com'"), auch auf
-# 24.04. Darum: erst kurz apt, sonst Lua 5.1 aus dem Quelltext bauen -
+# 24.04. Darum: Lua 5.1 aus dem Quelltext bauen -
 # von lua.org, sonst aus dem Spiegel auf GitHub (github.com ist sicher
 # erreichbar, der Checkout kam ja an). Ohne Lua scheitert der Lauf.
 set -u
-if timeout 120 sudo apt-get install -y lua5.1 >/dev/null 2>&1 && command -v luac5.1 >/dev/null; then
-  echo "Lua 5.1 aus apt"; exit 0
-fi
+# Gemessen (Lauf 1849): apt hing vier Minuten an den Paketquellen, der Bau
+# aus dem Quelltext klappte. Darum gleich bauen - ohne apt, in Sekunden.
 work=$(mktemp -d)
 cd "$work"
 if curl -fsSL --retry 3 -o lua.tgz https://www.lua.org/ftp/lua-5.1.5.tar.gz; then

@@ -32,7 +32,6 @@ jobs:
         # lua5.1, schlaegt der Lauf weiter fehl, statt gruen zu luegen.
         run: |
           sudo rm -f /etc/apt/sources.list.d/microsoft-prod.list /etc/apt/sources.list.d/microsoft*.list
-          timeout 120 sudo apt-get update -qq || echo "::warning::apt-get update mit Fehlern"
           bash .github/scripts/install_lua.sh
 
       # Erste Station, noch vor dem Bauen: laedt das Addon ueberhaupt?
