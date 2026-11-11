@@ -1,26 +1,22 @@
 #!/usr/bin/env bash
-# Lua 5.1 (lua5.1, luac5.1) fuer die Prueflaeufe.
-# 1.0.5.50: die Paketquellen der GitHub-Server waren nicht aufloesbar
-# ("Temporary failure resolving 'azure.archive.ubuntu.com'"), auch auf
-# 24.04. Darum: Lua 5.1 aus dem Quelltext bauen -
-# von lua.org, sonst aus dem Spiegel auf GitHub (github.com ist sicher
-# erreichbar, der Checkout kam ja an). Ohne Lua scheitert der Lauf.
-set -u
-# Gemessen (Lauf 1849): apt hing vier Minuten an den Paketquellen, der Bau
-# aus dem Quelltext klappte. Darum gleich bauen - ohne apt, in Sekunden.
+# Lua 5.1 (lua5.1, luac5.1) fuer die Prueflaeufe - OHNE Netz.
+#
+# 1.0.5.50-52: nacheinander waren von den Laeufern aus die Ubuntu-
+# Paketquellen, lua.org und der Spiegel auf GitHub nicht zu gebrauchen;
+# jeder Release scheiterte, bevor ein Test lief. Darum liegt der
+# Quelltext im Repo (.github/vendor/lua-5.1, MIT) und wird hier gebaut -
+# braucht nur gcc, das jeder Laeufer hat, und dauert Sekunden.
+#
+# luac5.1 ist ein kleiner Ersatz (.github/scripts/luac.lua): der Quelltext
+# enthaelt den Compiler nicht. Er kann, was die Laeufe brauchen - "-p"
+# (Syntax ueber loadfile, ohne Ausfuehren) und "-l" (globale Zugriffe aus
+# dem Bytecode, fuer die Globalenpruefung in load_test.lua).
+set -eu
+root=$(cd "$(dirname "$0")/../.." && pwd)
+src="$root/.github/vendor/lua-5.1"
 work=$(mktemp -d)
-cd "$work"
-# Feste Zeitlimits (Lauf 666 hing ohne sie am Download).
-if timeout 60 curl -fsSL --connect-timeout 10 --max-time 45 -o lua.tgz https://www.lua.org/ftp/lua-5.1.5.tar.gz; then
-  tar xzf lua.tgz && src=lua-5.1.5/src
-else
-  timeout 120 git clone -q --depth 1 --branch v5.1 https://github.com/lua/lua.git lua-git || exit 1
-  src=lua-git
-  [ -d lua-git/src ] && src=lua-git/src
-fi
-cd "$src"
-core=$(ls *.c | grep -v -E '^(lua|luac|print)\.c$')
-gcc -O2 -DLUA_USE_POSIX -o lua5.1 $core lua.c -lm || exit 1
-gcc -O2 -DLUA_USE_POSIX -o luac5.1 $core luac.c print.c -lm || exit 1
-sudo install -m 755 lua5.1 luac5.1 /usr/local/bin/
+core=$(cd "$src" && ls *.c | grep -v -E '^(lua|luac|print|ltests)\.c$')
+(cd "$src" && gcc -O2 -DLUA_USE_POSIX -o "$work/lua5.1" $core lua.c -lm)
+printf '#!/usr/bin/env bash\nexec lua5.1 "%s" "$@"\n' "$root/.github/scripts/luac.lua" > "$work/luac5.1"
+sudo install -m 755 "$work/lua5.1" "$work/luac5.1" /usr/local/bin/
 lua5.1 -v
