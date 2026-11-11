@@ -365,7 +365,10 @@ function PB.Remaining(unit, key, guid)
                 if type(exp) ~= "number" then return nil end
                 if exp == 0 then return math.huge end
                 local left = exp - Now()
-                return left > 0 and left or 0
+                -- 1.0.5.57: Gesamtdauer mitgeben - ein Segen von 5 Minuten
+                -- lag mit "Neu segnen ab 5 Minuten" sofort wieder darunter.
+                local dur = K.Plain(d.duration)
+                return left > 0 and left or 0, type(dur) == "number" and dur > 0 and dur or nil
             end
         end
     end
@@ -423,8 +426,11 @@ function PB.Scan()
             if key then
                 res.total = res.total + 1
                 local guid = Call(_G.UnitGUID, unit)
-                local left = PB.Remaining(unit, key, type(guid) == "string" and guid or nil)
-                if left == nil or left < refresh then
+                local left, dur = PB.Remaining(unit, key, type(guid) == "string" and guid or nil)
+                -- Schwelle hoechstens ein Viertel der echten Dauer (1.0.5.57).
+                local limit = refresh
+                if dur and dur / 4 < limit then limit = dur / 4 end
+                if left == nil or left < limit then
                     local usable = Call(_G.UnitIsConnected, unit) ~= false
                         and not Call(_G.UnitIsDeadOrGhost, unit) and InRange(unit, id)
                     if left == nil then

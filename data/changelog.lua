@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.0.5.57",
+        date    = "11.11.2026",
+        notes   = {
+            "|cff7C6CFFSegen-Knopf zählt richtig|r – ist ein Segen kürzer als „Neu segnen ab Restzeit“, meldet der Knopf ihn nicht mehr gleich nach dem Segnen als fehlend.",
+        },
+    },
+    {
         version = "1.0.5.56",
         date    = "11.11.2026",
         notes   = {

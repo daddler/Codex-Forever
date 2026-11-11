@@ -9,6 +9,13 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.0.5.57] – 2026-11-11
+
+### Behoben
+- Segen verteilen: „noch 1 ohne Segen“ blieb nach dem Segnen stehen. Die
+  Schwelle „Neu segnen ab Restzeit“ (5 Minuten) lag über der Dauer eines
+  kurzen Segens; sie gilt jetzt höchstens für ein Viertel der gelesenen Dauer.
+
 ## [1.0.5.56] – 2026-11-11
 
 - Berufe: Hinweis auf Ränge ohne Lehrer oben in der Lehrerkarte; ist der nächste Rang
