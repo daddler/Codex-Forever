@@ -9,6 +9,12 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.0.5.53] – 2026-11-11
+
+- Berufe: Lehrerzeile mit Knopf oben rechts, zweite Zeile über die ganze Breite;
+  `BookRow` dreizeilig; Rezeptkarte 64 % (vorher 62 %), Fertigkeitszahlen 10 pt.
+- CI: Lua 5.1.5 im Repo (`.github/vendor/lua-5.1`), ohne Netz gebaut.
+
 ## [1.0.5.52] – 2026-11-11
 
 - Berufe: `PRO.RankBookLines` setzt `req` auch für Ränge über eine Quest – `DrawRankBooks`

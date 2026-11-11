@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.0.5.53",
+        date    = "11.11.2026",
+        notes   = {
+            "|cff7C6CFFBerufe-Seite aufgeräumt|r – Lehrer mit Ort in voller Länge, Rangbücher in drei Zeilen (Rang, Buch, Händler), breitere Rezeptspalte.",
+        },
+    },
+    {
         version = "1.0.5.52",
         date    = "11.11.2026",
         notes   = {
