@@ -448,7 +448,57 @@ function CC.Apply()
         if not seen[f] then CC.ApplyTo(f, {}) end
     end
     CC.ApplyKeys(list)
+    CC.SyncSelfCast(list)
     return true
+end
+
+-- 1.0.5.49 (gemessen im Spiel: "Schild ging auch mit dem Fix nicht, erst
+-- Selbstzauber-Taste deaktivieren hat es gebracht"): haelt der Spieler
+-- die Selbstzauber-Taste des Spiels (ab Werk Alt) gedrueckt, zaubert der
+-- Client auf ihn selbst - auch ueber ein Makro mit ausdruecklichem Ziel.
+-- Liegt ein Klickzauber auf genau dieser Taste, schaltet WeintCodex sie
+-- fuer die Sitzung aus (SetModifiedClick, ohne SaveBindings - die
+-- gespeicherte Belegung des Spielers bleibt unberuehrt) und meldet das
+-- einmal. Ohne solche Belegung kommt der alte Wert zurueck.
+CC.selfCastOff = nil   -- alter Wert, solange wir sie ausgeschaltet haben
+
+function CC.SelfCastKey()
+    if type(_G.GetModifiedClick) ~= "function" then return nil end
+    local ok, v = pcall(_G.GetModifiedClick, "SELFCAST")
+    v = ok and K.Plain(v) or nil
+    return type(v) == "string" and v or nil
+end
+
+function CC.SelfCastClash(list, key)
+    if type(key) ~= "string" or key == "NONE" then return false end
+    for part in key:gmatch("[^%-]+") do
+        local m = part:lower() .. "-"
+        for _, b in ipairs(list) do
+            if b.action == "spell" and type(b.mod) == "string" and b.mod:find(m, 1, true) then return true end
+        end
+    end
+    return false
+end
+
+function CC.SyncSelfCast(list)
+    if type(_G.SetModifiedClick) ~= "function" then return end
+    local key = CC.SelfCastKey()
+    if CC.selfCastOff and key == "NONE" then
+        -- schon ausgeschaltet: noch noetig? Sonst zurueck.
+        if not CC.SelfCastClash(list, CC.selfCastOff) then
+            pcall(_G.SetModifiedClick, "SELFCAST", CC.selfCastOff)
+            CC.selfCastOff = nil
+        end
+        return
+    end
+    if CC.SelfCastClash(list, key) then
+        if pcall(_G.SetModifiedClick, "SELFCAST", "NONE") then
+            CC.selfCastOff = CC.selfCastOff or key
+            local label = ({ ALT = "Alt", CTRL = "Strg", SHIFT = "Umschalt" })[key] or key
+            print(WeintCodex.ColorText("accent", "[WeintCodex]") .. " Selbstzauber-Taste (" .. label
+                .. ") ausgeschaltet, solange ein Klickzauber auf ihr liegt – sonst gingen diese Zauber immer auf dich.")
+        end
+    end
 end
 
 --------------------------------------------------

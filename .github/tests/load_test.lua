@@ -7035,6 +7035,20 @@ do
             "Maustaste 7 nicht als -Button7 belegt")
         -- 1.0.5.45: mit Zusatztaste ausdruecklich auf den Rahmen (Alt = Selbstzauber).
         assert(f1:GetAttribute("alt-macrotext-Button7") == "/cast [@mouseover,exists] Heilen", "Alt-Zauber ohne ausdrueckliches Ziel")
+        -- 1.0.5.49: Klickzauber auf Alt schaltet die Selbstzauber-Taste aus, ohne kommt sie zurueck.
+        do
+            local mc = "ALT"
+            local oG, oS = _G.GetModifiedClick, _G.SetModifiedClick
+            _G.GetModifiedClick = function() return mc end
+            _G.SetModifiedClick = function(_, v) mc = v end
+            CC.SyncSelfCast({ { action = "spell", mod = "alt-", button = 2, spell = "Machtwort: Schild" } })
+            assert(mc == "NONE", "Selbstzauber-Taste nicht ausgeschaltet")
+            CC.SyncSelfCast({ { action = "spell", mod = "alt-", button = 2, spell = "Machtwort: Schild" } })
+            assert(mc == "NONE", "Selbstzauber-Taste beim zweiten Durchlauf wieder an")
+            CC.SyncSelfCast({ { action = "spell", mod = "ctrl-", button = 2, spell = "Heilen" } })
+            assert(mc == "ALT" and CC.selfCastOff == nil, "Selbstzauber-Taste nicht zurueck")
+            _G.GetModifiedClick, _G.SetModifiedClick = oG, oS
+        end
         assert(CC.Capture("3", false, "shift-") and CC.draft.button == "3", "Tastatur-Taste nicht übernommen")
         CC.Pick("spell", "Erneuerung")
         assert(binds["SHIFT-3"] == "WeintCodexClickKey1", "Taste nicht auf den Mouseover-Knopf gelegt")
