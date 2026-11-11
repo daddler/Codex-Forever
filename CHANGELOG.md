@@ -9,6 +9,14 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.0.5.50] – 2026-11-11
+
+- Berufe: `data/recipe_sources.lua` (erzeugt von `.github/scripts/import_recipesources.py`
+  aus der Questie-Datenbank für Forever, `community`): Händler, Beute, Objekte, Quests je
+  Rezeptgegenstand und Rangbuch. `PRO.Vendors` nimmt sie vor den Classic-Händlern,
+  `PRO.Origin` nennt Beute/Quest/Weltbeute; Lehrerkarte „Ränge ohne Lehrer“
+  (`PRO.RankBookLines`), Weg zum Maximalwert nennt den Händler des Buchs.
+
 ## [1.0.5.49] – 2026-11-11
 
 - Klickzauber: Selbstzauber-Taste (`SetModifiedClick("SELFCAST", "NONE")`, ohne `SaveBindings`)

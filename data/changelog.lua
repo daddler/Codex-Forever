@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.0.5.50",
+        date    = "11.11.2026",
+        notes   = {
+            "|cff7C6CFFWoher Rezepte und Rangbücher kommen|r – Händler, Beute und Quests je Rezept; Erste Hilfe, Kochkunst und Angeln zeigen an der Lehrerkarte, bei wem das Buch für Experte liegt und welcher Rang über eine Quest kommt.",
+        },
+    },
+    {
         version = "1.0.5.49",
         date    = "11.11.2026",
         notes   = {
