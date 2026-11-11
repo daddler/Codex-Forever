@@ -9,6 +9,13 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.0.5.58] – 2026-11-11
+
+### Behoben
+- Flüstern als Messenger: Lua-Fehler „secret number value … tainted by
+  WeintCodex“ in der Chatzeile, wenn das Fenster im Kampf oder in einer
+  Instanz der offenen Chatzeile den Fokus nahm. Dort bleibt sie jetzt offen.
+
 ## [1.0.5.57] – 2026-11-11
 
 ### Behoben

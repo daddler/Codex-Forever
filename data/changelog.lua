@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.0.5.58",
+        date    = "11.11.2026",
+        notes   = {
+            "|cff7C6CFFKein Fehler mehr beim Antworten im Dungeon|r – ist die Chatzeile offen, nimmt das Flüsterfenster ihr im Kampf und in Instanzen nicht mehr die Eingabe weg.",
+        },
+    },
+    {
         version = "1.0.5.57",
         date    = "11.11.2026",
         notes   = {

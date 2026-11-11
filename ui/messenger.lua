@@ -1450,6 +1450,26 @@ local function ActiveEdit()
     return ok and type(eb) == "table" and eb or nil
 end
 
+-- Fokus ins eigene Feld (1.0.5.58, Bericht aus den Todesminen): nimmt
+-- WeintCodex einer offenen Chatzeile den Fokus, schliesst das Spiel sie in
+-- unserem Aufruf - im Kampf und in Instanzen rechnet es dabei mit geheimen
+-- Werten und bricht ab ("secret number value, tainted by WeintCodex").
+-- Dort bleibt die Chatzeile darum, wie sie ist.
+local function Guarded()
+    if K.InCombat() then return true end
+    if _G.IsInInstance then
+        local ok, inside = pcall(_G.IsInInstance)
+        if ok and K.Plain(inside) == true then return true end
+    end
+    return false
+end
+function MS.SafeFocus(box)
+    if not (box and box.SetFocus) then return false end
+    if ActiveEdit() and Guarded() then return false end
+    box:SetFocus()
+    return true
+end
+
 -- Zielt die offene Chatzeile schon auf dieses Gespraech?
 function MS.EditAimsAt(key)
     local eb = ActiveEdit()
@@ -1481,7 +1501,7 @@ function MS.OnReply(_, src)
     local function Hand()
         if not (MS.Active() and conv[key]) then return end
         if Get("direct") then
-            if input then input:SetFocus() end
+            if input then MS.SafeFocus(input) end
             return
         end
         if not MS.EditAimsAt(key) then OpenGameReply(conv[key]) end
@@ -1530,7 +1550,7 @@ function MS.TakeFocus(eb)
         if not (win and win:IsShown()) then return end
         local text = eb and eb.GetText and K.Plain(eb:GetText())
         if type(text) == "string" and text:find("%S") then return end
-        input:SetFocus()
+        MS.SafeFocus(input)
     end
     local t = _G.C_Timer
     if type(t) == "table" and type(t.After) == "function" then t.After(0, Take) else Take() end
