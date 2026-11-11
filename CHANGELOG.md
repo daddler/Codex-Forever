@@ -9,6 +9,11 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.0.5.56] – 2026-11-11
+
+- Berufe: Hinweis auf Ränge ohne Lehrer oben in der Lehrerkarte; ist der nächste Rang
+  Buch oder Quest, steht der Abschnitt vor den Lehrern.
+
 ## [1.0.5.55] – 2026-11-11
 
 - Berufe: Sammelstellen im Gegenstands-Tooltip (`PRO.GatherLine`, `P.NF_NODES`);

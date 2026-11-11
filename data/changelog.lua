@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.0.5.56",
+        date    = "11.11.2026",
+        notes   = {
+            "|cff7C6CFFRänge ohne Lehrer gleich oben|r – die Lehrerkarte sagt zuerst, welche Ränge Buch oder Quest sind; ist es dein nächster, steht er ganz oben.",
+        },
+    },
+    {
         version = "1.0.5.55",
         date    = "11.11.2026",
         notes   = {
