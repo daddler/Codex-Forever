@@ -10,10 +10,11 @@ set -u
 # aus dem Quelltext klappte. Darum gleich bauen - ohne apt, in Sekunden.
 work=$(mktemp -d)
 cd "$work"
-if curl -fsSL --retry 3 -o lua.tgz https://www.lua.org/ftp/lua-5.1.5.tar.gz; then
+# Feste Zeitlimits (Lauf 666 hing ohne sie am Download).
+if timeout 60 curl -fsSL --connect-timeout 10 --max-time 45 -o lua.tgz https://www.lua.org/ftp/lua-5.1.5.tar.gz; then
   tar xzf lua.tgz && src=lua-5.1.5/src
 else
-  git clone -q --depth 1 --branch v5.1 https://github.com/lua/lua.git lua-git || exit 1
+  timeout 120 git clone -q --depth 1 --branch v5.1 https://github.com/lua/lua.git lua-git || exit 1
   src=lua-git
   [ -d lua-git/src ] && src=lua-git/src
 fi
