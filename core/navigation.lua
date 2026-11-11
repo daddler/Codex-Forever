@@ -2320,9 +2320,16 @@ local function InspectorItemList(parent, y, opts)
 end
 
 -- blocks: Liste von { type = "header"|"rows"|"text"|"input"|"list"|"checklist"|"card"|"notes"|"button"|"itemlist"|"divider"|"spacer", ... }
-function WeintCodex.Navigation.SetInspector(blocks)
+function WeintCodex.Navigation.SetInspector(blocks, width)
     WeintCodex.Navigation.ClearInspector()
     if not blocks or #blocks == 0 then return end
+    -- 1.0.5.55: Breite je Seite (Berufe: schmaler), sonst die 372 px.
+    if WeintCodex.SetDetailWidth then
+        WeintCodex.SetDetailWidth(width)
+        local w = WeintCodex.DetailWidth()
+        INSPECTOR_CONTENT_W = w - INSPECTOR_BAR_W - INSPECTOR_PAD * 2
+        if inspectorBody then inspectorBody:SetWidth(w - INSPECTOR_BAR_W) end
+    end
 
     -- Der Detailbereich ist keine eigene Fensterspalte mehr, sondern die
     -- rechte Spalte der Seite (372 px, Entwurf: Raster "1fr 372px"). Er

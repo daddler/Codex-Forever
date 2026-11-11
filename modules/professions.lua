@@ -1112,7 +1112,7 @@ local function TrainerRow(body, y, w, t, profName)
     row.map:SetShown(t.map ~= nil)
     row.sub:SetText(table.concat(parts, "  ·  "))
     row:Show()
-    return y - 44
+    return y - 48
 end
 
 -- 1.0.5.50: Raenge, die kein Lehrer gibt (Experte der Nebenberufe als
@@ -1330,6 +1330,8 @@ function PRO.Origin(r)
 end
 
 PRO.selRecipe = nil
+-- 1.0.5.55: Detailbereich schmaler, damit die Lehrer Platz haben.
+PRO.DETAIL_W = 300
 local function RecipeInspector(r)
     local BP = WeintCodex.BooksPage
     local QM = WeintCodex.QuestMap
@@ -1439,7 +1441,7 @@ function PRO.SelectRecipe(r)
         if row.sel then row.sel:SetShown(r ~= nil and row.recipe == r) end
     end
     local nav = WeintCodex.Navigation
-    if r and nav and nav.SetInspector then nav.SetInspector(RecipeInspector(r)) end
+    if r and nav and nav.SetInspector then nav.SetInspector(RecipeInspector(r), PRO.DETAIL_W) end
 end
 
 local function InspectorBlocks(key, skill, cat)
@@ -1476,17 +1478,16 @@ local function InspectorBlocks(key, skill, cat)
             "Öffne es nach dem Lernen erneut.",
         } or {
             "Noch unbekannt: öffne einmal dein",
-            "Berufsfenster, dann merkt sich WeintCodex,",
-            "welche Rezepte du kannst.",
+            "Berufsfenster, dann merkt sich",
+            "WeintCodex, welche Rezepte du kannst.",
         }},
         { type = "divider" },
         { type = "header", text = "Woher das stammt" },
         { type = "card", lines = {
-            "Unbestätigt: Rezepte, Stufen und Lehrer sind",
-            "der Wissensstand aus der Beta (Rezepte aus",
-            "dem Forever-Client) – nicht von Blizzard.",
-            "Händler für Rezepte stammen aus Classic.",
-            "Ohne „Season of Discovery“.",
+            "Unbestätigt: Rezepte aus dem Forever-",
+            "Client, Herkunft, Lehrer und Händler",
+            "Wissensstand der Community – nicht",
+            "von Blizzard. Ohne „Season of Discovery“.",
         }},
     }
 end
@@ -1524,8 +1525,8 @@ function PRO.Show()
     -- Erst der Detailbereich, dann messen (wie beim Lehrer).
     local cat = PRO.Categorize(selected, skill)
     if PRO.selRecipe and PRO.selRecipe.key ~= selected then PRO.selRecipe = nil end
-    if PRO.selRecipe then nav.SetInspector(RecipeInspector(PRO.selRecipe))
-    else nav.SetInspector(InspectorBlocks(selected, skill, cat)) end
+    if PRO.selRecipe then nav.SetInspector(RecipeInspector(PRO.selRecipe), PRO.DETAIL_W)
+    else nav.SetInspector(InspectorBlocks(selected, skill, cat), PRO.DETAIL_W) end
 
     if PT and PT.FitBar then
         PT.FitBar(f)
@@ -1533,7 +1534,7 @@ function PRO.Show()
     end
     local total = Plain(f:GetWidth())
     if type(total) == "number" and total > 400 then
-        f.RecipeCard:SetWidth(math.floor((total - 2 * WeintCodex.Metrics.PAD_X - WeintCodex.Metrics.GAP) * 0.64))
+        f.RecipeCard:SetWidth(math.floor((total - 2 * WeintCodex.Metrics.PAD_X - WeintCodex.Metrics.GAP) * 0.58))
     end
     local rw = (Plain(f.RecipeCard:GetWidth()) or 460) - 40
     local tw = (Plain(f.TrainerCard:GetWidth()) or 280) - 40
@@ -1615,3 +1616,56 @@ ev:SetScript("OnEvent", WeintCodex.Measured("Berufe", function(_, event, id)
     Redraw()
 end))
 PRO.events = ev
+
+--------------------------------------------------
+-- Sammelstellen im Tooltip (1.0.5.55)
+--------------------------------------------------
+-- Wunsch: "die Sammelstellen mit Fertigkeit in den Tooltip". Aus dem
+-- Abgleich (P.NF_NODES: Kraut/Ader -> Fertigkeit, Gegenstand): ein Kraut
+-- oder Erz nennt im Tooltip, ab welcher Fertigkeit man es sammelt - gruen,
+-- wenn du so weit bist, rot, wenn nicht, sonst neutral.
+PRO.GATHER_KIND = { herb = { "herbalism", "Kräuterkunde" }, ore = { "mining", "Bergbau" },
+                    leather = { "skinning", "Kürschnerei" }, skin = { "skinning", "Kürschnerei" } }
+local gatherByItem
+function PRO.GatherNeed(item)
+    if not gatherByItem then
+        gatherByItem = {}
+        for _, v in pairs(P and P.NF_NODES or {}) do
+            local kind, skill, it = v[1], v[2], v[3]
+            if it and skill and PRO.GATHER_KIND[kind] then
+                local cur = gatherByItem[it]
+                if not cur or skill < cur.skill then gatherByItem[it] = { kind = kind, skill = skill } end
+            end
+        end
+    end
+    return gatherByItem[item]
+end
+
+function PRO.GatherLine(item)
+    local need = PRO.GatherNeed(item)
+    if not need then return nil end
+    local k = PRO.GATHER_KIND[need.kind]
+    local ok, skills = pcall(PRO.Skills)
+    local mine = ok and type(skills) == "table" and skills[k[1]]
+    local tone = "textMuted"
+    if mine and type(mine.rank) == "number" then tone = mine.rank >= need.skill and "successBright" or "danger" end
+    return "Sammeln: " .. k[2] .. " ab " .. need.skill, tone
+end
+
+local function OnGatherItem(tt, data)
+    if tt ~= _G.GameTooltip and tt ~= _G.ItemRefTooltip then return end
+    if tt.IsForbidden and tt:IsForbidden() then return end
+    local id = type(data) == "table" and Plain(data.id)
+    if type(id) ~= "number" then return end
+    local text, tone = PRO.GatherLine(id)
+    if not text then return end
+    local c = C[tone] or C.textMuted
+    tt:AddLine(text, c[1], c[2], c[3])
+end
+PRO.OnGatherItem = OnGatherItem
+do
+    local tdp, e = _G.TooltipDataProcessor, _G.Enum and _G.Enum.TooltipDataType
+    if tdp and tdp.AddTooltipPostCall and e and e.Item then
+        pcall(tdp.AddTooltipPostCall, e.Item, WeintCodex.Measured("Berufe: Sammeln", OnGatherItem))
+    end
+end

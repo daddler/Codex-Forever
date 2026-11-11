@@ -22165,6 +22165,16 @@ do
         for _, l in ipairs(fa) do if l.teachers and #l.teachers > 0 then hasQuest = true end end
         assert(hasQuest, "Fachmann Erste Hilfe ohne Lehrer der Quest")
         assert(pcall(PRO.Trainers, "first-aid", "Alliance", 150), "Lehrer mit unbekanntem Rang brechen")
+        -- 1.0.5.55: Sammelstellen im Tooltip, Detailbereich je Seite.
+        assert(PRO.GatherNeed(2447) and PRO.GatherNeed(2447).skill == 1 and PRO.GatherNeed(2770), "Sammelstelle fehlt")
+        assert(PRO.GatherLine(2450):find("Kräuterkunde ab 70", 1, true), "Tooltipzeile Sammeln falsch")
+        local lines = {}
+        PRO.OnGatherItem({ AddLine = function(_, t) lines[#lines + 1] = t end, IsForbidden = function() return false end }, { id = 2450 })
+        assert(#lines == 0, "fremder Tooltip bekam eine Zeile")
+        WeintCodex.Navigation.SetInspector({ { type = "text", text = "x" } }, 300)
+        assert(WeintCodex.DetailWidth() == 300, "Detailbreite nicht gesetzt")
+        WeintCodex.Navigation.SetInspector({ { type = "text", text = "x" } })
+        assert(WeintCodex.DetailWidth() == 372, "Detailbreite nicht zurueck")
         -- 1.0.5.52: Rang ueber eine Quest zeichnet ohne Fehler (Bericht: "req" nil).
         local body = stub.NewObject("Frame")
         assert(pcall(PRO.DrawRankBooks, body, 0, 300, "first-aid") and pcall(PRO.DrawRankBooks, body, 0, 300, "cooking"),

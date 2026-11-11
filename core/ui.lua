@@ -3218,13 +3218,26 @@ inspector:Hide()
 -- merken vom Umbau nichts, ihre Flaeche wird nur kleiner.
 
 local detailShown, subNavW, subNavTop = false, 0, 0
+local detailW = DETAIL_W
 
 local function UpdateContentInsets()
     contentPanel:ClearAllPoints()
     contentPanel:SetPoint("TOPLEFT", contentHost, "TOPLEFT", subNavW, -subNavTop)
     contentPanel:SetPoint("BOTTOMRIGHT", contentHost, "BOTTOMRIGHT",
-        detailShown and -(DETAIL_W + DETAIL_GAP + WeintCodex.Metrics.PAD_X) or 0, 0)
+        detailShown and -(detailW + DETAIL_GAP + WeintCodex.Metrics.PAD_X) or 0, 0)
 end
+
+-- 1.0.5.55 (Wunsch: "die ganz rechte Seite etwas schmaler, damit Lehrer
+-- mehr Platz hat"): eine Seite darf den Detailbereich schmaler stellen;
+-- jedes neue SetInspector ohne Breite nimmt wieder die 372 px.
+function WeintCodex.SetDetailWidth(w)
+    w = tonumber(w) or DETAIL_W
+    if w == detailW then return end
+    detailW = w
+    inspector:SetWidth(w)
+    UpdateContentInsets()
+end
+function WeintCodex.DetailWidth() return detailW end
 
 function WeintCodex.SetDetailShown(shown)
     detailShown = shown and true or false
