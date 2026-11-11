@@ -660,6 +660,17 @@ local function QuestTitle(id)
     local t = q and Plain(q(id))
     return (type(t) == "string" and t ~= "") and t or nil
 end
+-- 1.0.5.50: bei wem das Rangbuch liegt (data/recipe_sources.lua).
+function PT.BookWhere(item)
+    local vs = PRO.Vendors and PRO.Vendors({ recipeItem = item }) or {}
+    local QM = WeintCodex.QuestMap
+    local names = {}
+    for _, v in ipairs(vs) do
+        local zone = v[2] and QM and QM.MapName(v[2])
+        names[#names + 1] = v[1] .. (zone and (" (" .. zone .. ")") or "")
+    end
+    return #names > 0 and ("bei " .. table.concat(names, " oder ")) or "beim Händler"
+end
 function PT.RankLine(st)
     local r, name = st.rank, st.name or ""
     local need = ""
@@ -671,7 +682,8 @@ function PT.RankLine(st)
     local hint = "Deine Obergrenze ist " .. st.cap .. "."
     if r and r.how == "book" and r.book then
         return { left = "→ Händler: Buch für Rang " .. name .. " kaufen", right = "bei " .. st.at, tone = "goldBright", item = r.book,
-            hint = hint .. " Den Rang lehrt ein Buch: " .. PRO.ItemName(r.book) .. " – beim Händler kaufen und benutzen"
+            hint = hint .. " Den Rang lehrt ein Buch: " .. PRO.ItemName(r.book) .. " – "
+                .. PT.BookWhere(r.book) .. " kaufen und benutzen"
                 .. (need ~= "" and (" (" .. need .. ")") or "") .. "." .. from }
     elseif r and r.how == "quest" then
         local title = r.quest and QuestTitle(r.quest)

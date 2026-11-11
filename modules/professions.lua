@@ -628,14 +628,88 @@ end
 -- Haendler ist der Stand aus Classic (P.VENDOR_SOURCE) und sagt das.
 function PRO.Vendors(r)
     local out = {}
-    if not (r and r.recipeItem and P and P.VENDORS) then return out end
+    if not (r and r.recipeItem) then return out end
+    -- 1.0.5.50: zuerst die Haendler aus der Datenbank fuer Forever
+    -- (data/recipe_sources.lua), erst ohne sie die aus Classic.
+    local src = PRO.ItemSources(r.recipeItem)
+    if src and #src.vendors > 0 then return src.vendors end
+    if not P.VENDORS then return out end
     local mine = _G.UnitFactionGroup and _G.UnitFactionGroup("player")
     if type(mine) ~= "string" then mine = nil end
     for _, npc in ipairs(P.VENDORS[r.recipeItem] or {}) do
         local v = P.VENDOR_NPC and P.VENDOR_NPC[npc]
         if v and (not mine or not v[5] or v[5] == mine) then out[#out + 1] = v end
     end
+    out.classic = true
     return out
+end
+
+-- 1.0.5.50 (Bericht: "Herkunft der Rezepte bzw. die Buecher, womit man den
+-- Skill erlernen kann, fuer Erste Hilfe etc. fehlen"): wer einen Rezept-
+-- oder Rangbuch-Gegenstand verkauft, fallen laesst oder als Belohnung gibt
+-- - aus data/recipe_sources.lua (Datenbank der Community fuer Forever).
+-- Haendler nur der eigenen Fraktion (oder beider); ohne Fraktion alle.
+-- { vendors = { {Name, Karte, x, y, Fraktion} }, drops = {Name}, objects, quests, world }
+local srcCache = {}
+local FAC = { A = "Alliance", H = "Horde" }
+local function SplitList(t)
+    local out = {}
+    for n in (t or ""):gmatch("%d+") do out[#out + 1] = tonumber(n) end
+    return out
+end
+local function Npc(id)
+    local RS = WeintCodex.RecipeSources
+    local raw = RS and RS.n and RS.n[id]
+    if type(raw) ~= "string" then return nil end
+    local name, map, x, y, fac = raw:match("^([^\t]*)\t([^\t]*)\t([^\t]*)\t([^\t]*)\t?([^\t]*)")
+    return { name, tonumber(map), tonumber(x), tonumber(y), FAC[fac] }, fac
+end
+function PRO.ItemSources(item)
+    if srcCache[item] ~= nil then return srcCache[item] or nil end
+    local RS = WeintCodex.RecipeSources
+    local raw = RS and RS.r and RS.r[item]
+    if type(raw) ~= "string" then srcCache[item] = false return nil end
+    local f = {}
+    for part in (raw .. "\t"):gmatch("([^\t]*)\t") do f[#f + 1] = part end
+    local mine = _G.UnitFactionGroup and Plain(_G.UnitFactionGroup("player"))
+    if mine ~= "Alliance" and mine ~= "Horde" then mine = nil end
+    local out = { vendors = {}, drops = {}, objects = {}, quests = {}, world = f[5] == "w" }
+    for _, id in ipairs(SplitList(f[1])) do
+        local v, fac = Npc(id)
+        if v and (not mine or fac == "" or fac == "AH" or v[5] == mine) then out.vendors[#out.vendors + 1] = v end
+    end
+    for _, id in ipairs(SplitList(f[2])) do
+        local v = Npc(id)
+        if v then out.drops[#out.drops + 1] = v end
+    end
+    for _, id in ipairs(SplitList(f[3])) do
+        local n = RS.o and RS.o[id]
+        if n then out.objects[#out.objects + 1] = n end
+    end
+    for _, id in ipairs(SplitList(f[4])) do
+        local n = RS.q and RS.q[id]
+        if n then out.quests[#out.quests + 1] = n end
+    end
+    srcCache[item] = out
+    return out
+end
+
+-- Die anderen Wege als Text, oder nil.
+function PRO.OtherSources(item)
+    local src = item and PRO.ItemSources(item)
+    if not src then return nil end
+    local parts = {}
+    if #src.quests > 0 then parts[#parts + 1] = "Belohnung der Quest „" .. table.concat(src.quests, "“, „") .. "“" end
+    if #src.drops > 0 then
+        local names = {}
+        for _, d in ipairs(src.drops) do names[#names + 1] = d[1] end
+        parts[#parts + 1] = "Beute von " .. table.concat(names, ", ")
+    elseif src.world then
+        parts[#parts + 1] = "Weltbeute (viele Gegner)"
+    end
+    if #src.objects > 0 then parts[#parts + 1] = "aus " .. table.concat(src.objects, ", ") end
+    if #parts == 0 then return nil end
+    return table.concat(parts, " · ")
 end
 
 -- Pfeil zum ersten Haendler (Kartennummer und Lage aus dem Bestand).
@@ -676,10 +750,12 @@ local function Tooltip(row)
         for _, v in ipairs(vs) do
             local zone = v[2] and QM and QM.MapName(v[2])
             line("  Händler: " .. v[1] .. (zone and (", " .. zone) or "")
-                .. (v[3] and string.format(" (%.0f, %.0f)", v[3], v[4]) or "") .. " – aus Classic", "textDim")
+                .. (v[3] and string.format(" (%.0f, %.0f)", v[3], v[4]) or "") .. (vs.classic and " – aus Classic" or ""), "textDim")
         end
         local _, origin = PRO.Origin(r)
         line(origin, #vs > 0 and "goldBright" or "textMuted")
+        local other = #vs > 0 and PRO.OtherSources(r.recipeItem)
+        if other then line("Auch: " .. other, "textDim") end
         line("Klick: Details rechts", "accent")
         if r.favor then line("  Für " .. r.favor .. " Händlergunst", "textDim") end
     else
@@ -907,6 +983,45 @@ local function TrainerRow(body, y, w, t, profName)
     return y - 44
 end
 
+-- 1.0.5.50: Raenge, die kein Lehrer gibt (Experte der Nebenberufe als
+-- Buch, Fachmann ueber eine Quest) - unter den Lehrern, mit Haendler.
+PRO.RANK_LABEL = { [150] = "Geselle", [225] = "Experte", [300] = "Fachmann" }
+function PRO.RankBookLines(key)
+    local line = PRO.Line and PRO.Line(key)
+    local rows = line and P and P.RANKS and P.RANKS[line]
+    local out = {}
+    if not rows then return out end
+    local QM = WeintCodex.QuestMap
+    local horde = _G.UnitFactionGroup and Plain(_G.UnitFactionGroup("player")) == "Horde"
+    for _, r in ipairs(rows) do
+        local rank = PRO.RANK_LABEL[r[1]] or tostring(r[1])
+        if r[2] == "book" and r[5] ~= 0 then
+            local vs = PRO.Vendors({ recipeItem = r[5] })
+            local where = {}
+            for _, v in ipairs(vs) do
+                local zone = v[2] and QM and QM.MapName(v[2])
+                where[#where + 1] = v[1] .. (zone and (", " .. zone) or "")
+            end
+            out[#out + 1] = { rank = rank, cap = r[1], item = r[5], req = r[3], vendors = vs,
+                text = "Rang " .. rank .. " (bis " .. r[1] .. ", ab " .. r[3] .. "): Buch „" .. PRO.ItemName(r[5]) .. "“"
+                    .. (#where > 0 and (" – bei " .. table.concat(where, " oder ")) or " – Händler unbekannt") }
+        elseif r[2] == "quest" then
+            local q = horde and r[7] or r[6]
+            out[#out + 1] = { rank = rank, cap = r[1], quest = q ~= 0 and q or nil,
+                text = "Rang " .. rank .. " (bis " .. r[1] .. ", ab " .. r[3] .. (r[4] > 0 and (", Stufe " .. r[4]) or "")
+                    .. "): über eine Quest, nicht beim Lehrer" }
+        end
+    end
+    return out
+end
+function PRO.DrawRankBooks(body, y, w, key)
+    local lines = PRO.RankBookLines(key)
+    if #lines == 0 then return y end
+    y = SectionHead(body, y, w, "Ränge ohne Lehrer", "goldBright", 0, nil)
+    for _, l in ipairs(lines) do y = Note(body, y, w, l.text) end
+    return y
+end
+
 local function DrawTrainers(body, w, key, faction, max)
     local list, need = PRO.Trainers(key, faction, max)
     local y = 0
@@ -916,6 +1031,7 @@ local function DrawTrainers(body, w, key, faction, max)
             .. PRO.RANK_CAP[need] .. ")" .. (list[1].dist and " – der nächstgelegene steht oben." or "."))
     end
     for _, t in ipairs(list) do y = TrainerRow(body, y, w, t, profName) end
+    y = PRO.DrawRankBooks(body, y, w, key)
     if #list == 0 then
         y = SectionHead(body, y, w, "Lehrer", "textMuted", 0,
             "Für diesen Beruf ist kein Lehrer deiner Fraktion hinterlegt.")
@@ -969,6 +1085,8 @@ function PRO.Origin(r)
     if not r.recipeItem then return "unknown", "Herkunft unbekannt" end
     if #PRO.Vendors(r) > 0 then return "vendor", "Käuflich beim Händler" end
     if r.favor then return "favor", "Gegen " .. r.favor .. " Händlergunst" end
+    local other = PRO.OtherSources(r.recipeItem)
+    if other then return "drop", other end
     if r.bop then return "drop", "Rezept muss selbst gefunden werden (beim Aufheben gebunden) – Fundort nicht im Bestand" end
     return "item", "Rezept als Gegenstand – kein Händler bekannt (Beute, Quest oder Auktionshaus)"
 end
@@ -1024,8 +1142,9 @@ local function RecipeInspector(r)
     local PT = WeintCodex.ProfTools
     if PT and PT.RecipeBlocks then PT.RecipeBlocks(r, blocks) end
     blocks[#blocks + 1] = { type = "divider" }
-    blocks[#blocks + 1] = { type = "text", text = kind == "vendor" and "Händler und Lage aus Classic – in Forever unbestätigt."
-        or "Unbestätigt – Wissensstand aus der Beta." }
+    local vs = PRO.Vendors(r)
+    blocks[#blocks + 1] = { type = "text", text = (kind == "vendor" and vs.classic) and "Händler und Lage aus Classic – in Forever unbestätigt."
+        or "Unbestätigt – Wissensstand der Community." }
     return blocks
 end
 PRO.RecipeInspector = RecipeInspector

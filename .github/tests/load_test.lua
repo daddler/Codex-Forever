@@ -22147,6 +22147,13 @@ do
         assert(PRO.Origin({ recipeItem = -1, favor = 5 }) == "favor", "Gunst nicht erkannt")
         assert(PRO.Origin({ recipeItem = -1, bop = true }) == "drop", "Fundstueck nicht erkannt")
         assert(PRO.Origin({ recipeItem = -1 }) == "item" and PRO.Origin({}) == "unknown", "Rest falsch")
+        -- 1.0.5.50: Herkunft aus der Datenbank fuer Forever, Rangbuecher der Nebenberufe.
+        local src = PRO.ItemSources(16084)
+        assert(src and #src.vendors >= 1, "Rangbuch Erste Hilfe ohne Haendler")
+        local kind2, txt2 = PRO.Origin({ recipeItem = 250380 })
+        assert(kind2 == "drop" and txt2:find("Beute von", 1, true), "Beute als Herkunft fehlt: " .. tostring(txt2))
+        local books = PRO.RankBookLines("first-aid")
+        assert(#books >= 1 and books[1].text:find("Buch", 1, true), "Rangbuch Erste Hilfe nicht genannt")
         local blocks = PRO.RecipeInspector({ spell = 1, recipeItem = any, reagents = { { 2589, 2 } }, name = "Test" })
         local hasGuide
         for _, b in ipairs(blocks) do if b.type == "custom" then hasGuide = true end end
