@@ -13,7 +13,7 @@ permissions:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04   # 1.0.5.50: ubuntu-latest (26.04) erreichte seine Paketquelle nicht
 
     steps:
       - name: Checkout repository
