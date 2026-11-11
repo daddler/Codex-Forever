@@ -73,12 +73,31 @@ function FL.IsFishing(spellID)
     if FL.CHANNELS[spellID] then return true end
     local cs = _G.C_Spell
     local n = cs and cs.GetSpellName and Plain(cs.GetSpellName(spellID))
-    return n ~= nil and n == SpellName()
+    if type(n) ~= "string" then return false end
+    -- 1.0.5.51 (Bericht: "Fertigkeit 34/75, aber kein Fisch drin"): kennt
+    -- der Client 7620 nicht (neue Nummern in Forever), zaehlt der Name.
+    return n == SpellName() or FL.NAMES[n] == true
 end
+FL.NAMES = { ["Angeln"] = true, ["Fishing"] = true }
 
+FL.lastCast = 0
+FL.CAST_WINDOW = 35    -- so lange nach dem Auswerfen gilt ein Beutefenster als Fang
 function FL.NoteCast(zone)
+    FL.lastCast = Now()
     local e = ZoneEntry(zone or FL.Zone())
     if e then e.casts = e.casts + 1 end
+end
+
+-- Angelbeute? Erst, was der Client sagt (IsFishingLoot); fehlt die
+-- Funktion oder sagt sie nichts Brauchbares, zaehlt ein Beutefenster kurz
+-- nach dem eigenen Auswerfen (1.0.5.51 - vorher fiel so jeder Fang weg).
+function FL.IsFishingLoot()
+    if type(_G.IsFishingLoot) == "function" then
+        local ok, v = pcall(_G.IsFishingLoot)
+        v = ok and Plain(v)
+        if v == true then return true end
+    end
+    return FL.lastCast > 0 and Now() - FL.lastCast <= FL.CAST_WINDOW
 end
 
 -- Ein Fang: Liste aus { id, qty }. Muenzen (ohne Gegenstand) zaehlen nicht.
@@ -152,19 +171,22 @@ end
 local lootCounted = false
 local ev = CreateFrame("Frame")
 FL.events = ev
-for _, e in ipairs({ "UNIT_SPELLCAST_CHANNEL_START", "LOOT_OPENED", "LOOT_CLOSED" }) do
+for _, e in ipairs({ "UNIT_SPELLCAST_CHANNEL_START", "LOOT_READY", "LOOT_OPENED", "LOOT_CLOSED" }) do
     pcall(ev.RegisterEvent, ev, e)
 end
 function FL.OnEvent(_, event, ...)
     if event == "UNIT_SPELLCAST_CHANNEL_START" then
         local unit, _, spellID = ...
         if Plain(unit) == "player" and FL.IsFishing(spellID) then FL.NoteCast() end
-    elseif event == "LOOT_OPENED" then
-        if lootCounted then return end
-        local ok, fishing = pcall(_G.IsFishingLoot)
-        if not (ok and Plain(fishing)) then return end
+    elseif event == "LOOT_READY" or event == "LOOT_OPENED" then
+        -- LOOT_READY kommt auch mit automatischem Pluendern, bevor die
+        -- Plaetze leer sind; einmal je Beutefenster.
+        if lootCounted or not FL.IsFishingLoot() then return end
+        local items = FL.ReadLoot()
+        if #items == 0 then return end
         lootCounted = true
-        FL.NoteCatch(FL.ReadLoot())
+        FL.lastCast = 0
+        FL.NoteCatch(items)
     elseif event == "LOOT_CLOSED" then
         lootCounted = false
     end

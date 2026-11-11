@@ -23861,6 +23861,16 @@ do
         Check(FL.Zones()[1].catches == 1, "Angel-Logbuch: Truhe oder Leiche ist kein Fang")
         FL.OnEvent(nil, "UNIT_SPELLCAST_CHANNEL_START", "target", "x", 7620)
         Check(FL.Zones()[1].casts == 1, "Angel-Logbuch: nur eigene Würfe")
+        -- 1.0.5.51: ohne IsFishingLoot zaehlt die Beute kurz nach dem Auswerfen.
+        G.IsFishingLoot = nil
+        FL.OnEvent(nil, "UNIT_SPELLCAST_CHANNEL_START", "player", "x", 7620)
+        FL.OnEvent(nil, "LOOT_READY", false)
+        FL.OnEvent(nil, "LOOT_OPENED", false)
+        FL.OnEvent(nil, "LOOT_CLOSED")
+        Check(FL.Zones()[1].catches == 2, "Angel-Logbuch: Fang ohne IsFishingLoot nicht gezählt")
+        FL.OnEvent(nil, "LOOT_OPENED", false)
+        FL.OnEvent(nil, "LOOT_CLOSED")
+        Check(FL.Zones()[1].catches == 2, "Angel-Logbuch: Beute ohne Wurf als Fang gezählt")
         local PT = WeintCodex.ProfTools
         PT.Show("angeln")
         Check(PT.lastDraw and PT.lastDraw.key == "angeln" and PT.lastDraw.rows >= 1, "Angel-Logbuch: Seite zeigt den Fang")

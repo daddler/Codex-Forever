@@ -559,14 +559,14 @@ local page
 local selected
 local showAll = false
 local ROW_H, HEAD_H = 26, 30
-local rowPool, headPool, notePool, trainerPool = {}, {}, {}, {}
-local used = { row = 0, head = 0, note = 0, trainer = 0 }
+local rowPool, headPool, notePool, trainerPool, bookPool = {}, {}, {}, {}, {}
+local used = { row = 0, head = 0, note = 0, trainer = 0, book = 0 }
 
 local function ResetPools()
-    for _, pool in ipairs({ rowPool, headPool, notePool, trainerPool }) do
+    for _, pool in ipairs({ rowPool, headPool, notePool, trainerPool, bookPool }) do
         for _, f in ipairs(pool) do f:Hide() end
     end
-    used.row, used.head, used.note, used.trainer = 0, 0, 0, 0
+    used.row, used.head, used.note, used.trainer, used.book = 0, 0, 0, 0, 0
 end
 
 local function BuildPage()
@@ -876,7 +876,9 @@ local function SectionHead(body, y, w, label, color, count, note)
     head.eb:SetText(WeintCodex.Spaced and WeintCodex.Spaced(WeintCodex.Upper(label)) or label)
     local c = C[color] or C.textMuted
     head.eb:SetTextColor(c[1], c[2], c[3])
-    head.right:SetText(count == 1 and "1 Rezept" or (count .. " Rezepte"))
+    -- 1.0.5.51: ohne Zahl kein Text - sonst stand ein alter "… Rezepte"
+    -- aus dem Vorrat unter "Ränge ohne Lehrer" (Bild vom Spieler).
+    head.right:SetText(type(count) ~= "number" and "" or count == 1 and "1 Rezept" or (count .. " Rezepte"))
     head:Show()
     y = y - HEAD_H - 4
     if note then y = Note(body, y, w, note) end
@@ -1014,11 +1016,68 @@ function PRO.RankBookLines(key)
     end
     return out
 end
+-- 1.0.5.51 (Bericht mit Bild: "Buecher ohne Questpfeil, alles ueberlappt"):
+-- je Haendler eine Zeile wie bei den Lehrern - Buch, Haendler und Ort,
+-- rechts "Pfeil" zum Haendler. Ein Rang ueber eine Quest steht als Zeile
+-- ohne Knopf.
+local function BookRow(body, y, w, title, sub, target)
+    used.book = used.book + 1
+    local row = bookPool[used.book]
+    if not row then
+        row = CreateFrame("Frame", nil, body)
+        row:SetHeight(40)
+        row.name = WeintCodex.Label(row, "", { size = 12, font = WeintCodex.Fonts.sansMedium, color = "goldBright" })
+        row.name:SetPoint("TOPLEFT", row, "TOPLEFT", 0, -4)
+        row.name:SetPoint("RIGHT", row, "RIGHT", -64, 0)
+        row.name:SetWordWrap(false)
+        row.sub = WeintCodex.Label(row, "", { size = 10, color = "textMuted" })
+        row.sub:SetPoint("TOPLEFT", row.name, "BOTTOMLEFT", 0, -3)
+        row.sub:SetPoint("RIGHT", row, "RIGHT", -64, 0)
+        row.sub:SetWordWrap(false)
+        row.go = WeintCodex.CreateButton(row, { kind = "secondary", text = "Pfeil", height = 20, size = 10,
+            padding = 18, radius = 0, onClick = function()
+                local t, QA = row.target, WeintCodex.UIQuestArrow
+                if t and QA and QA.SetCustom then
+                    QA.SetCustom({ map = t[2], x = t[3] / 100, y = t[4] / 100, title = row.title })
+                end
+            end })
+        WeintCodex.DrawSlimBorder(row.go, "accentDim", 1, 1)
+        row.go:SetPoint("RIGHT", row, "RIGHT", -4, 0)
+        bookPool[used.book] = row
+    end
+    row:SetParent(body)
+    row:ClearAllPoints()
+    row:SetPoint("TOPLEFT", body, "TOPLEFT", 0, y)
+    row:SetWidth(w)
+    row.target, row.title = target, title
+    row.name:SetText(title)
+    row.sub:SetText(sub)
+    row.go:SetShown(target ~= nil and target[2] ~= nil and target[3] ~= nil and WeintCodex.UIQuestArrow ~= nil)
+    row:Show()
+    return y - 44
+end
+
 function PRO.DrawRankBooks(body, y, w, key)
     local lines = PRO.RankBookLines(key)
     if #lines == 0 then return y end
-    y = SectionHead(body, y, w, "Ränge ohne Lehrer", "goldBright", 0, nil)
-    for _, l in ipairs(lines) do y = Note(body, y, w, l.text) end
+    y = y - 6
+    y = SectionHead(body, y, w, "Ränge ohne Lehrer", "goldBright", nil, nil)
+    local QM = WeintCodex.QuestMap
+    for _, l in ipairs(lines) do
+        if l.item then
+            local title = "Rang " .. l.rank .. ": " .. PRO.ItemName(l.item)
+            if #l.vendors == 0 then
+                y = BookRow(body, y, w, title, "Händler unbekannt · ab " .. l.req, nil)
+            end
+            for _, v in ipairs(l.vendors) do
+                local zone = v[2] and QM and QM.MapName(v[2])
+                y = BookRow(body, y, w, title, v[1] .. (zone and ("  ·  " .. zone) or "") .. "  ·  ab " .. l.req, v)
+            end
+        else
+            y = BookRow(body, y, w, "Rang " .. l.rank .. ": über eine Quest",
+                "nicht beim Lehrer  ·  ab " .. l.req, nil)
+        end
+    end
     return y
 end
 
