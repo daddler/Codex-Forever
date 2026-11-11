@@ -781,10 +781,10 @@ local function RecipeRow(body, y, w, r, opts)
         row.icon:SetSize(20, 20)
         row.icon:SetPoint("LEFT", row, "LEFT", 2, 0)
         row.icon:SetTexCoord(0.08, 0.92, 0.08, 0.92)
-        row.steps = WeintCodex.Label(row, "", { size = 11, justify = "RIGHT", font = WeintCodex.Fonts.mono })
+        row.steps = WeintCodex.Label(row, "", { size = 10, justify = "RIGHT", font = WeintCodex.Fonts.mono })
         row.steps:SetPoint("RIGHT", row, "RIGHT", -4, 0)
         row.tag = WeintCodex.Label(row, "", { size = 10, justify = "RIGHT" })
-        row.tag:SetPoint("RIGHT", row.steps, "LEFT", -10, 0)
+        row.tag:SetPoint("RIGHT", row.steps, "LEFT", -6, 0)
         row.name = WeintCodex.Label(row, "", { size = 12, font = WeintCodex.Fonts.sansMedium })
         row.name:SetPoint("LEFT", row.icon, "RIGHT", 8, 0)
         row.name:SetPoint("RIGHT", row.tag, "LEFT", -8, 0)
@@ -933,8 +933,10 @@ local function TrainerRow(body, y, w, t, profName)
         row.name:SetPoint("TOPLEFT", row, "TOPLEFT", 0, -4)
         row.sub = WeintCodex.Label(row, "", { size = 10, color = "textMuted" })
         row.sub:SetPoint("TOPLEFT", row.name, "BOTTOMLEFT", 0, -3)
-        row.name:SetPoint("RIGHT", row, "RIGHT", -64, 0)
-        row.sub:SetPoint("RIGHT", row, "RIGHT", -64, 0)
+        -- 1.0.5.53 (Bericht: "alles abgehackt"): Knopf neben dem Namen,
+        -- die zweite Zeile ueber die ganze Breite.
+        row.name:SetPoint("RIGHT", row, "RIGHT", -60, 0)
+        row.sub:SetPoint("RIGHT", row, "RIGHT", -2, 0)
         row.name:SetWordWrap(false)
         row.sub:SetWordWrap(false)
         row:EnableMouse(true)
@@ -961,7 +963,7 @@ local function TrainerRow(body, y, w, t, profName)
                 end
             end })
         WeintCodex.DrawSlimBorder(row.map, "accentDim", 1, 1)
-        row.map:SetPoint("RIGHT", row, "RIGHT", -4, 0)
+        row.map:SetPoint("TOPRIGHT", row, "TOPRIGHT", -2, -2)
         trainerPool[used.trainer] = row
     end
     row:SetParent(body)
@@ -1020,19 +1022,23 @@ end
 -- je Haendler eine Zeile wie bei den Lehrern - Buch, Haendler und Ort,
 -- rechts "Pfeil" zum Haendler. Ein Rang ueber eine Quest steht als Zeile
 -- ohne Knopf.
-local function BookRow(body, y, w, title, sub, target)
+local function BookRow(body, y, w, title, line2, line3, target)
     used.book = used.book + 1
     local row = bookPool[used.book]
     if not row then
         row = CreateFrame("Frame", nil, body)
-        row:SetHeight(40)
+        row:SetHeight(54)
         row.name = WeintCodex.Label(row, "", { size = 12, font = WeintCodex.Fonts.sansMedium, color = "goldBright" })
         row.name:SetPoint("TOPLEFT", row, "TOPLEFT", 0, -4)
-        row.name:SetPoint("RIGHT", row, "RIGHT", -64, 0)
+        row.name:SetPoint("RIGHT", row, "RIGHT", -60, 0)
         row.name:SetWordWrap(false)
+        row.line2 = WeintCodex.Label(row, "", { size = 11, color = "textNormal" })
+        row.line2:SetPoint("TOPLEFT", row.name, "BOTTOMLEFT", 0, -3)
+        row.line2:SetPoint("RIGHT", row, "RIGHT", -2, 0)
+        row.line2:SetWordWrap(false)
         row.sub = WeintCodex.Label(row, "", { size = 10, color = "textMuted" })
-        row.sub:SetPoint("TOPLEFT", row.name, "BOTTOMLEFT", 0, -3)
-        row.sub:SetPoint("RIGHT", row, "RIGHT", -64, 0)
+        row.sub:SetPoint("TOPLEFT", row.line2, "BOTTOMLEFT", 0, -3)
+        row.sub:SetPoint("RIGHT", row, "RIGHT", -2, 0)
         row.sub:SetWordWrap(false)
         row.go = WeintCodex.CreateButton(row, { kind = "secondary", text = "Pfeil", height = 20, size = 10,
             padding = 18, radius = 0, onClick = function()
@@ -1042,19 +1048,20 @@ local function BookRow(body, y, w, title, sub, target)
                 end
             end })
         WeintCodex.DrawSlimBorder(row.go, "accentDim", 1, 1)
-        row.go:SetPoint("RIGHT", row, "RIGHT", -4, 0)
+        row.go:SetPoint("TOPRIGHT", row, "TOPRIGHT", -2, -2)
         bookPool[used.book] = row
     end
     row:SetParent(body)
     row:ClearAllPoints()
     row:SetPoint("TOPLEFT", body, "TOPLEFT", 0, y)
     row:SetWidth(w)
-    row.target, row.title = target, title
+    row.target, row.title = target, line2
     row.name:SetText(title)
-    row.sub:SetText(sub)
+    row.line2:SetText(line2)
+    row.sub:SetText(line3)
     row.go:SetShown(target ~= nil and target[2] ~= nil and target[3] ~= nil and WeintCodex.UIQuestArrow ~= nil)
     row:Show()
-    return y - 44
+    return y - 60
 end
 
 function PRO.DrawRankBooks(body, y, w, key)
@@ -1064,18 +1071,18 @@ function PRO.DrawRankBooks(body, y, w, key)
     y = SectionHead(body, y, w, "Ränge ohne Lehrer", "goldBright", nil, nil)
     local QM = WeintCodex.QuestMap
     for _, l in ipairs(lines) do
+        local head = l.rank .. "  ·  ab " .. tostring(l.req or "?")
         if l.item then
-            local title = "Rang " .. l.rank .. ": " .. PRO.ItemName(l.item)
+            local book = PRO.ItemName(l.item)
             if #l.vendors == 0 then
-                y = BookRow(body, y, w, title, "Händler unbekannt · ab " .. l.req, nil)
+                y = BookRow(body, y, w, head, book, "Händler unbekannt", nil)
             end
             for _, v in ipairs(l.vendors) do
                 local zone = v[2] and QM and QM.MapName(v[2])
-                y = BookRow(body, y, w, title, v[1] .. (zone and ("  ·  " .. zone) or "") .. "  ·  ab " .. l.req, v)
+                y = BookRow(body, y, w, head, book, v[1] .. (zone and (", " .. zone) or ""), v)
             end
         else
-            y = BookRow(body, y, w, "Rang " .. l.rank .. ": über eine Quest",
-                "nicht beim Lehrer  ·  ab " .. tostring(l.req or "?"), nil)
+            y = BookRow(body, y, w, head, "über eine Quest", "nicht beim Lehrer", nil)
         end
     end
     return y
@@ -1308,7 +1315,7 @@ function PRO.Show()
     end
     local total = Plain(f:GetWidth())
     if type(total) == "number" and total > 400 then
-        f.RecipeCard:SetWidth(math.floor((total - 2 * WeintCodex.Metrics.PAD_X - WeintCodex.Metrics.GAP) * 0.62))
+        f.RecipeCard:SetWidth(math.floor((total - 2 * WeintCodex.Metrics.PAD_X - WeintCodex.Metrics.GAP) * 0.64))
     end
     local rw = (Plain(f.RecipeCard:GetWidth()) or 460) - 40
     local tw = (Plain(f.TrainerCard:GetWidth()) or 280) - 40
