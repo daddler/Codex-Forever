@@ -9,6 +9,13 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.0.5.46] – 2026-11-11
+
+- Bestand-Tooltip: eingeloggter Charakter als „Du“ zuerst (auch ohne Bestand), Twinks
+  darunter unter „Twinks“ (Bericht: Bank eines Twinks für den eigenen gehalten).
+- Aufträge: Statuszeile nach dem Einloggen (bei offenen Aufträgen) und bei `/wc aufträge`,
+  inkl. „von der Companion noch nie etwas bekommen“ – Diagnose, Ursache noch offen.
+
 ## [1.0.5.45] – 2026-11-10
 
 - Klickzauber auf Rahmen mit Zusatztaste: `type=macro` mit `/cast [@mouseover,exists] Zauber`

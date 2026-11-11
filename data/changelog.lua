@@ -22,6 +22,14 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.0.5.46",
+        date    = "11.11.2026",
+        notes   = {
+            "|cff7C6CFFBestand im Tooltip getrennt|r – oben steht, was du selbst dabeihast, darunter die Twinks mit Namen; hat nur ein Twink etwas, steht bei dir „nichts dabei“.",
+            "|cff7C6CFFAufträge im Chat|r – nach dem Einloggen eine Zeile, wie viele Aufträge offen sind; „/wc aufträge“ sagt auch, ob von der Companion schon etwas kam.",
+        },
+    },
+    {
         version = "1.0.5.45",
         date    = "10.11.2026",
         notes   = {
