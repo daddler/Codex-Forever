@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.0.5.52",
+        date    = "11.11.2026",
+        notes   = {
+            "|cff7C6CFFBerufe-Seite öffnet wieder|r – Erste Hilfe und Kochkunst brachen beim Rang über eine Quest mit einem Fehler ab.",
+        },
+    },
+    {
         version = "1.0.5.51",
         date    = "11.11.2026",
         notes   = {

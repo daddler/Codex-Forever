@@ -9,6 +9,11 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.0.5.52] – 2026-11-11
+
+- Berufe: `PRO.RankBookLines` setzt `req` auch für Ränge über eine Quest – `DrawRankBooks`
+  brach mit „attempt to concatenate field 'req'“ ab (Erste Hilfe, Kochkunst). Test zeichnet jetzt.
+
 ## [1.0.5.51] – 2026-11-11
 
 - Berufe: Rangbücher als Zeilen je Händler mit Questpfeil (`BookRow`), Kopfzeile ohne Zahl
