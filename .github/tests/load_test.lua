@@ -22154,6 +22154,10 @@ do
         assert(kind2 == "drop" and txt2:find("Beute von", 1, true), "Beute als Herkunft fehlt: " .. tostring(txt2))
         local books = PRO.RankBookLines("first-aid")
         assert(#books >= 1 and books[1].text:find("Buch", 1, true), "Rangbuch Erste Hilfe nicht genannt")
+        -- 1.0.5.52: Rang ueber eine Quest zeichnet ohne Fehler (Bericht: "req" nil).
+        local body = stub.NewObject("Frame")
+        assert(pcall(PRO.DrawRankBooks, body, 0, 300, "first-aid") and pcall(PRO.DrawRankBooks, body, 0, 300, "cooking"),
+            "Raenge ohne Lehrer zeichnen nicht")
         local blocks = PRO.RecipeInspector({ spell = 1, recipeItem = any, reagents = { { 2589, 2 } }, name = "Test" })
         local hasGuide
         for _, b in ipairs(blocks) do if b.type == "custom" then hasGuide = true end end

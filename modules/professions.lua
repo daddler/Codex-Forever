@@ -1009,7 +1009,7 @@ function PRO.RankBookLines(key)
                     .. (#where > 0 and (" – bei " .. table.concat(where, " oder ")) or " – Händler unbekannt") }
         elseif r[2] == "quest" then
             local q = horde and r[7] or r[6]
-            out[#out + 1] = { rank = rank, cap = r[1], quest = q ~= 0 and q or nil,
+            out[#out + 1] = { rank = rank, cap = r[1], req = r[3], quest = q ~= 0 and q or nil,
                 text = "Rang " .. rank .. " (bis " .. r[1] .. ", ab " .. r[3] .. (r[4] > 0 and (", Stufe " .. r[4]) or "")
                     .. "): über eine Quest, nicht beim Lehrer" }
         end
@@ -1075,7 +1075,7 @@ function PRO.DrawRankBooks(body, y, w, key)
             end
         else
             y = BookRow(body, y, w, "Rang " .. l.rank .. ": über eine Quest",
-                "nicht beim Lehrer  ·  ab " .. l.req, nil)
+                "nicht beim Lehrer  ·  ab " .. tostring(l.req or "?"), nil)
         end
     end
     return y
