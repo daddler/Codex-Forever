@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.0.5.47",
+        date    = "11.11.2026",
+        notes   = {
+            "|cff7C6CFFAufträge melden sich bei jedem Einloggen|r – solange einer offen oder angenommen ist, geht das Fenster nach dem Laden auf; die Zeilen sind aufgeräumt, Status und Knöpfe überdecken nichts mehr.",
+        },
+    },
+    {
         version = "1.0.5.46",
         date    = "11.11.2026",
         notes   = {

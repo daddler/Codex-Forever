@@ -9,6 +9,12 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.0.5.47] – 2026-11-11
+
+- Aufträge: Fenster nach jedem Einloggen/`/reload`, solange einer offen oder angenommen ist
+  (vorher nur bei neuen offenen); Zeile dreigeteilt (Titel + Status mit Farbstreifen, Zeile,
+  Knopfstreifen), Ablehnen/Stornieren als schlichte Knöpfe.
+
 ## [1.0.5.46] – 2026-11-11
 
 - Bestand-Tooltip: eingeloggter Charakter als „Du“ zuerst (auch ohne Bestand), Twinks
