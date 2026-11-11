@@ -9,6 +9,13 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.0.5.49] – 2026-11-11
+
+- Klickzauber: Selbstzauber-Taste (`SetModifiedClick("SELFCAST", "NONE")`, ohne `SaveBindings`)
+  für die Sitzung aus, solange ein Zauber auf ihrer Zusatztaste liegt; alter Wert zurück, wenn
+  keine mehr da ist. Gemessen: mit Alt als Selbstzauber-Taste ging das Schild trotz Makro mit
+  ausdrücklichem Ziel auf den Priester (Clique warnt in demselben Fall nur).
+
 ## [1.0.5.48] – 2026-11-11
 
 - Auftragsfenster: Eckmasken der Knöpfe in der Farbe der Fläche (vorher `bgDark` auf

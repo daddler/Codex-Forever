@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.0.5.49",
+        date    = "11.11.2026",
+        notes   = {
+            "|cff7C6CFFKlickzauber auf Alt gehen aufs Ziel|r – liegt ein Klickzauber auf der Selbstzauber-Taste des Spiels, schaltet WeintCodex sie für die Sitzung aus und sagt das im Chat; ohne solche Belegung kommt sie zurück.",
+        },
+    },
+    {
         version = "1.0.5.48",
         date    = "11.11.2026",
         notes   = {
