@@ -109,6 +109,7 @@ data/professions.lua
 # Abgleich der Schwellen und Raenge (1.9.0.0, erzeugt); gelesen von modules/professions.lua.
 data/professions_su.lua
 data/recipe_sources.lua
+data/professions_nf.lua
 # Klassenquests und Klassenlehrer (6.15.0.0, erzeugt); gelesen von modules/classquests.lua.
 data/classquests.lua
 # Wildtierkunde des Jaegers (erzeugt); gelesen von modules/beasts.lua.

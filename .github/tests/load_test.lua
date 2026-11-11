@@ -22154,6 +22154,17 @@ do
         assert(kind2 == "drop" and txt2:find("Beute von", 1, true), "Beute als Herkunft fehlt: " .. tostring(txt2))
         local books = PRO.RankBookLines("first-aid")
         assert(#books >= 1 and books[1].text:find("Buch", 1, true), "Rangbuch Erste Hilfe nicht genannt")
+        -- 1.0.5.54: Abgleich mit Naowh Forever - Herkunft, Preise, Raenge, Lehrer.
+        local nf = PRO.NFSources(7935)
+        assert(nf and #nf.drops >= 1 and nf.drops[1].chance, "Beute mit Dropchance fehlt")
+        local q = PRO.NFSources(6412)
+        assert(q and #q.quests >= 1 and q.quests[1].giver, "Quest mit Geber fehlt")
+        assert(PRO.Money(12345) and PRO.Money(0), "Geldtext fehlt")
+        local fa = PRO.RankBookLines("first-aid")
+        local hasQuest
+        for _, l in ipairs(fa) do if l.teachers and #l.teachers > 0 then hasQuest = true end end
+        assert(hasQuest, "Fachmann Erste Hilfe ohne Lehrer der Quest")
+        assert(pcall(PRO.Trainers, "first-aid", "Alliance", 150), "Lehrer mit unbekanntem Rang brechen")
         -- 1.0.5.52: Rang ueber eine Quest zeichnet ohne Fehler (Bericht: "req" nil).
         local body = stub.NewObject("Frame")
         assert(pcall(PRO.DrawRankBooks, body, 0, 300, "first-aid") and pcall(PRO.DrawRankBooks, body, 0, 300, "cooking"),

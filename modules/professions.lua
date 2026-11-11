@@ -60,6 +60,9 @@ function PRO.Recipes(key)
     -- (data/professions_su.lua, P.SU_RAW).
     local extra = P and P.SU_RAW and P.SU_RAW[key]
     if extra then raw = (raw or "") .. "\n" .. extra end
+    -- 1.0.5.54: und was nur Naowh Forever kennt (data/professions_nf.lua).
+    local nfAdd = P and P.NF_ADD and P.NF_ADD[key]
+    if nfAdd then raw = (raw or "") .. "\n" .. nfAdd end
     local out = {}
     for line in (raw or ""):gmatch("[^\n]+") do
         local head, reag, name = line:match("^([^|]*)|([^|]*)|(.*)$")
@@ -80,6 +83,14 @@ function PRO.Recipes(key)
                     r.learn = Num(l)
                     r.yellow, r.green, r.grey = tonumber(y), tonumber(g), tonumber(gr)
                 end
+            end
+            -- 1.0.5.54: Naowh Forever belegt eine andere Herkunft (Haendler,
+            -- Beute, Quest) - dann ist es kein Lehrerrezept; fehlt die
+            -- Lernstufe, nimmt sie die ihre. Gelb/grau bleiben vom Client.
+            local nf = r.spell and P.NF_FIX and P.NF_FIX[r.spell]
+            if nf then
+                if nf.t == 0 then r.trainer = false elseif nf.t == 1 then r.trainer = true end
+                if r.learn == nil and nf.l then r.learn = nf.l end
             end
             for id, n in reag:gmatch("(%d+):(%d+)") do
                 r.reagents[#r.reagents + 1] = { tonumber(id), tonumber(n) }
@@ -459,7 +470,13 @@ function PRO.Trainers(key, faction, max)
     local need = max and CAP_RANK[max] and (CAP_RANK[max] + 1) or nil
     local here, pc, px, py = PlayerPos()
     local out = {}
-    for _, t in ipairs(P and P.TRAINERS and P.TRAINERS[key] or {}) do
+    local list = {}
+    for _, t in ipairs(P and P.TRAINERS and P.TRAINERS[key] or {}) do list[#list + 1] = t end
+    -- 1.0.5.54: Lehrer, die nur Naowh Forever kennt - ohne bekannten Rang.
+    for _, t in ipairs(P and P.NF_TRAINERS and P.NF_TRAINERS[key] or {}) do
+        list[#list + 1] = { t[1], t[2], t[4], t[5], t[6], t[3] or nil, nil }
+    end
+    for _, t in ipairs(list) do
         local fr = t[6]
         if not faction or not fr or fr == faction then
             local dist
@@ -468,7 +485,7 @@ function PRO.Trainers(key, faction, max)
                 if c == pc then dist = math.sqrt((wx - px) ^ 2 + (wy - py) ^ 2) end
             end
             out[#out + 1] = { id = t[1], name = t[2], map = t[3], x = t[4], y = t[5], faction = fr, rank = t[7],
-                              next = need ~= nil and t[7] >= need, here = here ~= nil and t[3] == here, dist = dist }
+                              next = need ~= nil and t[7] ~= nil and t[7] >= need, here = here ~= nil and t[3] == here, dist = dist }
         end
     end
     table.sort(out, function(a, b)
@@ -476,7 +493,7 @@ function PRO.Trainers(key, faction, max)
         if (a.dist ~= nil) ~= (b.dist ~= nil) then return a.dist ~= nil end
         if a.dist and a.dist ~= b.dist then return a.dist < b.dist end
         if a.here ~= b.here then return a.here end
-        if a.rank ~= b.rank then return a.rank < b.rank end
+        if a.rank ~= b.rank then return (a.rank or 99) < (b.rank or 99) end
         return a.name < b.name
     end)
     return out, need
@@ -626,8 +643,85 @@ end
 -- Rezepten, die gekauft werden koennen, und wo"). Nur Haendler der eigenen
 -- Fraktion oder beider; ohne Fraktion des Spielers alle. Die Liste der
 -- Haendler ist der Stand aus Classic (P.VENDOR_SOURCE) und sagt das.
+-- 1.0.5.54: Herkunft je Rezept aus dem Abgleich mit Naowh Forever
+-- (data/professions_nf.lua, P.NF_SRC) - gelesen erst, wenn gebraucht.
+local nfCache = {}
+function PRO.Money(c)
+    c = tonumber(c)
+    if not c then return nil end
+    if _G.GetCoinTextureString then
+        local ok, t = pcall(_G.GetCoinTextureString, c)
+        if ok and type(t) == "string" and t ~= "" then return t end
+    end
+    local g, sv, k = math.floor(c / 10000), math.floor(c / 100) % 100, c % 100
+    local parts = {}
+    if g > 0 then parts[#parts + 1] = g .. " G" end
+    if sv > 0 then parts[#parts + 1] = sv .. " S" end
+    if k > 0 or #parts == 0 then parts[#parts + 1] = k .. " K" end
+    return table.concat(parts, " ")
+end
+-- Reagenz beim Haendler zu kaufen? { price = Kupfer oder nil, names = {...} }
+function PRO.ReagentVendor(item)
+    local v = P and P.NF_REAGENT_VENDORS and P.NF_REAGENT_VENDORS[item]
+    if not v then return nil end
+    local names = {}
+    for i = 2, #v do names[#names + 1] = v[i] end
+    return { price = v[1] or nil, names = names }
+end
+
+-- Questname vom Client (deutsch), sonst der englische aus dem Bestand.
+function PRO.QuestName(id, fallback)
+    local q = id and _G.C_QuestLog and _G.C_QuestLog.GetTitleForQuestID
+    if q then
+        local ok, t = pcall(q, id)
+        t = ok and Plain(t) or nil
+        if type(t) == "string" and t ~= "" then return t end
+    end
+    return fallback or (id and ("Quest " .. id)) or "?"
+end
+
+function PRO.NFSources(spell)
+    if not spell then return nil end
+    if nfCache[spell] ~= nil then return nfCache[spell] or nil end
+    local raw = P and P.NF_SRC and P.NF_SRC[spell]
+    if type(raw) ~= "string" then nfCache[spell] = false return nil end
+    local out = { vendors = {}, sellers = {}, drops = {}, bosses = {}, quests = {} }
+    for line in raw:gmatch("[^\n]+") do
+        local f = {}
+        for part in (line .. "\t"):gmatch("([^\t]*)\t") do f[#f + 1] = part end
+        local k = f[1]
+        local FAC = { A = "Alliance", H = "Horde" }
+        if k == "v" then
+            out.vendors[#out.vendors + 1] = { f[3], tonumber(f[5]), tonumber(f[6]), tonumber(f[7]), FAC[f[4]],
+                price = tonumber(f[8]), npc = tonumber(f[2]) }
+        elseif k == "s" then out.sellers[#out.sellers + 1] = { name = f[2], faction = FAC[f[3]], price = tonumber(f[4]) }
+        elseif k == "d" then out.drops[#out.drops + 1] = { name = f[2], npc = tonumber(f[3]), min = tonumber(f[4]),
+                max = tonumber(f[5]), chance = tonumber(f[6]) }
+        elseif k == "b" then out.bosses[#out.bosses + 1] = f[2]
+        elseif k == "w" then out.world = tonumber(f[2]) or true
+        elseif k == "m" then out.mobs = tonumber(f[2])
+        elseif k == "c" then out.chests = true
+        elseif k == "q" then out.quests[#out.quests + 1] = { id = tonumber(f[2]), name = f[3], level = tonumber(f[4]),
+                side = FAC[f[5]], giver = (f[7] and f[7] ~= "") and { f[7], tonumber(f[9]), tonumber(f[10]), tonumber(f[11]), FAC[f[8]] } or nil }
+        elseif k == "r" then out.rep = f[2]
+        elseif k == "k" then out.cost = tonumber(f[2]) end
+    end
+    nfCache[spell] = out
+    return out
+end
+
 function PRO.Vendors(r)
     local out = {}
+    -- 1.0.5.54: zuerst die Haendler aus dem Abgleich mit Naowh Forever, mit Preis.
+    local nf = r and PRO.NFSources(r.spell)
+    if nf and #nf.vendors > 0 then
+        local mine = _G.UnitFactionGroup and Plain(_G.UnitFactionGroup("player"))
+        if mine ~= "Alliance" and mine ~= "Horde" then mine = nil end
+        for _, v in ipairs(nf.vendors) do
+            if not mine or not v[5] or v[5] == mine then out[#out + 1] = v end
+        end
+        if #out > 0 then return out end
+    end
     if not (r and r.recipeItem) then return out end
     -- 1.0.5.50: zuerst die Haendler aus der Datenbank fuer Forever
     -- (data/recipe_sources.lua), erst ohne sie die aus Classic.
@@ -695,7 +789,34 @@ function PRO.ItemSources(item)
 end
 
 -- Die anderen Wege als Text, oder nil.
-function PRO.OtherSources(item)
+function PRO.OtherSources(item, spell)
+    local nf = spell and PRO.NFSources(spell)
+    if nf then
+        local parts = {}
+        for _, q in ipairs(nf.quests) do
+            if not q.side or not _G.UnitFactionGroup or q.side == Plain(_G.UnitFactionGroup("player")) then
+                parts[#parts + 1] = "Quest „" .. PRO.QuestName(q.id, q.name) .. "“" .. (q.giver and (" bei " .. q.giver[1]) or "")
+            end
+        end
+        if #nf.drops > 0 then
+            local names = {}
+            for i, d in ipairs(nf.drops) do
+                if i > 3 then break end
+                names[#names + 1] = d.name .. (d.chance and string.format(" (%.1f %%)", d.chance) or "")
+            end
+            parts[#parts + 1] = "Beute von " .. table.concat(names, ", ") .. ((nf.mobs and nf.mobs > #nf.drops) and (" und " .. (nf.mobs - math.min(3, #nf.drops)) .. " weiteren") or "")
+        elseif #nf.bosses > 0 then
+            parts[#parts + 1] = "Beute von " .. table.concat(nf.bosses, ", ")
+        elseif nf.world then
+            parts[#parts + 1] = "Weltbeute" .. (type(nf.world) == "number" and nf.world > 1 and (" (" .. nf.world .. " Gegner)") or "")
+        end
+        if nf.chests then parts[#parts + 1] = "auch aus Truhen" end
+        if nf.rep then parts[#parts + 1] = "Ruf: " .. nf.rep end
+        for _, sl in ipairs(nf.sellers) do
+            parts[#parts + 1] = "begrenzt bei " .. sl.name .. (sl.price and (" (" .. PRO.Money(sl.price) .. ")") or "")
+        end
+        if #parts > 0 then return table.concat(parts, " · ") end
+    end
     local src = item and PRO.ItemSources(item)
     if not src then return nil end
     local parts = {}
@@ -739,22 +860,29 @@ local function Tooltip(row)
     if steps ~= "" then line("Fertigkeit: " .. steps, "textMuted") end
     if #r.reagents > 0 then
         line("Reagenzien:", "textMuted")
-        for _, e in ipairs(r.reagents) do line("  " .. e[2] .. "× " .. PRO.ItemName(e[1]), "textNormal") end
+        for _, e in ipairs(r.reagents) do
+            local rv = PRO.ReagentVendor(e[1])
+            line("  " .. e[2] .. "× " .. PRO.ItemName(e[1]) .. (rv and ("  – beim Händler" .. (rv.price and (", " .. PRO.Money(rv.price)) or "")) or ""), "textNormal")
+        end
     end
     if r.trainer then
-        line("Herkunft: beim Lehrer", "textMuted")
-    elseif r.recipeItem then
-        line("Herkunft: Rezept „" .. PRO.ItemName(r.recipeItem) .. "“" .. (r.bop and " (beim Aufheben gebunden)" or ""), "textMuted")
+        local _, origin = PRO.Origin(r)
+        line("Herkunft: " .. origin, "textMuted")
+    elseif r.recipeItem or PRO.NFSources(r.spell) then
+        if r.recipeItem then
+            line("Herkunft: Rezept „" .. PRO.ItemName(r.recipeItem) .. "“" .. (r.bop and " (beim Aufheben gebunden)" or ""), "textMuted")
+        end
         local QM = WeintCodex.QuestMap
         local vs = PRO.Vendors(r)
         for _, v in ipairs(vs) do
             local zone = v[2] and QM and QM.MapName(v[2])
             line("  Händler: " .. v[1] .. (zone and (", " .. zone) or "")
-                .. (v[3] and string.format(" (%.0f, %.0f)", v[3], v[4]) or "") .. (vs.classic and " – aus Classic" or ""), "textDim")
+                .. (v[3] and string.format(" (%.0f, %.0f)", v[3], v[4]) or "") .. (v.price and (" – " .. PRO.Money(v.price)) or "")
+                .. (vs.classic and " – aus Classic" or ""), "textDim")
         end
         local _, origin = PRO.Origin(r)
         line(origin, #vs > 0 and "goldBright" or "textMuted")
-        local other = #vs > 0 and PRO.OtherSources(r.recipeItem)
+        local other = #vs > 0 and PRO.OtherSources(r.recipeItem, r.spell)
         if other then line("Auch: " .. other, "textDim") end
         line("Klick: Details rechts", "accent")
         if r.favor then line("  Für " .. r.favor .. " Händlergunst", "textDim") end
@@ -991,6 +1119,36 @@ end
 -- Buch, Fachmann ueber eine Quest) - unter den Lehrern, mit Haendler.
 PRO.RANK_LABEL = { [150] = "Geselle", [225] = "Experte", [300] = "Fachmann" }
 function PRO.RankBookLines(key)
+    -- 1.0.5.54: zuerst die Raenge aus dem Abgleich mit Naowh Forever -
+    -- mit Preis des Buchs und den Lehrern einer Quest (Pfeil dorthin).
+    local nfr = P and P.NF_RANKS and P.NF_RANKS[key]
+    if nfr and #nfr > 0 then
+        local out = {}
+        local mine = _G.UnitFactionGroup and Plain(_G.UnitFactionGroup("player"))
+        if mine ~= "Alliance" and mine ~= "Horde" then mine = nil end
+        local function pick(list)
+            local res = {}
+            for _, v in ipairs(list or {}) do
+                if not mine or not v[3] or v[3] == mine then
+                    res[#res + 1] = { v[2], v[4], v[5], v[6], v[3] or nil, price = v[7] or nil, npc = v[1] }
+                end
+            end
+            return res
+        end
+        for _, r in ipairs(nfr) do
+            local rank = PRO.RANK_LABEL[r.cap] or tostring(r.cap)
+            if r.item then
+                out[#out + 1] = { rank = rank, cap = r.cap, item = r.item, req = r.skill, vendors = pick(r.vendors),
+                    text = "Rang " .. rank .. ": Buch „" .. PRO.ItemName(r.item) .. "“" }
+            elseif r.quest then
+                local q = r.quest[mine == "Horde" and "H" or "A"] or r.quest.A or r.quest.H
+                out[#out + 1] = { rank = rank, cap = r.cap, req = r.skill, level = r.level, quest = q or nil,
+                    questName = r.questName, teachers = pick(r.teachers),
+                    text = "Rang " .. rank .. ": über eine Quest" }
+            end
+        end
+        return out
+    end
     local line = PRO.Line and PRO.Line(key)
     local rows = line and P and P.RANKS and P.RANKS[line]
     local out = {}
@@ -1079,10 +1237,18 @@ function PRO.DrawRankBooks(body, y, w, key)
             end
             for _, v in ipairs(l.vendors) do
                 local zone = v[2] and QM and QM.MapName(v[2])
-                y = BookRow(body, y, w, head, book, v[1] .. (zone and (", " .. zone) or ""), v)
+                y = BookRow(body, y, w, head, book .. (v.price and ("  ·  " .. PRO.Money(v.price)) or ""),
+                    v[1] .. (zone and (", " .. zone) or ""), v)
             end
         else
-            y = BookRow(body, y, w, head, "über eine Quest", "nicht beim Lehrer", nil)
+            local qn = (l.quest or l.questName) and ("Quest „" .. PRO.QuestName(l.quest, l.questName) .. "“") or "über eine Quest"
+            if l.level then head = head .. "  ·  Stufe " .. l.level end
+            local ts = l.teachers or {}
+            if #ts == 0 then y = BookRow(body, y, w, head, qn, "nicht beim Lehrer", nil) end
+            for _, t in ipairs(ts) do
+                local zone = t[2] and QM and QM.MapName(t[2])
+                y = BookRow(body, y, w, head, qn, t[1] .. (zone and (", " .. zone) or ""), t)
+            end
         end
     end
     return y
@@ -1147,11 +1313,17 @@ end
 -- raten keine Quelle (Beute, Quest, Ruf sind nicht im Bestand).
 function PRO.Origin(r)
     if not r then return "unknown", "Herkunft unbekannt" end
-    if r.trainer then return "trainer", "Beim Lehrer lernbar" end
-    if not r.recipeItem then return "unknown", "Herkunft unbekannt" end
-    if #PRO.Vendors(r) > 0 then return "vendor", "Käuflich beim Händler" end
+    local nf = PRO.NFSources(r.spell)
+    if r.trainer then
+        return "trainer", "Beim Lehrer lernbar" .. ((nf and nf.cost) and (" für " .. PRO.Money(nf.cost)) or "")
+    end
+    if #PRO.Vendors(r) > 0 then
+        local v = PRO.Vendors(r)[1]
+        return "vendor", "Käuflich beim Händler" .. (v.price and (" für " .. PRO.Money(v.price)) or "")
+    end
+    if not r.recipeItem and not nf then return "unknown", "Herkunft unbekannt" end
     if r.favor then return "favor", "Gegen " .. r.favor .. " Händlergunst" end
-    local other = PRO.OtherSources(r.recipeItem)
+    local other = PRO.OtherSources(r.recipeItem, r.spell)
     if other then return "drop", other end
     if r.bop then return "drop", "Rezept muss selbst gefunden werden (beim Aufheben gebunden) – Fundort nicht im Bestand" end
     return "item", "Rezept als Gegenstand – kein Händler bekannt (Beute, Quest oder Auktionshaus)"
@@ -1176,6 +1348,7 @@ local function RecipeInspector(r)
         local zone = v[2] and QM and QM.MapName(v[2])
         if zone then rows[#rows + 1] = { label = "Gebiet", value = zone } end
         if v[3] then rows[#rows + 1] = { label = "Lage", value = string.format("%.1f, %.1f", v[3], v[4]) } end
+        if v.price then rows[#rows + 1] = { label = "Preis", value = PRO.Money(v.price) } end
         if BP and BP.MapWidget and v[2] and v[3] then
             blocks[#blocks + 1] = { type = "custom", create = function(parent, width)
                 local w = BP.MapWidget(parent, width)
@@ -1184,7 +1357,48 @@ local function RecipeInspector(r)
             end }
         end
     end
+    -- 1.0.5.54: Quest mit Geber (Pfeil dorthin) und Gegner mit Dropchance.
+    local nf = PRO.NFSources(r.spell)
+    local giver
+    if nf and kind ~= "vendor" then
+        for _, q in ipairs(nf.quests) do
+            if q.giver and q.giver[2] and (not q.side or q.side == Plain(_G.UnitFactionGroup and _G.UnitFactionGroup("player"))) then
+                giver = q
+                break
+            end
+        end
+        if giver then
+            rows[#rows + 1] = { label = "Quest", value = PRO.QuestName(giver.id, giver.name) }
+            rows[#rows + 1] = { label = "Geber", value = giver.giver[1] }
+            local zone = QM and QM.MapName(giver.giver[2])
+            if zone then rows[#rows + 1] = { label = "Gebiet", value = zone } end
+        end
+        if #nf.drops > 0 then
+            local lines = {}
+            for i, d in ipairs(nf.drops) do
+                if i > 6 then break end
+                lines[#lines + 1] = d.name .. (d.min and ("  (Stufe " .. d.min .. ((d.max and d.max ~= d.min) and ("–" .. d.max) or "") .. ")") or "")
+                    .. (d.chance and string.format("  %.1f %%", d.chance) or "")
+            end
+            if nf.mobs and nf.mobs > #lines then lines[#lines + 1] = "… und " .. (nf.mobs - #lines) .. " weitere Gegner" end
+            blocks[#blocks + 1] = { type = "card", lines = lines }
+        end
+    end
     blocks[#blocks + 1] = { type = "rows", rows = rows }
+    if giver and BP and BP.Pill and WeintCodex.UIQuestArrow then
+        blocks[#blocks + 1] = { type = "custom", create = function(parent, width)
+            if not PRO.questBtn then PRO.questBtn = BP.Pill(parent, "Questpfeil zum Geber", { height = 32, size = 12, primary = true }) end
+            local g = PRO.questBtn
+            g:SetParent(parent)
+            g:SetWidth(width)
+            g:SetScript("OnClick", function()
+                local QA, gv = WeintCodex.UIQuestArrow, giver.giver
+                if QA.SetCustom then QA.SetCustom({ map = gv[2], x = gv[3] / 100, y = gv[4] / 100, title = gv[1] }) end
+            end)
+            g:Paint(false)
+            return g
+        end }
+    end
     if kind == "vendor" and v and BP and BP.Pill and WeintCodex.UIQuestArrow then
         blocks[#blocks + 1] = { type = "custom", create = function(parent, width)
             if not PRO.guideBtn then PRO.guideBtn = BP.Pill(parent, "Questpfeil hierhin", { height = 32, size = 12, primary = true }) end
@@ -1200,7 +1414,11 @@ local function RecipeInspector(r)
     end
     if #r.reagents > 0 then
         local lines = {}
-        for _, e in ipairs(r.reagents) do lines[#lines + 1] = e[2] .. "× " .. PRO.ItemName(e[1]) end
+        for _, e in ipairs(r.reagents) do
+            local rv = PRO.ReagentVendor(e[1])
+            lines[#lines + 1] = e[2] .. "× " .. PRO.ItemName(e[1])
+                .. (rv and ("  – Händler" .. (rv.price and (", " .. PRO.Money(rv.price)) or "")) or "")
+        end
         blocks[#blocks + 1] = { type = "divider" }
         blocks[#blocks + 1] = { type = "header", text = "Reagenzien" }
         blocks[#blocks + 1] = { type = "card", lines = lines }
