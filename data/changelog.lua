@@ -22,6 +22,14 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.0.5.51",
+        date    = "11.11.2026",
+        notes   = {
+            "|cff7C6CFFRangbücher mit Questpfeil|r – je Händler eine Zeile mit Buch, Ort und Knopf „Pfeil“; nichts überdeckt mehr die Überschrift.",
+            "|cff7C6CFFAngel-Logbuch zählt deine Fänge|r – auch wenn das Spiel Angelbeute nicht eigens meldet.",
+        },
+    },
+    {
         version = "1.0.5.50",
         date    = "11.11.2026",
         notes   = {

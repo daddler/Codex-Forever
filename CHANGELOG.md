@@ -9,6 +9,14 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.0.5.51] – 2026-11-11
+
+- Berufe: Rangbücher als Zeilen je Händler mit Questpfeil (`BookRow`), Kopfzeile ohne Zahl
+  leer (vorher Rest „… Rezepte“ aus dem Vorrat).
+- Angel-Logbuch: Fang auch ohne `IsFishingLoot` (Beute ≤ 35 s nach eigenem Wurf, auch
+  `LOOT_READY`), Wurf auch über den Namen „Angeln“.
+- CI: Lua 5.1 aus dem Quelltext (`.github/scripts/install_lua.sh`), Läufer `ubuntu-24.04`.
+
 ## [1.0.5.50] – 2026-11-11
 
 - Berufe: `data/recipe_sources.lua` (erzeugt von `.github/scripts/import_recipesources.py`
