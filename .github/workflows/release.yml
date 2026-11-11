@@ -33,7 +33,13 @@ jobs:
         run: |
           sudo rm -f /etc/apt/sources.list.d/microsoft-prod.list /etc/apt/sources.list.d/microsoft*.list
           sudo apt-get update -qq || echo "::warning::apt-get update mit Fehlern - installiere aus den Ubuntu-Quellen"
-          sudo apt-get install -y lua5.1 >/dev/null
+          # Netzfehler der Paketquellen (1.0.5.50: "Temporary failure resolving") -
+          # bis zu viermal mit Pause, dann erst scheitern.
+          for i in 1 2 3 4; do
+            sudo apt-get install -y --fix-missing lua5.1 >/dev/null && break
+            [ "$i" = 4 ] && exit 1
+            sleep $((i * 15)); sudo apt-get update -qq || true
+          done
 
       # Erste Station, noch vor dem Bauen: laedt das Addon ueberhaupt?
       # Ein Release, dessen ZIP im Spiel einen Lua-Fehler wirft, ist
