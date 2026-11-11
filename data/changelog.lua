@@ -22,6 +22,14 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.0.5.55",
+        date    = "11.11.2026",
+        notes   = {
+            "|cff7C6CFFKräuter und Erze sagen, ab wann|r – im Tooltip „Sammeln: Kräuterkunde ab 70“, grün oder rot nach deiner Fertigkeit.",
+            "|cff7C6CFFMehr Platz für die Lehrer|r – auf der Berufe-Seite ist die rechte Spalte schmaler, die Lehrerliste breiter und luftiger.",
+        },
+    },
+    {
         version = "1.0.5.54",
         date    = "11.11.2026",
         notes   = {

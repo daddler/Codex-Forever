@@ -9,6 +9,12 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.0.5.55] – 2026-11-11
+
+- Berufe: Sammelstellen im Gegenstands-Tooltip (`PRO.GatherLine`, `P.NF_NODES`);
+  Detailbereich je Seite einstellbar (`WeintCodex.SetDetailWidth`, `SetInspector(blocks, width)`),
+  Berufe 300 px, Rezeptkarte 58 %, Lehrerzeilen 48 px.
+
 ## [1.0.5.54] – 2026-11-11
 
 - Berufe: Abgleich mit Naowh Forever: Professions (`data/professions_nf.lua`, erzeugt von
