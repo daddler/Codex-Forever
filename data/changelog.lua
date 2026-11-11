@@ -22,6 +22,14 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.0.5.54",
+        date    = "11.11.2026",
+        notes   = {
+            "|cff7C6CFFJedes Rezept mit Herkunft|r – Händler mit Preis und Lage, Gegner mit Dropchance, Bosse, Quests mit Geber und Pfeil, Ruf; Kosten beim Lehrer.",
+            "|cff7C6CFFRänge und Lehrer vollständiger|r – Preis der Rangbücher, Quest-Ränge mit ihrem Lehrer, fehlende Lehrer ergänzt, Materialien vom Händler gekennzeichnet.",
+        },
+    },
+    {
         version = "1.0.5.53",
         date    = "11.11.2026",
         notes   = {

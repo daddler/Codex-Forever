@@ -9,6 +9,13 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.0.5.54] – 2026-11-11
+
+- Berufe: Abgleich mit Naowh Forever: Professions (`data/professions_nf.lua`, erzeugt von
+  `.github/scripts/import_naowh_prof.py`, nur Fakten, `community`): Herkunft je Rezept
+  (`PRO.NFSources`), Lehrerkosten, Ränge (`P.NF_RANKS`), 49 Lehrer (`P.NF_TRAINERS`),
+  Reagenzhändler (`PRO.ReagentVendor`), Lehrer-Kennung korrigiert, fehlende Lernstufen.
+
 ## [1.0.5.53] – 2026-11-11
 
 - Berufe: Lehrerzeile mit Knopf oben rechts, zweite Zeile über die ganze Breite;
