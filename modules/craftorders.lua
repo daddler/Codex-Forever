@@ -31,7 +31,7 @@ local CO = WeintCodex.CraftOrders
 local C  = WeintCodex.C
 
 local WINDOW_W   = 460
-local ROW_H      = 64
+local ROW_H      = 92
 local MAX_ROWS   = 5
 local HEAD_H     = 64
 local FOOT_H     = 60
@@ -51,8 +51,8 @@ CO.MOVES = {
 CO.BUTTONS = {
     accepted  = { "Annehmen", "primary" },
     done      = { "Erledigt", "secondary" },
-    declined  = { "Ablehnen", "danger" },
-    cancelled = { "Stornieren", "danger" },
+    declined  = { "Ablehnen", "ghost" },
+    cancelled = { "Stornieren", "ghost" },
 }
 
 local frame, rows, footer, moreStr = nil, {}, nil, nil
@@ -165,22 +165,44 @@ local function NewText(parent, size, fontKey, color)
     return fs
 end
 
+-- 1.0.5.47 (Bericht mit Bild: "die Buttons sehen nicht schoen aus"): die
+-- Knoepfe lagen ueber der zweiten Zeile. Jetzt drei Ebenen ohne
+-- Ueberlappung - Titel mit Status rechts, Zeile darunter, unten ein
+-- eigener Streifen mit den Knoepfen rechts; links ein Streifen in der
+-- Farbe des Status.
+CO.STATE_COLOR = { open = "gold", accepted = "accent", pending = "textMuted" }
+
 local function BuildRow(index)
     local row = CreateFrame("Frame", nil, frame)
-    row:SetSize(WINDOW_W - 32, ROW_H - 6)
+    row:SetSize(WINDOW_W - 32, ROW_H - 8)
     row:SetPoint("TOPLEFT", frame, "TOPLEFT", 16, -HEAD_H - (index - 1) * ROW_H)
     WeintCodex.SetSolidBg(row, C.surface3[1], C.surface3[2], C.surface3[3], 1.0)
 
+    row.bar = row:CreateTexture(nil, "ARTWORK")
+    row.bar:SetWidth(3)
+    row.bar:SetPoint("TOPLEFT", row, "TOPLEFT", 0, 0)
+    row.bar:SetPoint("BOTTOMLEFT", row, "BOTTOMLEFT", 0, 0)
+
+    row.state = NewText(row, 10, "sansSemi", "textMuted")
+    row.state:SetPoint("TOPRIGHT", row, "TOPRIGHT", -12, -11)
+    row.state:SetJustifyH("RIGHT")
+
     row.title = NewText(row, 13, "sansSemi", "textBright")
-    row.title:SetPoint("TOPLEFT", row, "TOPLEFT", 10, -8)
-    row.title:SetPoint("RIGHT", row, "RIGHT", -10, 0)
+    row.title:SetPoint("TOPLEFT", row, "TOPLEFT", 14, -9)
+    row.title:SetPoint("RIGHT", row.state, "LEFT", -8, 0)
 
     row.sub = NewText(row, 11, "sans", "textDim")
-    row.sub:SetPoint("TOPLEFT", row.title, "BOTTOMLEFT", 0, -4)
-    row.sub:SetPoint("RIGHT", row, "RIGHT", -10, 0)
+    row.sub:SetPoint("TOPLEFT", row.title, "BOTTOMLEFT", 0, -5)
+    row.sub:SetPoint("RIGHT", row, "RIGHT", -12, 0)
 
-    row.state = NewText(row, 10, "mono", "textMuted")
-    row.state:SetPoint("BOTTOMLEFT", row, "BOTTOMLEFT", 10, 7)
+    local line = row:CreateTexture(nil, "ARTWORK")
+    line:SetHeight(1)
+    line:SetPoint("BOTTOMLEFT", row, "BOTTOMLEFT", 3, 36)
+    line:SetPoint("BOTTOMRIGHT", row, "BOTTOMRIGHT", 0, 36)
+    line:SetColorTexture(C.border[1], C.border[2], C.border[3], 0.6)
+
+    row.hint = NewText(row, 10, "sans", "textMuted")
+    row.hint:SetPoint("BOTTOMLEFT", row, "BOTTOMLEFT", 14, 13)
 
     row.buttons = {}
     return row
@@ -189,9 +211,13 @@ end
 local function FillRow(row, order)
     local head, sub, state = CO.Line(order)
     if order.note and order.note ~= "" then sub = sub .. " · „" .. order.note .. "“" end
-    row.title:SetText(WeintCodex.Truncate(head, 52))
-    row.sub:SetText(WeintCodex.Truncate(sub, 70))
-    row.state:SetText(state)
+    local status, pending = CO.StatusOf(order)
+    local col = C[CO.STATE_COLOR[pending and "pending" or status] or "textMuted"] or C.textMuted
+    row.bar:SetColorTexture(col[1], col[2], col[3], 0.9)
+    row.state:SetTextColor(col[1], col[2], col[3])
+    row.state:SetText(WeintCodex.Upper(state))
+    row.title:SetText(WeintCodex.Truncate(head, 44))
+    row.sub:SetText(WeintCodex.Truncate(sub, 66))
 
     for _, b in ipairs(row.buttons) do b:Hide() b:SetParent(nil) end
     wipe(row.buttons)
@@ -199,16 +225,17 @@ local function FillRow(row, order)
     local right = -8
     local moves = CO.Moves(order)
     for i = #moves, 1, -1 do
-        local status = moves[i]
-        local look = CO.BUTTONS[status]
+        local st = moves[i]
+        local look = CO.BUTTONS[st]
         local b = WeintCodex.CreateButton(row, {
-            text = look[1], width = 86, height = 22, kind = look[2],
-            onClick = function() CO.SetStatus(order, status) end,
+            text = look[1], width = 96, height = 24, kind = look[2],
+            onClick = function() CO.SetStatus(order, st) end,
         })
         b:SetPoint("BOTTOMRIGHT", row, "BOTTOMRIGHT", right, 6)
-        right = right - 92
+        right = right - 102
         row.buttons[#row.buttons + 1] = b
     end
+    row.hint:SetText(pending and "wird beim Ausloggen oder /reload gemeldet" or (#moves == 0 and "nichts zu tun" or ""))
     row:Show()
 end
 
@@ -337,6 +364,15 @@ function CO.StatusLine()
         .. mine .. " eigene Bestellungen – /wc aufträge"
 end
 
+function CO.ActiveCount()
+    local n = 0
+    for _, o in ipairs(Store().list) do
+        local st = CO.StatusOf(o)
+        if st == "open" or st == "accepted" then n = n + 1 end
+    end
+    return n
+end
+
 function CO.Announce()
     local store = Store()
     local open = 0
@@ -349,7 +385,9 @@ function CO.Announce()
 end
 
 function CO.ShowIfNew()
-    if #CO.Unseen() == 0 then CO.Announce() return end
+    -- 1.0.5.47 (Wunsch: "soll aufploppen, wenn ich reloade"): bei jedem
+    -- Einloggen/Neuladen, solange ein Auftrag offen oder angenommen ist.
+    if CO.ActiveCount() == 0 then return end
 
     local function open()
         if InCombatLockdown and InCombatLockdown() then
