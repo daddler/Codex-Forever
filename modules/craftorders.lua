@@ -34,7 +34,7 @@ local WINDOW_W   = 460
 local ROW_H      = 92
 local MAX_ROWS   = 5
 local HEAD_H     = 64
-local FOOT_H     = 60
+local FOOT_H     = 64
 
 CO.LABELS = {
     open = "offen", accepted = "angenommen", declined = "abgelehnt",
@@ -50,9 +50,9 @@ CO.MOVES = {
 
 CO.BUTTONS = {
     accepted  = { "Annehmen", "primary" },
-    done      = { "Erledigt", "secondary" },
-    declined  = { "Ablehnen", "ghost" },
-    cancelled = { "Stornieren", "ghost" },
+    done      = { "Erledigt", "primary" },
+    declined  = { "Ablehnen", "danger" },
+    cancelled = { "Stornieren", "danger" },
 }
 
 local frame, rows, footer, moreStr = nil, {}, nil, nil
@@ -229,6 +229,7 @@ local function FillRow(row, order)
         local look = CO.BUTTONS[st]
         local b = WeintCodex.CreateButton(row, {
             text = look[1], width = 96, height = 24, kind = look[2],
+            backdrop = "surface3", radius = 6, border = false,
             onClick = function() CO.SetStatus(order, st) end,
         })
         b:SetPoint("BOTTOMRIGHT", row, "BOTTOMRIGHT", right, 6)
@@ -288,6 +289,7 @@ local function EnsureFrame()
 
     footer = WeintCodex.CreateButton(frame, {
         text = "Neue Aufträge holen", width = 170, height = 28, kind = "secondary",
+        backdrop = "surface2", radius = 6,
     })
     footer:SetPoint("BOTTOMLEFT", frame, "BOTTOMLEFT", 16, 16)
     -- /reload ist fuer Addons gesperrt - nur ueber den sicheren Makroknopf.
@@ -295,6 +297,7 @@ local function EnsureFrame()
 
     local done = WeintCodex.CreateButton(frame, {
         text = "Schließen", width = 110, height = 28, kind = "ghost",
+        backdrop = "surface2", radius = 6,
         onClick = function() frame:Hide() end,
     })
     done:SetPoint("BOTTOMRIGHT", frame, "BOTTOMRIGHT", -16, 16)

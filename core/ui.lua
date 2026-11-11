@@ -1449,7 +1449,9 @@ function WeintCodex.CreateButton(parent, opts)
         textCol = C.ink
     elseif kind == "danger" then
         textCol = C.dangerBright
-        DrawBorder(b, C.red[1], C.red[2], C.red[3], 0.50, 1)
+        -- opts.border = false: nur Flaeche - ein eckiger Rand passt nicht
+        -- zu den abgerundeten Ecken (Auftragsfenster, 1.0.5.48).
+        if opts.border ~= false then DrawBorder(b, C.red[1], C.red[2], C.red[3], 0.50, 1) end
     elseif kind == "ghost" then
         textCol = C.textMuted
     else
