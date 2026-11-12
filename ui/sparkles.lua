@@ -61,7 +61,6 @@ SP.NODE_CVARS = {
 SP.GATE = "SoftTargetNameplateInteract"    -- Plakette des Objekts: nur bei Kraut/Erz an
 SP.UNIT = "softinteract"
 SP.TICK = 0.12
-SP.GLINTS = 6
 SP.TEXTURE = "Interface\\Cooldown\\star4"   -- Funke des Spiels
 local stats = { looks = 0, herb = 0, ore = 0, other = 0, applied = 0, noplate = 0, bytip = 0 }
 SP.stats = stats
@@ -192,35 +191,94 @@ function SP.ClassifyCursor(unit)
     return kind, blocked
 end
 
--- Die Funken: ein Rahmen, sechs Bilder, die nacheinander aufleuchten.
+-- Die Funken (1.0.5.66, Wunsch mit Bildern: "genauso schoen wie das
+-- Glitzern von Questgebern und Gegenstaenden"). Bis hierher sechs grosse
+-- Sterne an festen Plaetzen, die an- und ausgingen. Das Glitzern des Spiels
+-- sieht anders aus: viele kleine, weiche Lichtpunkte, die am Boden
+-- entstehen, langsam aufsteigen, leicht zur Seite treiben und verglimmen -
+-- dazwischen ab und zu ein kurzes Aufblitzen. Genau so:
+--   * SP.MOTES weiche Punkte (media/ui/halo, 5-10 px), jeder mit eigenem
+--     Leben: Ort in einer flachen Ellipse am Boden, Steighoehe, Drift,
+--     Dauer. Hell beim Entstehen, dann langsam aus; am Ende neu gewuerfelt.
+--   * SP.TWINKLES kleine Sterne des Spiels, die kurz aufblitzen.
+-- Ein Takt je Bild, solange die Funken zu sehen sind - ohne Tabelle oder
+-- Closure je Bild; die Werte je Punkt stehen an seinem Bild.
+SP.MOTES, SP.TWINKLES = 14, 4
+SP.SPREAD_X, SP.SPREAD_Y = 30, 10      -- halbe Achsen der Ellipse am Boden
 local glow = CreateFrame("Frame", nil, UIParent)
 glow:SetSize(80, 60)
 glow:Hide()
 glow.dots = {}
-for i = 1, SP.GLINTS do
+local rnd = math.random
+-- Ein Punkt beginnt sein Leben neu (age < 0 = wartet noch).
+local function Reborn(t, wait)
+    local a, r = rnd() * 2 * math.pi, math.sqrt(rnd())
+    t.x0, t.y0 = math.cos(a) * r * SP.SPREAD_X, math.sin(a) * r * SP.SPREAD_Y
+    t.age = -(wait or 0)
+    if t.star then
+        t.life = 0.35 + rnd() * 0.3
+        t.rise, t.drift = 0, 0
+        t.size = 9 + rnd() * 7
+        t.y0 = t.y0 + rnd() * 18
+    else
+        t.life = 1.3 + rnd() * 1.2
+        t.rise = 14 + rnd() * 22
+        t.drift = (rnd() - 0.5) * 12
+        t.size = 5 + rnd() * 5
+    end
+    t.peak = 0.55 + rnd() * 0.45
+end
+SP.Reborn = Reborn
+for i = 1, SP.MOTES + SP.TWINKLES do
     local t = glow:CreateTexture(nil, "OVERLAY")
-    t:SetTexture(SP.TEXTURE)
+    t.star = i > SP.MOTES
+    t:SetTexture(t.star and SP.TEXTURE or (K.MEDIA .. "halo"))
     if t.SetBlendMode then t:SetBlendMode("ADD") end
-    local a = (i / SP.GLINTS) * 2 * math.pi
-    local r = 14 + (i % 3) * 8
-    t:SetPoint("CENTER", glow, "CENTER", math.cos(a) * r, math.sin(a) * r * 0.6)
-    t:SetSize(18 + (i % 2) * 8, 18 + (i % 2) * 8)
-    t.phase = i * 0.9
+    t:SetAlpha(0)
+    -- Gestaffelt beginnen, damit nicht alle zugleich aufsteigen.
+    Reborn(t, t.star and (0.4 + rnd() * 2.5) or (rnd() * 2))
     glow.dots[i] = t
 end
 SP.glow = glow
-local clock = 0
+-- Ein Schritt fuer einen Punkt (rein gerechnet, fuer den Ladetest): gibt
+-- Lage (x, y), Deckkraft und Groesse zum Alter zurueck.
+function SP.Mote(t)
+    local u = t.age / t.life
+    if u < 0 then return t.x0, t.y0, 0, t.size end
+    if u > 1 then u = 1 end
+    -- Schnell hell (erstes Fuenftel), dann lang aus.
+    local alpha = u < 0.2 and (u / 0.2) or (1 - (u - 0.2) / 0.8)
+    alpha = alpha * t.peak
+    -- Steigt erst zuegig, dann langsamer (weiches Auslaufen).
+    local e = 1 - (1 - u) * (1 - u)
+    local size = t.star and t.size * (0.6 + 0.4 * math.sin(u * math.pi)) or t.size * (1 - 0.35 * u)
+    return t.x0 + t.drift * e, t.y0 + t.rise * e, alpha, size
+end
 glow:SetScript("OnUpdate", WeintCodex.Measured("sparkles", function(self, el)
-    clock = clock + (el or 0)
-    for _, t in ipairs(self.dots) do
-        local s = math.sin(clock * 3 + t.phase)
-        t:SetAlpha(s > 0 and s or 0)
+    el = el or 0
+    if el > 0.1 then el = 0.1 end
+    local dots = self.dots
+    for i = 1, #dots do
+        local t = dots[i]
+        t.age = t.age + el
+        if t.age >= t.life then Reborn(t, t.star and (0.6 + rnd() * 2.2) or (rnd() * 0.5)) end
+        local x, y, alpha, size = SP.Mote(t)
+        t:SetAlpha(alpha)
+        if alpha > 0 then
+            t:SetSize(size, size)
+            t:SetPoint("CENTER", self, "CENTER", x, y)
+        end
     end
 end))
 
+-- Warmes Weissgold wie beim Spiel; grau, wenn du es (noch) nicht sammeln
+-- kannst. Sterne heller als die weichen Punkte.
 local function Paint(blocked)
-    local c = blocked and C.textMuted or C.warningBright
-    for _, t in ipairs(glow.dots) do t:SetVertexColor(c[1], c[2], c[3]) end
+    local c, w = blocked and C.textMuted or C.warningBright, C.textBright
+    for _, t in ipairs(glow.dots) do
+        local k = blocked and 0 or (t.star and 0.7 or 0.35)   -- Anteil Weiss
+        t:SetVertexColor(c[1] + (w[1] - c[1]) * k, c[2] + (w[2] - c[2]) * k, c[3] + (w[3] - c[3]) * k)
+    end
 end
 
 local gate     -- was SP.GATE gerade sagt (unserer)
@@ -302,7 +360,7 @@ function SP.Look()
         if type(plate) == "table" then
             glow:SetParent(plate)
             glow:ClearAllPoints()
-            glow:SetPoint("CENTER", plate, "CENTER", 0, -40)
+            glow:SetPoint("CENTER", plate, "CENTER", 0, -46)
             Paint(blocked)
             glow:Show()
         else

@@ -22171,6 +22171,25 @@ do
     local ok, err = pcall(function()
         local K, SP, PF = WeintCodex.UIKit, WeintCodex.UISparkles, WeintCodex.UIProfile
         assert(SP.ReadCursor("Interface\\Cursor\\GatherHerbs") == "herb", "Kraut nicht erkannt")
+        -- 1.0.5.66: Funken wie beim Spiel - viele kleine Punkte, die
+        -- aufsteigen und verglimmen; ein Punkt lebt, stirbt, beginnt neu.
+        assert(#SP.glow.dots == SP.MOTES + SP.TWINKLES and SP.MOTES >= 12, "zu wenige Funken")
+        local m = { x0 = 0, y0 = 0, age = 0, life = 2, rise = 20, drift = 4, size = 8, peak = 1 }
+        local _, y0, a0 = SP.Mote(m)
+        m.age = 0.4
+        local _, y1, a1, s1 = SP.Mote(m)
+        m.age = 1.9
+        local _, y2, a2, s2 = SP.Mote(m)
+        assert(a0 == 0 and a1 > 0.9 and a2 < 0.15 and a2 >= 0, "Funke glimmt nicht auf und aus")
+        assert(y1 > y0 and y2 > y1 and y2 <= 20 and s2 < s1, "Funke steigt nicht")
+        m.age = -1
+        local _, _, aw = SP.Mote(m)
+        assert(aw == 0, "wartender Funke sichtbar")
+        local onUpd = SP.glow:GetScript("OnUpdate")
+        for _ = 1, 200 do onUpd(SP.glow, 0.05) end
+        for _, t in ipairs(SP.glow.dots) do
+            assert(t.age < t.life and math.abs(t.x0) <= SP.SPREAD_X + 0.01, "Funke nicht neu begonnen")
+        end
         local k, b = SP.ReadCursor("Cursor_Crosshair_UnableMine_64")
         assert(k == "ore" and b == true, "ausgegraute Erzader nicht erkannt")
         assert(SP.ReadCursor("Interface\\Cursor\\Interact") == "other", "Briefkasten als Kraut")
