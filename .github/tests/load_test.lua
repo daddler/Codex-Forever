@@ -7903,6 +7903,17 @@ do
         PRO.Select("alchemy")
         PRO.Show()
         assert(PRO.lastDraw.skill == nil and PRO.lastDraw.rows > 0, "Beruf ohne Fertigkeit")
+        -- 1.0.5.60: Rezeptsuche ueber alle Berufe, mit Herkunft.
+        local any = PRO.Recipes("tailoring")[1]
+        local word = (any.name or ""):sub(1, 4)
+        local hits = PRO.Search(word)
+        assert(#hits > 0 and #hits <= PRO.SEARCH_MAX, "Suche findet nichts: " .. word)
+        PRO.query = word
+        PRO.Show()
+        assert(PRO.lastDraw.rows == #hits, "Suche nicht gezeichnet")
+        assert(#PRO.Search("q") == 0 and #PRO.Search("zzzzqqq") == 0, "Suche zu grosszuegig")
+        PRO.query = ""
+        PRO.Show()
 
         -- Startseite: Schritt nur mit bekanntem Gelernten.
         local HM = WeintCodex.Home

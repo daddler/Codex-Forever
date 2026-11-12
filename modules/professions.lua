@@ -618,6 +618,43 @@ local function BuildPage()
             PRO.Show()
         end })
     f.AllButton:SetPoint("TOPRIGHT", rc, "TOPRIGHT", -16, -12)
+    -- 1.0.5.60 (Wunsch: "Rezeptsuche fuer alle Berufe und wo sie zu
+    -- bekommen sind"): Suche ueber alle Berufe, jeder Treffer mit Beruf und
+    -- Herkunft; Klick zeigt das Rezept im Detail.
+    local sb = CreateFrame("Frame", nil, rc)
+    sb:SetHeight(24)
+    sb:SetPoint("LEFT", f.RecipeTitle, "RIGHT", 14, 0)
+    sb:SetPoint("RIGHT", f.AllButton, "LEFT", -10, 0)
+    local sbg = sb:CreateTexture(nil, "BACKGROUND")
+    sbg:SetAllPoints(sb)
+    sbg:SetColorTexture(C.surface2[1], C.surface2[2], C.surface2[3], 1)
+    local eb = CreateFrame("EditBox", nil, sb)
+    eb:SetPoint("TOPLEFT", sb, "TOPLEFT", 8, 0)
+    eb:SetPoint("BOTTOMRIGHT", sb, "BOTTOMRIGHT", -24, 0)
+    eb:SetAutoFocus(false)
+    eb:SetMaxLetters(40)
+    eb:SetFont(WeintCodex.Fonts.sans, 12, "")
+    eb:SetTextColor(C.textBright[1], C.textBright[2], C.textBright[3])
+    eb.hint = WeintCodex.Label(sb, "Rezept suchen – alle Berufe", { size = 12, color = "textDim" })
+    eb.hint:SetPoint("LEFT", sb, "LEFT", 10, 0)
+    local clear = CreateFrame("Button", nil, sb)
+    clear:SetSize(22, 22)
+    clear:SetPoint("RIGHT", sb, "RIGHT", -2, 0)
+    clear.x = WeintCodex.Label(clear, "\195\151", { size = 14, color = "textMuted" })
+    clear.x:SetPoint("CENTER", clear, "CENTER", 0, 1)
+    clear:SetScript("OnClick", function() eb:SetText("") eb:ClearFocus() end)
+    clear:Hide()
+    eb:SetScript("OnTextChanged", function(self)
+        local t = Plain(self:GetText()) or ""
+        self.hint:SetShown(t == "")
+        clear:SetShown(t ~= "")
+        if t ~= PRO.query then PRO.query = t PRO.Redraw() end
+    end)
+    eb:SetScript("OnEscapePressed", function(self) self:SetText("") self:ClearFocus() end)
+    eb:SetScript("OnEnterPressed", function(self) self:ClearFocus() end)
+    sb:EnableMouse(true)
+    sb:SetScript("OnMouseDown", function() eb:SetFocus() end)
+    f.SearchBox, f.SearchEdit = sb, eb
     f.RecipeScroll, f.RecipeBody = WeintCodex.CreateScrollArea(rc, 20, -46, 420, 300, true)
 
     local tc = WeintCodex.CreateSurface(f, { tone = "plain", radius = 14, backdrop = "bgDark" })
@@ -1018,6 +1055,48 @@ local TONE = { orange = "skillOrange", yellow = "skillYellow", green = "skillGre
 -- Hinweise je Fach; der erste nur, solange das Gelernte unbekannt ist.
 local NOTE_UNSURE = "Ob du ein Rezept schon kannst, weiß WeintCodex erst, wenn du einmal dein Berufsfenster öffnest – bis dahin heißt „lernbar“: ab deiner Fertigkeit."
 PRO.NOTE_UNSURE = NOTE_UNSURE
+
+-- Rezeptsuche (1.0.5.60): ueber alle Berufe, Name im Spiel (deutsch),
+-- Name im Bestand und Name des hergestellten Gegenstands. Hoechstens
+-- PRO.SEARCH_MAX Treffer - mehr liest keiner, und jede Zeile kostet.
+PRO.query = ""
+PRO.SEARCH_MAX = 40
+local function Fold(t) return (type(t) == "string" and t:lower()) or "" end
+function PRO.Search(query)
+    local q = Fold(query):gsub("^%s+", ""):gsub("%s+$", "")
+    local out = {}
+    if #q < 2 then return out, q end
+    for _, p in ipairs(P and P.PROFS or {}) do
+        for _, r in ipairs(PRO.Recipes(p.key)) do
+            if Fold(PRO.RecipeName(r)):find(q, 1, true) or Fold(r.name):find(q, 1, true)
+               or (r.item and P.NAMES and Fold(P.NAMES[r.item]):find(q, 1, true)) then
+                out[#out + 1] = r
+                if #out >= PRO.SEARCH_MAX then return out, q, true end
+            end
+        end
+    end
+    return out, q
+end
+
+local function DrawSearch(body, w)
+    local list, q, more = PRO.Search(PRO.query)
+    local y = 0
+    if #list == 0 then
+        y = SectionHead(body, y, w, "Suche", "textMuted", 0,
+            #q < 2 and "Mindestens zwei Buchstaben." or "Kein Rezept heißt so – in keinem Beruf.")
+        body:SetHeight(math.max(1, -y))
+        return
+    end
+    y = SectionHead(body, y, w, "Treffer in allen Berufen", "accent", #list,
+        more and ("Die ersten " .. PRO.SEARCH_MAX .. " – genauer suchen für mehr.") or nil)
+    for _, r in ipairs(list) do
+        y = RecipeRow(body, y, w, r, {})
+        local _, origin = PRO.Origin(r)
+        y = Note(body, y + 4, w, PRO.ProfName(r.key) .. " · " .. origin)
+    end
+    body:SetHeight(math.max(1, -y))
+end
+PRO.DrawSearch = DrawSearch
 
 local function DrawRecipes(body, w, skill, cat)
     local y, shown, hidden = 0, 0, 0
@@ -1544,7 +1623,7 @@ function PRO.Show()
     wipe(pending)
     -- Erst der Detailbereich, dann messen (wie beim Lehrer).
     local cat = PRO.Categorize(selected, skill)
-    if PRO.selRecipe and PRO.selRecipe.key ~= selected then PRO.selRecipe = nil end
+    if PRO.selRecipe and PRO.selRecipe.key ~= selected and (PRO.query or "") == "" then PRO.selRecipe = nil end
     if PRO.selRecipe then nav.SetInspector(RecipeInspector(PRO.selRecipe), PRO.DETAIL_W)
     else nav.SetInspector(InspectorBlocks(selected, skill, cat), PRO.DETAIL_W) end
 
@@ -1565,10 +1644,13 @@ function PRO.Show()
     f.TrainerScroll:SetSize(tw, math.max(60, th))
     f.TrainerBody:SetWidth(tw - 10)
 
-    local _, hidden = DrawRecipes(f.RecipeBody, rw - 14, skill, cat)
+    local hidden = 0
+    local searching = type(PRO.query) == "string" and PRO.query ~= ""
+    if searching then DrawSearch(f.RecipeBody, rw - 14)
+    else local _c _c, hidden = DrawRecipes(f.RecipeBody, rw - 14, skill, cat) end
     DrawTrainers(f.TrainerBody, tw - 14, selected, Faction(), s and s.max)
     f.AllButton:SetText(showAll and "Weniger zeigen" or ("Alle zeigen" .. (hidden > 0 and (" (" .. hidden .. ")") or "")))
-    f.AllButton:SetShown(showAll or hidden > 0)
+    f.AllButton:SetShown(not searching and (showAll or hidden > 0))
     f.drawnWidth = total
     PRO.lastDraw = { key = selected, skill = skill, rows = used.row, trainers = used.trainer, hidden = hidden }
 end
