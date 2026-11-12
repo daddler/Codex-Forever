@@ -22,6 +22,14 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.0.5.67",
+        date    = "12.11.2026",
+        notes   = {
+            "|cff7C6CFFBestand zählt nicht mehr doppelt|r – was in einer zusätzlichen Tasche liegt, stand auch als Bank da. Öffne einmal die Bank, dann stimmt die Zahl.",
+            "|cff7C6CFFErinnerungen prüfen|r – /wcui erinnerungen prüfen zeigt je Regel, was gerade erkannt wird: gelernt, Rolle, Buff.",
+        },
+    },
+    {
         version = "1.0.5.66",
         date    = "12.11.2026",
         notes   = {

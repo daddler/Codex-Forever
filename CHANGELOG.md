@@ -9,6 +9,16 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.0.5.67] – 2026-11-12
+
+### Behoben
+- Bestand: Banktaschen kommen aus `Enum.BagIndex` (sonst gerechnet); ein
+  Platz, der schon eigene Tasche ist (Reagenzientasche), zählt nie als Bank.
+
+### Neu
+- `/wcui erinnerungen prüfen` (`R.Diagnose`): je Regel gelernt, Rolle, gilt,
+  Buff lesbar, erinnert.
+
 ## [1.0.5.66] – 2026-11-12
 
 ### Geändert
