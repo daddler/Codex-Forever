@@ -231,8 +231,12 @@ local function TreePoints(tab, inspect)
     local ok, a, b, c, d, e = pcall(_G.GetTalentTabInfo, tab, inspect)
     if not ok then return nil end
     c, e = K.Plain(c), K.Plain(e)
-    if type(e) == "number" then return e end
+    -- 1.0.5.59: erst der 3. Wert. In der alten Form (Name, Symbol, Punkte,
+    -- Hintergrund, Vorschau) ist der 5. die Vorschau - meist 0. Ein
+    -- Schutzpaladin mit 11 Punkten galt so als "ohne Talente" und nie als
+    -- Tank. In der neuen Form ist der 3. die Beschreibung (Text).
     if type(c) == "number" then return c end
+    if type(e) == "number" then return e end
     return nil
 end
 

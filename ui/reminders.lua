@@ -2084,7 +2084,12 @@ R.draft = draft
 -- Fuer wen: "alle Klassen", "nur Krieger" oder - alte Regel - offen.
 function R.ScopeText(rule)
     if rule.class == R.ALL then return "alle Klassen" end
-    if rule.class then return "nur " .. (WeintCodex.Names.ClassLabel(rule.class) or rule.class) end
+    if rule.class then
+        local t = "nur " .. (WeintCodex.Names.ClassLabel(rule.class) or rule.class)
+        -- 1.0.5.59: die Rolle sichtbar (Zorn der Gerechtigkeit nur als Tank).
+        if rule.role == "TANK" then t = t .. " als Tank" end
+        return t
+    end
     return nil
 end
 
