@@ -22,6 +22,14 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.0.5.61",
+        date    = "12.11.2026",
+        notes   = {
+            "|cff7C6CFFFürs Lagerfeuer|r – jeder Beruf zeigt oben seine drei Lagergegenstände mit Fertigkeit und Herkunft; die stärkere Fassung ist ein eigenes Rezept.",
+            "|cff7C6CFFRezeptsuche in eigener Zeile|r – das Suchfeld überdeckt „Alle zeigen“ nicht mehr.",
+        },
+    },
+    {
         version = "1.0.5.60",
         date    = "12.11.2026",
         notes   = {

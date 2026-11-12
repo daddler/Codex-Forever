@@ -9,6 +9,16 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.0.5.61] – 2026-11-12
+
+### Neu
+- Berufe: Abschnitt „Fürs Lagerfeuer“ – Lagergegenstände je Beruf (Nummern
+  279930–279999), nach Lernstufe, mit Herkunft; Sonderzutaten ohne bekannte
+  Herkunft werden so benannt.
+
+### Behoben
+- Rezeptsuche: Feld in eigener Zeile, überlappte „Alle zeigen“.
+
 ## [1.0.5.60] – 2026-11-12
 
 ### Neu
