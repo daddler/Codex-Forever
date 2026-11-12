@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.0.5.62",
+        date    = "12.11.2026",
+        notes   = {
+            "|cff7C6CFFBaupläne mit deutschen Fundorten|r – Schemenzahn, Reliktwächter und Instabile Schildwache heißen jetzt auch so.",
+        },
+    },
+    {
         version = "1.0.5.61",
         date    = "12.11.2026",
         notes   = {

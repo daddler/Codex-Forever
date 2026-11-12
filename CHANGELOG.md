@@ -9,6 +9,11 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.0.5.62] – 2026-11-12
+
+### Geändert
+- Berufe: deutsche Namen dreier Forever-Gegner, die Baupläne fallen lassen.
+
 ## [1.0.5.61] – 2026-11-12
 
 ### Neu
