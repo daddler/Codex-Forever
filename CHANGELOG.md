@@ -9,6 +9,23 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.0.5.63] – 2026-11-12
+
+### Neu
+- Questpfeil: Klick auf den Pfeil öffnet eine Liste der Quests (höchstens 12,
+  eigener Kontinent); die Wahl bleibt beim Pfeil, kein C_SuperTrack.
+- Questpfeil: Schalter „Erst alles erledigen, dann abgeben“ (`collect`).
+- Questpfeil: Schalter „Symbole vor den Quests“ – setzt die Spieleinstellung
+  `questPOI` über das Profil (gemerkt, zurückgegeben); `/wcui pfeil` nennt sie.
+- Questpfeil: höher/tiefer aus den Höhen der Geländekarte (`NV.HeightsAt`,
+  `QA.TerrainHeight`), kleiner Pfeil mit Bewegung.
+- Berufe: Knopf „Lagerfeuer“ – Lagergegenstände aller Berufe auf einer Seite.
+
+### Behoben
+- Questpfeil: zeigte neben dem Laufweg bis zu zwei Sekunden auf eine schon
+  passierte Ecke zurück. Jetzt Fortschritt entlang des Wegs (`QA.Follow`),
+  Vorausschau wächst mit dem Abstand zum Weg, Drehung geglättet (`QA.Ease`).
+
 ## [1.0.5.62] – 2026-11-12
 
 ### Geändert

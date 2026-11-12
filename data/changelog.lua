@@ -22,6 +22,18 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.0.5.63",
+        date    = "12.11.2026",
+        notes   = {
+            "|cff7C6CFFQuest am Pfeil wählen|r – ein Klick auf den Questpfeil öffnet deine Quests, die nächste zuerst; wähle dort, wohin er zeigen soll.",
+            "|cff7C6CFFErst alles erledigen, dann abgeben|r – neuer Schalter am Questpfeil: Abgaben kommen erst, wenn im Gebiet nichts Offenes mehr liegt.",
+            "|cff7C6CFFDer Pfeil bleibt ruhig neben dem Weg|r – läufst du ein paar Meter neben der Route, zeigt er nicht mehr zurück, und er dreht weich statt zu springen.",
+            "|cff7C6CFFHöher oder tiefer|r – der Pfeil sagt aus der Geländekarte, ob das Ziel über oder unter dir liegt; der kleine Pfeil daneben steigt oder sinkt dazu.",
+            "|cff7C6CFFSymbole vor den Quests|r – der Questpfeil schaltet die Spieleinstellung ein, an der die runden Symbole in der Zielverfolgung hängen.",
+            "|cff7C6CFFRubrik Lagerfeuer|r – ein Knopf auf der Seite Berufe zeigt die Lagergegenstände aller Berufe mit Fertigkeit und Fundort.",
+        },
+    },
+    {
         version = "1.0.5.62",
         date    = "12.11.2026",
         notes   = {
