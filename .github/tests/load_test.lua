@@ -4139,6 +4139,24 @@ do
         assert(math.abs(b3) > math.rad(170), "dreht den langen Weg herum: " .. math.deg(b3))
         -- Nach einer Pause sofort.
         assert(QA.Ease(1, 30) == 1, "nach Pause nicht sofort")
+        -- Hoeher/tiefer aus der Gelaendekarte: nur, wenn es eindeutig ist.
+        local d, h = QA.TerrainHeight(10, 10, 40, 40)
+        assert(d == "up" and h == 30, "hoeher nicht erkannt")
+        d, h = QA.TerrainHeight(50, 50, 10, 22)
+        assert(d == "down" and h == 28, "tiefer nicht erkannt")
+        assert(QA.TerrainHeight(10, 10, 14, 14) == nil, "kleiner Unterschied gemeldet")
+        assert(QA.TerrainHeight(10, 10, 0, 40) == "stacked", "Ebenen uebereinander nicht genannt")
+        assert(QA.TerrainHeight(nil, nil, 5, 5) == nil and QA.TerrainHeight(5, 5, nil) == nil, "ohne Hoehe geraten")
+        -- Kleiner Pfeil: zeigt, dreht nur beim Wechsel, verbirgt ohne Richtung.
+        if QA.updown then
+            QA.SetClimb("up")
+            assert(QA.updown:IsShown() and QA.climbDir == "up", "Pfeil nach oben fehlt")
+            QA.SetClimb(nil)
+            assert(not QA.updown:IsShown(), "Pfeil bleibt stehen")
+            QA.SetClimb("down")
+            assert(QA.updown:IsShown() and QA.climbDir == "down", "Pfeil nach unten fehlt")
+            QA.SetClimb(nil)
+        end
         QA.EaseReset()
         QA.follow.path = nil
         WeintCodex._followOld = math.floor(math.deg(worstOld))
@@ -5189,6 +5207,9 @@ do
         for _ = 1, 50 do NV.Pump() end
         local p2 = NV.Path(99, 0.5 * cs, 1.5 * cs, NV.TILE + 3.5 * cs, 1.5 * cs)
         assert(p2, "Pump ohne Ergebnis")
+        -- 1.0.5.63: ohne Hoehen im Bestand kein Wert - und kein Fehler.
+        assert(NV.HeightsAt(99, 0.5 * cs, 1.5 * cs) == nil, "Hoehe ohne Bestand")
+        assert(NV.HeightsAt(12345, 0, 0) == nil, "Hoehe ohne Karte")
         local sN, sW, rest = NV.Steer(p2, 0.5 * cs, 1.5 * cs)
         assert(sN > 0.5 * cs and rest > 0, "Pfeil nicht voraus")
         -- 6.37.1.0: Wand quer durch den Abschnitt, Luecke nur am Rand - die

@@ -914,6 +914,47 @@ function QA.TrackHeight(z, dh)
 end
 function QA.ResetHeight() anchor, sign = nil, nil end
 
+-- Hoeher oder tiefer aus der Gelaendekarte (1.0.5.63, Wunsch: "Hoehen-
+-- unterschiede wie bei Shortest Path Forever"). Der Client nennt die eigene
+-- Hoehe nicht - aber die Gelaendekarte kennt zu jeder Zelle die Hoehe ihrer
+-- begehbaren Flaechen (ui/navmesh.lua, NV.HeightsAt). Daraus, rein:
+--   * liegt jede Flaeche am Ziel ueber jeder am eigenen Ort: "up" und um
+--     wie viel mindestens; unter jeder: "down";
+--   * ueberschneiden sie sich und liegen an einem der beiden Orte Ebenen
+--     weit uebereinander (QA.TERRAIN_MIN): "stacked" - Ebene unklar;
+--   * sonst nichts (gleiche Hoehe).
+-- Unter QA.TERRAIN_MIN kein Wort: das Raster ist grob (Zellen von 8 m).
+QA.TERRAIN_MIN, QA.TERRAIN_RANGE = 8, 600
+function QA.TerrainHeight(pLo, pHi, gLo, gHi)
+    if type(pLo) ~= "number" or type(gLo) ~= "number" then return nil end
+    pHi, gHi = pHi or pLo, gHi or gLo
+    if gLo - pHi >= QA.TERRAIN_MIN then return "up", gLo - pHi end
+    if pLo - gHi >= QA.TERRAIN_MIN then return "down", pLo - gHi end
+    if gHi - gLo >= QA.TERRAIN_MIN or pHi - pLo >= QA.TERRAIN_MIN then return "stacked", 0 end
+    return nil
+end
+-- Einmal je Sekunde und nur bei neuem Ort gelesen.
+local terr = { at = -1e9 }
+QA.terr = terr
+function QA.TerrainLine(c, pN, pW, gN, gW, units)
+    local NV = WeintCodex.UINav
+    if not (NV and NV.HeightsAt and NV.Available and NV.Available(c)) then return nil end
+    local now = Now()
+    if now - terr.at >= 1 or terr.c ~= c or terr.gN ~= gN or terr.gW ~= gW then
+        terr.at, terr.c, terr.gN, terr.gW = now, c, gN, gW
+        local ok, pLo, pHi = pcall(NV.HeightsAt, c, pN, pW)
+        local ok2, gLo, gHi = pcall(NV.HeightsAt, c, gN, gW)
+        terr.dir, terr.dh = nil, nil
+        if ok and ok2 then terr.dir, terr.dh = QA.TerrainHeight(pLo, pHi, gLo, gHi) end
+    end
+    if terr.dir == "up" or terr.dir == "down" then
+        return "Ziel ≈ " .. QA.FormatDistance(terr.dh, units) .. (terr.dir == "up" and " höher" or " tiefer"), terr.dir
+    elseif terr.dir == "stacked" then
+        return "Ebenen übereinander – Höhle, Keller oder Obergeschoss?", nil
+    end
+    return nil
+end
+
 local marker
 -- 6.74.0.0 (Wunsch: "erst in der Naehe, groesser, schoener - wie das
 -- Ping-System"): eine Plakette mit Raute auf runder Scheibe, darunter ein
@@ -1509,6 +1550,30 @@ function QA.ApplyIcons()
     return true
 end
 
+-- Kleiner Pfeil nach oben/unten mit Bewegung; nil = aus.
+QA.CLIMB_PX = 14
+function QA.SetClimb(dir)
+    local ud = QA.updown
+    if not ud then return end
+    if dir ~= "up" and dir ~= "down" then
+        -- Nur verbergen: jeder Durchlauf raeumt zuerst ab und zeigt dann
+        -- neu - die Bewegung liefe sonst fuenfmal je Sekunde von vorn an.
+        ud:Hide()
+        return
+    end
+    ud:Show()
+    if QA.climbDir == dir then return end
+    QA.climbDir = dir
+    ud:SetRotation(dir == "up" and 0 or math.pi)
+    if QA.climbAnim and QA.climbMove then
+        pcall(function()
+            QA.climbAnim:Stop()
+            QA.climbMove:SetOffset(0, dir == "up" and QA.CLIMB_PX or -QA.CLIMB_PX)
+            QA.climbAnim:Play()
+        end)
+    end
+end
+
 local function Build()
     frame = CreateFrame("Frame", "WeintCodexQuestArrow", UIParent)
     frame:SetSize(120, 96)
@@ -1555,11 +1620,32 @@ local function Build()
     -- nach unten = tiefer. Nur, wenn die Richtung bekannt ist.
     local updown = frame:CreateTexture(nil, "ARTWORK")
     updown:SetTexture(K.ARROW_TEXTURE)
-    updown:SetSize(18, 18)
+    updown:SetSize(24, 24)
     updown:SetPoint("LEFT", arrow, "RIGHT", 2, 0)
     updown:SetVertexColor(unpack(C.accentBright))
     updown:Hide()
     QA.updown = updown
+    -- 1.0.5.63 (Wunsch: "die Animation so, dass man erkennt, dass man nach
+    -- oben oder unten muss"): der kleine Pfeil steigt (oder sinkt) immer
+    -- wieder ein Stueck und verblasst dabei. Die Bewegung rechnet das Spiel
+    -- (AnimationGroup) - kein eigener Takt je Bild.
+    if updown.CreateAnimationGroup then
+        local ok, ag = pcall(updown.CreateAnimationGroup, updown)
+        if ok and type(ag) == "table" and ag.CreateAnimation then
+            pcall(function()
+                ag:SetLooping("REPEAT")
+                local mv = ag:CreateAnimation("Translation")
+                mv:SetDuration(0.9)
+                mv:SetSmoothing("OUT")
+                local fade = ag:CreateAnimation("Alpha")
+                fade:SetFromAlpha(1)
+                fade:SetToAlpha(0.15)
+                fade:SetDuration(0.45)
+                fade:SetStartDelay(0.45)
+                QA.climbAnim, QA.climbMove = ag, mv
+            end)
+        end
+    end
 
     -- Fuer den Prueflauf: was der Pfeil gerade anzeigt.
     QA.frame, QA.arrow = frame, arrow
@@ -1704,7 +1790,7 @@ function QA.Update(force)
     SetTxt(title, showTitle and name or "")
     SetTxt(eta, "")
     SetTxt(height, "")
-    if QA.updown then QA.updown:Hide() end
+    QA.SetClimb(nil)
 
     -- Zuerst die eigene Position: ohne sie laesst sich auch der Ort der
     -- Quest nicht suchen (er haengt an der Karte, auf der man steht), und
@@ -1829,6 +1915,18 @@ function QA.Update(force)
     cmp.dist = navRest or yards
     cmp.n = (cmp.n or 0) + 1
 
+    -- 1.0.5.63: hoeher/tiefer aus der Gelaendekarte - fuer jedes Ziel auf
+    -- dem eigenen Kontinent, nicht nur das der Navigation des Spiels.
+    local terrLine, terrDir
+    if K.Get(KEY, "showHeight") and K.Get(KEY, "terrain") ~= false and t.tc == pc and not hop
+       and flatGoal <= QA.TERRAIN_RANGE then
+        terrLine, terrDir = QA.TerrainLine(pc, pN, pW, t.tN, t.tW, K.Get(KEY, "units"))
+        if terrLine then
+            SetTxt(height, terrLine)
+            QA.SetClimb(terrDir)
+        end
+    end
+
     -- Hoehe und Zielmarke aus der Navigation des Spiels (siehe Kopf).
     local nav = t.nav and not hop and QA.Nav() or nil
     if nav then
@@ -1844,7 +1942,7 @@ function QA.Update(force)
             nav.inRange = true
         end
         local units = K.Get(KEY, "units")
-        if K.Get(KEY, "showHeight") then
+        if K.Get(KEY, "showHeight") and not terrLine then
             local first, second
             local dh = QA.Height(nav.dist, flatGoal)
             local dir = QA.TrackHeight(QA.PlayerZ(), dh)
@@ -1854,10 +1952,7 @@ function QA.Update(force)
                 local word = (dir == "up" and " höher") or (dir == "down" and " tiefer") or ""
                 first = (word ~= "" and "Ziel " or "Höhenunterschied ") .. "≈ "
                     .. QA.FormatDistance(dh, units) .. word
-                if dir and QA.updown then
-                    QA.updown:SetRotation(dir == "up" and 0 or math.pi)
-                    QA.updown:Show()
-                end
+                QA.SetClimb(dir)
             end
             if nav.occluded and nav.dist <= 150 then
                 second = "verdeckt – Höhle, Gebäude oder Hang?"

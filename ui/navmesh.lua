@@ -380,10 +380,14 @@ function NV.Surf(st, cl)
     local C = st.C
     local CC = C * C
     local sf = { fat = {}, fval = {}, first = {}, lk = {} }
-    if not fs or fs == "" then cl.surf = sf return sf end
+    -- 1.0.5.63: die Hoehen bleiben (sf.zb Grund, sf.fz Ebenen, in Einheiten
+    -- des Spiels) - NV.HeightsAt liest sie fuer "hoeher/tiefer" am Pfeil.
     local hs = Field(st.D, "height", cl.k + 1)
     local zb = hs and Heights(st, cl, hs) or {}
+    sf.zb = zb
+    if not fs or fs == "" then cl.surf = sf return sf end
     local fz, steps = {}, {}
+    sf.fz = fz
     local node, pos = CC, 4
     for _ = 1, Num(fs, 1, 3) do
         local lc, count = Num(fs, pos, 3), B64[byte(fs, pos + 3)]
@@ -592,6 +596,35 @@ function NV.Surfaces(st, cl, sf, cell, out)
         f = f + 1
     end
     return out
+end
+
+-- Hoehen an einer Lage (1.0.5.63): niedrigste und hoechste begehbare
+-- Flaeche der Zelle und wie viele es sind - oder nil (keine Karte, keine
+-- Hoehe im Bestand). Mehr als eine heisst: dort liegen Ebenen uebereinander
+-- (Hoehle unter dem Hang, Stadt unter dem Berg, Turm).
+function NV.HeightsAt(c, n, w)
+    local st = State(c)
+    if not st then return nil end
+    local k, cell = NV.Locate(st, n, w)
+    local cl = k and NV.Cluster(st, k)
+    if not cl then return nil end
+    local sf = NV.Surf(st, cl)
+    if not sf then return nil end
+    local lo, hi, cnt = nil, nil, 0
+    local z = Walk(cl, cell) ~= 0 and sf.zb and sf.zb[cell] or nil
+    if z then lo, hi, cnt = z, z, 1 end
+    local f = sf.first[cell]
+    while f and sf.fat[f] == cell do
+        local fz = (sf.fval[f] or 0) ~= 0 and sf.fz and sf.fz[f] or nil
+        if fz then
+            cnt = cnt + 1
+            if not lo or fz < lo then lo = fz end
+            if not hi or fz > hi then hi = fz end
+        end
+        f = f + 1
+    end
+    if cnt == 0 then return nil end
+    return lo, hi, cnt
 end
 
 -- Knoten eines Eingangs im Abschnitt (Grund: Zelle, Ebene: C*C + Nummer).
