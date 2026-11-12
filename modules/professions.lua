@@ -789,12 +789,15 @@ local function SplitList(t)
     for n in (t or ""):gmatch("%d+") do out[#out + 1] = tonumber(n) end
     return out
 end
+-- Deutsche Namen neuer Forever-Gegner, die der Bestand nur englisch kennt
+-- (1.0.5.62, Liste der Baupläne vom Spieler, `community`).
+PRO.NPC_DE = { [260325] = "Schemenzahn", [260326] = "Reliktwächter", [246017] = "Instabile Schildwache" }
 local function Npc(id)
     local RS = WeintCodex.RecipeSources
     local raw = RS and RS.n and RS.n[id]
     if type(raw) ~= "string" then return nil end
     local name, map, x, y, fac = raw:match("^([^\t]*)\t([^\t]*)\t([^\t]*)\t([^\t]*)\t?([^\t]*)")
-    return { name, tonumber(map), tonumber(x), tonumber(y), FAC[fac] }, fac
+    return { PRO.NPC_DE[id] or name, tonumber(map), tonumber(x), tonumber(y), FAC[fac] }, fac
 end
 function PRO.ItemSources(item)
     if srcCache[item] ~= nil then return srcCache[item] or nil end
