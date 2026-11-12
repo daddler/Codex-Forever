@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.0.5.59",
+        date    = "12.11.2026",
+        notes   = {
+            "|cff7C6CFFZorn der Gerechtigkeit erinnert den Schutzpaladin|r – die Talentpunkte werden richtig gelesen; die Liste der Erinnerungen sagt „nur Paladin als Tank“.",
+        },
+    },
+    {
         version = "1.0.5.58",
         date    = "11.11.2026",
         notes   = {

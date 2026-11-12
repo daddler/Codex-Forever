@@ -9,6 +9,14 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.0.5.59] – 2026-11-12
+
+### Behoben
+- Rolle aus den Talenten: Punkte je Baum zuerst aus dem 3. Wert (alte Form),
+  sonst aus dem 5.; vorher galt ein Schutzpaladin womöglich als „ohne Talente“
+  und bekam keine Erinnerung an Zorn der Gerechtigkeit.
+- Erinnerungen: Regeln mit Rolle zeigen „als Tank“ in der Liste.
+
 ## [1.0.5.58] – 2026-11-11
 
 ### Behoben
