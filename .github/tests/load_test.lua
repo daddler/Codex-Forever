@@ -4069,6 +4069,84 @@ do
     Check(ok, "Questpfeil plant: naechstes lohnendes Ziel, kein Hin und Her, eigene Wahl bis zur Abgabe"
         .. (ok and "" or (": " .. tostring(err))))
 
+    -- 1.0.5.63: dem Weg folgen - neben dem Weg laufen, ohne dass der Pfeil
+    -- zurueckzeigt (Bericht: "rastet aus, wenn man 5 m neben der Route laeuft").
+    ok, err = pcall(function()
+        local NV = WeintCodex.UINav
+        -- Weg nach Norden mit kleinen Knicken (Raster): alle 12 m ein Punkt,
+        -- abwechselnd 3 m nach links und rechts; nach 240 m eine echte Ecke
+        -- nach Westen (90 Grad), dann 200 m weiter.
+        local path = {}
+        for k = 0, 20 do path[#path + 1] = k * 12 path[#path + 1] = (k % 2 == 0) and 0 or 3 end
+        for k = 1, 10 do path[#path + 1] = 240 path[#path + 1] = 3 + k * 20 end
+        local function Bearing(pN, pW, tN, tW) local _, _, b = QA.Solve(pN, pW, tN, tW, 0) return b end
+        local function Diff(a, b) local d = (a - b) % (2 * math.pi) if d > math.pi then d = d - 2 * math.pi end return math.abs(d) end
+        -- Der Spieler laeuft 6 m rechts neben dem Weg (W = -6) nach Norden.
+        local worstNew, worstOld = 0, 0
+        local now = 100
+        local oldGT = _G.GetTime
+        _G.GetTime = function() return now end
+        QA.follow.path = nil
+        QA.hold.path = nil
+        for step = 0, 180 do
+            local pN, pW = step, -6
+            now = now + 0.15
+            local tN, tW = QA.Follow(path, pN, pW)
+            local d = Diff(Bearing(pN, pW, tN, tW), 0)
+            if d > worstNew then worstNew = d end
+            local sN, sW, _, segI = NV.Steer(path, pN, pW)
+            sN, sW = QA.HoldCorner(path, segI, pN, pW, sN, sW)
+            local o = Diff(Bearing(pN, pW, sN, sW), 0)
+            if o > worstOld then worstOld = o end
+        end
+        _G.GetTime = oldGT
+        assert(worstNew < math.rad(30), "Pfeil schlaegt neben dem Weg aus: " .. math.floor(math.deg(worstNew)) .. " Grad")
+        -- Fortschritt: nie zurueck auf einen frueheren Abschnitt.
+        QA.follow.path = nil
+        local lastI = 0
+        for step = 0, 230 do
+            local _, _, _, segI = QA.Follow(path, step, -6)
+            assert(segI >= lastI - 2, "Fortschritt springt zurueck: " .. segI .. " nach " .. lastI)
+            lastI = segI
+        end
+        -- Echte Ecke: weit davor zeigt der Pfeil nicht quer durch sie.
+        QA.follow.path = nil
+        local tN, tW = QA.Follow(path, 215, 0)
+        assert(tN <= 241 and tW <= 20, "schneidet die Ecke ab: " .. tN .. "/" .. tW)
+        -- An der Ecke vorbei: den naechsten Abschnitt entlang (nach Westen).
+        for step = 215, 240 do QA.Follow(path, step, 0) end
+        tN, tW = QA.Follow(path, 240, 10)
+        assert(tW > 30 and math.abs(tN - 240) < 1, "nach der Ecke nicht weiter: " .. tN .. "/" .. tW)
+        -- Rest des Wegs schrumpft; am Ende das Ziel.
+        local _, _, rest = QA.Follow(path, 240, 195)
+        assert(rest < 15, "Rest am Ende: " .. rest)
+        -- Serpentine: ein spaeterer Abschnitt liegt naeher - der Pfeil bleibt.
+        local zig = { 0, 0, 100, 0, 100, 10, 0, 10, 0, 20, 100, 20 }
+        QA.follow.path = nil
+        QA.Follow(zig, 10, 0)
+        local _, _, _, zi = QA.Follow(zig, 20, 4.9)
+        assert(zi == 1, "springt auf die Kehre nebenan: " .. zi)
+        -- Weich drehen: ein Sprung von 90 Grad kommt in Schritten an.
+        QA.EaseReset()
+        local b0 = QA.Ease(0, 10)
+        local b1 = QA.Ease(math.pi / 2, 10.05)
+        local b2 = QA.Ease(math.pi / 2, 10.6)
+        assert(b0 == 0 and b1 > 0 and b1 < math.pi / 4 and b2 > math.rad(80), "Drehung nicht weich: " .. b1 .. "/" .. b2)
+        -- Ueber die Naht bei 180 Grad auf dem kurzen Weg.
+        QA.EaseReset()
+        QA.Ease(math.rad(170), 20)
+        local b3 = QA.Ease(math.rad(-170), 20.1)
+        assert(math.abs(b3) > math.rad(170), "dreht den langen Weg herum: " .. math.deg(b3))
+        -- Nach einer Pause sofort.
+        assert(QA.Ease(1, 30) == 1, "nach Pause nicht sofort")
+        QA.EaseReset()
+        QA.follow.path = nil
+        WeintCodex._followOld = math.floor(math.deg(worstOld))
+    end)
+    Check(ok, "Questpfeil folgt dem Weg: ruhig neben der Route, Fortschritt, Ecken, weiche Drehung"
+        .. (ok and (" (alt bis " .. tostring(WeintCodex._followOld) .. " Grad daneben)") or (": " .. tostring(err))))
+    WeintCodex._followOld = nil
+
     -- 6.14.0.2: die eigene Lage ueber UnitPosition, wenn es mit der Karte
     -- uebereinstimmt - dann keine Vektoren mehr je Lauf.
     local saved = { _G.GetTime, _G.UnitPosition, _G.C_Map.GetPlayerMapPosition }

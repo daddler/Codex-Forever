@@ -1032,6 +1032,145 @@ function QA.OnCourse(path, segI, pN, pW, gN, gW, rest)
     return not st.follow
 end
 
+--------------------------------------------------
+-- Dem Weg folgen (1.0.5.63)
+--------------------------------------------------
+-- Bericht: "Manchmal rastet der Pfeil ziemlich aus, wenn man 5 m neben der
+-- Route laeuft." Bis hierher suchte jeder Durchlauf den naechsten Abschnitt
+-- des ganzen Wegs neu und hielt bei einem Wechsel bis zu zwei Sekunden die
+-- ECKE des alten Abschnitts fest (QA.HoldCorner). Lief man ein paar Meter
+-- neben dem Weg an einer Ecke vorbei, zeigte der Pfeil so lange zurueck -
+-- und der Weg aus dem Raster hat viele kleine Ecken.
+-- Jetzt wie eine Fahrspur-Fuehrung:
+--   * FORTSCHRITT statt naechster Abschnitt: wie weit man auf dem Weg ist
+--     (Bogenlaenge), gesucht nur in einem Fenster um den letzten Stand
+--     (QA.FOLLOW_BACK zurueck, QA.FOLLOW_AHEAD voraus). Der Pfeil springt
+--     nie auf einen fernen Abschnitt, der zufaellig naeher liegt
+--     (Serpentinen), und nie zurueck auf eine Ecke, die man passiert hat.
+--     Nur wer wirklich weg ist (QA.FOLLOW_LOST), wird im ganzen Weg gesucht.
+--   * VORAUS mit Abstand: der Zielpunkt liegt NV.LOOKAHEAD voraus, und je
+--     weiter man neben dem Weg laeuft, desto weiter (QA.FOLLOW_GAIN je
+--     Einheit daneben, hoechstens QA.FOLLOW_MAX) - der Pfeil fuehrt flach
+--     zurueck auf den Weg statt quer.
+--   * ECKEN: liegt eine Ecke weiter neben der Sichtlinie zum Zielpunkt als
+--     NV.CUT plus der eigene Abstand zum Weg, ist dort etwas im Weg - dann
+--     zeigt der Pfeil auf die Ecke. Ist die Ecke aber schon nah (naeher als
+--     QA.FOLLOW_NEAR oder das Anderthalbfache des eigenen Abstands), gilt
+--     sie als erreicht, und es geht den naechsten Abschnitt entlang.
+-- Rueckgabe: Zielpunkt (N, W), Rest des Wegs, Anfang des Abschnitts,
+-- Abstand zum Weg. Legt nur beim Wechsel des Wegs eine Tabelle neu an.
+QA.FOLLOW_BACK, QA.FOLLOW_AHEAD, QA.FOLLOW_LOST = 15, 80, 30
+QA.FOLLOW_GAIN, QA.FOLLOW_MAX, QA.FOLLOW_NEAR = 2, 90, 8
+local follow = { path = nil, n = 0, s = 0, cum = {} }
+QA.follow = follow
+local function ProjectOn(path, i, pN, pW)
+    local aN, aW, bN, bW = path[i], path[i + 1], path[i + 2], path[i + 3]
+    local dN, dW = bN - aN, bW - aW
+    local l2 = dN * dN + dW * dW
+    local u = l2 > 0 and ((pN - aN) * dN + (pW - aW) * dW) / l2 or 0
+    if u < 0 then u = 0 elseif u > 1 then u = 1 end
+    local qN, qW = aN + dN * u - pN, aW + dW * u - pW
+    return math.sqrt(qN * qN + qW * qW), u
+end
+-- Punkt auf dem Weg bei Bogenlaenge a (ab Abschnitt i gesucht).
+local function PointAt(path, cum, a, i)
+    local last = #path - 3
+    while i < last and cum[(i + 1) / 2 + 1] < a do i = i + 2 end
+    local k = (i + 1) / 2
+    local l = cum[k + 1] - cum[k]
+    local t = l > 0 and (a - cum[k]) / l or 0
+    if t < 0 then t = 0 elseif t > 1 then t = 1 end
+    return path[i] + (path[i + 2] - path[i]) * t, path[i + 1] + (path[i + 3] - path[i + 1]) * t, i
+end
+-- Naechster Abschnitt; mit lo/hi nur die im Fenster der Bogenlaenge.
+local function FollowScan(path, n, pN, pW, lo, hi)
+    local cum = follow.cum
+    local bestD, bestI, bestU
+    for i = 1, n - 3, 2 do
+        local k = (i + 1) / 2
+        if not lo or (cum[k + 1] >= lo and cum[k] <= hi) then
+            local d, u = ProjectOn(path, i, pN, pW)
+            if not bestD or d < bestD then bestD, bestI, bestU = d, i, u end
+        end
+    end
+    return bestD, bestI, bestU
+end
+function QA.Follow(path, pN, pW)
+    local n = #path
+    if n < 4 then return path[1], path[2], 0, 1, 0 end
+    local cum = follow.cum
+    local fresh = follow.path ~= path or follow.n ~= n
+    if fresh then
+        cum[1] = 0
+        local k = 1
+        for i = 1, n - 3, 2 do
+            k = k + 1
+            cum[k] = cum[k - 1] + math.sqrt((path[i + 2] - path[i]) ^ 2 + (path[i + 3] - path[i + 1]) ^ 2)
+        end
+        for j = #cum, k + 1, -1 do cum[j] = nil end
+        follow.path, follow.n, follow.s = path, n, 0
+    end
+    local total = cum[(n - 2) / 2 + 1]
+    -- Fortschritt: im Fenster, sonst (neu oder verloren) im ganzen Weg.
+    local bestD, bestI, bestU = FollowScan(path, n, pN, pW,
+        (not fresh) and (follow.s - QA.FOLLOW_BACK) or nil, follow.s + QA.FOLLOW_AHEAD)
+    if fresh or not bestD or bestD > QA.FOLLOW_LOST then bestD, bestI, bestU = FollowScan(path, n, pN, pW, nil, nil) end
+    local kI = (bestI + 1) / 2
+    local sNow = cum[kI] + (cum[kI + 1] - cum[kI]) * bestU
+    follow.s, follow.off, follow.i = sNow, bestD, bestI
+    local rest = total - sNow + bestD
+    -- Voraus, weiter bei Abstand zum Weg.
+    local look = (WeintCodex.UINav and WeintCodex.UINav.LOOKAHEAD or 30) + QA.FOLLOW_GAIN * bestD
+    if look > QA.FOLLOW_MAX then look = QA.FOLLOW_MAX end
+    local a = sNow + look
+    if a > total then a = total end
+    local tN, tW, endI = PointAt(path, cum, a, bestI)
+    -- Ecken zwischen hier und dem Zielpunkt gegen die Sichtlinie pruefen.
+    local tol = (WeintCodex.UINav and WeintCodex.UINav.CUT or 5) + bestD
+    local near = math.max(QA.FOLLOW_NEAR, bestD * 1.5)
+    local dN, dW = tN - pN, tW - pW
+    local len = math.sqrt(dN * dN + dW * dW)
+    if len > 0.01 then
+        for j = bestI + 2, endI, 2 do
+            local cN, cW = path[j], path[j + 1]
+            local dev = math.abs((cN - pN) * dW - (cW - pW) * dN) / len
+            if dev > tol then
+                local dc = math.sqrt((cN - pN) ^ 2 + (cW - pW) ^ 2)
+                if dc >= near then
+                    follow.state = "Ecke"
+                    return cN, cW, rest, bestI, bestD
+                end
+            end
+        end
+    end
+    follow.state = "voraus"
+    return tN, tW, rest, bestI, bestD
+end
+
+-- Weich drehen (1.0.5.63): die Richtung zum Zielpunkt aendert sich in
+-- Spruengen (naechste Ecke, Wechsel zwischen Weg und Ziel). Der Pfeil
+-- laeuft der neuen Richtung nach - Zeitkonstante QA.EASE_TAU - statt zu
+-- springen. Nur die Richtung in der Welt wird geglaettet; drehst du dich
+-- selbst, folgt der Pfeil sofort. Nach einer Pause (QA.EASE_GAP) oder
+-- ohne Stand: sofort die neue Richtung.
+QA.EASE_TAU, QA.EASE_GAP = 0.2, 1
+local ease = { b = nil, at = nil }
+QA.ease = ease
+function QA.Ease(bearing, now)
+    if type(bearing) ~= "number" then return bearing end
+    if type(ease.b) ~= "number" or type(now) ~= "number" or type(ease.at) ~= "number"
+       or now - ease.at > QA.EASE_GAP or now < ease.at then
+        ease.b, ease.at = bearing, now
+        return bearing
+    end
+    local dt = now - ease.at
+    local k = 1 - math.exp(-dt / QA.EASE_TAU)
+    ease.b = Norm(ease.b + Norm(bearing - ease.b) * k)
+    ease.at = now
+    return ease.b
+end
+function QA.EaseReset() ease.b, ease.at = nil, nil end
+
 function QA.HoldCorner(path, i, pN, pW, sN, sW)
     if type(path) ~= "table" or type(i) ~= "number" then hold.path, hold.state = nil, nil return sN, sW end
     local h = hold.i
@@ -1499,8 +1638,9 @@ function QA.Turn()
     if not aim.ok or not (arrow and arrow:IsShown()) then return false end
     local facing = _G.GetPlayerFacing and K.Plain(_G.GetPlayerFacing())
     if type(facing) ~= "number" then return false end
-    local _, rotation = QA.Solve(aim.pN, aim.pW, aim.tN, aim.tW, facing)
+    local _, rotation, bearing = QA.Solve(aim.pN, aim.pW, aim.tN, aim.tW, facing)
     if not rotation then return false end
+    rotation = Norm(QA.Ease(bearing, Now()) - facing)
     if QA.AngleMoved(aim.lastRot, rotation) then
         PointArrow(rotation)
         SetArrowColor(rotation)
@@ -1643,8 +1783,8 @@ function QA.Update(force)
     if planning and NV and pc == tc and K.Get(KEY, "terrain") ~= false then
         navPath = NV.Path(pc, pN, pW, tN, tW)
         if navPath then
-            local sN, sW, rest, segI = NV.Steer(navPath, pN, pW)
-            sN, sW = QA.HoldCorner(navPath, segI, pN, pW, sN, sW)
+            -- 1.0.5.63: QA.Follow statt NV.Steer + QA.HoldCorner.
+            local sN, sW, rest, segI = QA.Follow(navPath, pN, pW)
             navRest = rest
             -- 6.103.5.0: Ziel zuerst - dem Weg nur folgen, wenn er wirklich
             -- von der Luftlinie abweicht (QA.OnCourse).
@@ -1677,6 +1817,7 @@ function QA.Update(force)
 
     local facing = _G.GetPlayerFacing and K.Plain(_G.GetPlayerFacing())
     local yards, rotation, bearing = QA.Solve(pN, pW, tN, tW, facing)
+    if rotation then rotation = Norm(QA.Ease(bearing, Now()) - facing) end
     aim.ok, aim.pN, aim.pW, aim.tN, aim.tW = false, pN, pW, tN, tW
     cmp.ok, cmp.c, cmp.pN, cmp.pW, cmp.bN, cmp.bW = true, pc, pN, pW, tN, tW
     cmp.gN, cmp.gW = nil, nil
@@ -1954,7 +2095,10 @@ function QA.Inspect()
         out[#out + 1] = "Ziel: nächster von " .. (QA.areaMemo.spots or 0) .. " Fundorten, "
             .. QA.FormatDistance(QA.areaMemo.nearD, K.Get(KEY, "units"))
     end
-    if hold.state then out[#out + 1] = "Abschnitt des Laufwegs: " .. hold.state .. " (Nr. " .. tostring(hold.i) .. ")" end
+    if follow.path and follow.state then
+        out[#out + 1] = string.format("Laufweg: %s · Abschnitt %d · %d m neben dem Weg", follow.state,
+            ((follow.i or 1) + 1) / 2, math.floor((follow.off or 0) + 0.5))
+    end
     if QA.ghostLast then out[#out + 1] = "Als Geist: " .. QA.ghostLast end
     out[#out + 1] = "Zielmarke im Raum: " .. ((QA.marker and QA.marker:IsShown()) and "steht" or "nicht gezeigt")
         .. " · Marke des Spiels " .. (QA.gameMarkerVisible and "sichtbar" or "nicht sichtbar")
