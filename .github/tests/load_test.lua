@@ -4147,6 +4147,10 @@ do
         assert(QA.TerrainHeight(10, 10, 14, 14) == nil, "kleiner Unterschied gemeldet")
         assert(QA.TerrainHeight(10, 10, 0, 40) == "stacked", "Ebenen uebereinander nicht genannt")
         assert(QA.TerrainHeight(nil, nil, 5, 5) == nil and QA.TerrainHeight(5, 5, nil) == nil, "ohne Hoehe geraten")
+        -- 1.0.5.65: unglaubhafte Hoehe aus der Navigation (371 m bei 12 m).
+        assert(QA.Height(371, 12) == nil, "371 m Hoehe bei 12 m Abstand gemeldet")
+        assert(QA.Height(200, 190) ~= nil and QA.Height(45, 10) ~= nil, "glaubhafte Hoehe verworfen")
+        assert(QA.Height(400, 100) == nil, "Hoehe ueber der Grenze")
         -- An der Schwelle kippt nichts hin und her.
         assert(QA.TerrainHeight(10, 10, 16, 16) == nil and QA.TerrainHeight(10, 10, 16, 16, "up") == "up",
             "Richtung haelt nicht an der Schwelle")

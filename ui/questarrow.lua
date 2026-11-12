@@ -889,9 +889,19 @@ end
 -- Hoehenunterschied aus Luftlinie und Abstand auf der Karte (beide Yards).
 -- nil, wenn die Luftlinie kuerzer ist (Kartenort und Navigationspunkt
 -- liegen nicht genau aufeinander) - dann ist nichts zu sagen.
+-- 1.0.5.65 (Bild vom Spieler: "Hoehenunterschied ≈ 371 m" bei 12 m zum
+-- Ziel): die Luftlinie des Spiels gilt SEINEM Navigationspunkt, der Abstand
+-- auf der Karte UNSEREM Questort - liegen die beiden auseinander (das Spiel
+-- fuehrt zu einem anderen Fundort oder zum Gebietsausgang), ist die
+-- Differenz kein Hoehenunterschied. Glaubhaft ist nur, was nicht steiler
+-- ist als QA.HEIGHT_SLOPE (Hoehe je Abstand, mindestens QA.HEIGHT_FREE
+-- frei fuer Hoehle oder Turm direkt am Ziel) und unter QA.HEIGHT_MAX.
+QA.HEIGHT_SLOPE, QA.HEIGHT_FREE, QA.HEIGHT_MAX = 1.5, 60, 150
 function QA.Height(dist3d, flat)
     if type(dist3d) ~= "number" or type(flat) ~= "number" or dist3d <= flat then return nil end
-    return math.sqrt(dist3d * dist3d - flat * flat)
+    local dh = math.sqrt(dist3d * dist3d - flat * flat)
+    if dh > QA.HEIGHT_MAX or dh > math.max(QA.HEIGHT_FREE, flat * QA.HEIGHT_SLOPE) then return nil end
+    return dh
 end
 
 -- Die eigene Hoehe, wenn der Client sie nennt (nil sonst). UnitPosition
@@ -963,13 +973,16 @@ function QA.TerrainLine(c, pN, pW, gN, gW, units)
         local was = terr.dir
         terr.dir, terr.dh = nil, nil
         if ok and ok2 then terr.dir, terr.dh = QA.TerrainHeight(pLo, pHi, gLo, gHi, was) end
+        -- Beide Hoehen bekannt: die Gelaendekarte hat das Wort - auch wenn
+        -- es "kein nennenswerter Unterschied" heisst.
+        terr.known = ok and ok2 and type(pLo) == "number" and type(gLo) == "number" or false
     end
     if terr.dir == "up" or terr.dir == "down" then
         return "Ziel ≈ " .. QA.FormatDistance(terr.dh, units) .. (terr.dir == "up" and " höher" or " tiefer"), terr.dir
     elseif terr.dir == "stacked" then
         return "Ebenen übereinander – Höhle, Keller oder Obergeschoss?", nil
     end
-    return nil
+    return nil, nil, terr.known
 end
 
 local marker
@@ -1937,10 +1950,10 @@ function QA.Update(force)
 
     -- 1.0.5.63: hoeher/tiefer aus der Gelaendekarte - fuer jedes Ziel auf
     -- dem eigenen Kontinent, nicht nur das der Navigation des Spiels.
-    local terrLine, terrDir
+    local terrLine, terrDir, terrKnown
     if K.Get(KEY, "showHeight") and K.Get(KEY, "terrain") ~= false and t.tc == pc and not hop
        and flatGoal <= QA.TERRAIN_RANGE then
-        terrLine, terrDir = QA.TerrainLine(pc, pN, pW, t.tN, t.tW, K.Get(KEY, "units"))
+        terrLine, terrDir, terrKnown = QA.TerrainLine(pc, pN, pW, t.tN, t.tW, K.Get(KEY, "units"))
         if terrLine then
             SetTxt(height, terrLine)
             QA.SetClimb(terrDir)
@@ -1964,7 +1977,9 @@ function QA.Update(force)
         local units = K.Get(KEY, "units")
         if K.Get(KEY, "showHeight") and not terrLine then
             local first, second
-            local dh = QA.Height(nav.dist, flatGoal)
+            -- Kennt die Gelaendekarte beide Hoehen und nennt keinen
+            -- Unterschied, gibt es keinen - die Rechnung unten schweigt.
+            local dh = (not terrKnown) and QA.Height(nav.dist, flatGoal) or nil
             local dir = QA.TrackHeight(QA.PlayerZ(), dh)
             -- Erst in der Naehe verlaesslich: Kartenort und Navigationspunkt
             -- liegen auf Entfernung nicht genau aufeinander.
