@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.0.5.64",
+        date    = "12.11.2026",
+        notes   = {
+            "|cff7C6CFFDer Questpfeil kippt|r – liegt das Ziel höher, richtet sich die Spitze auf; liegt es tiefer, senkt sie sich.",
+        },
+    },
+    {
         version = "1.0.5.63",
         date    = "12.11.2026",
         notes   = {

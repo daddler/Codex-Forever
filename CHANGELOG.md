@@ -9,6 +9,13 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.0.5.64] – 2026-11-12
+
+### Neu
+- Questpfeil (3D-Stil): zwei weitere Bildtafeln `arrow3d_up`/`arrow3d_down`
+  (Spitze +32° / −17°, je 64 Drehungen, aus `make_ui_media.py`); gewählt über
+  `QA.pitch`. Richtung aus der Geländekarte hält bis 5 m (Hysterese).
+
 ## [1.0.5.63] – 2026-11-12
 
 ### Neu
