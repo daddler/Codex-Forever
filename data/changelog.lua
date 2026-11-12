@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.0.5.60",
+        date    = "12.11.2026",
+        notes   = {
+            "|cff7C6CFFRezeptsuche über alle Berufe|r – auf der Seite Berufe ein Suchfeld: jeder Treffer nennt Beruf und Herkunft (Lehrer, Händler mit Preis, Beute, Quest), ein Klick zeigt die Details mit Pfeil.",
+        },
+    },
+    {
         version = "1.0.5.59",
         date    = "12.11.2026",
         notes   = {

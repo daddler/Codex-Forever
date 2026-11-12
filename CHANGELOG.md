@@ -9,6 +9,13 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.0.5.60] – 2026-11-12
+
+### Neu
+- Berufe: Rezeptsuche über alle Berufe (deutscher Name aus dem Spiel, Name im
+  Bestand, hergestellter Gegenstand), je Treffer Beruf und Herkunft,
+  höchstens 40 Treffer; Klick öffnet die Details.
+
 ## [1.0.5.59] – 2026-11-12
 
 ### Behoben
