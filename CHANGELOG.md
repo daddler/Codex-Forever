@@ -9,6 +9,14 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.0.5.65] – 2026-11-12
+
+### Behoben
+- Questpfeil: „Höhenunterschied ≈ 371 m“ bei 12 m zum Ziel. Die Rechnung aus
+  der Navigation des Spiels gilt nur noch, wo die Geländekarte keine Höhen
+  kennt, und nur glaubhafte Werte (≤ 150 m, nicht steiler als 1,5 × Abstand,
+  bis 60 m frei).
+
 ## [1.0.5.64] – 2026-11-12
 
 ### Neu

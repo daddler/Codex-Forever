@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.0.5.65",
+        date    = "12.11.2026",
+        notes   = {
+            "|cff7C6CFFKein falscher Höhenunterschied mehr|r – der Questpfeil nennt keine Hunderte Meter Höhe mehr, wenn das Ziel direkt vor dir liegt.",
+        },
+    },
+    {
         version = "1.0.5.64",
         date    = "12.11.2026",
         notes   = {
