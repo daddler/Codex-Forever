@@ -623,8 +623,9 @@ local function BuildPage()
     -- Herkunft; Klick zeigt das Rezept im Detail.
     local sb = CreateFrame("Frame", nil, rc)
     sb:SetHeight(24)
-    sb:SetPoint("LEFT", f.RecipeTitle, "RIGHT", 14, 0)
-    sb:SetPoint("RIGHT", f.AllButton, "LEFT", -10, 0)
+    -- 1.0.5.61 (Bild: ueberlappte "Alle zeigen"): eigene Zeile unter dem Titel.
+    sb:SetPoint("TOPLEFT", rc, "TOPLEFT", 20, -44)
+    sb:SetPoint("TOPRIGHT", rc, "TOPRIGHT", -20, -44)
     local sbg = sb:CreateTexture(nil, "BACKGROUND")
     sbg:SetAllPoints(sb)
     sbg:SetColorTexture(C.surface2[1], C.surface2[2], C.surface2[3], 1)
@@ -655,7 +656,7 @@ local function BuildPage()
     sb:EnableMouse(true)
     sb:SetScript("OnMouseDown", function() eb:SetFocus() end)
     f.SearchBox, f.SearchEdit = sb, eb
-    f.RecipeScroll, f.RecipeBody = WeintCodex.CreateScrollArea(rc, 20, -46, 420, 300, true)
+    f.RecipeScroll, f.RecipeBody = WeintCodex.CreateScrollArea(rc, 20, -78, 420, 300, true)
 
     local tc = WeintCodex.CreateSurface(f, { tone = "plain", radius = 14, backdrop = "bgDark" })
     tc:SetPoint("TOPLEFT",     rc, "TOPRIGHT", GAP, 0)
@@ -1098,10 +1099,51 @@ local function DrawSearch(body, w)
 end
 PRO.DrawSearch = DrawSearch
 
+-- Fuers Lagerfeuer (1.0.5.61, Wunsch: "Goodies am Lagerfeuer, 3 an der
+-- Zahl, verbessern mit hoeherer Fertigkeit - wo man das findet und wie man
+-- es verbessert"). Erkannt an der Nummer des hergestellten Gegenstands:
+-- die Lagergegenstaende von Forever liegen in 279930-279999 (Bestand
+-- data/professions.lua, gezaehlt: je Beruf drei Stufen 20/140/300, beim
+-- Kochen auch die drei Lagerfeuer). Stufe = Rang nach Lernstufe.
+PRO.CAMP_FROM, PRO.CAMP_TO = 279930, 279999
+function PRO.IsCamp(r) return r and r.item and r.item >= PRO.CAMP_FROM and r.item <= PRO.CAMP_TO or false end
+function PRO.CampItems(key)
+    local out = {}
+    for _, r in ipairs(PRO.Recipes(key)) do if PRO.IsCamp(r) then out[#out + 1] = r end end
+    table.sort(out, function(a, b) return (a.learn or 0) < (b.learn or 0) end)
+    return out
+end
+-- Was zum Bauen fehlt: Zutaten, die kein Rezept herstellt und die der
+-- Bestand nicht kennt (Nummern ab 272000 = neu in Forever) - ehrlich
+-- "Herkunft nicht im Bestand". `step` bleibt fuer spaeter ungenutzt.
+function PRO.CampLine(r, step)
+    local _, origin = PRO.Origin(r)
+    local t = "ab Fertigkeit " .. (r.learn or "?") .. " · " .. origin
+    for _, rg in ipairs(r.reagents) do
+        if rg[1] >= 272000 and P.NAMES and P.NAMES[rg[1]] then
+            t = t .. " · braucht " .. PRO.ItemName(rg[1]) .. " (Herkunft nicht im Bestand)"
+        end
+    end
+    return t
+end
+local function DrawCamp(body, y, w, key)
+    local list = PRO.CampItems(key)
+    if #list == 0 then return y end
+    y = SectionHead(body, y, w, "Fürs Lagerfeuer", "goldBright", #list,
+        "Am Lagerfeuer aufstellbar. Verbessert wird nicht das Aufgestellte: die stärkere Fassung ist ein eigenes Rezept ab mehr Fertigkeit – meist als Rezept zu finden.")
+    for i, r in ipairs(list) do
+        y = RecipeRow(body, y, w, r, {})
+        y = Note(body, y + 4, w, PRO.CampLine(r, i))
+    end
+    return y - 10
+end
+PRO.DrawCamp = DrawCamp
+
 local function DrawRecipes(body, w, skill, cat)
     local y, shown, hidden = 0, 0, 0
     local defs = skill and PRO.SECTIONS or PRO.RANKS
     y = Note(body, y, w, PRO.Legend())
+    y = DrawCamp(body, y, w, selected)
     for i, sec in ipairs(defs) do
         local list = cat.sections[sec.key]
         -- Ohne Fertigkeit: der erste Rang offen, die anderen nur mit "Alle zeigen".
@@ -1637,7 +1679,7 @@ function PRO.Show()
     end
     local rw = (Plain(f.RecipeCard:GetWidth()) or 460) - 40
     local tw = (Plain(f.TrainerCard:GetWidth()) or 280) - 40
-    local rh = (Plain(f.RecipeCard:GetHeight()) or 360) - 62
+    local rh = (Plain(f.RecipeCard:GetHeight()) or 360) - 94
     local th = (Plain(f.TrainerCard:GetHeight()) or 360) - 62
     f.RecipeScroll:SetSize(rw, math.max(60, rh))
     f.RecipeBody:SetWidth(rw - 10)

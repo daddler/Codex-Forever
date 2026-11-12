@@ -7903,6 +7903,12 @@ do
         PRO.Select("alchemy")
         PRO.Show()
         assert(PRO.lastDraw.skill == nil and PRO.lastDraw.rows > 0, "Beruf ohne Fertigkeit")
+        -- 1.0.5.61: Lagerfeuer je Beruf, nach Fertigkeit, mit Herkunft.
+        local camp = PRO.CampItems("skinning")
+        assert(#camp == 3 and camp[1].learn <= camp[2].learn and camp[2].learn <= camp[3].learn, "Lager Kuerschnerei: " .. #camp)
+        assert(PRO.CampLine(camp[2], 2):find("ab Fertigkeit", 1, true), "Lagerzeile")
+        local alc = PRO.CampItems("alchemy")
+        assert(PRO.CampLine(alc[3], 3):find("Herkunft nicht im Bestand", 1, true), "Sonderzutat ohne Hinweis")
         -- 1.0.5.60: Rezeptsuche ueber alle Berufe, mit Herkunft.
         local any = PRO.Recipes("tailoring")[1]
         local word = (any.name or ""):sub(1, 4)
