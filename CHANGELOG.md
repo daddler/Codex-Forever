@@ -9,6 +9,12 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.0.5.66] – 2026-11-12
+
+### Geändert
+- Glitzern an Kraut und Erz (`ui/sparkles.lua`): 14 weiche Punkte, die
+  aufsteigen und verglimmen, dazu 4 kurze Sterne – statt sechs fester Sterne.
+
 ## [1.0.5.65] – 2026-11-12
 
 ### Behoben

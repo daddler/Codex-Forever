@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.0.5.66",
+        date    = "12.11.2026",
+        notes   = {
+            "|cff7C6CFFSchöneres Glitzern an Kräutern und Erz|r – viele kleine Lichtpunkte steigen auf und verglimmen, dazwischen blitzt es kurz auf, wie beim Questgeber.",
+        },
+    },
+    {
         version = "1.0.5.65",
         date    = "12.11.2026",
         notes   = {
