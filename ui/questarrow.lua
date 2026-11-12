@@ -106,6 +106,12 @@ local defaults = {
     -- Ziel aus dem ganzen Questlog; "tracked" folgt nur der Quest, die das
     -- Spiel verfolgt (alles vor 6.6.2.7).
     plan       = "smart",
+    -- 1.0.5.63 (Feedback: "erst alle Quests des Gebiets, am Ende alle
+    -- abgeben"): Abgaben erst, wenn im Gebiet nichts Offenes mehr liegt.
+    collect    = false,
+    -- 1.0.5.63 (Stream: die Symbole vor den Quests fehlten): die
+    -- Spieleinstellung "questPOI" an - an ihr haengen die Symbole.
+    questIcons = true,
     autoNext   = true,     -- nach dem Abgeben die naechste Quest
     onComplete = "turnin", -- turnin | next: was nach erfuellten Zielen kommt
     -- Routenplaner (6.31.0.0, ui/route.lua): zeigt auf den naechsten
@@ -549,7 +555,7 @@ local function FillPlanCache(playerMap)
                 n = n + 1
                 local e = planCache[n] or {}
                 planCache[n] = e
-                e.id, e.tc, e.tN, e.tW = id, tc, tN, tW
+                e.id, e.tc, e.tN, e.tW, e.map = id, tc, tN, tW, mapID
                 e.level, e.group, e.done = info.difficultyLevel or info.level, info.suggestedGroup, IsComplete(id)
             end
         end
@@ -578,10 +584,24 @@ function QA.Plan(current)
     local now = _G.GetTime and K.Plain(_G.GetTime()) or 0
     local plevel = _G.UnitLevel and K.Plain(_G.UnitLevel("player"))
     local best, bestCost, curCost
+    -- Abgaben sammeln (1.0.5.63): liegt auf der Karte des Spielers noch
+    -- eine offene, machbare Quest (nicht rot, keine Gruppenquest, nicht
+    -- ausgelassen), sind erfuellte Quests kein Ziel. Unmachbares haelt die
+    -- Abgaben so nie fest.
+    local hold = false
+    if K.Get(KEY, "collect") then
+        for i = 1, planCache.n do
+            local e = planCache[i]
+            local until_ = QA.skipped[e.id]
+            if e.tc == pc and not e.done and e.map == playerMap and not (until_ and until_ > now)
+               and QA.Weight(e.level, plevel, e.group) < 3 then hold = true break end
+        end
+    end
+    QA.plan.hold = hold
     for i = 1, planCache.n do
         local e = planCache[i]
         local until_ = QA.skipped[e.id]
-        if e.tc == pc and not (until_ and until_ > now) then
+        if e.tc == pc and not (until_ and until_ > now) and not (hold and e.done) then
             local d = QA.Solve(pN, pW, e.tN, e.tW, nil)
             local w = QA.Weight(e.level, plevel, e.group)
             local cost = d * w
@@ -1237,6 +1257,119 @@ local function PlaceMarker(n, text, key)
     return true
 end
 
+--------------------------------------------------
+-- Ziel am Pfeil waehlen (1.0.5.63)
+--------------------------------------------------
+-- Feedback: "wie wird die jeweilige Quest angewaehlt?" - bisher nur ueber
+-- die Symbole des Spiels in der Zielverfolgung, und die fehlten bei dem
+-- Spieler. Ein Klick auf den Pfeil oeffnet darum eine eigene Liste: was
+-- der Planer gerade zur Wahl hat, naechstes zuerst. Die Wahl bleibt beim
+-- Pfeil (QA.manual) - nichts am Spiel wird angefasst, kein C_SuperTrack.
+QA.MENU_MAX, QA.MENU_W, QA.MENU_ROW = 12, 280, 20
+local menu
+function QA.Pick(id)
+    if QA.Smart() then QA.manual, QA.Chosen = id, nil else QA.manual, QA.Chosen = nil, id end
+    QA.ClearCustom()
+    if QA.Update then pcall(QA.Update, true) end
+end
+function QA.MenuItems()
+    if QA.Smart() and not QA.manual then QA.Replan() else QA.Plan(QA.manual or QA.Chosen) end
+    local out = {}
+    for i, c in ipairs(QA.plan.list) do
+        if i > QA.MENU_MAX then break end
+        local t = QuestTitle(c.id)
+        out[#out + 1] = { id = c.id, title = type(t) == "string" and t or ("Quest " .. c.id), dist = c.dist, done = c.done }
+    end
+    return out
+end
+local function MenuRow(i)
+    local r = menu.rows[i]
+    if r then return r end
+    r = CreateFrame("Button", nil, menu)
+    r:SetHeight(QA.MENU_ROW)
+    r:SetPoint("TOPLEFT", menu, "TOPLEFT", 6, -6 - (i - 1) * QA.MENU_ROW)
+    r:SetPoint("TOPRIGHT", menu, "TOPRIGHT", -6, -6 - (i - 1) * QA.MENU_ROW)
+    local hl = r:CreateTexture(nil, "HIGHLIGHT")
+    hl:SetAllPoints(r)
+    hl:SetColorTexture(C.accent[1], C.accent[2], C.accent[3], 0.18)
+    r.right = K.NewText(r, 11)
+    r.right:SetPoint("RIGHT", r, "RIGHT", -4, 0)
+    r.left = K.NewText(r, 12)
+    r.left:SetPoint("LEFT", r, "LEFT", 4, 0)
+    r.left:SetPoint("RIGHT", r.right, "LEFT", -6, 0)
+    r.left:SetJustifyH("LEFT")
+    r.left:SetWordWrap(false)
+    r:SetScript("OnClick", function(self)
+        menu:Hide()
+        if self.act then self.act() end
+    end)
+    menu.rows[i] = r
+    return r
+end
+function QA.ToggleMenu()
+    if menu and menu:IsShown() then menu:Hide() return end
+    if not frame then return end
+    if not menu then
+        menu = CreateFrame("Frame", "WeintCodexQuestArrowMenu", UIParent)
+        menu:SetFrameStrata("DIALOG")
+        menu:SetWidth(QA.MENU_W)
+        menu:EnableMouse(true)
+        K.Kachel(menu, { alpha = 0.95, shadow = 6 })
+        menu.rows = {}
+        QA.menu = menu
+    end
+    local items = QA.MenuItems()
+    local n = 0
+    local function Add(left, right, color, act)
+        n = n + 1
+        local r = MenuRow(n)
+        r.left:SetText(left)
+        r.right:SetText(right or "")
+        r.left:SetTextColor(color[1], color[2], color[3])
+        r.act = act
+        r:Show()
+    end
+    local current = QA.manual or QA.Chosen
+    for _, it in ipairs(items) do
+        local id = it.id
+        Add((id == current and "» " or "") .. it.title,
+            (it.done and "Abgabe · " or "") .. QA.FormatDistance(it.dist, K.Get(KEY, "units")),
+            id == current and C.accentBright or (it.done and C.successBright or C.textNormal),
+            function() QA.Pick(id) end)
+    end
+    if #items == 0 then
+        Add("Keine Quest mit bekanntem Ort auf diesem Kontinent.", nil, C.textDim, nil)
+    end
+    if QA.manual or not QA.Smart() then
+        Add("Wieder selbst planen", nil, C.textMuted, function() QA.Resume() if QA.Update then pcall(QA.Update, true) end end)
+    end
+    if current then
+        Add("Dieses Ziel 10 Minuten auslassen", nil, C.textMuted, function() QA.Skip() if QA.Update then pcall(QA.Update, true) end end)
+    end
+    for i = n + 1, #menu.rows do menu.rows[i]:Hide() end
+    menu:SetHeight(12 + n * QA.MENU_ROW)
+    menu:ClearAllPoints()
+    menu:SetPoint("TOP", frame, "BOTTOM", 0, -4)
+    menu:Show()
+end
+
+-- Die Symbole vor den Quests in der Zielverfolgung haengen an der
+-- Spieleinstellung "questPOI" (Questziele auf der Karte). Gemerkt und
+-- zurueckgegeben wie jede Spieleinstellung (ui/profile.lua). Nie im Kampf.
+function QA.ApplyIcons()
+    local PF = WeintCodex.UIProfile
+    if not (PF and PF.SetCVar and PF.GetCVar) then return nil end
+    if _G.InCombatLockdown and K.Bool(_G.InCombatLockdown(), false) then return nil end
+    local now = PF.GetCVar("questPOI")
+    if now == nil then return nil end           -- der Client kennt sie nicht
+    if K.Get(KEY, "questIcons") then
+        if tostring(now) ~= "1" then return PF.SetCVar("questPOI", "1", KEY) end
+    elseif PF.ReleaseOwner then
+        PF.ReleaseOwner(KEY)
+    end
+    return true
+end
+
 local function Build()
     frame = CreateFrame("Frame", "WeintCodexQuestArrow", UIParent)
     frame:SetSize(120, 96)
@@ -1247,6 +1380,23 @@ local function Build()
     arrow:SetTexture(K.ARROW_TEXTURE)
     arrow:SetSize(52, 52)
     arrow:SetPoint("TOP", frame, "TOP", 0, -14)
+
+    -- Klick auf den Pfeil: Ziel waehlen (nur die Flaeche des Pfeils faengt
+    -- Klicks, nicht der ganze Rahmen - dahinter liegt die Spielwelt).
+    local click = CreateFrame("Button", nil, frame)
+    click:SetAllPoints(arrow)
+    click:RegisterForClicks("LeftButtonUp", "RightButtonUp")
+    click:SetScript("OnClick", function() if not frame._unlock then QA.ToggleMenu() end end)
+    click:SetScript("OnEnter", function(self)
+        local tt = _G.GameTooltip
+        if not tt then return end
+        tt:SetOwner(self, "ANCHOR_BOTTOM")
+        tt:AddLine("Questpfeil")
+        tt:AddLine("Klick: Ziel wählen", 1, 1, 1)
+        tt:Show()
+    end)
+    click:SetScript("OnLeave", function() if _G.GameTooltip then _G.GameTooltip:Hide() end end)
+    QA.click = click
 
     title = K.NewText(frame)
     title:SetPoint("BOTTOM", arrow, "TOP", 0, 2)
@@ -1813,6 +1963,12 @@ function QA.Inspect()
     out[#out + 1] = "Richtung der Höhe: " .. ((sign == "up" and "höher") or (sign == "down" and "tiefer")
         or "unbekannt – erst, wenn der Client die eigene Höhe nennt und du bergauf oder bergab gehst")
     -- Planen (6.6.2.7): wer gewaehlt hat und was zur Wahl stand.
+    -- 1.0.5.63: Symbole vor den Quests - was das Spiel dazu sagt.
+    do
+        local PF = WeintCodex.UIProfile
+        local v = PF and PF.GetCVar and PF.GetCVar("questPOI")
+        out[#out + 1] = "Symbole vor den Quests (questPOI): " .. (v == nil and "kennt der Client nicht" or tostring(v))
+    end
     if not QA.Smart() then
         out[#out + 1] = "Ziel: nur die Quest, die das Spiel verfolgt (Einstellung „Welches Ziel“)"
     elseif QA.manual then
@@ -1821,6 +1977,7 @@ function QA.Inspect()
     else
         QA.Chosen = QA.Plan(QA.Chosen)
         out[#out + 1] = "Ziel: geplant – " .. (QA.Chosen and (QuestTitle(QA.Chosen) or QA.Chosen) or "nichts im Questlog mit Ort")
+        if QA.plan.hold then out[#out + 1] = "   Abgaben warten: im Gebiet liegt noch Offenes (Einstellung „Erst alles erledigen“)" end
         for i = 1, math.min(5, #QA.plan.list) do
             local c = QA.plan.list[i]
             out[#out + 1] = string.format("   %d. %s%s – %s%s", i, c.done and "Abgeben: " or "",
@@ -1855,9 +2012,11 @@ local function Enable()
     -- K.Activate setzt _active erst nach Enable; der erste Stand kommt
     -- deshalb einen Takt spaeter aus dem ersten Ereignis oder hier.
     if _G.C_Timer and _G.C_Timer.After then _G.C_Timer.After(0, Refresh) end
+    if _G.C_Timer and _G.C_Timer.After then _G.C_Timer.After(2, QA.ApplyIcons) else QA.ApplyIcons() end
 end
 
 local function Disable()
+    if menu then menu:Hide() end
     if WeintCodex.UIRoute then WeintCodex.UIRoute.Stop() end
     events:UnregisterAllEvents()
     ticker:SetScript("OnUpdate", nil)
@@ -1880,6 +2039,8 @@ K.Register({
     Disable = Disable,
     OnSetting = function()
         ApplyStyle()
+        QA.ApplyIcons()
+        QA.Replan()
         Refresh()
         if WeintCodex.UICompass then WeintCodex.UICompass.Refresh() end
     end,
@@ -1914,7 +2075,13 @@ K.Register({
                   { type = "toggle", label = "Als Geist zur Leiche", key = "corpse",
                     description = "Nach dem Tod zeigt der Pfeil von selbst zu deiner Leiche." })
             B:Row({ type = "toggle", label = "Als Geist: zum Geistheiler, wenn näher", key = "ghostHealer",
-                    description = "Liegt ein Geistheiler deiner Karte deutlich näher als die Leiche, zeigt der Pfeil zu ihm." })
+                    description = "Liegt ein Geistheiler deiner Karte deutlich näher als die Leiche, zeigt der Pfeil zu ihm." },
+                  { type = "toggle", label = "Erst alles erledigen, dann abgeben", key = "collect",
+                    disabled = function() return K.Get(KEY, "plan") == "tracked" end,
+                    description = "Solange in deinem Gebiet noch eine offene, machbare Quest liegt, führt der Pfeil zu keiner Abgabe. Rote Quests und Gruppenquests halten die Abgaben nicht auf." })
+            B:Row({ type = "toggle", label = "Symbole vor den Quests", key = "questIcons",
+                    description = "Schaltet die Spieleinstellung für Questziele an: an ihr hängen die runden Symbole vor jeder Quest in der Zielverfolgung. Ein Klick darauf wählt die Quest für den Pfeil." },
+                  { type = "empty" })
             -- 6.10.1.0: Aussehen des Pfeils und was nach einer Quest kommt, zugeklappt.
             B:Advanced()
             B:Section("Der Pfeil im Einzelnen")
@@ -1959,7 +2126,7 @@ K.Register({
                     description = "Nur bei „Nur die Quest, die das Spiel verfolgt“: die nächstgelegene Quest aus deinem Questlog wird ausgewählt." })
             B:EndAdvanced()
             B:Section("So benutzt du ihn")
-            B:Note("Von selbst zeigt der Pfeil auf das nächste lohnende Ziel aus deinem Questlog und plant unterwegs neu. Klickst du im Questlog oder in der Zielverfolgung eine Quest an, gilt sie bis zur Abgabe; eine Kartenmarkierung gilt, solange sie steht.")
+            B:Note("Von selbst zeigt der Pfeil auf das nächste lohnende Ziel aus deinem Questlog und plant unterwegs neu. Ein Klick auf den Pfeil öffnet die Liste deiner Quests – wähle dort, wohin er zeigen soll. Auch das runde Symbol vor einer Quest in der Zielverfolgung wählt sie. Die Wahl gilt bis zur Abgabe; eine Kartenmarkierung gilt, solange sie steht.")
             B:Note("/wcui pfeil zeigt, was zur Wahl stand. /wcui pfeil weiter lässt das jetzige Ziel zehn Minuten aus, /wcui pfeil planen gibt eine eigene Wahl wieder ab.")
             B:Note("In Dungeons nennt das Spiel Addons keine Position. Deshalb ist der Pfeil dort aus; wer ihn trotzdem will, sieht „Position unbekannt“ statt einer Zahl.")
             B:Note("„m“ ist die Spieleinheit, die der deutsche Client auch in Zauberreichweiten „Meter“ nennt. Echte Meter sind etwa 9 % weniger.")

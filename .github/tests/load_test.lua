@@ -4008,6 +4008,59 @@ do
         assert(QA.Skip() == 13 and QA.Chosen == 9, "Ueberspringen waehlt nicht das naechste")
         local lines = table.concat(QA.Inspect(), " | ")
         assert(lines:find("Ziel: geplant", 1, true) and lines:find("Abgeben: ", 1, true), "/wcui pfeil ohne Plan: " .. lines)
+        assert(lines:find("Symbole vor den Quests", 1, true), "/wcui pfeil ohne questPOI")
+
+        -- 1.0.5.63: Ziel am Pfeil waehlen - Liste, Klick, eigene Wahl.
+        local K = WeintCodex.UIKit
+        QA.skipped[13] = nil
+        QA.manual, QA.Chosen = nil, nil
+        QA.Replan()
+        local items = QA.MenuItems()
+        assert(#items == 3 and items[1].dist <= items[2].dist, "Liste am Pfeil: " .. #items)
+        QA.ToggleMenu()
+        assert(QA.menu and QA.menu:IsShown(), "Liste am Pfeil nicht offen")
+        QA.menu.rows[#items].act()
+        assert(QA.manual == items[#items].id, "Wahl aus der Liste gilt nicht")
+        QA.ToggleMenu() QA.ToggleMenu()
+        QA.Resume()
+        assert(not QA.manual, "Wieder planen")
+
+        -- Erst alles erledigen, dann abgeben: die Abgabe (7) ruecke ganz nah
+        -- (10 m) - ohne Schalter gewinnt sie, mit ihm ein offenes Ziel.
+        where[7] = { 0.5, 0.49 }
+        QA.PlanDirty()
+        QA.Chosen = nil
+        QA.Replan()
+        assert(QA.Chosen == 7, "nahe Abgabe nicht gewaehlt: " .. tostring(QA.Chosen))
+        K.Set("questarrow", "collect", true)
+        QA.Chosen = nil
+        QA.Replan()
+        assert(QA.Chosen ~= 7 and QA.Chosen ~= nil and QA.plan.hold, "Abgabe trotz offener Quests: " .. tostring(QA.Chosen))
+        -- Nichts Offenes mehr: jetzt die Abgaben.
+        _G.C_QuestLog.IsComplete = function() return true end
+        QA.PlanDirty()
+        QA.Chosen = nil
+        QA.Replan()
+        assert(QA.Chosen == 7 and not QA.plan.hold, "Abgaben bleiben gesperrt")
+        K.Set("questarrow", "collect", false)
+
+        -- Symbole vor den Quests: questPOI an, gemerkt; nie im Kampf.
+        local cv = { questPOI = "0" }
+        local oC, oGet, oSet, oLock = _G.C_CVar, _G.GetCVar, _G.SetCVar, _G.InCombatLockdown
+        _G.C_CVar = nil
+        _G.GetCVar = function(n) if cv[n] ~= nil then return cv[n] end return oGet and oGet(n) end
+        _G.SetCVar = function(n, v) if cv[n] ~= nil then cv[n] = tostring(v) return true end return oSet and oSet(n, v) end
+        _G.InCombatLockdown = function() return true end
+        QA.ApplyIcons()
+        assert(cv.questPOI == "0", "Spieleinstellung im Kampf gesetzt")
+        _G.InCombatLockdown = function() return false end
+        QA.ApplyIcons()
+        assert(cv.questPOI == "1", "questPOI nicht eingeschaltet")
+        K.Set("questarrow", "questIcons", false)
+        assert(cv.questPOI == "0", "questPOI nicht zurueckgegeben: " .. cv.questPOI)
+        K.Set("questarrow", "questIcons", true)
+        WeintCodex.UIProfile.ReleaseOwner("questarrow")
+        _G.C_CVar, _G.GetCVar, _G.SetCVar, _G.InCombatLockdown = oC, oGet, oSet, oLock
     end)
     QA.skipped[13] = nil
     QA.manual, QA.Chosen = nil, nil
