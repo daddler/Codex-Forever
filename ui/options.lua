@@ -1649,6 +1649,11 @@ SlashCmdList["WEINTCODEXUI"] = function(msg)
         return
     end
     -- Direkt zu einem Modul, ohne die Seitenleiste zu suchen.
+    if msg == "erinnerungen prüfen" or msg == "erinnerungen pruefen" or msg == "reminders check" then
+        local RM = WeintCodex.UIReminders
+        if RM and RM.Diagnose then K.ShowReport("Erinnerungen", RM.Diagnose()) end
+        return
+    end
     if msg == "erinnerungen" or msg == "reminders" then
         if not K.Module("reminders") then
             print(WeintCodex.ColorText("accent", "[WeintCodex]") .. " Die Erinnerungen sind nicht geladen – läuft WeintCodex 6.4.0.0 oder neuer? Gerade: " .. tostring(WeintCodex.Version))

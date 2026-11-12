@@ -2077,6 +2077,45 @@ end
 -- Einstellungen
 --------------------------------------------------
 
+-- "/wcui erinnerungen prüfen" (1.0.5.67, Bericht: "Zorn der Gerechtigkeit
+-- erinnert als Tank immer noch nicht"): je Regel der Klasse, was WeintCodex
+-- gerade sieht - gelernt, Rolle, ob der Buff lesbar ist. Ohne das laesst
+-- sich von aussen nicht sagen, an welcher der drei Stellen es haengt.
+function R.Diagnose()
+    local out = {}
+    local class = PlayerClass()
+    local PB = WeintCodex.UIPaladinBuffs
+    local tree = PB and PB.ReadTrees and PB.ReadTrees(false) or nil
+    local group = _G.UnitGroupRolesAssigned and K.Plain(_G.UnitGroupRolesAssigned("player")) or nil
+    local role = PB and PB.RoleOf and PB.RoleOf("player", class) or nil
+    out[#out + 1] = "Klasse " .. tostring(class) .. " · Talentbaum mit den meisten Punkten: " .. tostring(tree or "unbekannt")
+        .. " · Rolle der Gruppe: " .. tostring(group or "keine") .. " · erkannte Rolle: " .. tostring(role or "unbekannt")
+    local fight = K.InCombat and K.InCombat()
+    out[#out + 1] = fight and "Im Kampf: Buffs sind nicht lesbar, erinnert wird danach." or "Außerhalb des Kampfes."
+    for _, rule in ipairs(R.Rules()) do
+        if rule.class == class or rule.class == R.ALL or rule.class == nil then
+            local line = "• " .. tostring(R.BaseRuleText and R.BaseRuleText(rule) or rule.kind)
+            local why = {}
+            if rule.learned then
+                local l = R.Learned(rule)
+                why[#why + 1] = "gelernt: " .. (l == true and "ja" or l == false and "NEIN" or "unbekannt")
+            end
+            if rule.role then
+                why[#why + 1] = "braucht Rolle " .. rule.role .. (role == rule.role and " (passt)" or " (PASST NICHT)")
+            end
+            why[#why + 1] = "gilt: " .. (R.Applies(rule) and "ja" or "NEIN")
+            if rule.kind == "buff" then
+                local a = R.PlayerAura(rule)
+                why[#why + 1] = "Buff: " .. (a == false and "fehlt" or a == nil and "NICHT LESBAR" or "aktiv")
+            end
+            local c = R.Applies(rule) and R.Check(rule) or nil
+            why[#why + 1] = c and ("erinnert: " .. tostring(c.text)) or "erinnert nicht"
+            out[#out + 1] = line .. " – " .. table.concat(why, " · ")
+        end
+    end
+    return out
+end
+
 -- Was im Formular "Regel hinzufuegen" steht (nicht gespeichert).
 local draft = { kind = "buff", spell = "", hand = "main", scope = "class", min = "", below = 3 }
 R.draft = draft

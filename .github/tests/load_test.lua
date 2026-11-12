@@ -2283,6 +2283,23 @@ do
     local sdInv = WeintCodex.SavedData and WeintCodex.SavedData.inventory
     local ok, err = pcall(function()
         assert(type(WeintCodex.SavedData) == "table", "kein SavedData")
+        -- 1.0.5.67: Pruefausgabe der Erinnerungen laeuft und nennt die Rolle.
+        local diag = table.concat(WeintCodex.UIReminders.Diagnose(), " | ")
+        assert(diag:find("erkannte Rolle", 1, true), "Pruefausgabe der Erinnerungen: " .. diag)
+        -- 1.0.5.67: keine Tasche zaehlt zweimal - eine Reagenzientasche auf
+        -- Platz 5 ist Tasche, nie Bank; die Banktaschen ruecken dahinter.
+        local oEnum = G.Enum
+        G.Enum = { BagIndex = { ReagentBag = 5 } }
+        local own, twice = {}, nil
+        for _, b in ipairs(IV.BagList()) do own[b] = true end
+        local bl = IV.BankList()
+        for _, b in ipairs(bl) do if own[b] then twice = b end end
+        assert(own[5] and not twice, "Tasche zaehlt auch als Bank: " .. tostring(twice))
+        assert(bl[1] == -1 and bl[2] == 6 and #bl == 8, "Banktaschen falsch: " .. table.concat(bl, ","))
+        G.Enum = { BagIndex = { ReagentBag = 5, Bank = -1, BankBag_1 = 6, BankBag_2 = 7 } }
+        bl = IV.BankList()
+        assert(#bl == 3 and bl[2] == 6 and bl[3] == 7, "Banktaschen des Clients nicht genommen: " .. table.concat(bl, ","))
+        G.Enum = oEnum
         WeintCodex.SavedData.inventory = nil
         local bags = {
             [0] = { { itemID = 100, stackCount = 3, hyperlink = "|cffffffff|Hitem:100|h[Leinenstoff]|h|r" } },

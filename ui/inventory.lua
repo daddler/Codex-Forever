@@ -128,12 +128,45 @@ function IV.BagList()
 end
 
 -- Bank: das Fach der Bank und ihre Taschen.
+-- 1.0.5.67 (Bericht: "2 Grober Stein - einer in der Tasche, einer in der
+-- Bank; in der Bank liegt keiner"): die Banktaschen wurden als "Taschen +
+-- 1 ..." gezaehlt. Hat der Client eine weitere eigene Tasche auf diesem
+-- Platz (Reagenzientasche, Enum.BagIndex.ReagentBag = 5), stand sie in
+-- BEIDEN Listen - ihr Inhalt zaehlte bei den Taschen und noch einmal als
+-- Bank. Jetzt: die Plaetze nennt der Client (Enum.BagIndex.BankBag_1..7,
+-- CharacterBankTab_1..6), sonst wie bisher gerechnet - und nie ein Platz,
+-- der schon eine eigene Tasche ist.
 function IV.BankList()
-    local bank = tonumber(_G.BANK_CONTAINER) or -1
-    local n = tonumber(_G.NUM_BAG_SLOTS) or 4
-    local m = tonumber(_G.NUM_BANKBAGSLOTS) or 7
-    local list = { bank }
-    for b = n + 1, n + m do list[#list + 1] = b end
+    local own = {}
+    for _, b in ipairs(IV.BagList()) do own[b] = true end
+    local list, seen = {}, {}
+    local function add(b)
+        if type(b) == "number" and not own[b] and not seen[b] then
+            seen[b] = true
+            list[#list + 1] = b
+        end
+    end
+    local bi = _G.Enum and _G.Enum.BagIndex
+    add(Plain(bi and bi.Bank) or tonumber(_G.BANK_CONTAINER) or -1)
+    local named = false
+    if bi then
+        for i = 1, 7 do
+            local v = Plain(bi["BankBag_" .. i])
+            if type(v) == "number" then named = true add(v) end
+        end
+        for i = 1, 6 do
+            local v = Plain(bi["CharacterBankTab_" .. i])
+            if type(v) == "number" then named = true add(v) end
+        end
+    end
+    if not named then
+        local n = tonumber(_G.NUM_BAG_SLOTS) or 4
+        local m = tonumber(_G.NUM_BANKBAGSLOTS) or 7
+        -- Eigene Taschen ueber n (Reagenzientasche) schieben die Banktaschen.
+        local extra = 0
+        for b in pairs(own) do if b > n then extra = extra + 1 end end
+        for b = n + 1, n + m + extra do add(b) end
+    end
     return list
 end
 
