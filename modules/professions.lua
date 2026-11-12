@@ -618,6 +618,17 @@ local function BuildPage()
             PRO.Show()
         end })
     f.AllButton:SetPoint("TOPRIGHT", rc, "TOPRIGHT", -16, -12)
+    -- 1.0.5.63 (Wunsch: "eine Rubrik, in der steht, wo ich die
+    -- Lagerfeuerverbesserungen finde"): alle Berufe auf einer Seite. Als
+    -- Knopf in der Karte - die Spalte der Berufe ist voll (nachgerechnet).
+    f.CampButton = WeintCodex.CreateButton(rc, { kind = "ghost", text = "Lagerfeuer", height = 24,
+        size = 11, padding = 20, radius = 0, onClick = function()
+            PRO.campAll = not PRO.campAll
+            if PRO.campAll and f.SearchEdit then f.SearchEdit:SetText("") end
+            PRO.query = PRO.campAll and "" or PRO.query
+            PRO.Show()
+        end })
+    f.CampButton:SetPoint("LEFT", f.RecipeTitle, "RIGHT", 14, 0)
     -- 1.0.5.60 (Wunsch: "Rezeptsuche fuer alle Berufe und wo sie zu
     -- bekommen sind"): Suche ueber alle Berufe, jeder Treffer mit Beruf und
     -- Herkunft; Klick zeigt das Rezept im Detail.
@@ -1141,6 +1152,27 @@ local function DrawCamp(body, y, w, key)
     return y - 10
 end
 PRO.DrawCamp = DrawCamp
+-- Alle Berufe: je Beruf seine Lagergegenstaende, die eigenen Berufe zuerst.
+local function DrawCampAll(body, w, skills)
+    local y = Note(body, 0, w, "Alles, was du am Lagerfeuer aufstellen kannst – je Beruf drei Stufen. Die erste lehrt der Lehrer, die höheren sind Baupläne: meist Beute bestimmter Bosse. Ein Klick zeigt rechts Fundort und Zutaten.")
+    local function Block(p)
+        local list = PRO.CampItems(p.key)
+        if #list == 0 then return end
+        local s = skills and skills[p.key]
+        y = SectionHead(body, y, w, PRO.ProfName(p.key) .. (s and ("  ·  deine Fertigkeit " .. s.rank) or ""),
+            s and "goldBright" or "textMuted", #list)
+        for i, r in ipairs(list) do
+            local have = s and r.learn and s.rank >= r.learn
+            y = RecipeRow(body, y, w, r, { tone = have and "skillGreen" or nil })
+            y = Note(body, y + 4, w, PRO.CampLine(r, i))
+        end
+        y = y - 10
+    end
+    for _, p in ipairs(P and P.PROFS or {}) do if skills and skills[p.key] then Block(p) end end
+    for _, p in ipairs(P and P.PROFS or {}) do if not (skills and skills[p.key]) then Block(p) end end
+    body:SetHeight(math.max(1, -y))
+end
+PRO.DrawCampAll = DrawCampAll
 
 local function DrawRecipes(body, w, skill, cat)
     local y, shown, hidden = 0, 0, 0
@@ -1427,6 +1459,7 @@ function PRO.SidebarItems(skills)
     local function add(p, status)
         items[#items + 1] = { label = PRO.ProfName(p.key), status = status, onClick = function()
             selected = p.key
+            PRO.campAll = false
             -- 6.131.1.0 (Beta-Test: "Planer springt zurueck auf Leder"): ein
             -- Werkzeug bleibt offen und nimmt den gewaehlten Beruf.
             PRO.Show()
@@ -1668,7 +1701,7 @@ function PRO.Show()
     wipe(pending)
     -- Erst der Detailbereich, dann messen (wie beim Lehrer).
     local cat = PRO.Categorize(selected, skill)
-    if PRO.selRecipe and PRO.selRecipe.key ~= selected and (PRO.query or "") == "" then PRO.selRecipe = nil end
+    if PRO.selRecipe and PRO.selRecipe.key ~= selected and (PRO.query or "") == "" and not PRO.campAll then PRO.selRecipe = nil end
     if PRO.selRecipe then nav.SetInspector(RecipeInspector(PRO.selRecipe), PRO.DETAIL_W)
     else nav.SetInspector(InspectorBlocks(selected, skill, cat), PRO.DETAIL_W) end
 
@@ -1691,11 +1724,19 @@ function PRO.Show()
 
     local hidden = 0
     local searching = type(PRO.query) == "string" and PRO.query ~= ""
+    local camp = PRO.campAll and not searching
     if searching then DrawSearch(f.RecipeBody, rw - 14)
+    elseif camp then DrawCampAll(f.RecipeBody, rw - 14, skills)
     else local _c _c, hidden = DrawRecipes(f.RecipeBody, rw - 14, skill, cat) end
+    if camp then
+        if f.Head and f.Head.Title then f.Head.Title:SetText("Berufe · Lagerfeuer") end
+        WeintCodex.SetBreadcrumb("Berufe", "Lagerfeuer")
+    end
+    if f.CampButton then f.CampButton:SetText(camp and "Zurück zum Beruf" or "Lagerfeuer") end
+    if f.RecipeTitle then f.RecipeTitle:SetText(camp and "Lagerfeuer" or "Rezepte") end
     DrawTrainers(f.TrainerBody, tw - 14, selected, Faction(), s and s.max)
     f.AllButton:SetText(showAll and "Weniger zeigen" or ("Alle zeigen" .. (hidden > 0 and (" (" .. hidden .. ")") or "")))
-    f.AllButton:SetShown(not searching and (showAll or hidden > 0))
+    f.AllButton:SetShown(not searching and not camp and (showAll or hidden > 0))
     f.drawnWidth = total
     PRO.lastDraw = { key = selected, skill = skill, rows = used.row, trainers = used.trainer, hidden = hidden }
 end

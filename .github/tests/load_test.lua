@@ -8061,6 +8061,13 @@ do
         assert(PRO.CampLine(camp[2], 2):find("ab Fertigkeit", 1, true), "Lagerzeile")
         local alc = PRO.CampItems("alchemy")
         assert(PRO.CampLine(alc[3], 3):find("Herkunft nicht im Bestand", 1, true), "Sonderzutat ohne Hinweis")
+        -- 1.0.5.63: Rubrik Lagerfeuer - alle Berufe auf einer Seite.
+        PRO.campAll = true
+        PRO.Show()
+        assert(PRO.lastDraw.rows >= 36, "Lagerfeuer-Seite: " .. tostring(PRO.lastDraw.rows))
+        assert(PRO.Page().CampButton and PRO.Page().RecipeTitle:GetText() == "Lagerfeuer", "Knopf Lagerfeuer")
+        PRO.campAll = false
+        PRO.Show()
         -- 1.0.5.60: Rezeptsuche ueber alle Berufe, mit Herkunft.
         local any = PRO.Recipes("tailoring")[1]
         local word = (any.name or ""):sub(1, 4)
