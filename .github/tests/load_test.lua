@@ -4147,6 +4147,21 @@ do
         assert(QA.TerrainHeight(10, 10, 14, 14) == nil, "kleiner Unterschied gemeldet")
         assert(QA.TerrainHeight(10, 10, 0, 40) == "stacked", "Ebenen uebereinander nicht genannt")
         assert(QA.TerrainHeight(nil, nil, 5, 5) == nil and QA.TerrainHeight(5, 5, nil) == nil, "ohne Hoehe geraten")
+        -- An der Schwelle kippt nichts hin und her.
+        assert(QA.TerrainHeight(10, 10, 16, 16) == nil and QA.TerrainHeight(10, 10, 16, 16, "up") == "up",
+            "Richtung haelt nicht an der Schwelle")
+        -- 1.0.5.64: geneigter Pfeil - eigene Bildtafel je Richtung.
+        assert(QA.SheetFor("up"):find("arrow3d_up$") and QA.SheetFor("down"):find("arrow3d_down$")
+            and QA.SheetFor(nil):find("arrow3d$"), "Bildtafeln des Pfeils")
+        for _, n in ipairs({ "arrow3d_up", "arrow3d_down" }) do
+            local fh = io.open("media/ui/" .. n .. ".tga", "rb")
+            assert(fh, "Bildtafel fehlt: " .. n)
+            fh:close()
+        end
+        QA.SetClimb("up")
+        assert(QA.pitch == "up", "Neigung nicht gesetzt")
+        QA.SetClimb(nil)
+        assert(QA.pitch == nil, "Neigung bleibt")
         -- Kleiner Pfeil: zeigt, dreht nur beim Wechsel, verbirgt ohne Richtung.
         if QA.updown then
             QA.SetClimb("up")

@@ -824,12 +824,25 @@ local function Is3D() return K.Get(KEY, "style") ~= "flat" end
 
 -- Den Pfeil auf einen Winkel stellen: im 3D-Stil die passende Ansicht,
 -- flach die gedrehte Pfeilform.
+-- 1.0.5.64 (Wunsch: "den Pfeil dreidimensional kippen, um zu sehen, ob man
+-- nach oben oder unten muss"): zwei weitere Bildtafeln desselben Pfeils,
+-- Spitze angehoben (arrow3d_up) und gesenkt (arrow3d_down), je 64
+-- Drehungen. QA.pitch ("up"/"down"/nil) waehlt die Tafel; gesetzt von
+-- QA.SetClimb. Die Textur wechselt nur, wenn sich die Neigung aendert.
+QA.SHEETS = { up = SHEET .. "_up", down = SHEET .. "_down" }
+function QA.SheetFor(pitch) return QA.SHEETS[pitch or ""] or SHEET end
 local function PointArrow(rotation)
     if Is3D() then
         local _, l, r, t, b = QA.Frame(rotation)
+        local sheet = QA.SheetFor(QA.pitch)
+        if QA.sheetShown ~= sheet then
+            arrow:SetTexture(sheet)
+            QA.sheetShown = sheet
+        end
         arrow:SetRotation(0)
         arrow:SetTexCoord(l, r, t, b)
     else
+        QA.sheetShown = nil
         arrow:SetTexCoord(0, 1, 0, 1)
         arrow:SetRotation(rotation)
     end
@@ -925,11 +938,14 @@ function QA.ResetHeight() anchor, sign = nil, nil end
 --   * sonst nichts (gleiche Hoehe).
 -- Unter QA.TERRAIN_MIN kein Wort: das Raster ist grob (Zellen von 8 m).
 QA.TERRAIN_MIN, QA.TERRAIN_RANGE = 8, 600
-function QA.TerrainHeight(pLo, pHi, gLo, gHi)
+-- was: die Richtung vom letzten Mal - sie bleibt bis QA.TERRAIN_KEEP
+-- (kein Kippen des Pfeils im Sekundentakt an der Schwelle).
+QA.TERRAIN_KEEP = 5
+function QA.TerrainHeight(pLo, pHi, gLo, gHi, was)
     if type(pLo) ~= "number" or type(gLo) ~= "number" then return nil end
     pHi, gHi = pHi or pLo, gHi or gLo
-    if gLo - pHi >= QA.TERRAIN_MIN then return "up", gLo - pHi end
-    if pLo - gHi >= QA.TERRAIN_MIN then return "down", pLo - gHi end
+    if gLo - pHi >= (was == "up" and QA.TERRAIN_KEEP or QA.TERRAIN_MIN) then return "up", gLo - pHi end
+    if pLo - gHi >= (was == "down" and QA.TERRAIN_KEEP or QA.TERRAIN_MIN) then return "down", pLo - gHi end
     if gHi - gLo >= QA.TERRAIN_MIN or pHi - pLo >= QA.TERRAIN_MIN then return "stacked", 0 end
     return nil
 end
@@ -944,8 +960,9 @@ function QA.TerrainLine(c, pN, pW, gN, gW, units)
         terr.at, terr.c, terr.gN, terr.gW = now, c, gN, gW
         local ok, pLo, pHi = pcall(NV.HeightsAt, c, pN, pW)
         local ok2, gLo, gHi = pcall(NV.HeightsAt, c, gN, gW)
+        local was = terr.dir
         terr.dir, terr.dh = nil, nil
-        if ok and ok2 then terr.dir, terr.dh = QA.TerrainHeight(pLo, pHi, gLo, gHi) end
+        if ok and ok2 then terr.dir, terr.dh = QA.TerrainHeight(pLo, pHi, gLo, gHi, was) end
     end
     if terr.dir == "up" or terr.dir == "down" then
         return "Ziel ≈ " .. QA.FormatDistance(terr.dh, units) .. (terr.dir == "up" and " höher" or " tiefer"), terr.dir
@@ -1559,8 +1576,10 @@ function QA.SetClimb(dir)
         -- Nur verbergen: jeder Durchlauf raeumt zuerst ab und zeigt dann
         -- neu - die Bewegung liefe sonst fuenfmal je Sekunde von vorn an.
         ud:Hide()
+        QA.pitch = nil
         return
     end
+    QA.pitch = dir
     ud:Show()
     if QA.climbDir == dir then return end
     QA.climbDir = dir
@@ -1672,7 +1691,8 @@ local function ApplyStyle()
     if not frame then return end
     frame:SetScale((K.Get(KEY, "scale") or 100) / 100)
     if Is3D() then
-        arrow:SetTexture(SHEET)
+        arrow:SetTexture(QA.SheetFor(QA.pitch))
+        QA.sheetShown = QA.SheetFor(QA.pitch)
         arrow:SetSize(72, 72)
     else
         arrow:SetTexture(K.ARROW_TEXTURE)

@@ -295,7 +295,14 @@ UP = norm(cross(RIGHT, FWD))
 LIGHT = norm((-0.75, -0.30, 0.80))
 
 
-def render_arrow_frame(yaw):
+# Neigung fuer "Ziel hoeher/tiefer" (1.0.5.64): die Spitze hebt oder senkt
+# sich um die Querachse, bevor der Pfeil gedreht wird. Nach unten weniger:
+# die Kamera schaut von hinten oben (38 Grad) - bei mehr Neigung stuende
+# der Pfeil auf der Kante und waere geradeaus nur noch ein Strich.
+TILT_UP, TILT_DOWN = math.radians(32), math.radians(-17)
+
+
+def render_arrow_frame(yaw, tilt=0.0):
     W = CELL * SS
     depth = [float("inf")] * (W * W)
     shade = [0.0] * (W * W)
@@ -303,8 +310,11 @@ def render_arrow_frame(yaw):
     cs, sn = math.cos(yaw), math.sin(yaw)
     scale = W * 0.42
 
+    ct, st = math.cos(tilt), math.sin(tilt)
+
     def rot(p):
         x, y, z = p[0], p[1] - CENTER_Y, p[2]
+        y, z = y * ct - z * st, y * st + z * ct
         return (x * cs - y * sn, x * sn + y * cs, z)
 
     def project(p):
@@ -385,12 +395,12 @@ def render_arrow_frame(yaw):
     return out
 
 
-def render_arrow_sheet():
+def render_arrow_sheet(tilt=0.0):
     size = CELL * GRID
     sheet = [(0, 0, 0, 0)] * (size * size)
     for i in range(GRID * GRID):
         yaw = i * 2 * math.pi / (GRID * GRID)
-        frame = render_arrow_frame(yaw)
+        frame = render_arrow_frame(yaw, tilt)
         ox, oy = (i % GRID) * CELL, (i // GRID) * CELL
         for y in range(CELL):
             base = (oy + y) * size + ox
@@ -827,10 +837,11 @@ def main():
 
     make_bar_styles()
 
-    size, sheet = render_arrow_sheet()
-    target = os.path.join(OUT, "arrow3d.tga")
-    write_tga(target, size, size, sheet)
-    print("geschrieben:", os.path.relpath(target, ROOT))
+    for name, tilt in (("arrow3d", 0.0), ("arrow3d_up", TILT_UP), ("arrow3d_down", TILT_DOWN)):
+        size, sheet = render_arrow_sheet(tilt)
+        target = os.path.join(OUT, name + ".tga")
+        write_tga(target, size, size, sheet)
+        print("geschrieben:", os.path.relpath(target, ROOT))
 
 
 if __name__ == "__main__":
