@@ -2066,6 +2066,33 @@ J.HAND_ENTRANCES = {
 --             "classic", Herkunft J.CLASSIC_LOOT_SOURCE
 --   Weitere   Gruppen mit `kind = "classic"`
 J.LOOT_KIND = {}
+J.CLASSIC_LOOT_HAND = {
+    blackrock_depths = {
+        theldren = {
+            { 22305, "Ironweave Mantle", "Schulter, Stoff", 3 },
+            { 22330, "Shroud of Arcane Mastery", "Rücken", 3 },
+            { 22318, "Malgen's Long Bow", "Distanz, Bogen", 3 },
+            { 22317, "Lefty's Brass Knuckle", "Waffenhand, Faustwaffe", 3 },
+        },
+    },
+    scholomance = {
+        blood_steward = {
+            { 13523, "Blood of Innocents", "Questgegenstand", 1, chance = 59 },
+        },
+    },
+    stratholme = {
+        crimson_hammersmith = {
+            { 18781, "Bottom Half of Advanced Armorsmithing: Volume II", "Questgegenstand", 1, chance = 63 },
+        },
+        jarien_and_sothos = {
+            { 22327, "Amulet of the Redeemed", "Hals", 3 },
+            { 22301, "Ironweave Robe", "Brust, Stoff", 3 },
+            { 22328, "Legplates of Vigilance", "Beine, Platte", 3 },
+            { 22334, "Band of Mending", "Finger", 3 },
+            { 22329, "Scepter of Interminable Focus", "In Schildhand geführt", 3 },
+        },
+    },
+}
 J.ENTRANCES = J.ENTRANCES or {}
 J.CHAIN = J.CHAIN or {}
 J.CHAIN_NAMES = J.CHAIN_NAMES or {}
@@ -2248,6 +2275,20 @@ function J.MergeClassic(did)
     if type(bosses) == "table" then
         local e = entry()
         for bid, list in pairs(bosses) do
+            if not e.loot[bid] then
+                e.loot[bid] = list
+                J.LOOT_KIND[did] = J.LOOT_KIND[did] or {}
+                J.LOOT_KIND[did][bid] = "classic"
+            end
+        end
+    end
+    -- 1.0.6.1: Classic-Beute von Hand, wo der erzeugte Bestand einen Boss
+    -- nicht fuehrt (Nummern aus der Seite "Beute", data/loot.lua). Namen
+    -- liefert der Client.
+    local hand = J.CLASSIC_LOOT_HAND and J.CLASSIC_LOOT_HAND[did]
+    if type(hand) == "table" then
+        local e = entry()
+        for bid, list in pairs(hand) do
             if not e.loot[bid] then
                 e.loot[bid] = list
                 J.LOOT_KIND[did] = J.LOOT_KIND[did] or {}

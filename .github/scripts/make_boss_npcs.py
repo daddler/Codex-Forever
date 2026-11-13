@@ -3,7 +3,7 @@
 
 Aufruf (im Wurzelordner des Repos):
 
-    python3 -I .github/scripts/make_boss_npcs.py
+    python3 -I .github/scripts/make_boss_npcs.py [NaowhForever_DungeonJournal-Ordner]
 
 Schreibt data/boss_npcs.lua (erzeugt - nicht von Hand aendern).
 
@@ -116,6 +116,40 @@ def main():
             rows.append((d, b, int(npc), de.replace('\\"', '"'), comp[d][b]))
             have.add((d, b)); used.add(int(npc)); found += 1
             missing = [m for m in missing if m != f"{d}/{b}"]
+        rows.sort()
+    # 1.0.6.1: mit dem Ordner von Naowh Forever: Dungeon Journal bekommen
+    # Bosse ohne eindeutige Beute ihre Nummer von dort - je Dungeon ueber den
+    # englischen Namen (dieselbe Zuordnung wie import_naowh.py). Deutscher
+    # Name aus dessen deDE, sonst der englische ("Sammelpunkt n" sind
+    # Platzhalter des Clients, kein Name).
+    if len(sys.argv) > 1 and os.path.isdir(sys.argv[1]):
+        import json
+        import subprocess
+        sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+        import import_naowh as N
+        data = os.path.join(sys.argv[1], "Data")
+        nf = json.loads(subprocess.run(["lua5.1", os.path.join(ROOT, ".github", "scripts", "nf_dump.lua"), data],
+                                       check=True, capture_output=True, text=True).stdout)
+        de = dict((int(k), v) for k, v in re.findall(r'\[(\d+)\] = "((?:[^"\\]|\\.)*)"',
+                  open(os.path.join(data, "Names", "deDE.lua"), encoding="utf-8").read()))
+        have = {(r[0], r[1]) for r in rows}
+        used = {r[2] for r in rows}
+        for d in nf["dungeons"]:
+            did = N.DUNGEON_MAP.get(d["key"])
+            if did not in comp:
+                continue
+            byname = {N.norm(en): b for b, en in comp[did].items()}
+            for w in N.as_list(d.get("wings")):
+                for nb in N.as_list(w.get("bosses")):
+                    b, npc = byname.get(N.norm(nb.get("name", ""))), nb.get("npc")
+                    if not b or not npc or (did, b) in have or npc in used:
+                        continue
+                    name = de.get(npc) or ""
+                    if not name or name.startswith("Sammelpunkt"):
+                        name = comp[did][b]
+                    rows.append((did, b, npc, name, comp[did][b]))
+                    have.add((did, b)); used.add(npc); found += 1
+                    missing = [m for m in missing if m != f"{did}/{b}"]
         rows.sort()
     lines = [
         "--------------------------------------------------",

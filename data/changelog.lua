@@ -22,6 +22,16 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.0.6.1",
+        date    = "13.11.2026",
+        notes   = {
+            "|cff7C6CFFDungeonkompendium komplett bebildert|r – jeder Dungeon und jeder Boss hat jetzt ein eigenes Bild.",
+            "|cff7C6CFFBosse für Krol'dok Stronghold, Alcaz Island Prison und Blackmaw Hold|r – mit ihrer Beute; dazu zwei neue Gegner in der Drowned City und Beute für Shaper's Terrace.",
+            "|cff7C6CFFMehr Quests auf der Karte|r – über 600 neue Quests in der Questhilfe, dazu neue Fundorte für Rezepte.",
+            "|cff7C6CFFBosskämpfe erkennen die neuen Forever-Bosse|r – Siege und Bestzeiten zählen jetzt auch dort.",
+        },
+    },
+    {
         version = "1.0.6.0",
         date    = "13.11.2026",
         notes   = {

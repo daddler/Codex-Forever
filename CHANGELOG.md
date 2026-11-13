@@ -9,6 +9,25 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.0.6.1] – 2026-11-13
+
+### Neu
+- Dungeonkompendium: 37 Bossbilder und vier Kopfbilder, damit jeder Dungeon
+  und jeder Boss bebildert (`data/artwork.lua`, `make_artwork.py`).
+- Bosslisten (`community`, unvollständig, nur was zwei Sammlungen übereinstimmend
+  nennen): Krol'dok Stronghold 6, Alcaz Island Prison 5, Blackmaw Hold 8
+  (vorher umstritten), Drowned City +2.
+- Beute: Naowh Dungeon Journal 1.2.30 neu eingelesen; von Hand Blazeroar und
+  Shaper's Terrace; Classic-Beute für Theldren, Blood Steward of Kirtonos,
+  Crimson Hammersmith, Jarien and Sothos (`J.CLASSIC_LOOT_HAND`).
+- Questdatenbank (653 neue Quests), Rezeptherkunft, Naowh Professions neu
+  eingelesen; Seite „Beute“ aus AtlasLoot v1.3.8.
+- `data/boss_npcs.lua`: NPC-Nummern der neuen Bosse aus Naowh (240 von 250).
+
+### Technisch
+- `import_naowh.py` und `make_boss_npcs.py` behalten Namen bzw. Nummern der
+  vorigen Fassung, wo die neue Quelle keine mehr liefert.
+
 ## [1.0.6.0] – 2026-11-13
 
 ### Technisch
