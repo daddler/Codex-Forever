@@ -427,6 +427,12 @@ WeintCodex_Dungeons = {
             -- im Client, 270882-270888): Gill dazu.
             { id = "gill",              name = "Gill" },
             { id = "minloth",           name = "Min'loth the Serpent" },
+            -- 1.0.6.1 (Abgleich vom 13.11.2026, Client-Build 1.60.1.70938):
+            -- ein siebter Kampf mit eigener Encounter-Nummer (NPC 270887)
+            -- und ein seltener Gegner (NPC 264172).
+            { id = "primeval_elemental", name = "Primeval Elemental" },
+            { id = "umbra",             name = "Umbra", optional = true,
+              position = "Seltener Gegner – nicht in jedem Durchlauf da." },
         },
     },
 
@@ -449,12 +455,28 @@ WeintCodex_Dungeons = {
                 .. "Gegnerstufen.",
         mapArt   = false,
 
-        -- Keine Encounterdaten, keine Karte. Der Stufenbereich ist
-        -- ausserdem der eine, bei dem Blizzard nachkorrigiert hat:
-        -- 40-55 stand in der Präsentation, 40-45 ist der korrigierte
+        -- Der Stufenbereich ist der eine, bei dem Blizzard nachkorrigiert
+        -- hat: 40-55 stand in der Präsentation, 40-45 ist der korrigierte
         -- Wert - und ältere Darstellungen tragen bis heute 40-55.
-        bossSource = nil,
-        bosses     = {},
+        --
+        -- BIS 1.0.6.0 LEER. Seit 1.0.6.1 (Abgleich vom 13.11.2026,
+        -- Client-Build 1.60.1.70938) sechs Namen, die zwei voneinander
+        -- unabhängige Sammlungen übereinstimmend nennen, fünf davon mit
+        -- Encounter-Nummer (NPC 258964-259281, 264773). Ein siebter Name
+        -- („Kroog“) steht nur in einer der beiden - nicht aufgenommen.
+        -- Niemand hier hat den Client gelesen: `community`, nicht
+        -- vollständig, keine Reihenfolge.
+        bossSource     = SRC.COMMUNITY,
+        bossesComplete = false,
+        orderKnown     = false,
+        bosses = {
+            { id = "slavecrusher_grox",         name = "Slavecrusher Grox" },
+            { id = "twilight_commander_zarmok", name = "Twilight Commander Zarmok" },
+            { id = "war_handler_ashka",         name = "War Handler Ashka" },
+            { id = "nargurk",                   name = "Nar'gurk" },
+            { id = "overlord_mugg",             name = "Overlord Mugg" },
+            { id = "bossman_toof",              name = "Bossman Toof", optional = true },
+        },
     },
 
     {
@@ -472,14 +494,20 @@ WeintCodex_Dungeons = {
                 .. "Defias und Naga kämpfen darin gegeneinander.",
         mapArt   = false,
 
-        -- Seit 1.4.0.0 ein Name (Abgleich vom 27.10.2026): Blazeroar, ohne
-        -- NPC-Nummer, der Dungeon ist in der Beta geschlossen. Einer von
-        -- unbekannt vielen - `bossesComplete = false`.
+        -- Seit 1.4.0.0 ein Name (Abgleich vom 27.10.2026): Blazeroar.
+        -- Seit 1.0.6.1 (Abgleich vom 13.11.2026, Client-Build
+        -- 1.60.1.70938) fünf, alle mit Encounter-Nummer, von zwei
+        -- unabhängigen Sammlungen übereinstimmend genannt. Ob das alle
+        -- sind, sagt niemand - `bossesComplete = false`.
         bossSource     = SRC.COMMUNITY,
         bossesComplete = false,
         orderKnown     = false,
         bosses = {
-            { id = "blazeroar", name = "Blazeroar" },
+            { id = "overseer_wrex",        name = "Overseer Wrex" },
+            { id = "tidemistress_cazass",  name = "Tidemistress Ca'zass" },
+            { id = "katerina_the_cleaner", name = "Katerina the Cleaner" },
+            { id = "the_questioner",       name = "The Questioner" },
+            { id = "blazeroar",            name = "Blazeroar" },
         },
     },
 
@@ -499,19 +527,31 @@ WeintCodex_Dungeons = {
                 .. "Barrow Deeps.",
         mapArt   = false,
 
-        -- FÜR DIESEN DUNGEON KURSIERT EINE BOSSLISTE, DIE NACHWEISLICH
-        -- FALSCH IST: eine Darstellung führt hier „Zul'Alai" und
-        -- „Zin'aka" auf - das sind die beiden Bosse, die Blizzard in
-        -- der Drowned City gezeigt hat. Sie steht hier als Warnung:
-        -- eine Liste, die sich einem anderen Dungeon zuordnen lässt,
-        -- ist kein schwacher Beleg, sondern gar keiner.
-        conflict = "Eine kursierende Liste nennt für Blackmaw Hold „Zul'Alai“ "
-                .. "und „Zin'aka“ - das sind die beiden Bosse der Drowned "
-                .. "City, die Blizzard auf der BlizzCon gezeigt hat. Für "
-                .. "Blackmaw Hold ist nichts bekannt.",
-
-        bossSource = nil,
-        bosses     = {},
+        -- BIS 1.0.6.0 UMSTRITTEN UND LEER: eine kursierende Liste nannte
+        -- hier „Zul'Alai" und „Zin'aka" - die Bosse der Drowned City.
+        -- Eine Liste, die sich einem anderen Dungeon zuordnen lässt, ist
+        -- kein schwacher Beleg, sondern gar keiner; sie bleibt draussen.
+        -- Seit 1.0.6.1 (Abgleich vom 13.11.2026, Client-Build
+        -- 1.60.1.70938) stehen acht Namen da, die zwei voneinander
+        -- unabhängige Sammlungen übereinstimmend nennen - sieben mit
+        -- Encounter-Nummer (NPC 247195-247234), dazu ein seltener Gegner
+        -- (269104). Zwei weitere Namen („Gortek the Apprentice“,
+        -- „Tunnelweb Matriarch“) nennt nur eine der beiden - nicht
+        -- aufgenommen. `community`, nicht vollständig, keine Reihenfolge.
+        bossSource     = SRC.COMMUNITY,
+        bossesComplete = false,
+        orderKnown     = false,
+        bosses = {
+            { id = "withermaw",              name = "Withermaw" },
+            { id = "impaan_the_imprisoner",  name = "Impaan the Imprisoner" },
+            { id = "elder_shaman_bloodmane", name = "Elder Shaman Bloodmane" },
+            { id = "bonesnout_the_unbroken", name = "Bonesnout the Unbroken" },
+            { id = "varrox_bleakhoof",       name = "Varrox Bleakhoof" },
+            { id = "blackmaw_behemoth",      name = "Blackmaw Behemoth" },
+            { id = "unbound_spirit",         name = "Unbound Spirit" },
+            { id = "moontouched_wanderer",   name = "Moontouched Wanderer", optional = true,
+              position = "Seltener Gegner – nicht in jedem Durchlauf da." },
+        },
     },
 
     {

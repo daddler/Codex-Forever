@@ -115,9 +115,10 @@ internet; any further outward message needs the same explicit request.
   more, and they are not decoration: **counted but unnamed**
   (`bossCount` set, `bosses` empty — City of Dalaran until 6.9.0.6, when
   all nine names arrived; no current case, `load_test.lua` borrows a
-  table to keep the page honest) and **contested** (Blackmaw Hold, and
+  table to keep the page honest) and **contested** (Blackmaw Hold until 1.0.6.1,
   Excavation Site until 6.9.0.6 — sources contradict each other:
-  `conflict` set, everything else empty). Neither may be rendered as an
+  `conflict` set, everything else empty; no current case, same borrowed
+  table). Neither may be rendered as an
   empty list or as silence.
   Details: `docs/invariants/data-integrity.md`.
 - **Kein Bestand ohne Herkunft.** Nothing may appear in a data table
@@ -132,9 +133,11 @@ internet; any further outward message needs the same explicit request.
   `community`, `classic`. **Only `release` counts as confirmed**;
   every other kind carries a visible prefix *and* a `Why()` sentence
   on every surface. A filled boss list without a valid source fails
-  `data_test.lua`; so does an empty one *with* one. Onyxias Hort,
-  Blackmaw Hold, four more dungeons and the material watchlist stay
-  empty — no source, no entry. **Since 6.21.0.0 the source is named
+  `data_test.lua`; so does an empty one *with* one. Onyxias Hort
+  and the material watchlist stay empty — no source, no entry (since
+  1.0.6.1 every dungeon carries a `community` list: Krol'dok Stronghold,
+  Alcaz Island Prison and Blackmaw Hold only what two independent
+  collections agree on, none complete). **Since 6.21.0.0 the source is named
   only for maintainers:** no text a player sees names a third-party
   addon (ForeverGuide, Questie, Leatrix Maps, …) as its source – it says
   „Wissensstand aus der Beta“ / „aus Classic“, the *kind* stays

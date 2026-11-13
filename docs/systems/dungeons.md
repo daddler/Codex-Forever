@@ -21,11 +21,11 @@ zu Stufe 32?"* — und die beantwortet eine Neunerliste falsch.
 | `ruins_of_lordaeron` | Ruins of Lordaeron | Tirisfal-Wälder | 15 – 20 | 7, unvollständig |
 | `excavation_site` | Excavation Site | Sumpfland | 24 – 29 | 3, unvollständig (seit 6.9.0.6; vorher: Quellen widersprechen sich) |
 | `city_of_dalaran` | City of Dalaran | Alteracgebirge | 28 – 33 | 9, vollständig, ohne Reihenfolge (seit 6.9.0.6; vorher: 9 Kämpfe, Namen unbekannt) |
-| `drowned_city` | The Drowned City | Schlingendorntal | 35 – 40 | 2, unvollständig |
-| `kroldok_stronghold` | Krol'dok Stronghold | Riverglades | 40 – 45 | — |
-| `alcaz_island_prison` | Alcaz Island Prison | Düstermarschen | 48 – 53 | — |
-| `blackmaw_hold` | Blackmaw Hold | Azshara | 55 – 60 | — |
-| `shapers_terrace` | Shaper's Terrace | Krater von Un'Goro | 58 – 60 | — |
+| `drowned_city` | The Drowned City | Schlingendorntal | 35 – 40 | 8, unvollständig |
+| `kroldok_stronghold` | Krol'dok Stronghold | Riverglades | 40 – 45 | 6, unvollständig (seit 1.0.6.1) |
+| `alcaz_island_prison` | Alcaz Island Prison | Düstermarschen | 48 – 53 | 5, unvollständig (seit 1.0.6.1) |
+| `blackmaw_hold` | Blackmaw Hold | Azshara | 55 – 60 | 8, unvollständig (seit 1.0.6.1; vorher: Quellen widersprechen sich) |
+| `shapers_terrace` | Shaper's Terrace | Krater von Un'Goro | 58 – 60 | 4, unvollständig |
 
 Alle neun sind **Fünfergruppen** und gehören zum Erscheinungsinhalt
 (04.11.2026).
@@ -142,17 +142,19 @@ Früher war eine Bossliste entweder da oder nicht. Das reicht nicht mehr:
 | `bosses` gefüllt, `bossesComplete = true` | so vollständig, wie die Quelle sie hergibt | Hall of Thanes |
 | `bosses` gefüllt, `bossesComplete = false` | Kämpfe bekannt, aber nicht alle | Ruins of Lordaeron, Drowned City |
 | `bosses` leer, `bossCount` gesetzt | die **Anzahl** ist berichtet, die Namen nicht | derzeit keiner (City of Dalaran bis 6.9.0.6) |
-| alles leer, `conflict` gesetzt | die Quellen widersprechen sich | Blackmaw Hold (Excavation Site bis 6.9.0.6) |
+| alles leer, `conflict` gesetzt | die Quellen widersprechen sich | derzeit keiner (Blackmaw Hold bis 1.0.6.1, Excavation Site bis 6.9.0.6) |
 
 Der dritte Zustand ist der interessante: *„neun Kämpfe, Namen
 unbekannt"* ist mehr als „nichts bekannt" und weniger als eine Liste.
 Fünf von neun Namen als Liste einzutragen hiesse, einen Dungeon mit neun
 Kämpfen als Dungeon mit fünf zu führen.
 
-Der vierte auch. Für Blackmaw Hold kursiert eine Liste, die
-nachweislich die der Drowned City ist. Das steht als Widerspruch da —
-wer die kursierende Liste anderswo gesehen hat, erfährt hier, warum sie
-fehlt.
+Der vierte auch. Für Blackmaw Hold kursierte eine Liste, die
+nachweislich die der Drowned City ist. Bis 1.0.6.1 stand das als
+Widerspruch da; seitdem trägt der Dungeon die acht Namen, die zwei
+unabhängige Sammlungen übereinstimmend nennen (siehe *Abgleich vom
+13.11.2026*), und die falsche Liste steht nur noch im Kommentar der
+Datei.
 
 **6.9.0.6: zwei Zustände aufgelöst.** Das Dungeon Journal (Fassung
 1.4.2, `community`) nennt für die City of Dalaran alle neun Kämpfe —
@@ -976,6 +978,25 @@ stehen gelassen:** „An Unholy Alliance“ 6521 steht dort in Razorfen Kraul,
 im ForeverGuide-Abgleich in Razorfen Downs; der Eingang der Hall of Thanes
 liegt dort bei 43,5; 52,0, im Abgleich bei 31,8; 46,4. Bosslisten: nichts
 Neues seit 1.6.2 (Dalaran schon in 6.28.1.0).
+
+**1.0.6.1 – Abgleich vom 13.11.2026** (Naowh Forever: Dungeon Journal
+1.2.30, Daten vom 13.11., Client-Build 1.60.1.70938; „Dungeon Journal“
+von Exehn 2.0.4). `import_naowh.py` neu gelaufen: 1747 Beutezeilen, 1089
+mit Dropchance, nur noch 45 Gegenstände „noch nicht im Spiel“ (vorher
+gut 700), Beute der Drowned City, von Krol'dok Stronghold, Alcaz Island
+Prison und Blackmaw Hold. Der Import behält Namen, Platz und Qualität aus
+der vorigen Fassung der erzeugten Datei, wo die neue Quelle keinen mehr
+liefert (was früher „noch nicht im Spiel“ war, trug seinen Namen von
+dort). **Bosslisten von Hand**, nur was beide Sammlungen übereinstimmend
+nennen: Krol'dok Stronghold sechs (vorher leer), Alcaz Island Prison
+fünf (vorher einer), Blackmaw Hold acht (vorher umstritten und leer),
+Drowned City plus Primeval Elemental und der seltene Umbra. **Nicht
+übernommen** (nur eine Quelle): Kroog (Krol'dok), Gortek the Apprentice
+und Tunnelweb Matriarch (Blackmaw Hold), sechs weitere Namen für
+Shaper's Terrace; Stufenbereiche und Boss-Stufen des Dungeon Journal;
+dessen Quests, Routen und Bilder (nicht verglichen). Zusätzliche Gegner
+alter Dungeons, die nur Naowh als Boss führt (Untere Schwarzfelsspitze,
+Zul'Farrak …), bleiben wie bisher unter „weitere Beute“.
 
 **1.4.0.0 (27.10.2026): abgeglichen mit „Naowh Forever: Dungeon Journal“
 1.1.47** (Daten vom 21.10.2026, Client-Build 1.60.1.70532) – erzeugt wie der

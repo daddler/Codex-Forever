@@ -10766,10 +10766,18 @@ do
         -- Ein Dungeon ohne Journal zeichnet keine einzige Gegenstandszeile.
         -- (Seit 6.14.0.0 hat Maraudon Quests und Beute aus dem Abgleich -
         -- ohne Journal bleiben die Forever-Dungeons ohne Berichte.)
-        assert(not J.Has("kroldok_stronghold"), "Krol'dok Stronghold hat ein Journal")
-        DP.Select("kroldok_stronghold", nil)
-        WeintCodex.Navigation.SwitchTo("dungeons")
-        assert(DP.itemRows == 0, "Gegenstandszeilen in einem Dungeon ohne Journal")
+        -- 1.0.6.1: Krol'dok Stronghold hat seit dem Abgleich vom 13.11.2026
+        -- Bosse und Beute - geprueft wird am ersten Dungeon ohne Journal,
+        -- solange es einen gibt.
+        local bare
+        for _, d in ipairs(WeintCodex.DungeonData.AllInstances()) do
+            if not J.Has(d.id) then bare = d.id break end
+        end
+        if bare then
+            DP.Select(bare, nil)
+            WeintCodex.Navigation.SwitchTo("dungeons")
+            assert(DP.itemRows == 0, "Gegenstandszeilen in einem Dungeon ohne Journal (" .. bare .. ")")
+        end
     end)
     Check(ok, "Dungeonseite: Beute je Boss, Quests je Dungeon, Namen vom Client" .. (ok and "" or (": " .. tostring(err))))
 end

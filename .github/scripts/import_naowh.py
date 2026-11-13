@@ -35,7 +35,8 @@ import subprocess
 import sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-NF_VERSION = "1.2.11"
+OUT = os.path.join(ROOT, "data", "dungeon_journal_nf.lua")
+NF_VERSION = "1.2.30"
 
 # Schluessel des Addons -> Dungeon des Codex (Fluegel zusammengefasst).
 # Schlachtzuege (Barrow Deeps, Hyjal Summit, Onyxias Hort) fehlen mit
@@ -119,13 +120,34 @@ def run_dump(script, *args):
 def build(nf, cx):
     names = {e["id"]: e for e in cx["items"]}
     not_yet = {int(k): v for k, v in nf["notYet"].items()}
-    info = {int(k): v for k, v in nf["bossInfo"].items()}
+    # Ein Eintrag mit Luecke (nil mitten in der Liste) kommt aus dem Dump als
+    # Objekt mit den Schluesseln "1", "2", ... statt als Liste.
+    def row(v):
+        return [v.get("1", 0), v.get("2", 0)] if isinstance(v, dict) else v
+    info = {int(k): row(v) for k, v in nf["bossInfo"].items()}
     abil = {int(k): as_list(v) for k, v in (nf.get("abilities") or {}).items()}
     codex = {d["id"]: d for d in cx["dungeons"]}
+
+    # Namen, Platz und Qualitaet der letzten Fassung dieser Datei: was Naowh
+    # frueher als "noch nicht im Spiel" mit Namen fuehrte und jetzt nicht mehr,
+    # verloere sonst seinen Namen (der Gegenstand ist derselbe geblieben).
+    before = {}
+    if os.path.exists(OUT):
+        for m in re.finditer(r'\{ (\d+), ("(?:[^"\\]|\\.)*"|nil), ("(?:[^"\\]|\\.)*"|nil), (\d+|nil)',
+                             open(OUT, encoding="utf-8").read()):
+            unq = lambda t: None if t == "nil" else t[1:-1].replace('\\"', '"').replace("\\\\", "\\")
+            if m.group(2) != "nil":
+                before[int(m.group(1))] = (unq(m.group(2)), unq(m.group(3)),
+                                           None if m.group(4) == "nil" else int(m.group(4)))
 
     def item(i, chance, prefix=None):
         e = names.get(i, {})
         n, s, q = e.get("n"), e.get("s"), e.get("q")
+        old = before.get(i)
+        if old:
+            n = n or old[0]
+            s = s if s is not None else old[1]
+            q = q if q is not None else old[2]
         ny = not_yet.get(i)
         if ny:
             n = n or ny[6]
@@ -239,7 +261,7 @@ def write(nf, dd):
     w("")
     w("J.NF_SOURCE = {")
     w('    kind  = "community",')
-    w('    date  = "27.10.2026",')
+    w('    date  = "13.11.2026",')
     w('    label = "Beute: Wissensstand aus der Beta, Dropchancen gezählt (alte Bosse zusammen mit Classic)",')
     w("}")
     w("")
