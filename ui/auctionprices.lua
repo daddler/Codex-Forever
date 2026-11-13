@@ -82,7 +82,6 @@ local SETTING = { stack = "ahStack", passive = "ahPassive" }
 local function Get(k) return K.Get(KEY, SETTING[k] or k) end
 function AP.Active() return K.IsActive(KEY) and K.Get(KEY, "ahPrices") and true or false end
 
-local function Clock() return (_G.GetTime and K.Plain(_G.GetTime())) or 0 end
 local function Time() return (_G.time and _G.time()) or 0 end
 
 local function Say(text)

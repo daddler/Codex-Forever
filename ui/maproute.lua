@@ -142,18 +142,6 @@ local function HideFrom(i)
     for k = i, #lines do lines[k]:Hide() end
 end
 
--- Eine Polylinie aus Weltpunkten (c, n, w je Punkt ueber Zugriffsfunktion).
-local function Poly(mapID, count, at, width, col, alpha)
-    local px, py
-    for i = 1, count do
-        local c, n, w = at(i)
-        local x, y
-        if c then x, y = MP.ToMap(mapID, c, n, w) end
-        if x and px then RouteLine(px, py, x, y, width, col, alpha) end
-        px, py = x, y
-    end
-end
-
 --------------------------------------------------
 -- Was gezeichnet wird
 --------------------------------------------------

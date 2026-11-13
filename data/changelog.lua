@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.0.6.0",
+        date    = "13.11.2026",
+        notes   = {
+            "|cff7C6CFFDurchsicht des ganzen Addons|r – keine neue Funktion, keine geänderte: geprüft, aufgeräumt, neue Zählung 1.0.6.",
+        },
+    },
+    {
         version = "1.0.5.69",
         date    = "13.11.2026",
         notes   = {

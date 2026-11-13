@@ -49,8 +49,6 @@ local function Plain(v) return K.Plain(v) end
 local function Now() return (_G.GetTime and Plain(_G.GetTime())) or 0 end
 function BS.On() return K.IsActive(KEY) and K.Get(KEY, "bossShare") and true or false end
 
-local function Say(text) print(WeintCodex.ColorText("accent", "[WeintCodex]") .. " " .. text) end
-
 --------------------------------------------------
 -- Kodieren und pruefen
 --------------------------------------------------

@@ -150,11 +150,6 @@ local function Can(featureKey)
     return WeintCodex.Access.Can(featureKey)
 end
 
-local function Locked(tabId)
-    local feature = tabFeature[tabId]
-    return feature ~= nil and not Can(feature)
-end
-
 local tabButtons = {}
 
 local NAV_ITEM_H   = 35   -- 6.25.0.0: 38 -> 35, Platz fuer "Taschen" und Luft fuer einen weiteren

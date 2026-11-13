@@ -499,10 +499,6 @@ local function SourceText(b)
     return src and S.Prefix(src) or (b.new and "Unbestätigt" or "Aus Classic")
 end
 
-local function LevelText(b)
-    return b.level and ("Stufe " .. b.level) or "Stufe unbekannt"
-end
-
 local function Tags(b)
     local t = {}
     if b.rare then t[#t + 1] = WeintCodex.ColorText("infoBright", "Selten") end

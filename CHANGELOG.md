@@ -9,6 +9,14 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.0.6.0] – 2026-11-13
+
+### Technisch
+- Durchsicht mit statischer Prüfung über `core/`, `modules/`, `ui/`: keine
+  versehentlichen globalen Variablen, keine fehlerhaften Zuweisungen gefunden.
+  Fünf nirgends aufgerufene lokale Funktionen entfernt. Kein geändertes
+  Verhalten.
+
 ## [1.0.5.69] – 2026-11-13
 
 ### Neu
