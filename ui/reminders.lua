@@ -1727,10 +1727,22 @@ function R.ActiveGeneral()
     if R.Quiet() then return out end
     if not Opt("showReminders") then return out end
     local fighting = R.Fighting()
-    if fighting and not Opt("remindInCombat") then return out end
     local where = Opt("where")
     if where == "group" and not InGroup() then return out end
     if where == "instance" and not InInstance() then return out end
+    -- 1.0.5.68 (Bericht mit Pruefausgabe: ausserhalb des Dungeons kommt
+    -- "Zorn der Gerechtigkeit fehlt", im Dungeon nie): als Tank ist man dort
+    -- fast immer im Kampf, und ohne "Auch im Kampf" (ab Werk aus) kam gar
+    -- nichts - auch nicht, was die eigene Uhr sicher weiss. Ein Buff, den du
+    -- selbst gewirkt hast und dessen Zeit abgelaufen ist (R.ClockHit), wird
+    -- jetzt auch im Kampf gemeldet; alles andere bleibt beim Schalter.
+    if fighting and not Opt("remindInCombat") then
+        for _, rule in ipairs(R.Here()) do
+            local clock = rule.kind == "buff" and R.ClockHit(rule)
+            if clock then out[#out + 1] = clock end
+        end
+        return out
+    end
     -- Buffs und Essen erst mit Gegner im Ziel (Schalter, ab Werk aus).
     local buffsNow = not Opt("buffsOnTarget") or fighting or R.HostileTarget()
     for _, rule in ipairs(R.Here()) do
@@ -2091,7 +2103,13 @@ function R.Diagnose()
     out[#out + 1] = "Klasse " .. tostring(class) .. " · Talentbaum mit den meisten Punkten: " .. tostring(tree or "unbekannt")
         .. " · Rolle der Gruppe: " .. tostring(group or "keine") .. " · erkannte Rolle: " .. tostring(role or "unbekannt")
     local fight = K.InCombat and K.InCombat()
-    out[#out + 1] = fight and "Im Kampf: Buffs sind nicht lesbar, erinnert wird danach." or "Außerhalb des Kampfes."
+    out[#out + 1] = fight and "Im Kampf: Buffs sind nicht lesbar – gemeldet wird nur, was die eigene Uhr als abgelaufen kennt." or "Außerhalb des Kampfes."
+    local inst = InInstance()
+    out[#out + 1] = "Ort: " .. (inst and "Instanz" or "offene Welt") .. " · Erinnerungen " .. (Opt("showReminders") and "an" or "AUS")
+        .. " · Wo: " .. tostring(Opt("where") or "überall") .. " · Auch im Kampf: " .. (Opt("remindInCombat") and "ja" or "nein")
+        .. " · erst mit Gegner im Ziel: " .. (Opt("buffsOnTarget") and "JA" or "nein")
+        .. (R.Quiet() and " · RUHT (Gasthaus/Stadt oder Angeln)" or "")
+    out[#out + 1] = "Gerade gemeldet: " .. #R.Active()
     for _, rule in ipairs(R.Rules()) do
         if rule.class == class or rule.class == R.ALL or rule.class == nil then
             local line = "• " .. tostring(R.BaseRuleText and R.BaseRuleText(rule) or rule.kind)
@@ -2107,6 +2125,11 @@ function R.Diagnose()
             if rule.kind == "buff" then
                 local a = R.PlayerAura(rule)
                 why[#why + 1] = "Buff: " .. (a == false and "fehlt" or a == nil and "NICHT LESBAR" or "aktiv")
+                local BTm = WeintCodex.UIBuffTimes
+                local sp = type(rule.spell) == "string" and R.Resolve(rule.spell) or nil
+                local st = BTm and BTm.ClockState and sp and sp.id and BTm.ClockState(sp.id) or nil
+                why[#why + 1] = "eigene Uhr: " .. (st == "running" and "läuft" or st == "expired" and "abgelaufen"
+                    or "unbekannt (in dieser Sitzung nicht selbst gewirkt)")
             end
             local c = R.Applies(rule) and R.Check(rule) or nil
             why[#why + 1] = c and ("erinnert: " .. tostring(c.text)) or "erinnert nicht"

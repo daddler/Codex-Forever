@@ -549,7 +549,17 @@ local function Tick(_, el)
     acc = acc + (el or 0)
     if acc < 1 then return end
     acc = 0
+    -- 1.0.5.68: laeuft dabei ein Buff ab, die Erinnerungen gleich neu
+    -- pruefen - im Kampf kommt sonst kein Ereignis, das es taete.
+    local before = 0
+    for _ in pairs(BT.active) do before = before + 1 end
     BT.Expire()
+    local after = 0
+    for _ in pairs(BT.active) do after = after + 1 end
+    if after < before then
+        local R = WeintCodex.UIReminders
+        if R and R.Schedule then pcall(R.Schedule, true, false, false) end
+    end
     BT.Update()
 end
 

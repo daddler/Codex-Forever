@@ -7481,6 +7481,24 @@ do
         now = texts()
         assert(not now:find("Kampfschrei", 1, true), "im Kampf Buff als fehlend gemeldet: " .. now)
         K.Set(R.KEY or "reminders", "remindInCombat", oIC)
+        -- 1.0.5.68: ohne "Auch im Kampf" meldet der Kampf trotzdem, was die
+        -- eigene Uhr als abgelaufen kennt (Zorn der Gerechtigkeit im Dungeon)
+        -- - und nur das.
+        do
+            local BTm = WeintCodex.UIBuffTimes
+            local oCS = BTm.ClockState
+            K.Set(R.KEY or "reminders", "remindInCombat", false)
+            BTm.ClockState = function() return nil end
+            assert(texts() == "", "im Kampf ohne Schalter gemeldet: " .. texts())
+            BTm.ClockState = function(id) return id == 6673 and "expired" or nil end
+            now = texts()
+            assert(now:find("Kampfschrei fehlt", 1, true) and not now:find("Verzauberung", 1, true),
+                "abgelaufener Buff im Kampf nicht gemeldet: " .. now)
+            BTm.ClockState = function() return "running" end
+            assert(texts() == "", "laufender Buff im Kampf gemeldet")
+            BTm.ClockState = oCS
+            K.Set(R.KEY or "reminders", "remindInCombat", oIC)
+        end
         R.fighting = false
         -- Mit Frist: erst nach 2 s gemeldet (Wechsel eines Aspekts).
         R.BUFF_GRACE = oGrace
