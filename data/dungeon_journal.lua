@@ -2050,6 +2050,13 @@ J.HAND_ENTRANCES = {
     city_of_dalaran    = { { map = 1416, x = 0.085, y = 0.593 } },
     excavation_site    = { { map = 1437, x = 0.477, y = 0.562 } },
     ruins_of_lordaeron = { { map = 1420, x = 0.634, y = 0.674 } },
+    -- 1.0.6.2 (Dungeon Journal 2.0.4, 13.11.2026): die drei Forever-Dungeons
+    -- ohne Eingang; Shaper's Terrace hier statt des erzeugten Werts (der lag
+    -- auf der Karte von Tausend Nadeln, beschrieben ist der Nordrand von Un'Goro).
+    kroldok_stronghold  = { { map = 2548, x = 0.375, y = 0.373 } },
+    alcaz_island_prison = { { map = 1445, x = 0.753, y = 0.141 } },
+    blackmaw_hold       = { { map = 1447, x = 0.386, y = 0.332 } },
+    shapers_terrace     = { { map = 1449, x = 0.481, y = 0.061 } },
 }
 
 --------------------------------------------------

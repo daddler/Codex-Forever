@@ -9,6 +9,12 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.0.6.2] – 2026-11-13
+
+### Neu
+- Eingänge (`J.HAND_ENTRANCES`) für Krol'dok Stronghold, Alcaz Island Prison,
+  Blackmaw Hold; Shaper's Terrace korrigiert (Un'Goro statt Tausend Nadeln).
+
 ## [1.0.6.1] – 2026-11-13
 
 ### Neu

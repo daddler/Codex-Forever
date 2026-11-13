@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.0.6.2",
+        date    = "13.11.2026",
+        notes   = {
+            "|cff7C6CFFEingänge für Krol'dok Stronghold, Alcaz Island Prison und Blackmaw Hold|r – auf der Weltkarte und im Kompendium wie bei den anderen Dungeons; der Eingang von Shaper's Terrace liegt jetzt richtig am Nordrand von Un'Goro.",
+        },
+    },
+    {
         version = "1.0.6.1",
         date    = "13.11.2026",
         notes   = {

@@ -9670,7 +9670,7 @@ do
         canvas._width, canvas._height = 1000, 600
         wm.GetCanvas = function() return canvas end
         -- Zonen unter den Oestlichen Koenigreichen (1415), Kalimdor 1414.
-        local KALIMDOR = { [1413] = true, [1440] = true, [1443] = true, [1444] = true, [1446] = true, [1454] = true, [1435] = false }
+        local KALIMDOR = { [1413] = true, [1440] = true, [1443] = true, [1444] = true, [1446] = true, [1454] = true, [1445] = true, [1447] = true, [1449] = true, [1435] = false }
         G.C_Map = {
             GetMapInfo = function(id)
                 if id == 1414 or id == 1415 then return { mapType = 2, parentMapID = 947 } end
@@ -9739,7 +9739,7 @@ do
         mapID = 1415
         assert(ME.Place() == 17, "Oestliche Koenigreiche: " .. tostring(ME.Place()))
         mapID = 1414
-        assert(ME.Place() == 8, "Kalimdor: " .. tostring(ME.Place()))
+        assert(ME.Place() == 11, "Kalimdor: " .. tostring(ME.Place()))
         mapID = 1415
         ME.Place()
         assert(ME.pins[1].spot == br, "Kontinent: erstes Symbol nicht Blackrock")
@@ -9791,7 +9791,7 @@ do
 
         -- Selbstpruefung.
         local sc = table.concat(ME.StatusLines(), "\n")
-        assert(sc:find("Eingänge im Bestand: 27 an 25 Stellen", 1, true) and sc:find("GetMapRectOnMap): ja", 1, true), "Selbstpruefung: " .. sc)
+        assert(sc:find("Eingänge im Bestand: 30 an 28 Stellen", 1, true) and sc:find("GetMapRectOnMap): ja", 1, true), "Selbstpruefung: " .. sc)
         local page
         for _, pg in ipairs(K.Module("comfort").pages) do if pg.key == "karte" then page = pg end end
         assert(page and page.label == "Karte", "Seite fehlt")
