@@ -234,6 +234,68 @@ function GX.MyBuffs()
     return out
 end
 
+-- Wem in der Gruppe fehlt dein Gruppenbuff? (1.0.5.69, Bericht: "verliert
+-- ein Gruppenmitglied den Buff durch Dispel oder Tod, kommt keine
+-- Erinnerung".) Fuer die Erinnerungen (ui/reminders.lua): je Buffreihe
+-- deiner Klasse die Namen derer, denen er sicher fehlt - lesbar, lebend,
+-- online, in Sicht. Paladin nicht: seine Segen verteilt die Seite "Segen".
+-- Nur ausserhalb des Kampfes gelesen, hoechstens alle GX.MISS_EVERY s.
+GX.MISS_EVERY = 2
+local missMemo = { at = -1e9, list = {} }
+local PARTY_UNITS = { "party1", "party2", "party3", "party4" }
+local RAID_UNITS = {}
+for i = 1, 40 do RAID_UNITS[i] = "raid" .. i end
+local function Plainly(fn, u, want)
+    if type(fn) ~= "function" then return false end
+    local ok, v = pcall(fn, u)
+    v = ok and K.Plain(v) or nil
+    if type(v) == "nil" then return false end
+    return (v and true or false) == want
+end
+function GX.UnitMissing(u, fam)
+    if not Plainly(_G.UnitExists, u, true) then return nil end
+    if Plainly(_G.UnitIsDeadOrGhost, u, true) or Plainly(_G.UnitIsConnected, u, false)
+       or Plainly(_G.UnitIsVisible, u, false) then return nil end
+    for i = 1, 40 do
+        local icon, _, _, name, sid = GX.BuffAt(u, i)
+        if type(icon) == "nil" then return true end
+        if type(name) ~= "string" and type(sid) ~= "number" then return nil end   -- unlesbar
+        if type(name) == "string" and fam.names[name] then return false end
+        if type(sid) == "number" then
+            for _, id in ipairs(fam.ids) do if id == sid then return false end end
+        end
+    end
+    return true
+end
+-- { { label, icon, names = { "Anna", ... } }, ... } - nur Reihen mit Fehlenden.
+function GX.GroupMissing(now)
+    now = now or (_G.GetTime and K.Plain(_G.GetTime())) or 0
+    if now - missMemo.at < GX.MISS_EVERY and now >= missMemo.at then return missMemo.list end
+    missMemo.at = now
+    local list = {}
+    missMemo.list = list
+    if InCombat() then return list end
+    local class
+    if _G.UnitClass then local _, c = _G.UnitClass("player") class = K.Plain(c) end
+    if class == "PALADIN" then return list end
+    local units
+    if _G.IsInRaid and K.Bool(_G.IsInRaid(), false) then units = RAID_UNITS
+    elseif _G.IsInGroup and K.Bool(_G.IsInGroup(), false) then units = PARTY_UNITS
+    else return list end
+    for _, fam in ipairs(GX.MyBuffs()) do
+        local names
+        for _, u in ipairs(units) do
+            if not (_G.UnitIsUnit and K.Bool(_G.UnitIsUnit(u, "player"), false)) and GX.UnitMissing(u, fam) == true then
+                names = names or {}
+                local n = _G.UnitName and K.Plain(_G.UnitName(u))
+                names[#names + 1] = type(n) == "string" and n or u
+            end
+        end
+        if names then list[#list + 1] = { label = fam.label, icon = fam.icon, names = names } end
+    end
+    return list
+end
+
 GX.lastRead = {}
 function GX.UpdateBuffs(f)
     local o = Over(f)

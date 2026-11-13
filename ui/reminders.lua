@@ -77,6 +77,8 @@ local defaults = {
     -- 1.0.3.9 (Spielerwunsch: "Erinnerung, wenn ich einen Talentpunkt
     -- vergeben kann"):
     talentPoints  = true,
+    trackRemind   = true,    -- Kraeuter-/Mineraliensuche aus (1.0.5.69)
+    groupBuffs    = true,    -- dein Gruppenbuff fehlt einem Mitspieler (1.0.5.69)
     -- 1.0.4.1 (Wunsch: "Buff-Erinnerungen erst, wenn man einen Gegner ins
     -- Visier nimmt"): Buffs und Essen nur mit angreifbarem Ziel.
     buffsOnTarget = false,
@@ -1718,6 +1720,24 @@ function R.Active()
     if not R.Fighting() then
         local t = R.TalentHit()
         if t then out[#out + 1] = t end
+        -- 1.0.5.69: Suche aus und Gruppenbuffs - eigene Schalter, nicht an
+        -- ruhigen Orten, nicht beim Angeln.
+        if not R.Quiet() then
+            local GT = WeintCodex.UIGatherTrack
+            if Opt("trackRemind") and GT and GT.TrackHit then
+                local hit, wait = GT.TrackHit()
+                if hit then out[#out + 1] = hit elseif wait then R.Recheck(wait) end
+            end
+            local GX = WeintCodex.UIGroupExtra
+            if Opt("groupBuffs") and GX and GX.GroupMissing then
+                for _, m in ipairs(GX.GroupMissing()) do
+                    local who = m.names[1]
+                    if #m.names == 2 then who = who .. ", " .. m.names[2]
+                    elseif #m.names > 2 then who = who .. ", " .. m.names[2] .. " +" .. (#m.names - 2) end
+                    out[#out + 1] = { text = m.label .. " fehlt: " .. who, icon = m.icon }
+                end
+            end
+        end
     end
     return out
 end
@@ -2439,7 +2459,11 @@ K.Register({
                     format = function(v) return string.format("%d %%", v) end,
                     description = "Für Erinnerungen, Buffs/Procs und Abklingzeiten." })
             B:Row({ type = "toggle", label = "An ruhigen Orten ausblenden", key = "hideResting",
-                    description = "In Städten und Gasthäusern (wo das Spiel „ruhend“ sagt) keine Erinnerung und kein Symbol." }, nil)
+                    description = "In Städten und Gasthäusern (wo das Spiel „ruhend“ sagt) keine Erinnerung und kein Symbol." },
+                  { type = "toggle", label = "Kräuter- oder Mineraliensuche aus", key = "trackRemind",
+                    description = "Erinnert, wenn du Kräuter- oder Mineraliensuche kannst und keine läuft – etwa nach dem Tod." })
+            B:Row({ type = "toggle", label = "Dein Gruppenbuff fehlt jemandem", key = "groupBuffs",
+                    description = "Nennt, wem in der Gruppe dein Buff fehlt – Mal der Wildnis, Arkane Intelligenz, Seelenstärke. Gelesen außerhalb des Kampfes; wer tot, offline oder außer Sicht ist, zählt nicht." }, nil)
             B:Row({ type = "toggle", label = "Talentpunkte zu vergeben", key = "talentPoints",
                     description = "Nach dem Stufenaufstieg, sobald du aus dem Kampf bist – überall, auch wenn die übrigen Erinnerungen aus sind. Klick blendet sie aus." },
                   { type = "toggle", label = "Buffs erst mit Gegner im Ziel", key = "buffsOnTarget",

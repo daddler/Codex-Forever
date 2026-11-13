@@ -40,6 +40,7 @@ GT.ALIVE_GRACE = 3
 GT.ALIVE_TRUST = 30
 GT.aliveAt = -math.huge
 GT.MAX_NOEFFECT = 3
+GT.BACKOFF = 60
 
 local stats = { swaps = 0, paused = 0, noEffect = 0, blocked = 0 }
 GT.stats = stats
@@ -158,14 +159,23 @@ function GT.Swap()
             -- Kurz nach dem Wiederbeleben ist "ohne Wirkung" das Spiel, kein Fehler.
             if misses >= GT.MAX_NOEFFECT and Now() - GT.aliveAt < GT.ALIVE_TRUST then misses = 0 end
             if misses >= GT.MAX_NOEFFECT then
-                pending = nil
-                Stop("ohne Wirkung", "Die Suche lässt sich von WeintCodex nicht wechseln – der Wechsel ist wieder aus.")
+                -- 1.0.5.69 (Bericht: "die Suche verschwindet auch ohne Tod"):
+                -- dreimal ohne Wirkung hiess bisher "Wechsel fuer immer aus".
+                -- Es gibt aber harmlose Gruende (Gestalt des Druiden, Reittier
+                -- im Flug, Abklingzeit) - jetzt eine Pause von GT.BACKOFF s,
+                -- dann wieder; der Schalter bleibt an. Ganz aus nur noch,
+                -- wenn das Spiel den Wechsel sperrt (GT.OnBlocked).
+                pending, misses = nil, 0
+                stats.backoff = (stats.backoff or 0) + 1
+                GT.backoffUntil = Now() + GT.BACKOFF
                 return false
             end
         end
         pending = nil
     end
     if GT.Paused() then stats.paused = stats.paused + 1 return false end
+    if GT.backoffUntil and Now() < GT.backoffUntil then return false end
+    GT.backoffUntil = nil
     local herb, ore, on = GT.Find()
     -- 6.30.17.0: ohne beide Suchen (kein Kraeuter- UND Bergbau) gibt es
     -- nichts zu wechseln - dann nur noch alle GT.IDLE s nachsehen statt
@@ -180,6 +190,32 @@ function GT.Swap()
     pending = target
     stats.swaps = stats.swaps + 1
     return true
+end
+
+-- Erinnerung "Suche aus" (1.0.5.69, Vorschlag des Spielers: "eine
+-- Erinnerung, Bergbau oder Kraeuterkunde zu aktivieren"). Warum die Suche
+-- des Spiels ausgeht (Tod, und laut Bericht auch ohne), laesst sich von
+-- hier nicht sicher sagen - dass sie aus ist, schon: kennt der Charakter
+-- Kraeuter- oder Mineraliensuche und laeuft keine davon laenger als
+-- GT.OFF_GRACE s, gibt es eine Erinnerung. Tot nie; der Wechsel selbst
+-- stellt sie im naechsten Takt wieder an (darum die Frist).
+GT.OFF_GRACE = 6
+function GT.TrackHit(now)
+    if _G.UnitIsDeadOrGhost and K.Bool(_G.UnitIsDeadOrGhost("player"), false) then GT.offSince = nil return nil end
+    local herb, ore, on = GT.Find()
+    if not (herb or ore) or on then GT.offSince = nil return nil end
+    now = now or Now()
+    GT.offSince = GT.offSince or now
+    if now - GT.offSince < GT.OFF_GRACE then return nil, GT.OFF_GRACE - (now - GT.offSince) end
+    local text = (herb and ore) and "Kräuter- und Mineraliensuche sind aus"
+        or herb and "Kräutersuche ist aus" or "Mineraliensuche ist aus"
+    local cs = _G.C_Spell
+    local icon
+    if cs and cs.GetSpellTexture then
+        local ok, t = pcall(cs.GetSpellTexture, herb and GT.SPELLS.herb or GT.SPELLS.ore)
+        if ok and not K.IsSecret(t) then icon = t end
+    end
+    return { text = text, icon = icon }
 end
 
 -- ADDON_ACTION_BLOCKED/FORBIDDEN kurz nach einem eigenen Wechsel.

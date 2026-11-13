@@ -1110,12 +1110,17 @@ do
         casting = true
         assert(GT.Swap() == false and #sets == 2, "beim Zaubern gewechselt")
         casting = false
-        -- Wirkungslos: nach drei Versuchen aus.
+        -- Wirkungslos (1.0.5.69): nach drei Versuchen eine Pause, der
+        -- Schalter bleibt an - kein "fuer immer aus" mehr.
         works = false
+        local nSets = #sets
         GT.Swap() GT.Swap() GT.Swap()
-        assert(GT.Swap() == false and not K.Get("comfort", "gatherSwap") and GT.stopped == "ohne Wirkung",
-            "wirkungsloser Wechsel laeuft weiter")
-        assert(not GT.ticker:IsShown(), "Takt laeuft nach dem Abschalten")
+        assert(GT.Swap() == false and K.Get("comfort", "gatherSwap") and GT.stopped == nil and GT.backoffUntil,
+            "wirkungsloser Wechsel schaltet sich ab statt zu pausieren")
+        local paused = #sets
+        assert(GT.Swap() == false and #sets == paused and paused <= nSets + 3, "in der Pause gewechselt")
+        assert(GT.ticker:IsShown(), "Takt steht in der Pause")
+        GT.backoffUntil = nil
         -- Gesperrt: sofort aus.
         works = true
         K.Set("comfort", "gatherSwap", true)
@@ -1603,12 +1608,74 @@ do
         GT.Active = function() return true end
         GT.Paused = function() return false end
         GT.Find = function() return nil, nil, nil end
+        GT.backoffUntil = nil
         GT.Swap()
         assert(GT.idle == true and GT.IDLE >= 10, "ohne Suchen nicht in Ruhe")
     end)
     GT.Find, GT.Active, GT.Paused = oF, oA, oP
     GT.idle = false
     Check(ok, "Suche wechseln: Ruhe ohne Kraeuter- und Erzsuche" .. (ok and "" or (": " .. tostring(err))))
+end
+
+-- 1.0.5.69: Erinnerung "Suche aus" und "dein Gruppenbuff fehlt jemandem".
+do
+    local GT, GX = WeintCodex.UIGatherTrack, WeintCodex.UIGroupExtra
+    local oF, oDead = GT.Find, _G.UnitIsDeadOrGhost
+    local oMy, oBuffAt = GX.MyBuffs, GX.BuffAt
+    local names = { "IsInRaid", "IsInGroup", "UnitExists", "UnitIsConnected", "UnitIsVisible", "UnitName", "UnitIsUnit", "UnitClass", "InCombatLockdown" }
+    local saved = {}
+    for i, n in ipairs(names) do saved[i] = _G[n] end
+    local ok, err = pcall(function()
+        local dead = false
+        _G.UnitIsDeadOrGhost = function() return dead end
+        GT.offSince = nil
+        GT.Find = function() return 2, 3, 2 end
+        assert(GT.TrackHit(100) == nil, "Suche an und trotzdem erinnert")
+        GT.Find = function() return 2, 3, nil end
+        local hit, wait = GT.TrackHit(100)
+        assert(hit == nil and wait and wait > 0, "Suche sofort als aus gemeldet")
+        hit = GT.TrackHit(100 + GT.OFF_GRACE + 1)
+        assert(hit and hit.text:find("Kräuter", 1, true) and hit.text:find("aus", 1, true), "Suche aus nicht gemeldet")
+        GT.Find = function() return nil, 3, nil end
+        GT.TrackHit(200)
+        assert(GT.TrackHit(300).text == "Mineraliensuche ist aus", "nur Erz: falscher Text")
+        dead = true
+        assert(GT.TrackHit(350) == nil, "tot erinnert")
+        dead = false
+        GT.Find = function() return nil, nil, nil end
+        assert(GT.TrackHit(400) == nil, "ohne Sammelberuf erinnert")
+
+        -- Gruppenbuff: party1 hat ihn, party2 nicht, party3 ist tot, party4 unlesbar.
+        _G.InCombatLockdown = function() return false end
+        _G.UnitClass = function() return "Druide", "DRUID" end
+        _G.IsInRaid = function() return false end
+        _G.IsInGroup = function() return true end
+        _G.UnitExists = function() return true end
+        _G.UnitIsConnected = function() return true end
+        _G.UnitIsVisible = function() return true end
+        _G.UnitIsUnit = function() return false end
+        _G.UnitIsDeadOrGhost = function(u) return u == "party3" end
+        _G.UnitName = function(u) return ({ party1 = "Anna", party2 = "Bert", party3 = "Cora", party4 = "Dirk" })[u] end
+        GX.MyBuffs = function() return { { label = "Mal der Wildnis", ids = { 1126 }, names = { ["Mal der Wildnis"] = true }, icon = 1 } } end
+        GX.BuffAt = function(u, i)
+            if u == "party1" and i == 1 then return 1, false, 1800, "Mal der Wildnis", 1126 end
+            if u == "party2" and i == 1 then return 2, false, 1800, "Seelenstärke", 1243 end
+            if u == "party4" and i == 1 then return 3, nil, nil, nil, nil end
+            return nil
+        end
+        local list = GX.GroupMissing(1000)
+        assert(#list == 1 and #list[1].names == 1 and list[1].names[1] == "Bert",
+            "Gruppenbuff: " .. (#list > 0 and table.concat(list[1].names, ",") or "nichts"))
+        _G.UnitClass = function() return "Paladin", "PALADIN" end
+        assert(#GX.GroupMissing(2000) == 0, "Paladin doppelt erinnert")
+        _G.UnitClass = function() return "Druide", "DRUID" end
+        _G.InCombatLockdown = function() return true end
+        assert(#GX.GroupMissing(3000) == 0, "im Kampf gelesen")
+    end)
+    GT.Find, _G.UnitIsDeadOrGhost, GX.MyBuffs, GX.BuffAt = oF, oDead, oMy, oBuffAt
+    for i, n in ipairs(names) do _G[n] = saved[i] end
+    GT.offSince = nil
+    Check(ok, "Erinnerungen: Suche aus, Gruppenbuff fehlt einem Mitspieler" .. (ok and "" or (": " .. tostring(err))))
 end
 
 -- 6.30.19.0: auf der Minikarte kein graues "?" (Abgabe noch nicht fertig).
