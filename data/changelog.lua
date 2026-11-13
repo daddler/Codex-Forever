@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.0.5.68",
+        date    = "13.11.2026",
+        notes   = {
+            "|cff7C6CFFZorn der Gerechtigkeit erinnert auch im Dungeon|r – läuft ein Buff ab, den du selbst gewirkt hast, kommt die Erinnerung jetzt auch mitten im Kampf.",
+        },
+    },
+    {
         version = "1.0.5.67",
         date    = "12.11.2026",
         notes   = {

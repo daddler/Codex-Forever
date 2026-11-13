@@ -9,6 +9,14 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.0.5.68] – 2026-11-13
+
+### Behoben
+- Erinnerungen: ohne „Auch im Kampf“ wurde im Kampf nichts gemeldet – auch
+  nicht ein selbst gewirkter Buff, den die eigene Uhr als abgelaufen kennt
+  (`R.ClockHit`). Der kommt jetzt immer; läuft er im Kampf ab, wird sofort
+  neu geprüft. `/wcui erinnerungen prüfen` nennt Uhr und Schalter.
+
 ## [1.0.5.67] – 2026-11-12
 
 ### Behoben
