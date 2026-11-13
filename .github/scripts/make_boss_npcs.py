@@ -102,6 +102,21 @@ def main():
         rows.remove(r)
         found -= 1
         missing.append(f"{r[0]}/{r[1]} (Nummer {r[2]} mehrdeutig)")
+    # Was die vorige Fassung dieser Datei schon wusste, bleibt: die Nummer
+    # eines Bosses aendert sich nicht, nur weil eine neue Beuteliste keine
+    # eindeutige Ueberschneidung mehr hergibt (1.0.6.1: drei gingen so verloren).
+    if os.path.exists(OUT):
+        have = {(r[0], r[1]) for r in rows}
+        used = {r[2] for r in rows}
+        for npc, d, b, de, en in re.findall(
+                r'^    \[(\d+)\] = \{ "([^"]+)", "([^"]+)", "((?:[^"\\]|\\.)*)", "((?:[^"\\]|\\.)*)" \},',
+                open(OUT, encoding="utf-8").read(), re.M):
+            if (d, b) in have or int(npc) in used or b not in comp.get(d, {}):
+                continue
+            rows.append((d, b, int(npc), de.replace('\\"', '"'), comp[d][b]))
+            have.add((d, b)); used.add(int(npc)); found += 1
+            missing = [m for m in missing if m != f"{d}/{b}"]
+        rows.sort()
     lines = [
         "--------------------------------------------------",
         "-- WeintCodex :: NPC-Nummern der Bosse des Dungeonkompendiums",

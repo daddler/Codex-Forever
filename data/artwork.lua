@@ -277,6 +277,10 @@ WeintCodex.Artworks = {
                 file = ART .. "excavation_site/saltspine",
                 w = 512, h = 128, focusX = 0.65,
             },
+            highland_horror = {
+                file = ART .. "excavation_site/highland_horror",
+                w = 512, h = 128, focusX = 0.5,
+            },
             shadetooth = {
                 file = ART .. "excavation_site/shadetooth",
                 w = 512, h = 128, focusX = 0.62,
@@ -421,6 +425,30 @@ WeintCodex.Artworks = {
             interrogator_vishas = {
                 file = ART .. "scarlet_monastery/interrogator_vishas",
                 w = 512, h = 128, focusX = 0.55,
+            },
+            houndmaster_loksey = {
+                file = ART .. "scarlet_monastery/houndmaster_loksey",
+                w = 512, h = 128, focusX = 0.5,
+            },
+            arcanist_doan = {
+                file = ART .. "scarlet_monastery/arcanist_doan",
+                w = 512, h = 128, focusX = 0.5,
+            },
+            herod = {
+                file = ART .. "scarlet_monastery/herod",
+                w = 512, h = 128, focusX = 0.5,
+            },
+            high_inquisitor_fairbanks = {
+                file = ART .. "scarlet_monastery/high_inquisitor_fairbanks",
+                w = 512, h = 128, focusX = 0.5,
+            },
+            mograine = {
+                file = ART .. "scarlet_monastery/mograine",
+                w = 512, h = 128, focusX = 0.5,
+            },
+            whitemane = {
+                file = ART .. "scarlet_monastery/whitemane",
+                w = 512, h = 128, focusX = 0.5,
             },
             bloodmage_thalnos = {
                 file = ART .. "scarlet_monastery/bloodmage_thalnos",
@@ -1138,9 +1166,8 @@ WeintCodex.Artworks = {
     },
 
     drowned_city = {
-        -- Originale 1983x793, Banner y 60. Bilder liegen fuer sieben Gestalten
-        -- vor, im Bestand steht aber nur Zul'Alai (data/dungeons.lua) - die
-        -- anderen bekommen erst ein Bild, wenn sie eine Herkunft haben.
+        -- Originale 1983x793, Banner y 60. Seit 1.0.6.1 alle acht Bosse
+        -- (Ausschnitte in make_artwork.py).
         header = {
             file = ART .. "drowned_city/header",
             w = 1024, h = 256, focusX = 0.58,
@@ -1149,6 +1176,166 @@ WeintCodex.Artworks = {
             zulalai = {
                 file = ART .. "drowned_city/zulalai",
                 w = 512, h = 128, focusX = 0.55,
+            },
+            vartaka = {
+                file = ART .. "drowned_city/vartaka",
+                w = 512, h = 128, focusX = 0.5,
+            },
+            captain_dreadrise = {
+                file = ART .. "drowned_city/captain_dreadrise",
+                w = 512, h = 128, focusX = 0.5,
+            },
+            deathless_marrow = {
+                file = ART .. "drowned_city/deathless_marrow",
+                w = 512, h = 128, focusX = 0.5,
+            },
+            gill = {
+                file = ART .. "drowned_city/gill",
+                w = 512, h = 128, focusX = 0.5,
+            },
+            minloth = {
+                file = ART .. "drowned_city/minloth",
+                w = 512, h = 128, focusX = 0.5,
+            },
+            primeval_elemental = {
+                file = ART .. "drowned_city/primeval_elemental",
+                w = 512, h = 128, focusX = 0.5,
+            },
+            umbra = {
+                file = ART .. "drowned_city/umbra",
+                w = 512, h = 128, focusX = 0.5,
+            },
+        },
+    },
+
+    kroldok_stronghold = {
+        -- 1.0.6.1. Banner 2172x724 (y 90), Bosse siehe make_artwork.py.
+        header = {
+            file = ART .. "kroldok_stronghold/header",
+            w = 1024, h = 256, focusX = 0.58,
+        },
+        bosses = {
+            slavecrusher_grox = {
+                file = ART .. "kroldok_stronghold/slavecrusher_grox",
+                w = 512, h = 128, focusX = 0.5,
+            },
+            twilight_commander_zarmok = {
+                file = ART .. "kroldok_stronghold/twilight_commander_zarmok",
+                w = 512, h = 128, focusX = 0.5,
+            },
+            war_handler_ashka = {
+                file = ART .. "kroldok_stronghold/war_handler_ashka",
+                w = 512, h = 128, focusX = 0.5,
+            },
+            nargurk = {
+                file = ART .. "kroldok_stronghold/nargurk",
+                w = 512, h = 128, focusX = 0.5,
+            },
+            overlord_mugg = {
+                file = ART .. "kroldok_stronghold/overlord_mugg",
+                w = 512, h = 128, focusX = 0.5,
+            },
+            bossman_toof = {
+                file = ART .. "kroldok_stronghold/bossman_toof",
+                w = 512, h = 128, focusX = 0.5,
+            },
+        },
+    },
+
+    alcaz_island_prison = {
+        -- 1.0.6.1. Banner 2172x724 (y 90), Bosse siehe make_artwork.py.
+        header = {
+            file = ART .. "alcaz_island_prison/header",
+            w = 1024, h = 256, focusX = 0.58,
+        },
+        bosses = {
+            overseer_wrex = {
+                file = ART .. "alcaz_island_prison/overseer_wrex",
+                w = 512, h = 128, focusX = 0.5,
+            },
+            tidemistress_cazass = {
+                file = ART .. "alcaz_island_prison/tidemistress_cazass",
+                w = 512, h = 128, focusX = 0.5,
+            },
+            katerina_the_cleaner = {
+                file = ART .. "alcaz_island_prison/katerina_the_cleaner",
+                w = 512, h = 128, focusX = 0.5,
+            },
+            the_questioner = {
+                file = ART .. "alcaz_island_prison/the_questioner",
+                w = 512, h = 128, focusX = 0.5,
+            },
+            blazeroar = {
+                file = ART .. "alcaz_island_prison/blazeroar",
+                w = 512, h = 128, focusX = 0.5,
+            },
+        },
+    },
+
+    blackmaw_hold = {
+        -- 1.0.6.1. Banner 2172x724 (y 90), Bosse siehe make_artwork.py.
+        header = {
+            file = ART .. "blackmaw_hold/header",
+            w = 1024, h = 256, focusX = 0.58,
+        },
+        bosses = {
+            withermaw = {
+                file = ART .. "blackmaw_hold/withermaw",
+                w = 512, h = 128, focusX = 0.5,
+            },
+            impaan_the_imprisoner = {
+                file = ART .. "blackmaw_hold/impaan_the_imprisoner",
+                w = 512, h = 128, focusX = 0.5,
+            },
+            elder_shaman_bloodmane = {
+                file = ART .. "blackmaw_hold/elder_shaman_bloodmane",
+                w = 512, h = 128, focusX = 0.5,
+            },
+            bonesnout_the_unbroken = {
+                file = ART .. "blackmaw_hold/bonesnout_the_unbroken",
+                w = 512, h = 128, focusX = 0.5,
+            },
+            varrox_bleakhoof = {
+                file = ART .. "blackmaw_hold/varrox_bleakhoof",
+                w = 512, h = 128, focusX = 0.5,
+            },
+            blackmaw_behemoth = {
+                file = ART .. "blackmaw_hold/blackmaw_behemoth",
+                w = 512, h = 128, focusX = 0.5,
+            },
+            unbound_spirit = {
+                file = ART .. "blackmaw_hold/unbound_spirit",
+                w = 512, h = 128, focusX = 0.5,
+            },
+            moontouched_wanderer = {
+                file = ART .. "blackmaw_hold/moontouched_wanderer",
+                w = 512, h = 128, focusX = 0.5,
+            },
+        },
+    },
+
+    shapers_terrace = {
+        -- 1.0.6.1. Banner 2172x724 (y 90), Bosse siehe make_artwork.py.
+        header = {
+            file = ART .. "shapers_terrace/header",
+            w = 1024, h = 256, focusX = 0.58,
+        },
+        bosses = {
+            nanaya = {
+                file = ART .. "shapers_terrace/nanaya",
+                w = 512, h = 128, focusX = 0.5,
+            },
+            snowtalon = {
+                file = ART .. "shapers_terrace/snowtalon",
+                w = 512, h = 128, focusX = 0.5,
+            },
+            cinder = {
+                file = ART .. "shapers_terrace/cinder",
+                w = 512, h = 128, focusX = 0.5,
+            },
+            bolt = {
+                file = ART .. "shapers_terrace/bolt",
+                w = 512, h = 128, focusX = 0.5,
             },
         },
     },

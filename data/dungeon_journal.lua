@@ -1787,6 +1787,41 @@ J.DATA = {
             },
         },
     },
+    -- 1.0.6.1 (Abgleich vom 13.11.2026, Dungeon Journal 2.0.4): Beute, die
+    -- der Abgleich mit Naowh nicht fuehrt. Nur Nummern, Namen, Platz -
+    -- von Spielern gesehen bzw. bei Wowhead Forever verzeichnet.
+    alcaz_island_prison = {
+        loot = {
+            blazeroar = {
+                { 276744, "Zarla's Snack Pouch", "Schmuck", 3 },
+                { 276745, "Beastbond Robe", "Brust, Stoff", 3 },
+                { 276746, "Defias Enforcer's Legguards", "Beine, Leder", 3 },
+                { 276890, "Zarla's Journal", "Questgegenstand", 1 },
+            },
+        },
+    },
+    shapers_terrace = {
+        loot = {
+            cinder = {
+                { 280029, "Cinderedge Crescent", "Einhändig, Axt", 3 },
+                { 280028, "Heartflame Gauntlets", "Hände, Platte", 3 },
+            },
+            bolt = {
+                { 280031, "Sparklance Wand", "Distanz, Zauberstab", 3 },
+                { 280032, "Bolt's Charged Eyeball", "Schmuck", 3 },
+            },
+            snowtalon = {
+                { 280026, "Albinofur Grips", "Hände, Kette", 3 },
+                { 280027, "Crownroar Chestplate", "Brust, Platte", 3 },
+            },
+            nanaya = {
+                { 280023, "Nanaya's Control Spire", "Zweihändig, Stab", 3 },
+                { 280025, "Leggings of Curation", "Beine, Stoff", 3 },
+                { 280024, "Legplates of Reinforced Crystal", "Beine, Platte", 3 },
+                { 273128, "Maker's Spark", "Handwerksmaterial", 2 },
+            },
+        },
+    },
 }
 
 --------------------------------------------------

@@ -998,6 +998,21 @@ dessen Quests, Routen und Bilder (nicht verglichen). Zusätzliche Gegner
 alter Dungeons, die nur Naowh als Boss führt (Untere Schwarzfelsspitze,
 Zul'Farrak …), bleiben wie bisher unter „weitere Beute“.
 
+**Bilder vollständig (1.0.6.1).** Die letzten 37 Bossbilder und vier
+Kopfbilder (Krol'dok Stronghold, Alcaz Island Prison, Blackmaw Hold,
+Shaper's Terrace; dazu Scharlachrotes Kloster ab der Bibliothek, Drowned
+City, Highland Horror) – jeder Dungeon hat ein Kopfbild, jeder der 252
+Bosse ein Bild. Die Originale sind hochkant oder quadratisch; der
+Ausschnitt nimmt die ganze Breite und sitzt auf dem Kopf (`JOBS` in
+`make_artwork.py`). **Beute von Hand** (`data/dungeon_journal.lua`), wo
+Naowh keine führt: Blazeroar und die vier Bosse von Shaper's Terrace
+(Dungeon Journal 2.0.4, von Spielern gesehen). Seite „Beute“
+(`data/loot.lua`) aus AtlasLootClassic v1.3.8 neu erzeugt: neu darin die
+Drowned City. `make_boss_npcs.py` behält Nummern der vorigen Fassung.
+**Weiter ohne Beute** (keine Quelle nennt welche oder nur als Classic-
+Bestand der Seite „Beute“): Mana Wraith, Theldren, Blood Steward of
+Kirtonos, Fras Siabi, Crimson Hammersmith, Jarien and Sothos.
+
 **1.4.0.0 (27.10.2026): abgeglichen mit „Naowh Forever: Dungeon Journal“
 1.1.47** (Daten vom 21.10.2026, Client-Build 1.60.1.70532) – erzeugt wie der
 ForeverGuide-Abgleich: `.github/scripts/import_naowh.py <Ordner>` liest die

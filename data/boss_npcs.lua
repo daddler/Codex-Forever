@@ -4,7 +4,7 @@
 -- ERZEUGT von .github/scripts/make_boss_npcs.py - nicht von Hand aendern.
 -- Zuordnung ueber gleiche Beute (data/loot.lua <-> Journal), kein Name
 -- verglichen. B[npc] = { Dungeon, Boss, deutscher Name, englischer Name }.
--- 171 Bosse mit Nummer, 56 ohne (keine eindeutige Beute).
+-- 171 Bosse mit Nummer, 77 ohne (keine eindeutige Beute).
 --------------------------------------------------
 
 WeintCodex = WeintCodex or {}
