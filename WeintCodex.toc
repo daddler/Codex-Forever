@@ -355,6 +355,7 @@ ui/bossshare.lua
 ui/pvpframes.lua
 # Glitzern: Questgegenstaende, Kraeuter und Erz (6.29.0.0, Komfort; Verhalten von ForeverLootSparkles, eigener Code).
 ui/sparkles.lua
+ui/selftext.lua
 ui/dialogue.lua
 # Weltkarte aufdecken (6.20.0.0, Seite "Karte"): Daten aus data/mapreveal.lua, im Spiel gegengeprueft.
 ui/mapreveal.lua

@@ -85,6 +85,9 @@ K.LAYOUT = {
     questarrow      = { point = "TOP",         relPoint = "TOP", x = 0, y = -8 },
     compass         = { point = "TOP",         relPoint = "TOP", x = 0, y = -106 },
     combatalert     = { point = "CENTER",      relPoint = "CENTER", x = 0, y = 110 },
+    -- Schaden und Heilung an dir (ui/selftext.lua, 1.0.5.69): links neben
+    -- der Bildschirmmitte, wo die eigene Figur steht.
+    selftext        = { point = "CENTER",      relPoint = "CENTER", x = -150, y = 20 },
     fps             = { point = "TOPLEFT",     relPoint = "TOPLEFT", x = 12, y = -12 },
     durability      = { point = "TOP",         relPoint = "TOP", x = 0, y = -160 },
     -- Seltene Gegner (ui/rares.lua, 6.16.0.0): Hinweis unter dem Questpfeil.

@@ -1617,6 +1617,39 @@ do
     Check(ok, "Suche wechseln: Ruhe ohne Kraeuter- und Erzsuche" .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 1.0.5.69: Schaden und Heilung an dir als schwebende Zahl - ab Werk aus.
+do
+    local ST = WeintCodex.UISelfText
+    local K = WeintCodex.UIKit
+    local ok, err = pcall(function()
+        assert(ST and not K.Get("comfort", "selfText"), "schwebende Zahlen ab Werk an")
+        assert(not ST.listening, "hoert zu, obwohl aus")
+        -- Komfort ist an dieser Stelle des Prueflaufs nicht aktiv: nur der Schalter zaehlt.
+        local oAct = ST.Active
+        ST.Active = function() return K.Get("comfort", "selfText") and true or false end
+        K.Set("comfort", "selfText", true)
+        ST.Apply()
+        assert(ST.listening and ST.anchor, "nicht eingeschaltet")
+        local n = ST.stats.shown
+        stub.FireEvent("UNIT_COMBAT", "player", "WOUND", "", 120, 1)
+        stub.FireEvent("UNIT_COMBAT", "player", "HEAL", "CRITICAL", 300, 1)
+        stub.FireEvent("UNIT_COMBAT", "target", "WOUND", "", 50, 1)
+        stub.FireEvent("UNIT_COMBAT", "player", "DODGE", "", 0, 1)
+        assert(ST.stats.shown == n + 2, "falsche Zahl schwebender Zahlen: " .. (ST.stats.shown - n))
+        local seen = {}
+        for _, fs in ipairs(ST.lines) do local t = fs:GetText() if t then seen[t] = true end end
+        assert(seen["-120"] and seen["+300"], "Text der Zahlen")
+        -- Mehr Treffer als Zeilen: reihum, kein Fehler.
+        for i = 1, ST.LINES * 2 do assert(ST.Show("WOUND", nil, i), "Vorrat erschoepft") end
+        K.Set("comfort", "selfText", false)
+        ST.Apply()
+        assert(not ST.listening, "hoert nach dem Ausschalten weiter zu")
+        ST.Active = oAct
+    end)
+    K.Set("comfort", "selfText", nil)
+    Check(ok, "Schaden und Heilung an dir als schwebende Zahl" .. (ok and "" or (": " .. tostring(err))))
+end
+
 -- 1.0.5.69: Erinnerung "Suche aus" und "dein Gruppenbuff fehlt jemandem".
 do
     local GT, GX = WeintCodex.UIGatherTrack, WeintCodex.UIGroupExtra

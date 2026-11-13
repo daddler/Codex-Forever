@@ -32,6 +32,7 @@ local defaults = {
     skipCinematics = false,
     hideErrorsInCombat = false,
     combatAlert    = false,
+    selfText       = false,     -- 1.0.5.69: Schaden/Heilung an dir schwebend (ui/selftext.lua)
     fps            = false,
     durability     = false,
     durabilityThreshold = 20,
@@ -515,6 +516,8 @@ K.Register({
             B:Row({ type = "toggle", label = "Kampfhinweis", key = "combatAlert",
                     description = "„+ Kampf“ und „− Kampf“ kurz in der Bildschirmmitte." },
                   { type = "toggle", label = "Bildrate und Latenz", key = "fps" })
+            B:Row(Row2({ type = "toggle", label = "Schaden und Heilung an dir als schwebende Zahl", key = "selfText",
+                         description = "Was du abbekommst, steigt als Zahl auf: Schaden rot, Heilung grün, kritische Treffer größer. Den Platz verschiebst du im Gestaltungsmodus. Die Zahl am Einheitenrahmen schaltest du dort ab („Treffer und Heilung als Zahl“)." }))
             B:Row({ type = "toggle", label = "Haltbarkeitswarnung", key = "durability" },
                   { type = "slider", label = "Warnen ab", key = "durabilityThreshold", min = 5, max = 50, step = 5,
                     format = function(v) return string.format("%d %%", v) end,
