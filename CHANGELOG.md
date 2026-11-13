@@ -9,6 +9,19 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.0.5.69] – 2026-11-13
+
+### Neu
+- Komfort (`ui/selftext.lua`, Schalter `selfText`, aus): Schaden und Heilung
+  am Spieler als schwebende Zahl aus `UNIT_COMBAT`, eigener Anker `selftext`.
+- Erinnerungen: „Kräuter- oder Mineraliensuche aus“ (`trackRemind`,
+  `GT.TrackHit`) und „Dein Gruppenbuff fehlt jemandem“ (`groupBuffs`,
+  `GX.GroupMissing`; nicht für Paladine).
+
+### Geändert
+- Suche wechseln: nach drei wirkungslosen Wechseln 60 s Pause statt
+  dauerhaft aus; ganz aus nur noch bei Sperre durch das Spiel.
+
 ## [1.0.5.68] – 2026-11-13
 
 ### Behoben

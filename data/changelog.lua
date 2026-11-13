@@ -22,6 +22,16 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.0.5.69",
+        date    = "13.11.2026",
+        notes   = {
+            "|cff7C6CFFSchaden und Heilung an dir als schwebende Zahl|r – neu und ab Werk aus: Einstellungen, Alltag, Seite „Anzeigen“. Rot, was du abbekommst, grün, was dich heilt.",
+            "|cff7C6CFFErinnerung: Suche aus|r – kannst du Kräuter- oder Mineraliensuche und läuft keine, sagt WeintCodex Bescheid.",
+            "|cff7C6CFFErinnerung: dein Buff fehlt jemandem|r – verliert ein Gruppenmitglied Mal der Wildnis, Arkane Intelligenz oder Seelenstärke, steht sein Name da.",
+            "|cff7C6CFFDer Wechsel der Suche schaltet sich nicht mehr ab|r – bewirkt er dreimal nichts, macht er eine Minute Pause und versucht es wieder.",
+        },
+    },
+    {
         version = "1.0.5.68",
         date    = "13.11.2026",
         notes   = {
