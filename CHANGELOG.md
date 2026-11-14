@@ -9,6 +9,13 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.0.6.4] – 2026-11-14
+
+### Behoben
+- Ruckler nach dem Kampf: `K.AfterCombat` nimmt dieselbe Funktion nur einmal
+  in die Warteschlange (gemessen: „Grundlage“ ~0,8 s, ~10 MB nach dem Kampf).
+- `K.HeldSize` überspringt Tabellen, die ein Addon nicht lesen darf.
+
 ## [1.0.6.3] – 2026-11-14
 
 ### Neu

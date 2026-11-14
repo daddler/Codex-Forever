@@ -22,6 +22,14 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.0.6.4",
+        date    = "14.11.2026",
+        notes   = {
+            "|cff7C6CFFKein Ruckler mehr nach dem Kampf|r – was im Kampf warten musste, lief danach teils hundertfach hintereinander. Jetzt nur noch einmal.",
+            "|cff7C6CFF„/wcui speicher“ ohne Fehlermeldung|r am Ende der Ausgabe.",
+        },
+    },
+    {
         version = "1.0.6.3",
         date    = "14.11.2026",
         notes   = {
