@@ -22,6 +22,14 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.0.6.11",
+        date    = "14.11.2026",
+        notes   = {
+            "|cff7C6CFFBosskämpfe nennen die Wirkung|r – hinter dem Namen einer Fähigkeit steht jetzt, was sie tut: Furcht, Rückstoß, Betäubung, Stille, Raserei und mehr. Was dich aus dem Spiel nimmt oder wegschiebt, erscheint zusätzlich groß in der Mitte, und zum Pull kommt eine Zeile mit dem, was dieser Boss kann. Abschaltbar unter Bosskämpfe.",
+            "|cff7C6CFFDungeonkompendium|r – die Fähigkeiten eines Bosses tragen dieselbe Kennzeichnung.",
+        },
+    },
+    {
         version = "1.0.6.10",
         date    = "14.11.2026",
         notes   = {

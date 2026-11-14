@@ -1847,7 +1847,11 @@ local function DrawAbilities(inner, y, w, dungeon, boss)
         local name, desc = WeintCodex.DungeonPages.AbilityText(id)
         if name then
             if not any then y = BodyHeading(inner, y, "Fähigkeiten") any = true end
-            y = BodyText(inner, y, WeintCodex.ColorText("textBright", name), w, { size = 12 }) - 2
+            -- 1.0.6.11: die Wirkung dahinter, wie an den Leisten im Kampf.
+            local BMod = WeintCodex.UIBossMod
+            local eff = desc and BMod and BMod.EffectIn and BMod.EffectIn(desc)
+            y = BodyText(inner, y, WeintCodex.ColorText("textBright", name)
+                .. (eff and WeintCodex.ColorText("warningBright", "  ·  " .. eff.label) or ""), w, { size = 12 }) - 2
             if desc then y = BodyText(inner, y, desc, w, { size = 11, color = "textMuted" }) - 6 end
         end
     end

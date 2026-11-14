@@ -9,6 +9,17 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.0.6.11] – 2026-11-14
+
+### Neu (nicht im Spiel bestätigt)
+- Bosskämpfe: Wirkung einer Fähigkeit (`BM.EFFECTS`, `BM.EffectOf`) – gelesen
+  aus `C_Spell.GetSpellDescription` über Stichworte (deutsch/englisch), keine
+  eigene Angabe. An Zauberleisten und gelernten Leisten („Name · Furcht“),
+  groß in der Mitte bei Furcht, Rückstoß, Übernahme, Schlaf, Verwandlung,
+  Betäubung, Stille (`BM.EffectWarn`, auch bei Sofortzaubern), zum Pull eine
+  Zeile aus `J.Abilities` (`BM.EffectAnnounce`). Schalter `bossEffects`, ab
+  Werk an. Dieselbe Kennzeichnung an den Fähigkeiten im Dungeonkompendium.
+
 ## [1.0.6.10] – 2026-11-14
 
 ### Neu

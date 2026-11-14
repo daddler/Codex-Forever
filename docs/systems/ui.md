@@ -2316,6 +2316,17 @@ Fassung des Clients eine Antwort nicht stillschweigend überholt.
 
 ## Bosskämpfe *(1.10.0.0, `ui/bossmod.lua`)*
 
+**Wirkung einer Fähigkeit (1.0.6.11):** `BM.EFFECTS` ordnet Stichworte aus der
+Beschreibung des Zaubers (`C_Spell.GetSpellDescription`, vom Client) einer
+Wirkung zu – Furcht, Rückstoß, Übernahme, Schlaf, Verwandlung, Betäubung,
+Stille (`warn`: groß in der Mitte), dazu Festgehalten, Entwaffnen, Raserei,
+Heilung, Verlangsamung (nur als Zusatz am Namen). Reihenfolge = Vorrang, die
+erste passende gilt. Ohne Beschreibung oder Treffer steht nichts da; gemerkt
+wird erst, wenn die Beschreibung geladen ist. Zum Pull nennt
+`BM.EffectAnnounce` die Wirkungen der Fähigkeiten aus `J.Abilities` (welcher
+Boss sie hat: `community`). Keine Taktik, keine eigenen Angaben. Schalter
+`bossEffects`.
+
 Wunsch „sowas wie BigWigs“. Verhalten nach BigWigs, **kein Code** (All
 Rights Reserved). BigWigs bringt für Forever kein Bossmodul mit
 (`currentExpansion.zones = {}` für Forever im Lader) – auf modernen Clients

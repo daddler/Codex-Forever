@@ -1750,6 +1750,44 @@ do
     Check(ok, "Weltkarte: oeffnen ueber den Kartenknopf des Spiels, Taint-Bericht im Fehlerbericht" .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 1.0.6.11: Bosskaempfe nennen die Wirkung einer Faehigkeit.
+do
+    local ok, err = pcall(function()
+        local BM, K = WeintCodex.UIBossMod, WeintCodex.UIKit
+        local G = _G
+        local oldSpell = G.C_Spell
+        local desc = { [101] = "Versetzt alle Gegner in Furcht, sodass sie 4 Sek. lang fliehen.",
+                       [102] = "Fügt 100 Schaden zu und stößt das Ziel zurück. Das Ziel wird zurückgestoßen.",
+                       [103] = "Fügt 50 Feuerschaden zu.", [104] = "" }
+        G.C_Spell = { GetSpellDescription = function(id) return desc[id] end,
+                      GetSpellName = function(id) return "Zauber " .. id end }
+        for k in pairs(BM._effectOf) do BM._effectOf[k] = nil end
+        assert(BM.EffectOf(101).key == "fear", "Furcht nicht erkannt")
+        assert(BM.EffectOf(102).key == "knockback", "Rückstoß nicht erkannt")
+        assert(BM.EffectOf(103) == nil, "Schaden ohne Wirkung bekommt eine")
+        assert(BM.EffectOf(104) == nil and BM._effectOf[104] == nil, "leere Beschreibung gemerkt")
+        assert(BM.EffectOf(nil) == nil, "ohne Nummer")
+        assert(BM.Tagged("Gebrüll", 101) == "Gebrüll · Furcht", "Name ohne Wirkung: " .. tostring(BM.Tagged("Gebrüll", 101)))
+        assert(BM.Tagged("Feuerball", 103) == "Feuerball", "Name veraendert")
+        -- Zum Pull: eine Zeile aus den bekannten Faehigkeiten des Bosses.
+        local J = WeintCodex.DungeonJournal
+        local oldAb = J.Abilities
+        J.Abilities = function() return { 101, 103, 102, 101 } end
+        assert(BM.EffectSummary({ dungeon = "x", boss = "y" }) == "Furcht, Rückstoß", "Zeile zum Pull")
+        J.Abilities = function() return { 103 } end
+        assert(BM.EffectSummary({ dungeon = "x", boss = "y" }) == nil, "Zeile ohne Wirkung")
+        J.Abilities = oldAb
+        -- Ausgeschaltet: nichts.
+        K.Set("comfort", "bossEffects", false)
+        local off = BM.Tagged("Gebrüll", 101)
+        K.Set("comfort", "bossEffects", true)
+        assert(off == "Gebrüll", "Schalter wirkt nicht: " .. tostring(off))
+        G.C_Spell = oldSpell
+        for k in pairs(BM._effectOf) do BM._effectOf[k] = nil end
+    end)
+    Check(ok, "Bosskaempfe: Wirkung einer Faehigkeit (Furcht, Rueckstoss) aus der Beschreibung" .. (ok and "" or (": " .. tostring(err))))
+end
+
 -- 1.0.6.10: /wcui dungeonkarte - was der Client in der Instanz sagt.
 do
     local ok, err = pcall(function()

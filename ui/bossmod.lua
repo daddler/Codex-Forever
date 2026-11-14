@@ -66,6 +66,7 @@ BM.DEFAULTS = {
     bossCasts    = true,    -- 1.10.6.0: Zauber der Bosse als Leisten
     bossCount    = "important", -- 1.10.14.0: laut von 5 herunterzaehlen: off | important | all
     bossLearn    = true,    -- 1.10.8.0: Zeiten aus eigenen Kaempfen lernen
+    bossEffects  = true,    -- 1.0.6.11: Wirkung einer Faehigkeit nennen (Furcht, Rueckstoss ...)
     bossSoonSecs = 3,       -- Vorwarnung: so viele Sekunden vor der Faehigkeit
     bossWhere    = "all",   -- all | group | instance (wie bei "Raus da!")
     bossChannel  = "Master",
@@ -1065,6 +1066,8 @@ function BM.EncounterStart(id, name, difficulty)
     BM.Stop("pull")
     BM.CatchUp()
     if not (old and (old.src == "engage" or old.src == "codex")) then BM.LearnStart() end
+    if old and old.effectsSaid then BM.fight.effectsSaid = true end
+    BM.EffectAnnounce()
     BM.Refresh()
 end
 
@@ -1267,6 +1270,7 @@ function BM.CodexEngage(unit)
         codex = e, guid = guid, instance = BM.InstanceName() }
     BM.Stop("pull")
     BM.LearnStart()
+    BM.EffectAnnounce()
     return true
 end
 
@@ -1440,6 +1444,110 @@ function BM.CastUnit(unit)
     return c == "worldboss" or c == "elite" or c == "rareelite"
 end
 
+--------------------------------------------------
+-- WIRKUNG EINER FAEHIGKEIT (1.0.6.11, Wunsch: "dass man irgendwas angezeigt
+-- bekommt. Rueckstoesse, Fear etc."). Was ein Zauber tut, sagt der Client in
+-- seiner Beschreibung (C_Spell.GetSpellDescription) - WeintCodex liest nur
+-- nach, ob dort eines der Worte unten steht. Keine Taktik, keine eigene
+-- Angabe: fehlt die Beschreibung oder nennt sie nichts davon, steht nichts
+-- da. Reihenfolge = Vorrang; `warn`: gross in der Mitte, wenn der Boss es
+-- wirkt (was einen aus dem Spiel nimmt oder wegschiebt).
+--------------------------------------------------
+BM.EFFECTS = {
+    { key = "fear",      label = "Furcht",       warn = true,
+      words = { "furcht", "flieh", "entsetzen", "fear", "flee", "horrif", "terrif" } },
+    { key = "knockback", label = "Rückstoß",     warn = true,
+      words = { "zurückgesto", "zurückgeworfen", "zurückschleuder", "zurückwirft", "zurückstö", "zurückgeschleudert",
+                "wegsto", "wegschleuder", "in die luft", "knock", "into the air" } },
+    { key = "charm",     label = "Übernahme",    warn = true,
+      words = { "bezauber", "gedankenkontrolle", "kontrolle über", "charm", "mind control" } },
+    { key = "sleep",     label = "Schlaf",       warn = true, words = { "schlaf", "sleep" } },
+    { key = "polymorph", label = "Verwandlung",  warn = true, words = { "verwandelt", "polymorph", "transforms the" } },
+    { key = "stun",      label = "Betäubung",    warn = true, words = { "betäub", "stun" } },
+    { key = "silence",   label = "Stille",       warn = true, words = { "zum schweigen", "verstumm", "silenc" } },
+    { key = "root",      label = "Festgehalten", words = { "bewegungsunfähig", "festgewurzelt", "wurzeln", "immobil", "root" } },
+    { key = "disarm",    label = "Entwaffnen",   words = { "entwaffn", "disarm" } },
+    { key = "enrage",    label = "Raserei",      words = { "raserei", "wutanfall", "enrag", "frenzy" } },
+    { key = "heal",      label = "Heilung",      words = { "heilt", "heals" } },
+    { key = "slow",      label = "Verlangsamung", words = { "verlangsamt", "bewegungsgeschwindigkeit", "slow" } },
+}
+local effectOf = {}      -- [Zauber-ID] = Eintrag aus BM.EFFECTS oder false
+BM._effectOf = effectOf
+
+function BM.EffectIn(desc)
+    desc = Lower(desc)
+    if not desc then return nil end
+    for _, e in ipairs(BM.EFFECTS) do
+        for _, w in ipairs(e.words) do
+            if desc:find(w, 1, true) then return e end
+        end
+    end
+    return nil
+end
+
+-- Wirkung eines Zaubers: Eintrag oder nil. Gemerkt wird erst, wenn der
+-- Client die Beschreibung nennt (sie laedt manchmal nach).
+function BM.EffectOf(spellID)
+    if type(spellID) ~= "number" then return nil end
+    local hit = effectOf[spellID]
+    if type(hit) ~= "nil" then return hit or nil end
+    local cs = _G.C_Spell
+    if not (cs and cs.GetSpellDescription) then return nil end
+    local ok, d = pcall(cs.GetSpellDescription, spellID)
+    d = ok and Plain(d) or nil
+    if type(d) ~= "string" or d == "" then return nil end
+    local e = BM.EffectIn(d)
+    effectOf[spellID] = e or false
+    return e
+end
+
+-- Name mit Wirkung dahinter ("Kriegsdonner · Betäubung").
+function BM.Tagged(name, spellID)
+    if not Opt("bossEffects") then return name end
+    local e = BM.EffectOf(spellID)
+    return e and (name .. " · " .. e.label) or name
+end
+
+-- Gross warnen, wenn die Wirkung es wert ist. Hoechstens alle 3 s je Zauber.
+local effectWarned = {}
+function BM.EffectWarn(name, spellID, icon)
+    if not (Opt("bossEffects") and Opt("bossWarnings")) then return nil end
+    local e = BM.EffectOf(spellID)
+    if not (e and e.warn) or type(name) ~= "string" then return nil end
+    local now = Now()
+    if effectWarned[name] and now - effectWarned[name] < 3 then return nil end
+    effectWarned[name] = now
+    BM.Warn(e.label .. ": " .. name, icon)
+    return e
+end
+
+-- Zum Pull: was die bekannten Faehigkeiten dieses Bosses tun, in einer Zeile.
+-- Welcher Boss welche Faehigkeit hat, ist Wissensstand aus der Beta - die
+-- Wirkung selbst liest der Client.
+function BM.EffectSummary(codex)
+    local J = WeintCodex.DungeonJournal
+    if not (type(codex) == "table" and J and J.Abilities) then return nil end
+    local have, out = {}, {}
+    for _, id in ipairs(J.Abilities(codex.dungeon, codex.boss) or {}) do
+        local e = BM.EffectOf(id)
+        if e and not have[e.key] then
+            have[e.key] = true
+            out[#out + 1] = e.label
+        end
+    end
+    if #out == 0 then return nil end
+    return table.concat(out, ", ")
+end
+function BM.EffectAnnounce()
+    local f = BM.fight
+    if not (f and f.codex and not f.effectsSaid and Opt("bossEffects") and Opt("bossWarnings")) then return nil end
+    f.effectsSaid = true
+    local text = BM.EffectSummary(f.codex)
+    if not text then return nil end
+    BM.Warn("Achtung: " .. text)
+    return text
+end
+
 function BM.CastStart(unit, channel)
     if not Opt("bossCasts") or not BM.CastUnit(unit) then return nil end
     local fn = channel and _G.UnitChannelInfo or _G.UnitCastingInfo
@@ -1457,17 +1565,18 @@ function BM.CastStart(unit, channel)
     if left <= 0 then return nil end
     -- 1.10.8.0: der Zauber, nicht der Boss - ein langer Bossname frass
     -- sonst den ganzen Platz ("Kriegshaeuptling Rend Schwarzf...").
-    local t = BM.Start("cast" .. unit, name, left, Plain(icon), locked == true and "blue" or "gold")
+    local spellID = Plain(channel and a8 or a9)
+    local t = BM.Start("cast" .. unit, BM.Tagged(Plain(name), spellID), left, Plain(icon), locked == true and "blue" or "gold")
     t.start = startMS / 1000
     castStarted[unit], castStartedAt[unit] = Plain(name), Now()
     castSpellOf[unit] = Plain(name)
-    local spellID = Plain(channel and a8 or a9)
     local rec = BM.LearnCast(unit, Plain(name), Plain(icon), type(spellID) == "number" and spellID or nil, true)
     -- Je Faehigkeit (Seite "Bosse"): eigener Ton beim Wirken, grosse Warnung.
     local e = type(rec) == "table" and type(rec.edit) == "table" and rec.edit or nil
     if not (e and e.mode == "off") then
         BM.Sound("Cast", nil, e and e.castSound)
-        if e and e.warn then BM.Warn(name, Plain(icon)) end
+        if e and e.warn then BM.Warn(BM.Tagged(Plain(name), spellID), Plain(icon))
+        else BM.EffectWarn(Plain(name), spellID, Plain(icon)) end
     end
     return true
 end
@@ -1604,7 +1713,9 @@ BM.SPAM_GAP = 8
 local function Predict(spell, secs, icon, sound, gap, soonSecs, important)
     if not secs or secs <= 0 then return end
     if gap and gap < BM.SPAM_GAP then return end
-    local t = BM.Start("nx" .. spell, "~ " .. spell, secs, icon, "textMuted")
+    local st = BM.LearnStore()
+    local rec = type(st) == "table" and st[spell] or nil
+    local t = BM.Start("nx" .. spell, "~ " .. BM.Tagged(spell, type(rec) == "table" and rec.id or nil), secs, icon, "textMuted")
     t.soon, t.learned, t.sound, t.gap, t.soonSecs = true, true, sound, gap, soonSecs
     t.count = BM.Counts(important)
 end
@@ -1910,7 +2021,12 @@ function BM.CastSucceeded(unit, spellID)
         local ok, i = pcall(_G.C_Spell.GetSpellTexture, spellID)
         icon = ok and Plain(i) or nil
     end
-    return BM.LearnCast(unit, name, icon, spellID)
+    local rec = BM.LearnCast(unit, name, icon, spellID)
+    -- Sofortzauber des Bosses (keine Leiste): die Wirkung wenigstens nennen.
+    if rec and not rec.cast and not (type(rec.edit) == "table" and rec.edit.mode == "off") then
+        BM.EffectWarn(name, spellID, icon)
+    end
+    return rec
 end
 BM.castStarted = castStarted
 
@@ -2128,6 +2244,8 @@ local function BuildGeneral(B)
             description = "Warnungen und Emotes der Bosse – das Spiel zeigt sie auch selbst; das hier ist eine zweite, größere Anzeige." },
           { type = "toggle", label = "Zeiten aus eigenen Kämpfen lernen", key = "bossLearn",
             description = "Wann ein Boss was wirkt, gemessen in deinen Kämpfen. Solche Leisten tragen ein „~“. Einstellen je Boss unter „Bosse“." })
+    B:Row({ type = "toggle", label = "Wirkung nennen (Furcht, Rückstoß …)", key = "bossEffects",
+            description = "Hinter dem Namen einer Fähigkeit steht, was sie tut – gelesen aus der Beschreibung des Spiels. Furcht, Rückstoß, Betäubung und Ähnliches erscheinen zusätzlich groß in der Mitte, und zum Pull eine Zeile mit dem, was dieser Boss kann." })
 end
 
 -- Reiter 2: Leisten und Zeitleiste.
