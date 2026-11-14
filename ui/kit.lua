@@ -885,7 +885,10 @@ function K.HeldSize(root, seen, budget)
     seen[root] = true
     while #stack > 0 do
         local t = table.remove(stack)
-        local n = #t
+        -- 1.0.6.4: Tabellen des Spiels, die ein Addon nicht lesen darf,
+        -- werfen schon bei #t ("cannot be accessed while tainted") - auslassen.
+        local okN, n = pcall(function() return #t end)
+        if not okN then n = 0 t = {} end
         bytes = bytes + 56 + n * 16
         for k, v in pairs(t) do
             budget.left = budget.left - 1
@@ -1004,6 +1007,7 @@ end
 --------------------------------------------------
 
 local afterCombat = {}
+local queued = {}
 function K.InCombat()
     return _G.InCombatLockdown ~= nil and _G.InCombatLockdown() and true or false
 end
@@ -1013,8 +1017,16 @@ function K.AfterCombat(fn)
         fn()
         return
     end
+    -- 1.0.6.4 (Ruckler nach dem Kampf, gemessen: "Grundlage" ~0,8 s und
+    -- ~10 MB in wenigen Aufrufen): Teile, die bei jedem Ereignis im Kampf
+    -- dieselbe Funktion nachreichten (Segen, Aktionsleisten, Glitzern ...),
+    -- liefen nach dem Kampf hundertfach hintereinander. Dieselbe Funktion
+    -- steht jetzt nur einmal in der Schlange.
+    if queued[fn] then return end
+    queued[fn] = true
     afterCombat[#afterCombat + 1] = fn
 end
+K.AfterCombatQueued = function() return #afterCombat end
 
 --------------------------------------------------
 -- Schriften und Balken
@@ -2352,6 +2364,7 @@ boot:SetScript("OnEvent", WeintCodex.Measured("Grundlage", function(_, event)
     if event == "PLAYER_REGEN_ENABLED" then
         local queue = afterCombat
         afterCombat = {}
+        queued = {}
         for _, fn in ipairs(queue) do
             local ok, err = pcall(fn)
             if not ok then K.Report("kampf", err) end
