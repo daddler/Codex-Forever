@@ -49,7 +49,11 @@ MW.WINDOWS = {
     "ProfessionsFrame", "ProfessionsBookFrame", "TradeSkillFrame", "CraftFrame", "ClassTrainerFrame",
     "GossipFrame", "QuestFrame", "QuestLogFrame", "QuestLogPopupDetailFrame", "ItemTextFrame",
     "MerchantFrame", "MailFrame", "OpenMailFrame", "BankFrame", "GuildBankFrame", "AuctionHouseFrame",
-    "TradeFrame", "LootFrame", "MacroFrame", "SettingsPanel", "AddonList", "WorldMapFrame",
+    -- 1.0.6.6: ohne WorldMapFrame. "Blockiert: SetPassThroughButtons" beim
+    -- Oeffnen der Karte (Aufbau ueber ShowUIPanel/SetUIPanel): ein von einem
+    -- Addon gesetzter Platz der Weltkarte verunreinigt ihren Aufbau - die
+    -- Karte steht wieder dort, wo das Spiel sie hinstellt.
+    "TradeFrame", "LootFrame", "MacroFrame", "SettingsPanel", "AddonList",
     "TaxiFrame", "FlightMapFrame", "DressUpFrame", "TabardFrame", "InspectFrame", "TimeManagerFrame",
     "CalendarFrame", "ChannelFrame", "AchievementFrame", "EncounterJournal", "ItemSocketingFrame",
     "PetStableFrame", "StableFrame", "HelpFrame", "ChatConfigFrame", "KeyBindingFrame", "QuickKeybindFrame",

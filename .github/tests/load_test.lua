@@ -19413,19 +19413,12 @@ do
         combat = false
         stub.FireEvent("PLAYER_REGEN_ENABLED")
         assert(MW.hooked[mf] == "MacroFrame", "Einrichten nach dem Kampf nicht nachgeholt")
-        -- Vergroesserte Karte: nicht ziehen, nicht setzen.
+        -- 1.0.6.6: die Weltkarte wird nicht mehr verschoben (Verunreinigung
+        -- ihres Aufbaus, "Blockiert: SetPassThroughButtons").
         local map = Win("WorldMapFrame")
         _G.WorldMapFrame = map
-        map.IsMaximized = function() return true end
         stub.FireEvent("ADDON_LOADED", "Blizzard_WorldMap")
-        assert(MW.hooked[map], "Karte nicht eingerichtet")
-        map:Show()
-        map._scripts.OnDragStart(map)
-        assert(not map._moving, "vergroesserte Karte gezogen")
-        MW.open[map] = { x = 5, y = 6 }
-        map._scripts.OnShow(map)
-        assert(map._pt[4] ~= 5, "vergroesserte Karte versetzt")
-        MW.open[map] = nil
+        assert(not MW.hooked[map], "Weltkarte wird wieder verschoben")
         -- Umschalt + Rechtsklick: an den Platz des Spiels.
         cf._scripts.OnDragStart(cf)
         cf._l, cf._t = 300, 651
