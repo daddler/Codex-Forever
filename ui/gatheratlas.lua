@@ -79,7 +79,12 @@ local MINIKEY = { herb = "gaMiniHerb", ore = "gaMiniOre", chest = "gaMiniChest",
 
 -- Sammelzauber der klassischen Clients: Kraeutersammeln, Bergbau, Oeffnen,
 -- Angeln (vier Raenge).
+-- 1.0.6.5: dazu die hoeheren Raenge von Kraeutersammeln und Bergbau, falls
+-- der Client beim Sammeln den Rang meldet (Classic: 2368/3570/11993,
+-- 2576/3564/10248) - sonst fehlten Stellen in hoeheren Gebieten.
 GA.SPELLS = { [2366] = "herb", [2575] = "ore", [3365] = "chest",
+              [2368] = "herb", [3570] = "herb", [11993] = "herb",
+              [2576] = "ore", [3564] = "ore", [10248] = "ore",
               [7620] = "fish", [7731] = "fish", [7732] = "fish", [18248] = "fish" }
 GA.BOBBER = 35591          -- Angelschwimmer: Angeln im freien Wasser, kein Schwarm
 GA.MERGE = 0.004           -- Kartenanteil: so nah = dieselbe Stelle
@@ -154,12 +159,81 @@ local function CountMap(m)
 end
 GA.CountMap = CountMap
 
+-- 1.0.6.5 (Spieler: "in einigen Bereichen falsch"): GetBestMapForUnit
+-- nennt in Hoehlen, Minen und manchen Orten eine eigene kleine Karte. Dort
+-- gesammelte Stellen (eigene wie von der Gilde) standen unter dieser Karte
+-- und fehlten auf der Gebietskarte. Jede Stelle steht jetzt auf dem Gebiet
+-- (Kartentyp 3), umgerechnet ueber die Weltlage.
+GA.ZONE_TYPE = 3
+local zoneOf = {}
+function GA.ZoneOf(map)
+    if type(map) ~= "number" then return map end
+    local z = zoneOf[map]
+    if z then return z end
+    z = map
+    local cm = _G.C_Map
+    if cm and cm.GetMapInfo then
+        local cur = map
+        for _ = 1, 6 do
+            local ok, info = pcall(cm.GetMapInfo, cur)
+            if not ok or type(info) ~= "table" then break end
+            local t, parent = K.Plain(info.mapType), K.Plain(info.parentMapID)
+            if type(t) ~= "number" or t <= GA.ZONE_TYPE then z = cur break end
+            if type(parent) ~= "number" or parent <= 0 then break end
+            cur = parent
+        end
+    end
+    zoneOf[map] = z
+    return z
+end
+function GA.Normalize(map, x, y)
+    local z = GA.ZoneOf(map)
+    if z == map or not (K.ToWorld and K.WorldToMap) then return map, x, y end
+    local c, n, w = K.ToWorld(map, x, y)
+    local zx, zy = K.WorldToMap(z, c, n, w)
+    if not zx then return map, x, y end
+    return z, zx, zy
+end
+
+-- Alte Stellen auf kleinen Karten einmal je Sitzung aufs Gebiet ziehen.
+function GA.Migrate()
+    if GA.migrated then return 0 end
+    local g = GA.Store()
+    if not g then return 0 end
+    GA.migrated = true
+    local moved = 0
+    local maps = {}
+    for mapID in pairs(g.nodes) do maps[#maps + 1] = mapID end
+    for _, mapID in ipairs(maps) do
+        if GA.ZoneOf(mapID) ~= mapID then
+            local m = g.nodes[mapID]
+            local keep, kept = {}, false
+            for key, list in pairs(m) do
+                for _, p in ipairs(list) do
+                    local z, zx, zy = GA.Normalize(mapID, p.x, p.y)
+                    if z ~= mapID and GA.Record(z, key, zx, zy, nil, nil, p.s, p.last) then
+                        moved = moved + 1
+                    else
+                        keep[key] = keep[key] or {}
+                        keep[key][#keep[key] + 1] = p
+                        kept = true
+                    end
+                end
+            end
+            g.nodes[mapID] = kept and keep or nil
+        end
+    end
+    if moved > 0 then Changed() end
+    return moved
+end
+
 -- Eine Stelle merken. `key`: objectID (Zahl) oder Name (Text, ohne GUID).
 -- Gibt den Punkt und ob er neu ist zurueck - oder nil (ungueltig, voll).
 function GA.Record(mapID, key, x, y, kind, name, shared, when)
     if type(mapID) ~= "number" or mapID <= 0 then return nil end
     if not (type(key) == "number" and key > 0) and not (type(key) == "string" and key ~= "") then return nil end
     if type(x) ~= "number" or type(y) ~= "number" or x < 0 or x > 1 or y < 0 or y > 1 then return nil end
+    mapID, x, y = GA.Normalize(mapID, x, y)
     local g = GA.Store(true)
     if not g then return nil end
     if kind and GA.KIND_LABEL[kind] and not g.kinds[key] then g.kinds[key] = kind end
@@ -553,7 +627,7 @@ function GA.OnSent(unit, target, castGUID, spellID)
     if not kind then return end
     for k in pairs(tracker) do tracker[k] = nil end
     if InInstance() then GA.last.where = "Instanz" return end
-    local map = K.BestMap()
+    local map = GA.ZoneOf(K.BestMap())
     local x, y
     if map then x, y = K.PlayerMapXY(map) end
     if not (map and x) then GA.last.where = "Lage unbekannt" return end
@@ -896,6 +970,7 @@ local routeEntries = {} -- [mapID] = { version, list }
 -- Eintraege einer Karte (eigene Tabellen, nie die gespeicherten: die
 -- Minikarte merkt sich an ihnen die Weltlage).
 function GA.Entries(mapID)
+    if not GA.migrated then pcall(GA.Migrate) end
     local c = entries[mapID]
     if c and c.version == GA.version then return c.list end
     local list = {}

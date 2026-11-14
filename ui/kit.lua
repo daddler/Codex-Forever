@@ -250,6 +250,16 @@ end
 
 -- Wo auf Karte `map` (Standard: die eigene) der Spieler steht, 0..1 -
 -- oder nil (andere Karte, Instanz, Client schweigt).
+-- Weltlage -> Kartenpunkt 0..1 auf `map` (1.0.6.5), oder nil (anderer
+-- Kontinent, ausserhalb der Karte, Karte ohne Rechteck).
+function K.WorldToMap(map, c, n, w)
+    local r = Rect(map)
+    if not (r and c and n and w) or c ~= r.c then return nil end
+    local x, y = (w - r.w0) / r.dw, (n - r.n0) / r.dn
+    if x < 0 or x > 1 or y < 0 or y > 1 then return nil end
+    return x, y
+end
+
 function K.PlayerMapXY(map)
     map = map or K.BestMap()
     if not map then return nil end
