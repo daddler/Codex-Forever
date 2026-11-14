@@ -9,6 +9,16 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.0.6.9] – 2026-11-14
+
+### Neu
+- Karten von Santiago Reyes für Drowned City (2 Ebenen), Krol'dok, Alcaz (2),
+  Blackmaw Hold (6) und Shaper's Terrace (2) – auf seiner neuen Seite
+  (sreyesmaps.com) inzwischen veröffentlicht. `data/dungeonmaps_forever.lua`,
+  `media/dungeonmaps/` (+5 MB im Paket, geladen erst beim Anzeigen).
+  Instanz-IDs 2970, 3039, 2994, 2974, 3001 aus dem Journal-Abgleich, im Spiel
+  nicht geprüft.
+
 ## [1.0.6.8] – 2026-11-14
 
 ### Neu

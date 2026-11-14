@@ -13,6 +13,9 @@ und Nennung des Zeichners inklusive) - nur verlustbehaftet gepackt.
 
     python3 -I .github/scripts/make_dungeonmaps.py <Quellordner> <Name>...
 
+Seit 1.0.6.9 gibt er die Karten als 3000x2000 heraus: vorher auf 1024x683
+verkleinern und oben in ein schwarzes 1024x1024-Bild setzen.
+
 Braucht Pillow und numpy. Der Zeichner erlaubt Addons die Nutzung, solange
 Wasserzeichen und Nennung bleiben und nichts verkauft wird (siehe
 data/dungeonmaps_forever.lua).

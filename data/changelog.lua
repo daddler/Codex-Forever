@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.0.6.9",
+        date    = "14.11.2026",
+        notes   = {
+            "|cff7C6CFFKarten für fünf weitere Dungeons|r – The Drowned City, Krol'dok Stronghold, Alcaz Island Prison, Blackmaw Hold und Shaper's Terrace zeigen jetzt eine Karte, mit allen Ebenen. Zeichnungen von Santiago Reyes, keine Karten des Spiels.",
+        },
+    },
+    {
         version = "1.0.6.8",
         date    = "14.11.2026",
         notes   = {
