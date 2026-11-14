@@ -9,6 +9,16 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.0.6.12] – 2026-11-14
+
+### Behoben
+- „Blockiert: UNKNOWN()“ aus `MS.Send` (`ui/messenger.lua:1120`): die Sperre
+  des direkten Flüsterns war erwartet und wurde aufgefangen (Text in die
+  Chatzeile, `msgDirect` aus), das Fehlerfenster meldete sie trotzdem.
+  `ER.Expect`/`ER.Expected` (`ui/errors.lua`): eine angekündigte Sperre ist
+  kein Fehler. Gemessen damit: direktes Flüstern ist auf Forever gesperrt
+  (mindestens in der Lage des Spielers – welche, nennt der Bericht nicht).
+
 ## [1.0.6.11] – 2026-11-14
 
 ### Neu (nicht im Spiel bestätigt)

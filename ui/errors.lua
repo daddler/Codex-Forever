@@ -323,6 +323,19 @@ function ER.Extra(func, stack)
     return "--- Taschen, Taint-Bericht ---\n" .. table.concat(lines, "\n")
 end
 
+-- Ein Teil probiert etwas, das das Spiel sperren darf, und faengt die
+-- Sperre selbst auf: fuer `secs` Sekunden gilt eine Sperre als erwartet.
+ER.expectUntil = 0
+local function Clock()
+    local K = WeintCodex.UIKit
+    local t = _G.GetTime and _G.GetTime()
+    if K and K.Plain then t = K.Plain(t) end
+    return type(t) == "number" and t or 0
+end
+function ER.Expect(secs) ER.expectUntil = Clock() + (secs or 1) end
+function ER.Expected() return (ER.expectUntil or 0) > 0 and Clock() <= ER.expectUntil end
+function ER.ExpectEnd() ER.expectUntil = 0 end
+
 local ev = CreateFrame("Frame")
 for _, e in ipairs({ "PLAYER_LOGIN", "ADDON_ACTION_BLOCKED", "ADDON_ACTION_FORBIDDEN" }) do
     pcall(ev.RegisterEvent, ev, e)
@@ -335,6 +348,10 @@ ev:SetScript("OnEvent", WeintCodex.Measured("Fehlerfenster", function(_, event, 
         return
     end
     if addon ~= "WeintCodex" then return end
+    -- 1.0.6.12 (Bericht: "Blockiert: UNKNOWN()" aus dem Senden des
+    -- Messengers): ein Teil, der eine Sperre erwartet und selbst auffaengt
+    -- (ER.Expect kurz vor dem Versuch), ist kein Fehler.
+    if ER.Expected() then return end
     local msg = (event == "ADDON_ACTION_FORBIDDEN" and "Verboten: " or "Blockiert: ") .. tostring(func or "?")
     local stack = _G.debugstack and _G.debugstack(2) or ""
     ER.Announce(ER.Record("blocked", msg, stack, ER.Extra(func, stack)))

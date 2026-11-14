@@ -1111,6 +1111,10 @@ function MS.Send(key, text)
     if not Get("direct") then return OpenGameReply(c, text) end
     sendAt = Clock()
     MS.blockedNow = nil
+    -- Sperrt das Spiel das Senden, faengt MS.OnBlocked es auf - kein Fall
+    -- fuers Fehlerfenster.
+    local ER = WeintCodex.UIErrors
+    if ER and ER.Expect then ER.Expect(MS.BLOCK_WINDOW) end
     local ok
     if c.bn then
         local f = _G.BNSendWhisper or (_G.C_BattleNet and _G.C_BattleNet.SendWhisper)
@@ -1119,6 +1123,8 @@ function MS.Send(key, text)
         local f = (_G.C_ChatInfo and _G.C_ChatInfo.SendChatMessage) or _G.SendChatMessage
         ok = f and pcall(f, text, "WHISPER", nil, c.target)
     end
+    -- Die Sperre meldet das Spiel noch im Aufruf: danach gilt wieder jede.
+    if ER and ER.ExpectEnd then ER.ExpectEnd() end
     if MS.blockedNow or not ok then
         -- Das Spiel laesst es nicht: zurueck auf die Chatzeile, mit dem Text.
         OpenGameReply(c, text)

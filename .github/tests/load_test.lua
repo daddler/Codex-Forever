@@ -1750,6 +1750,28 @@ do
     Check(ok, "Weltkarte: oeffnen ueber den Kartenknopf des Spiels, Taint-Bericht im Fehlerbericht" .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 1.0.6.12: eine erwartete Sperre (Messenger sendet selbst) ist kein Fehler.
+do
+    local ok, err = pcall(function()
+        local ER = WeintCodex.UIErrors
+        local h = ER.events:GetScript("OnEvent")
+        local oldRecord, n = ER.Record, 0
+        ER.Record = function(...) n = n + 1 return oldRecord(...) end
+        local oldT = _G.GetTime
+        _G.GetTime = function() return 500 end
+        ER.Expect(1)
+        h(ER.events, "ADDON_ACTION_BLOCKED", "WeintCodex", "UNKNOWN()")
+        assert(n == 0, "erwartete Sperre als Fehler gemeldet")
+        _G.GetTime = function() return 502 end
+        h(ER.events, "ADDON_ACTION_BLOCKED", "WeintCodex", "UNKNOWN()")
+        assert(n == 1, "unerwartete Sperre nicht gemeldet")
+        _G.GetTime = oldT
+        ER.Record = oldRecord
+        ER.expectUntil = 0
+    end)
+    Check(ok, "Fehlerfenster: erwartete Sperre still, unerwartete gemeldet" .. (ok and "" or (": " .. tostring(err))))
+end
+
 -- 1.0.6.11: Bosskaempfe nennen die Wirkung einer Faehigkeit.
 do
     local ok, err = pcall(function()

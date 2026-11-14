@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.0.6.12",
+        date    = "14.11.2026",
+        notes   = {
+            "|cff7C6CFFKeine Fehlermeldung mehr beim Antworten im Flüsterfenster|r („Blockiert: UNKNOWN()“) – lässt das Spiel WeintCodex nicht selbst flüstern, landet dein Text wie bisher in der Chatzeile und Enter sendet; das Fehlerfenster bleibt dabei zu.",
+        },
+    },
+    {
         version = "1.0.6.11",
         date    = "14.11.2026",
         notes   = {
