@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.0.6.6",
+        date    = "14.11.2026",
+        notes   = {
+            "|cff7C6CFFKeine Fehlermeldung mehr beim Öffnen der Weltkarte|r („Blockiert: SetPassThroughButtons“) – dafür lässt sich die Weltkarte nicht mehr verschieben, sie steht wieder dort, wo das Spiel sie hinstellt.",
+        },
+    },
+    {
         version = "1.0.6.5",
         date    = "14.11.2026",
         notes   = {

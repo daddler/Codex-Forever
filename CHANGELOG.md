@@ -9,6 +9,13 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.0.6.6] – 2026-11-14
+
+### Behoben
+- „Blockiert: SetPassThroughButtons“ beim Öffnen der Weltkarte: `WorldMapFrame`
+  nicht mehr in `MW.WINDOWS` (ein vom Addon gesetzter Platz verunreinigte den
+  Aufbau über `ShowUIPanel`). Nicht im Spiel bestätigt.
+
 ## [1.0.6.5] – 2026-11-14
 
 ### Behoben
