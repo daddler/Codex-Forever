@@ -22,6 +22,15 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.0.6.7",
+        date    = "14.11.2026",
+        notes   = {
+            "|cff7C6CFF„Blockiert“-Meldungen aus der Weltkarte|r – die Karte öffnet sich per Rechtsklick auf die Minikarte und per Klick auf die Koordinaten jetzt über den Kartenknopf des Spiels, und die Zielmarke im Raum setzt ihren Wegpunkt, ohne dass die Karte dabei mitläuft. Nach dem Update einmal neu laden.",
+            "|cff7C6CFFRechtsklick auf die Minikarte im Kampf|r pingt jetzt wie im Spiel, statt nichts zu tun.",
+            "|cff7C6CFF„/wcui karte“|r zeigt, ob und wodurch die Weltkarte gestört ist – steht auch automatisch im Fehlerbericht.",
+        },
+    },
+    {
         version = "1.0.6.6",
         date    = "14.11.2026",
         notes   = {

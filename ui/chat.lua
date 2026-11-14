@@ -849,8 +849,15 @@ local function BuildInfoBar()
             -- Oeffnen der Karte, 48x): im Kampf oeffnet ein Addon die Weltkarte
             -- nicht - ihr Aufbau laeuft dann als Addon-Code und wird gesperrt.
             if K.InCombat() then return end
+            -- 1.0.6.7: nur noch der Notweg (kein Kartenknopf des Spiels) -
+            -- sonst klickt der Makroknopf darueber den Knopf des Spiels.
+            if info.coords and info.coords._mapOverlay then return end
             if _G.ToggleWorldMap then pcall(_G.ToggleWorldMap) end
+            if K.MapTaintNote then K.MapTaintNote("Klick auf die Koordinaten (direkt geöffnet)") end
         end, "Deine Lage im Gebiet – Klick: Karte")
+        if WeintCodex.AttachMapToggle then
+            K.AfterCombat(function() pcall(WeintCodex.AttachMapToggle, info.coords) end)
+        end
         info.guild = InfoCell(info, function() if _G.ToggleGuildFrame then pcall(_G.ToggleGuildFrame) end end, "Gildenmitglieder online – Klick: Gilde")
         local acc = 0
         info:SetScript("OnUpdate", K.Measured("Chat-Infozeile", function(_, el)

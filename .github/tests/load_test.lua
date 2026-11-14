@@ -1711,6 +1711,45 @@ do
     Check(ok, "Erinnerungen: Suche aus, Gruppenbuff fehlt einem Mitspieler" .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 1.0.6.7: die Weltkarte oeffnet WeintCodex ueber den Kartenknopf des Spiels
+-- (Makroknopf), und der Bericht nennt, was an der Karte verunreinigt ist.
+do
+    local ok, err = pcall(function()
+        local K = WeintCodex.UIKit
+        local saved = {}
+        for _, n in ipairs(WeintCodex.MAP_BUTTONS) do saved[n] = _G[n] _G[n] = nil end
+        assert(WeintCodex.MapMacro() == nil, "Makro ohne Kartenknopf des Spiels")
+        local host = CreateFrame("Button", nil, UIParent)
+        assert(WeintCodex.AttachMapToggle(host) == nil, "Makroknopf ohne Kartenknopf des Spiels")
+        _G.MiniMapWorldMapButton = { Click = function() end }
+        assert(WeintCodex.MapMacro() == "/click MiniMapWorldMapButton", "Makro: " .. tostring(WeintCodex.MapMacro()))
+        _G.WorldMapMicroButton = { Click = function() end }
+        assert(WeintCodex.MapMacro() == "/click WorldMapMicroButton", "Reihenfolge der Kartenknoepfe")
+        local ov = WeintCodex.AttachMapToggle(host)
+        assert(ov and host._mapOverlay == ov, "kein Makroknopf")
+        assert(ov:GetAttribute("type") == "macro" and ov:GetAttribute("macrotext") == "/click WorldMapMicroButton",
+            "Makroknopf nicht scharf")
+        for _, n in ipairs(WeintCodex.MAP_BUTTONS) do _G[n] = saved[n] end
+        -- Messung: issecurevariable nennt Feld und Addon.
+        local oldWM, oldIsv = _G.WorldMapFrame, _G.issecurevariable
+        _G.WorldMapFrame = { dataProviders = {} }
+        _G.issecurevariable = function(_, key) if key == "mapID" then return false, "WeintCodex" end return true end
+        local key, by = K.MapTaint()
+        assert(key == "mapID" and by == "WeintCodex", "Taint der Karte nicht erkannt")
+        K.mapTaint = nil
+        K.MapTaintNote("Probe")
+        local rep = table.concat(K.MapTaintReport(), " | ")
+        assert(rep:find("verunreinigt – mapID (WeintCodex)", 1, true) and rep:find("zuerst bemerkt nach: Probe", 1, true), rep)
+        local extra = WeintCodex.UIErrors.Extra("Frame:SetPassThroughButtons()", "Blizzard_MapCanvas.lua:331")
+        assert(type(extra) == "string" and extra:find("Weltkarte, Taint-Bericht", 1, true), "Fehlerbericht ohne Karten-Anhang")
+        _G.issecurevariable = function() return true end
+        assert(K.MapTaint() == nil, "saubere Karte als verunreinigt gemeldet")
+        K.mapTaint = nil
+        _G.WorldMapFrame, _G.issecurevariable = oldWM, oldIsv
+    end)
+    Check(ok, "Weltkarte: oeffnen ueber den Kartenknopf des Spiels, Taint-Bericht im Fehlerbericht" .. (ok and "" or (": " .. tostring(err))))
+end
+
 -- 1.0.6.7: waehrend WeintCodex Wegpunkt oder Questverfolgung aendert, hoert
 -- die Weltkarte nicht mit - danach wieder wie vorher.
 do

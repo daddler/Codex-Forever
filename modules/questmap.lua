@@ -398,6 +398,10 @@ local function OpenMap(mapID)
     local cm = _G.C_Map
     if not (cm and type(cm.OpenWorldMap) == "function") then return false, "api" end
     local ok = pcall(cm.OpenWorldMap, mapID)
+    local K = WeintCodex.UIKit
+    if K and K.MapTaintNote and _G.C_Timer and _G.C_Timer.After then
+        _G.C_Timer.After(1, function() K.MapTaintNote("Auf der Karte zeigen (Zone geöffnet)") end)
+    end
     return ok and true or false
 end
 QM._OpenMap = OpenMap

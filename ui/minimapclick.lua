@@ -32,14 +32,68 @@ function MC.OnClick(button)
     local toggle = _G.ToggleWorldMap
     if type(toggle) ~= "function" then return false end
     pcall(toggle)
+    if K.MapTaintNote then K.MapTaintNote("Rechtsklick auf die Minikarte (direkt geöffnet)") end
     MC.clicks = (MC.clicks or 0) + 1
     return true
+end
+
+-- 1.0.6.7 (Fehlerberichte "Blockiert: SetPassThroughButtons" /
+-- "SetPropagateMouseClicks" aus der Weltkarte): ToggleWorldMap aus einem
+-- Addon verunreinigt die Weltkarte bis zum Neuladen. Wo es geht, liegt
+-- deshalb ein geschuetzter Makroknopf ueber der Minikarte, der NUR den
+-- Rechtsklick nimmt und den Kartenknopf des Spiels klickt
+-- (WeintCodex.AttachMapToggle). Links-/Mittelklick und Mausbewegung gehen
+-- an die Minikarte darunter (Ping, Tooltips der Punkte). Im Kampf ist der
+-- Knopf abgehaengt - Rechtsklick pingt dann wie im Spiel. Fehlt ein Teil
+-- davon (Kartenknopf, Durchreichen), bleibt der alte Weg unten.
+MC.PASS = { "LeftButton", "MiddleButton", "Button4", "Button5" }
+function MC.Overlay()
+    if MC.overlay then return MC.overlay end
+    if MC.overlayTried then return nil end
+    local mm = _G.Minimap
+    if type(mm) ~= "table" or not WeintCodex.AttachMapToggle then return nil end
+    if K.InCombat() then return nil end
+    MC.overlayTried = true
+    local probe = mm
+    if type(probe.SetPassThroughButtons) ~= "function" or type(probe.SetMouseMotionEnabled) ~= "function" then return nil end
+    local ok, ov = pcall(WeintCodex.AttachMapToggle, mm, "RightButtonUp", 1)
+    if not ok or not ov then return nil end
+    -- Nur Klicks, keine Bewegung: die Minikarte bleibt unter der Maus.
+    local fine = pcall(ov.SetMouseMotionEnabled, ov, false)
+    fine = fine and pcall(ov.SetPassThroughButtons, ov, unpack(MC.PASS))
+    if not fine then
+        pcall(ov.Hide, ov)
+        return nil
+    end
+    ov:SetScript("OnEnter", nil)
+    ov:SetScript("OnLeave", nil)
+    ov:HookScript("OnClick", function() MC.clicks = (MC.clicks or 0) + 1 end)
+    MC.overlay = ov
+    return ov
+end
+
+-- Schalter an/aus: den Knopf zeigen oder verbergen (nie im Kampf).
+function MC.Sync()
+    local ov = MC.overlay
+    if not ov then return end
+    local want = MC.Active()
+    if MC.overlayOn == want then return end
+    if K.InCombat() then K.AfterCombat(MC.Sync) return end
+    MC.overlayOn = want
+    if want then ov:Show() else ov:Hide() end
 end
 
 local hooked     -- die Minikarte, an der der Klick schon haengt
 function MC.Hook()
     local mm = _G.Minimap
     if type(mm) ~= "table" or hooked == mm or not (mm.GetScript and mm.SetScript) then return false end
+    -- Sauberer Weg zuerst; dann bleibt der Klick der Minikarte unberuehrt.
+    if MC.Overlay() then
+        hooked = mm
+        MC.Sync()
+        return true
+    end
+    if K.InCombat() then K.AfterCombat(MC.Hook) return false end
     hooked = mm
     local orig = mm:GetScript("OnMouseUp")
     MC.orig = orig
@@ -69,3 +123,4 @@ local boot = CreateFrame("Frame")
 boot:RegisterEvent("PLAYER_LOGIN")
 boot:SetScript("OnEvent", WeintCodex.Measured("Minikarte: Klick", function() MC.Hook() end))
 MC.boot = boot
+if K.Listen then K.Listen(function() MC.Sync() end) end

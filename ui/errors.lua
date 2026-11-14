@@ -307,6 +307,12 @@ ER.Hook()
 -- was im Stapel steht.
 function ER.Extra(func, stack)
     local f = tostring(K.Plain(func) or "") .. " " .. tostring(stack or "")
+    -- 1.0.6.7: Sperren aus der Weltkarte - der Bericht nennt, welches Feld
+    -- der Karte verunreinigt ist und nach welcher Aktion es auffiel.
+    if (f:find("MapCanvas", 1, true) or f:find("WorldMap", 1, true) or f:find("DataProvider", 1, true)) and K.MapTaintReport then
+        local okM, linesM = pcall(K.MapTaintReport)
+        if okM and type(linesM) == "table" then return "--- Weltkarte, Taint-Bericht ---\n" .. table.concat(linesM, "\n") end
+    end
     -- 1.0.3.8: auch die Bank ("Verboten: PurchaseBankTab()" beim Oeffnen,
     -- dreimal gemeldet, Ursache unbekannt) - der Bericht nennt BankPanel.
     if not (f:find("ContainerItem", 1, true) or f:find("UseItem", 1, true) or f:find("BankTab", 1, true)) then return nil end

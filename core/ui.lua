@@ -2722,6 +2722,58 @@ function WeintCodex.AttachReload(button, onClick)
     return ov
 end
 
+-- DIE WELTKARTE OEFFNEN, OHNE SIE ZU VERUNREINIGEN (1.0.6.7).
+-- Fehlerberichte "Blockiert: SetPassThroughButtons" / "SetPropagateMouseClicks"
+-- (64x, 21x): oeffnet ein Addon die Weltkarte selbst (ToggleWorldMap), stellt
+-- die Karte ihre Zone in UNSEREM Aufruf ein - die Kartennummer gilt danach
+-- als "vom Addon geschrieben", bis zum Neuladen. Jedes spaetere Oeffnen oder
+-- Blaettern im Kampf liest sie, und das Spiel sperrt die Nadeln.
+-- Sauber geht es nur ueber einen Klick, den das Spiel selbst ausfuehrt: ein
+-- geschuetzter Makroknopf ueber unserem Knopf klickt den Kartenknopf des
+-- Spiels ("/click ..."). Gibt es keinen solchen Knopf, bleibt der alte Weg.
+WeintCodex.MAP_BUTTONS = { "WorldMapMicroButton", "MiniMapWorldMapButton", "QuestLogMicroButton" }
+function WeintCodex.MapButtonName()
+    for _, name in ipairs(WeintCodex.MAP_BUTTONS) do
+        local b = _G[name]
+        if type(b) == "table" and type(b.Click) == "function" then return name end
+    end
+    return nil
+end
+function WeintCodex.MapMacro()
+    local name = WeintCodex.MapButtonName()
+    return name and ("/click " .. name) or nil
+end
+-- Legt den Makroknopf ueber `button`. Gibt ihn zurueck - oder nil, wenn es
+-- keinen sauberen Weg gibt (kein Kartenknopf, keine Vorlage, im Kampf).
+function WeintCodex.AttachMapToggle(button, clicks, lift)
+    if InCombatLockdown and InCombatLockdown() then return nil end
+    local macro = WeintCodex.MapMacro()
+    if not macro then return nil end
+    local ok, ov = pcall(CreateFrame, "Button", nil, button, "SecureActionButtonTemplate")
+    if not ok or not ov then return nil end
+    if not pcall(ov.SetAllPoints, ov, button) then
+        ov:ClearAllPoints()
+        WeintCodex.FollowRect(ov, button)
+    end
+    ov._lift = lift or 5
+    ov:SetFrameLevel((button:GetFrameLevel() or 1) + ov._lift)
+    if ov.RegisterForClicks then ov:RegisterForClicks(clicks or "AnyUp") end
+    ov:SetAttribute("useOnKeyDown", false)
+    ov:SetAttribute("type", "macro")
+    ov:SetAttribute("macrotext", macro)
+    ov:SetScript("OnEnter", function()
+        local f = button:GetScript("OnEnter")
+        if f then f(button) end
+    end)
+    ov:SetScript("OnLeave", function()
+        local f = button:GetScript("OnLeave")
+        if f then f(button) end
+    end)
+    button._mapOverlay = ov
+    WeintCodex.DetachInCombat(ov, button)
+    return ov
+end
+
 -- 6.73.1.0 (Fehlerbericht: im Kampf "Blockiert: WeintCodexUIOptions:Hide()",
 -- StartMoving, SetShown beim Seitenwechsel): ein geschuetzter Knopf IN einem
 -- Fenster macht das ganze Fenster im Kampf geschuetzt - es laesst sich dann
@@ -2746,7 +2798,7 @@ local function Reanchor(ov, button)
         ov:ClearAllPoints()
         WeintCodex.FollowRect(ov, button)
     end
-    ov:SetFrameLevel((button:GetFrameLevel() or 1) + 5)
+    ov:SetFrameLevel((button:GetFrameLevel() or 1) + (ov._lift or 5))
 end
 function WeintCodex.DetachAll(on)
     for ov, st in pairs(detached) do

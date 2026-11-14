@@ -9,6 +9,25 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.0.6.7] – 2026-11-14
+
+### Behoben (nicht im Spiel bestätigt)
+- „Blockiert: SetPassThroughButtons / SetPropagateMouseClicks“ aus der Weltkarte:
+  - Karte öffnen über den Kartenknopf des Spiels (`WeintCodex.AttachMapToggle`,
+    Makroknopf `/click …`) statt `ToggleWorldMap` aus dem Addon: Minikarte
+    (Rechtsklick, `MC.Overlay`) und Koordinaten der Chat-Infozeile. Ohne
+    Kartenknopf bleibt der alte Weg.
+  - Wegpunkt (Zielmarke im Raum) und Questverfolgung im Dungeon über
+    `UIKit.QuietMap`: die Karte hört währenddessen nicht mit.
+- Zielmarke im Raum bleibt ab Werk an.
+
+### Neu
+- `UIKit.MapTaintReport` (`issecurevariable` auf Feldern der Weltkarte): `/wcui karte`
+  und Anhang an Fehlerberichte aus der Weltkarte.
+
+### Offen
+- „Auf der Karte zeigen“ (`C_Map.OpenWorldMap` mit Zone) läuft weiter aus dem Addon.
+
 ## [1.0.6.6] – 2026-11-14
 
 ### Behoben

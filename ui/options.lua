@@ -1782,6 +1782,13 @@ SlashCmdList["WEINTCODEXUI"] = function(msg)
         print(WeintCodex.ColorText("accent", "[WeintCodex]") .. " Gespeicherte Fehler gelöscht.")
         return
     end
+    if msg == "karte" or msg == "map" then
+        -- 1.0.6.7: ist die Weltkarte verunreinigt, und wodurch?
+        for _, line in ipairs(K.MapTaintReport()) do
+            print(WeintCodex.ColorText("accent", "[WeintCodex]") .. " " .. line)
+        end
+        return
+    end
     if msg == "speicher" or msg == "memory" then
         local say = function(line) print(WeintCodex.ColorText("accent", "[WeintCodex]") .. " " .. line) end
         if K.prof.on then say("Die Messung läuft schon.") return end

@@ -1032,6 +1032,60 @@ end
 -- Aufrufs hoert die Karte auf diese Meldungen nicht; beim naechsten Oeffnen
 -- baut das Spiel alles selbst (sauber) neu auf. Nur fuer Aufrufe bei
 -- geschlossener Karte und ausserhalb des Kampfes gedacht.
+-- Ist die Weltkarte verunreinigt, und wodurch? (issecurevariable nennt das
+-- Addon.) K.MapTaintNote merkt sich, nach welcher Aktion von WeintCodex es
+-- zum ersten Mal auffiel - das steht dann im Fehlerbericht.
+K.MAP_TAINT_KEYS = { "mapID", "mapArtID", "pinPools", "dataProviders", "ScrollContainer", "pinFrameLevelsManager" }
+function K.MapTaint()
+    local wm, isv = _G.WorldMapFrame, _G.issecurevariable
+    if type(wm) ~= "table" or type(isv) ~= "function" then return nil end
+    for _, key in ipairs(K.MAP_TAINT_KEYS) do
+        local ok, secure, by = pcall(isv, wm, key)
+        if ok and secure == false then return key, tostring(by or "?") end
+    end
+    return nil
+end
+function K.MapTaintNote(action)
+    if K.mapTaint then return end
+    local key, by = K.MapTaint()
+    if key then K.mapTaint = { key = key, by = by, action = action } end
+end
+function K.MapTaintReport()
+    local out = {}
+    local wm, isv = _G.WorldMapFrame, _G.issecurevariable
+    if type(wm) ~= "table" or type(isv) ~= "function" then
+        out[1] = "Weltkarte: nicht messbar (issecurevariable fehlt)"
+        return out
+    end
+    local bad = {}
+    for _, key in ipairs(K.MAP_TAINT_KEYS) do
+        local ok, secure, by = pcall(isv, wm, key)
+        if ok and secure == false then bad[#bad + 1] = key .. " (" .. tostring(by or "?") .. ")" end
+    end
+    out[#out + 1] = "Weltkarte: " .. (#bad > 0 and ("verunreinigt – " .. table.concat(bad, ", ")) or "Felder sauber")
+    local n, shown = 0, 0
+    if type(wm.dataProviders) == "table" then
+        for prov in pairs(wm.dataProviders) do
+            n = n + 1
+            if type(prov) == "table" and shown < 6 then
+                for _, key in ipairs({ "pin", "owningMap" }) do
+                    local ok, secure, by = pcall(isv, prov, key)
+                    if ok and secure == false then
+                        shown = shown + 1
+                        out[#out + 1] = "  Datenquelle: Feld " .. key .. " verunreinigt (" .. tostring(by or "?") .. ")"
+                    end
+                end
+            end
+        end
+    end
+    out[#out + 1] = "  Datenquellen: " .. n .. ", Karte öffnen über: " .. (WeintCodex.MapButtonName and WeintCodex.MapButtonName() or "direkt (kein Kartenknopf des Spiels)")
+    if K.mapTaint then
+        out[#out + 1] = "  zuerst bemerkt nach: " .. tostring(K.mapTaint.action) .. " – " .. tostring(K.mapTaint.key) .. " (" .. tostring(K.mapTaint.by) .. ")"
+    end
+    out[#out + 1] = "  stille Aufrufe (Wegpunkt/Questverfolgung): " .. tostring(K.quietRuns or 0)
+    return out
+end
+
 K.MAP_FRAMES = { "WorldMapFrame", "BattlefieldMapFrame" }
 K.MAP_QUIET_EVENTS = { "USER_WAYPOINT_UPDATED", "SUPER_TRACKING_CHANGED", "SUPER_TRACKING_PATH_UPDATED",
                        "QUEST_WATCH_LIST_CHANGED", "QUEST_POI_UPDATE", "QUEST_LOG_UPDATE" }
@@ -1057,6 +1111,7 @@ function K.QuietMap(fn, ...)
         pcall(quietF[i].RegisterEvent, quietF[i], quietE[i])
         quietF[i], quietE[i] = nil, nil
     end
+    K.MapTaintNote("Wegpunkt oder Questverfolgung geändert")
     return ok, a, b
 end
 
