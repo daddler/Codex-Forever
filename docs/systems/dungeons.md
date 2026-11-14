@@ -1065,6 +1065,15 @@ druckt einen Bericht. ForeverGuide nennt keine Lizenz; übernommen sind,
 wie beim Dungeon Journal, nur Fakten (Nummern, Stufen, Lagen,
 Zuordnungen, englische Namen) – keine Texte, kein Code. Was es bringt:
 
+* **Abgleich der Quests mit Naowh Forever (1.0.6.8):** `J.NF_QUESTS` in
+  `data/dungeon_journal_nf.lua` – 46 Quests in 18 Dungeons, die dem Bestand
+  fehlten (alle der vier neuen Dungeons). Die Liste des Addons (`Data/Quests.lua`)
+  sagt nur, welche Quest zu welchem Dungeon gehört; Stufe, Seite, Geber und
+  Abgabe liest `import_naowh.py` aus `data/questdb.lua`. Eingemischt in
+  `J.MergeNaowh` wie die des ersten Abgleichs (`src = "fg"`, dazu `nf = true`).
+  Nicht aufgenommen: was dem Namen nach schon da ist (andere Stufe derselben
+  Reihe). Ohne Geber/Abgabe bleibt, was der Bestand nicht kennt – etwa
+  „The Twin Bears“ (Blackmaw Hold).
 * **266 Quests in 17 Dungeons** (Blackrock-Tiefen 40, Düsterbruch 36,
   Untere/Obere Schwarzfelsspitze je 37, Uldaman 29, Stratholme 16,
   Scholomance 12 …), dazu fehlende in Gnomeregan (9), Ruins of Lordaeron

@@ -219,6 +219,133 @@ def build(nf, cx):
     return out
 
 
+# QUESTS (1.0.6.8): die Liste des Addons sagt, WELCHE Quests zu einem Dungeon
+# gehoeren; Stufe, Geber und Abgabe kommen aus dem eigenen Questbestand
+# (data/questdb.lua, erzeugt). Aufgenommen wird nur, was dem Dungeon noch
+# fehlt - nach Nummer, und nach Name (gleiche Quest in mehreren Schritten).
+QUEST_DUNGEON = {
+    "excavationsitewetlands": "excavation_site", "scarletmonasterygraveyard": "scarlet_monastery",
+    "scarletmonasterylibrary": "scarlet_monastery", "scarletmonasteryarmory": "scarlet_monastery",
+    "scarletmonasterycathedral": "scarlet_monastery", "sunkentemple": "sunken_temple",
+    "alcazprison": "alcaz_island_prison",
+}
+FACTION = {"A": "alliance", "H": "horde", "B": "both"}
+
+
+def load_questdb():
+    sec, db = None, {"q": {}, "n": {}, "o": {}, "i": {}}
+    with open(os.path.join(ROOT, "data", "questdb.lua"), encoding="utf-8") as f:
+        for line in f:
+            m = re.match(r"\s+([a-z]) = \{", line)
+            if m:
+                sec = m.group(1)
+                continue
+            m = re.match(r'\s+\[(\d+)\] = "(.*)",\s*$', line)
+            if m and sec:
+                db[sec][int(m.group(1))] = m.group(2).replace('\\"', '"').split("\\t")
+    return db
+
+
+def build_quests(nf, cx):
+    db = load_questdb()
+    codex = {d["id"]: d for d in cx["dungeons"]}
+    by_name = {norm(d["name"]): d["id"] for d in cx["dungeons"]}
+    turnins = {int(k): as_list(v) for k, v in (nf.get("questTurnIns") or {}).items()}
+
+    def cell(row, i):
+        if isinstance(row, dict):
+            return row.get(str(i))
+        return row[i - 1] if len(row) >= i else None
+
+    def place(did, ids, table):
+        for i in ids:
+            row = db[table].get(i)
+            if not row or not row[0]:
+                continue
+            out = {"name": row[0]}
+            first = (row[1] if len(row) > 1 else "").split(";")[0]
+            m = re.match(r"(\d+):([\d.]+),([\d.]+)", first)
+            if m:
+                mp, x, y = int(m.group(1)), float(m.group(2)), float(m.group(3))
+                # Die Datenbank legt, wer IM Dungeon steht, auf den Eingang.
+                for e in as_list(codex[did].get("entrances")):
+                    if e.get("map") == mp and abs(e["x"] - x) < 0.02 and abs(e["y"] - y) < 0.02:
+                        out["inside"] = True
+                if not out.get("inside") and 0 < x < 1 and 0 < y < 1:
+                    out.update(map=mp, x=round(x, 3), y=round(y, 3))
+            return out
+        return None
+
+    def ids(text):
+        return [int(x) for x in (text or "").split(",") if x.isdigit()]
+
+    out, stats = {}, {"new": 0, "db": 0, "giver": 0, "turnin": 0, "named": 0}
+    for d in nf.get("questData") or []:
+        k = norm(d["name"])
+        did = by_name.get(k) or QUEST_DUNGEON.get(k)
+        if not did:
+            continue
+        have = {q["id"] for q in codex[did]["quests"]}
+        have_names = {norm(q["name"]) for q in codex[did]["quests"]}
+        rows = []
+        for row in as_list(d.get("quests")):
+            rows.append((cell(row, 1), cell(row, 2), cell(row, 3), cell(row, 4), row))
+            # `alt`: dieselbe Quest der anderen Seite - nur, wenn der Bestand sie kennt.
+            for alt in as_list(row.get("alt")) if isinstance(row, dict) else []:
+                if alt in db["q"]:
+                    rows.append((alt, cell(row, 2), cell(row, 3), cell(row, 4), row))
+        for qid, name, low, side, row in rows:
+            if qid in have or any(q["id"] == qid for q in out.get(did, [])):
+                continue
+            if norm(name) in have_names and qid == cell(row, 1):
+                stats["named"] += 1
+                continue
+            q = {"id": qid, "name": name, "faction": FACTION.get(side, "both")}
+            r = db["q"].get(qid)
+            level, req = (int(r[1]), int(r[2])) if r else (0, 0)
+            if r:
+                stats["db"] += 1
+                # Die Voelker des Bestands sagen die Seite genauer als "beide".
+                q["faction"] = {"77": "alliance", "178": "horde"}.get(r[3], q["faction"])
+            q["level"] = level if level >= low else low
+            req = req if req > 0 else low
+            q["requires"] = min(req, q["level"])
+            cls = isinstance(row, dict) and row.get("class")
+            if cls:
+                q["classes"] = [cls]
+            if r:
+                both = [i for i in ids(r[5]) if i in ids(r[7])]
+                giver = place(did, both or ids(r[5]), "n") or place(did, ids(r[6]), "o")
+                turnin = place(did, ids(r[7]), "n") or place(did, ids(r[8]), "o")
+            else:
+                giver = turnin = None
+            t = turnins.get(qid)
+            if not turnin and t and len(t) >= 4:
+                turnin = {"name": t[3].split(",")[0].strip(), "map": t[0],
+                          "x": round(t[1] / 100, 3), "y": round(t[2] / 100, 3)}
+            if giver:
+                q["giverNpc"] = giver
+                stats["giver"] += 1
+            if turnin:
+                q["turninNpc"] = turnin
+                stats["turnin"] += 1
+            out.setdefault(did, []).append(q)
+            stats["new"] += 1
+    say(f"  Quests: {stats['new']} neu in {len(out)} Dungeons ({stats['db']} im Questbestand, "
+        f"{stats['giver']} mit Geber, {stats['turnin']} mit Abgabe); {stats['named']} dem Namen nach schon da")
+    for did in sorted(out):
+        say(f"    {did}: " + ", ".join(str(q["id"]) for q in out[did]))
+    return out
+
+
+def lua_npc(n):
+    if n.get("inside"):
+        return f"{{ name = {lua_str(n['name'])}, inside = true }}"
+    if "map" in n:
+        return f"{{ name = {lua_str(n['name'])}, map = {n['map']}, x = {n['x']}, y = {n['y']} }}"
+    return f"{{ name = {lua_str(n['name'])} }}"
+
+
 def lua_row(r):
     s = f"{{ {r['id']}, {lua_str(r['n']) if r['n'] else 'nil'}, {lua_str(r['s']) if r['s'] else 'nil'}, " \
         f"{r['q'] if r['q'] is not None else 'nil'}"
@@ -253,6 +380,9 @@ def write(nf, dd):
     w("--   NOT_YET[Nummer]         der Server kennt den Gegenstand (noch) nicht -")
     w("--                           der Client zeigte ewig \"lädt …\"")
     w("--   NF_ENTRANCES            Eingaenge, wo noch keiner bekannt war")
+    w("--   NF_QUESTS[Dungeon]      Quests, die dem Dungeon noch fehlten: welche")
+    w("--                           dazugehoeren, sagt das Addon; Stufe, Geber und")
+    w("--                           Abgabe der eigene Questbestand. Keine Texte.")
     w("--")
     w("-- DROPCHANCEN alter Bosse zaehlen Kills aus Classic und Forever zusammen.")
     w("--------------------------------------------------")
@@ -307,6 +437,21 @@ def write(nf, dd):
         w(f"    [{i}] = true,")
     w("}")
     w("")
+    w("J.NF_QUESTS = {")
+    for did in sorted(dd["quests"]):
+        w(f"    {did} = {{")
+        for q in dd["quests"][did]:
+            parts = [f"id = {q['id']}", f"name = {lua_str(q['name'])}", f"level = {q['level']}",
+                     f"requires = {q['requires']}", f"faction = \"{q['faction']}\""]
+            if q.get("classes"):
+                parts.append("classes = { " + ", ".join(f'"{c}"' for c in q["classes"]) + " }")
+            for k in ("giverNpc", "turninNpc"):
+                if q.get(k):
+                    parts.append(f"{k} = {lua_npc(q[k])}")
+            w("        { " + ", ".join(parts) + " },")
+        w("    },")
+    w("}")
+    w("")
     w("J.NF_ENTRANCES = {")
     for did in sorted(dd["entrances"]):
         m, x, y = dd["entrances"][did]
@@ -327,7 +472,9 @@ def main():
     nf = run_dump(".github/scripts/nf_dump.lua", os.path.join(sys.argv[1], "Data"))
     cx = run_dump(".github/scripts/journal_dump.lua")
     say(f"Naowh Forever Dungeon Journal {NF_VERSION}, Daten vom {nf['date']} (Build {nf['build']})")
-    write(nf, build(nf, cx))
+    dd = build(nf, cx)
+    dd["quests"] = build_quests(nf, cx)
+    write(nf, dd)
     print("\n".join(report))
 
 

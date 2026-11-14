@@ -9,6 +9,23 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.0.6.8] – 2026-11-14
+
+### Neu
+- Dungeonquests abgeglichen mit der Questliste des Naowh-Journals vom 13.11.
+  (`J.NF_QUESTS`, erzeugt von `import_naowh.py`): 46 Quests in 18 Dungeons,
+  darunter alle der vier neuen (Krol'dok 4, Alcaz 3, Blackmaw 7, Shaper's
+  Terrace 5). Welche Quest zu welchem Dungeon gehört, sagt die Liste; Stufe,
+  Seite, Geber und Abgabe kommen aus `data/questdb.lua`. Keine Texte, keine
+  Belohnungen. 9 ohne Geber, 12 ohne Abgabe (im Bestand nicht bekannt).
+
+### Behoben (nicht im Spiel bestätigt)
+- Erinnerungen: die Gruppenfassung eines Klassenbuffs erfüllt die Regel
+  (`R.ALSO`: Arkane Brillanz, Gebet der Seelenstärke, Gabe der Wildnis, Große
+  Segen). Meldung „Lagerfeuerbuffs ersetzen die Klassenbuffs“: wird der eigene
+  Buff mit „Ein mächtigerer Zauber ist bereits aktiv“ abgewiesen, schweigt die
+  Regel, bis einer der Buffs von dem Moment endet (`R.SpellBounced`).
+
 ## [1.0.6.7] – 2026-11-14
 
 ### Behoben (nicht im Spiel bestätigt)

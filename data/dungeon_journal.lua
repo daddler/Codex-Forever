@@ -2180,6 +2180,21 @@ function J.MergeNaowh()
         end
         return have
     end
+    -- Quests, die dem Dungeon noch fehlten (1.0.6.8). Gebaut wie die des
+    -- ersten Abgleichs (`src = "fg"`: keine Texte, Geber und Abgabe als
+    -- NPC); `nf` nennt den Pflegenden die Herkunft.
+    for did, list in pairs(J.NF_QUESTS or {}) do
+        local e = entry(did)
+        local have = {}
+        for _, q in ipairs(e.quests) do have[q.id] = true end
+        for _, q in ipairs(list) do
+            if not have[q.id] then
+                q.src, q.nf = "fg", true
+                e.quests[#e.quests + 1] = q
+                have[q.id] = true
+            end
+        end
+    end
     -- Zeilen des Abgleichs tragen `nf`: ihnen duerfen Name, Platz und
     -- Qualitaet fehlen - die nennt der Client.
     for _, bosses in pairs(J.NF_LOOT or {}) do

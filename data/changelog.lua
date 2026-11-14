@@ -22,6 +22,14 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.0.6.8",
+        date    = "14.11.2026",
+        notes   = {
+            "|cff7C6CFFQuests der neuen Dungeons|r – Krol'dok Stronghold, Alcaz Island Prison, Blackmaw Hold und Shaper's Terrace zeigen jetzt ihre Quests mit Geber und Abgabeort; dazu fehlende Quests in 14 weiteren Dungeons (46 insgesamt), etwa in der Ausgrabungsstätte, der Versunkenen Stadt und den Schwarzfelstiefen.",
+            "|cff7C6CFFErinnerung an Klassenbuffs|r – Arkane Brillanz, Gebet der Seelenstärke, Gabe der Wildnis und die Großen Segen zählen wie der einfache Buff. Weist das Spiel deinen Buff ab, weil ein stärkerer anliegt (etwa vom Lagerfeuer), schweigt die Erinnerung, bis der endet.",
+        },
+    },
+    {
         version = "1.0.6.7",
         date    = "14.11.2026",
         notes   = {

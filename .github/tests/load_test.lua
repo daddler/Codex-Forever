@@ -8004,6 +8004,16 @@ do
         for _, q in ipairs(brd) do if q.id == 4126 then q4126 = q end end
         assert(q4126 and q4126.src == "fg" and J.QuestSource(q4126) == J.FG_SOURCE, "Quest 4126 nicht aus dem Abgleich")
         assert(J.QuestSource(J.Quests("hall_of_thanes")[1]) == J.SOURCE, "Journal-Quest traegt die Herkunft des Abgleichs")
+        -- 1.0.6.8: die neuen Dungeons haben Quests (Abgleich mit dem Journal
+        -- vom 13.11.), je Seite nur die eigenen.
+        for _, did in ipairs({ "kroldok_stronghold", "alcaz_island_prison", "blackmaw_hold", "shapers_terrace" }) do
+            local list = J.Quests(did)
+            assert(#list >= 3, did .. " ohne Quests")
+            for _, q in ipairs(list) do
+                assert(q.src == "fg" and q.nf and J.QuestSource(q).kind == "community", did .. ": Herkunft der Quest " .. q.id)
+            end
+        end
+        assert(#J.Quests("kroldok_stronghold", "horde") < #J.Quests("kroldok_stronghold"), "Seite nicht gefiltert")
         -- 1.0.5.2: Wache Fengus hat seit Naowh 1.2.11 eigene Beute - irgendein
         -- Boss mit Classic-Beute statt eines festen.
         J.LootSource("dire_maul", "alzzin")

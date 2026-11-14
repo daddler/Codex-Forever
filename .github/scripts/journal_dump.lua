@@ -42,10 +42,12 @@ for _, d in ipairs(D.AllInstances()) do
         for _, it in ipairs(g.items or {}) do ids[#ids + 1] = it[1]; note(it) end
         others[#others + 1] = { name = g.name, kind = g.kind or "journal", ids = ids }
     end
+    local quests = {}
     for _, q in ipairs(e.quests or {}) do
         for _, r in ipairs(q.rewards or {}) do note({ r[1], r[2], nil, r[3] }) end
+        quests[#quests + 1] = { id = q.id, name = q.name, faction = q.faction }
     end
-    dungeons[#dungeons + 1] = { id = d.id, bosses = bosses, loot = loot, others = others,
+    dungeons[#dungeons + 1] = { id = d.id, name = d.name, bosses = bosses, loot = loot, others = others, quests = quests, entrances = J.Entrances(d.id),
                                 entrance = J.ENTRANCES[d.id] ~= nil or (J.HAND_ENTRANCES or {})[d.id] ~= nil }
 end
 local list = {}
