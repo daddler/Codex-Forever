@@ -9,6 +9,13 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.0.6.5] – 2026-11-14
+
+### Behoben
+- Sammel-Atlas: Stellen werden auf die Gebietskarte (Kartentyp 3) umgerechnet
+  (`GA.ZoneOf`, `GA.Normalize`, `K.WorldToMap`), alte einmal verschoben
+  (`GA.Migrate`); höhere Ränge von Kräutersammeln/Bergbau in `GA.SPELLS`.
+
 ## [1.0.6.4] – 2026-11-14
 
 ### Behoben

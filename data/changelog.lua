@@ -22,6 +22,14 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.0.6.5",
+        date    = "14.11.2026",
+        notes   = {
+            "|cff7C6CFFSammel-Atlas: Fundstellen aus Höhlen und Minen auf der Gebietskarte|r – eigene wie von der Gilde. Bisher fehlten sie dort; schon gespeicherte werden beim ersten Öffnen der Karte umgezogen.",
+            "|cff7C6CFFSammeln auf höherem Rang|r wird jetzt auch erkannt.",
+        },
+    },
+    {
         version = "1.0.6.4",
         date    = "14.11.2026",
         notes   = {
