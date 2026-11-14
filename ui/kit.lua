@@ -756,7 +756,13 @@ local function Account(name, m0, t0, ...)
     end
     e.calls = e.calls + 1
     if m0 and m1 and m1 > m0 then e.kb = e.kb + (m1 - m0) end
-    if t0 and t1 then e.ms = e.ms + (t1 - t0) end
+    if t0 and t1 then
+        local d = t1 - t0
+        e.ms = e.ms + d
+        -- 1.0.6.3 (Ruckler nach dem Kampf): der laengste Einzelaufruf - ein
+        -- Ruckler ist ein einzelner langer Aufruf, kein Mittelwert.
+        if d > (e.peak or 0) then e.peak = d end
+    end
     return ...
 end
 
@@ -853,6 +859,15 @@ function K.ProfileReport(secs)
         if e.ms / secs >= 0.05 then slow[#slow + 1] = string.format("%s %.2f ms/s", list[i].name, e.ms / secs) end
     end
     if #slow > 0 then out[#out + 1] = "Meiste Zeit: " .. table.concat(slow, ", ") end
+    -- 1.0.6.3: die laengsten Einzelaufrufe. Ab etwa 16 ms faellt ein Bild aus.
+    table.sort(list, function(a, b) return (a.e.peak or 0) > (b.e.peak or 0) end)
+    local peaks = {}
+    for i = 1, math.min(5, #list) do
+        local p = list[i].e.peak or 0
+        if p >= 1 then peaks[#peaks + 1] = string.format("%s %.1f ms", list[i].name, p) end
+    end
+    out[#out + 1] = #peaks > 0 and ("Längste Einzelaufrufe: " .. table.concat(peaks, ", "))
+        or "Längste Einzelaufrufe: keiner über 1 ms"
     AddHeld()
     return out
 end
