@@ -511,7 +511,61 @@ end
 R.ALSO = {
     ["324"] = { ids = { "24398", "52127" }, names = { "Wasserschild", "Water Shield" },
                 label = "Blitzschlagschild oder Wasserschild" },
+    -- 1.0.6.8 (Meldung: "Lagerfeuerbuffs ersetzen die Klassenbuffs, die
+    -- Erinnerung geht nicht weg"): die Gruppenfassung eines Klassenbuffs
+    -- heisst anders und ersetzt die einfache. IDs aus Classic (Art
+    -- classic), dazu die Namen - gefragt wird auch ueber den Namen.
+    ["1459"] = { ids = { "23028" }, names = { "Arkane Brillanz", "Arcane Brilliance" } },
+    ["1243"] = { ids = { "21562", "21564" }, names = { "Gebet der Seelenstärke", "Prayer of Fortitude" } },
+    ["1126"] = { ids = { "21849", "21850" }, names = { "Gabe der Wildnis", "Gift of the Wild" } },
+    ["19740"] = { ids = { "25782", "25916", "25894", "25918", "25898", "25895", "25890", "25899",
+                          "1038", "19977", "20911" },
+                  names = { "Großer Segen der Macht", "Großer Segen der Weisheit", "Großer Segen der Könige",
+                            "Großer Segen der Rettung", "Großer Segen des Lichts", "Großer Segen des Refugiums",
+                            "Segen der Rettung", "Segen des Lichts", "Segen des Refugiums",
+                            "Greater Blessing of Might", "Greater Blessing of Wisdom", "Greater Blessing of Kings",
+                            "Greater Blessing of Salvation", "Greater Blessing of Light",
+                            "Greater Blessing of Sanctuary", "Blessing of Salvation", "Blessing of Light",
+                            "Blessing of Sanctuary" } },
 }
+
+-- DAS SPIEL SAGT NEIN, auch bei Zaubern (1.0.6.8): wirkt der Spieler den
+-- Buff einer Regel auf sich und das Spiel antwortet "Ein maechtigerer
+-- Zauber ist bereits aktiv", liegt ein staerkerer Buff an, den WeintCodex
+-- nicht beim Namen kennt (Lagerfeuer). Die Regel schweigt, bis einer der
+-- Buffs von dem Moment endet. Nur gelesen: UNIT_SPELLCAST_SENT und die
+-- Fehlermeldung des Spiels.
+R.lastCast = { name = nil, t = 0 }
+R.bouncedSpell = {}     -- [Zaubername klein] = { Buffnamen beim Abweisen }
+function R.NoteCast(id, target)
+    id = K.Plain(id)
+    target = K.Plain(target)
+    if type(id) ~= "number" then return end
+    if type(target) == "string" and target ~= "" then
+        local me = _G.UnitName and K.Plain((_G.UnitName("player")))
+        if type(me) == "string" and target ~= me then R.lastCast.name = nil return end
+    end
+    local sp = R.Resolve(tostring(id))
+    R.lastCast.name = sp and type(sp.name) == "string" and sp.name:lower() or nil
+    R.lastCast.t = (_G.GetTime and K.Plain(_G.GetTime())) or 0
+end
+function R.SpellBounced(rule, names)
+    for _, t in ipairs(rule.any or { rule.spell }) do
+        local sp = R.Resolve(tostring(t))
+        local key = sp and type(sp.name) == "string" and sp.name:lower() or nil
+        local snap = key and R.bouncedSpell[key]
+        if snap then
+            if type(names) ~= "table" then return true end
+            local still = true
+            for _, n in ipairs(snap) do
+                if not R.ExactName(names, n) then still = false break end
+            end
+            if still then return true end
+            R.bouncedSpell[key] = nil
+        end
+    end
+    return false
+end
 
 local function AuraByName(name)
     local ua = _G.C_UnitAuras
@@ -971,6 +1025,7 @@ function R.Check(rule)
     if kind == "buff" then
         local aura = R.PlayerAura(rule)
         if aura == false then
+            if R.anyBounced and R.SpellBounced(rule, R.HelpfulNames()) then return nil end
             local sp = R.Resolve(rule.spell) or {}
             local also = R.Also(rule)
             return { text = (rule.label or (also and also.label) or sp.name or rule.spell or "?") .. " fehlt", icon = sp.icon }
@@ -1379,10 +1434,21 @@ function R.OnUIError(msg, names)
     if not R.IsBounceText(msg) then return false end
     local now = (_G.GetTime and K.Plain(_G.GetTime())) or 0
     local id = R.lastUse.id
-    if not id or now - (R.lastUse.t or 0) > R.BOUNCE_WINDOW then return false end
-    if not names then names = HelpfulNames() end
-    R.bounced[id] = names or {}
-    return true
+    local hit = false
+    if id and now - (R.lastUse.t or 0) <= R.BOUNCE_WINDOW then
+        if not names then names = HelpfulNames() end
+        R.bounced[id] = names or {}
+        hit = true
+    end
+    local cast = R.lastCast.name
+    if cast and now - (R.lastCast.t or 0) <= R.BOUNCE_WINDOW then
+        if not names then names = HelpfulNames() end
+        R.bouncedSpell[cast] = names or {}
+        R.anyBounced = true
+        R.lastCast.name = nil
+        hit = true
+    end
+    return hit
 end
 -- Weist das Spiel diesen Gegenstand gerade ab? Bis ein Buff von damals fehlt.
 function R.Bounced(id, names)
@@ -1396,7 +1462,12 @@ end
 do
     local ev = CreateFrame("Frame")
     pcall(ev.RegisterEvent, ev, "UI_ERROR_MESSAGE")
-    ev:SetScript("OnEvent", WeintCodex.Measured("Erinnerungen", function(_, _, _, msg)
+    pcall(ev.RegisterEvent, ev, "UNIT_SPELLCAST_SENT")
+    ev:SetScript("OnEvent", WeintCodex.Measured("Erinnerungen", function(_, event, a1, msg, _, a4)
+        if event == "UNIT_SPELLCAST_SENT" then
+            if a1 == "player" then R.NoteCast(a4, msg) end
+            return
+        end
         if R.OnUIError(msg) and R.Schedule then R.Schedule(true, false, false) end
     end))
 end

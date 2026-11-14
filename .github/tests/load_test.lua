@@ -4907,6 +4907,31 @@ do
         R.lastUse.id, R.lastUse.t = 3389, 90
         assert(not R.OnUIError("Ein mächtigerer Zauber ist bereits aktiv.", {}), "alte Benutzung zaehlt")
         assert(not R.OnUIError("Nicht genug Mana", {}), "andere Meldung zaehlt")
+        -- 1.0.6.8: dasselbe fuer einen gewirkten Buff (staerkerer Buff
+        -- unbekannten Namens, etwa vom Lagerfeuer).
+        local G = _G
+        local oldUA, oldSpell, oldName = G.C_UnitAuras, G.C_Spell, G.UnitName
+        local have = { "lagerbuff" }
+        G.C_Spell = { GetSpellInfo = function(k) return { spellID = 1459, name = "Arkane Intelligenz" } end }
+        G.C_UnitAuras = { GetAuraDataBySpellName = function() return nil end,
+                          GetPlayerAuraBySpellID = function() return nil end,
+                          GetAuraDataByIndex = function(_, i) if have[i] then return { name = have[i] } end end }
+        G.UnitName = function() return "Ich" end
+        R.ClearCache()
+        local rule = { kind = "buff", spell = "1459", any = { "1459" } }
+        assert(R.Check(rule), "fehlender Buff nicht gemeldet")
+        R.NoteCast(1459, "Anderer")
+        assert(not R.OnUIError("Ein mächtigerer Zauber ist bereits aktiv."), "Buff auf andere zaehlt")
+        R.NoteCast(1459, "Ich")
+        assert(R.OnUIError("Ein mächtigerer Zauber ist bereits aktiv."), "abgewiesener Zauber nicht erkannt")
+        assert(R.Check(rule) == nil, "abgewiesener Buff weiter gemeldet")
+        have[1] = nil
+        assert(R.Check(rule), "nach Ende des staerkeren Buffs weiter still")
+        -- Gruppenfassung zaehlt wie die einfache.
+        G.C_UnitAuras.GetAuraDataBySpellName = function(_, n) if n == "Arkane Brillanz" then return { name = n } end end
+        assert(R.Check(rule) == nil, "Arkane Brillanz nicht erkannt")
+        G.C_UnitAuras, G.C_Spell, G.UnitName = oldUA, oldSpell, oldName
+        R.ClearCache()
         _G.GetTime = oldT
         R.bounced[3389] = nil
     end)
