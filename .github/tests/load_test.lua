@@ -777,6 +777,8 @@ Section("Optionale Oberflaeche")
 local K  = WeintCodex.UIKit
 local UO = WeintCodex.UIOptions
 local QA = WeintCodex.UIQuestArrow
+-- 1.0.6.7: Zielmarke ab Werk aus - die Pruefungen der Marke laufen mit ihr.
+WeintCodex.UIKit.Set("questarrow", "worldMarker", true)
 
 Check(type(K) == "table" and type(UO) == "table", "UIKit und UIOptions sind geladen")
 for _, key in ipairs({ "general", "nameplates", "unitframes", "questarrow", "comfort" }) do

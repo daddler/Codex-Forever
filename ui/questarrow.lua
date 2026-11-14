@@ -99,7 +99,10 @@ local defaults = {
     arriveDistance = 5,
     markerNear = 100,      -- Zielmarke im Raum erst ab dieser Naehe (6.74.0.0)
     showHeight  = true,    -- Hoehenunterschied und "verdeckt" (6.6.0.1)
-    worldMarker = true,    -- Zielmarke im Raum am Ort des Ziels (6.6.0.1)
+    -- 1.0.6.7: ab Werk aus. Den Wegpunkt des Spiels setzt WeintCodex als
+    -- Addon - danach meldet die Weltkarte beim Oeffnen im Kampf "Blockiert:
+    -- SetPassThroughButtons" (WaypointLocationDataProvider, 64x gemeldet).
+    worldMarker = false,   -- Zielmarke im Raum am Ort des Ziels (6.6.0.1)
     corpse     = true,     -- als Geist zur Leiche
     ghostHealer = false,   -- als Geist zum Geistheiler, wenn der klar naeher ist
     -- Welches Ziel (6.6.2.7): "smart" plant selbst - das naechste lohnende
@@ -2329,7 +2332,7 @@ K.Register({
                         { value = "yards",  text = "Yards" } } })
             B:Row({ type = "toggle", label = "Name der Quest", key = "showTitle" },
                   { type = "toggle", label = "Zielmarke im Raum", key = "worldMarker",
-                    description = "Eine Nadel genau am Ziel, auf dem Berg oder am Höhleneingang. Für die Quest, die das Spiel verfolgt, Kartenmarkierungen und eigene Ziele (Eingang, Händler, Buch) – dafür setzt WeintCodex den Wegpunkt des Spiels und nimmt ihn danach wieder ab." })
+                    description = "Eine Nadel genau am Ziel, auf dem Berg oder am Höhleneingang. Für die Quest, die das Spiel verfolgt, Kartenmarkierungen und eigene Ziele (Eingang, Händler, Buch) – dafür setzt WeintCodex den Wegpunkt des Spiels und nimmt ihn danach wieder ab. Nebenwirkung: Öffnest du danach im Kampf die Weltkarte, meldet das Spiel „Blockiert“ – darum ab Werk aus." })
             B:Row({ type = "dropdown", label = "Kompass", key = "compass", items = {
                         { value = "off",  text = "Aus" },
                         { value = "both", text = "Pfeil und Kompass" },
