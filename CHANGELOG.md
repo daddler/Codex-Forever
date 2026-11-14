@@ -9,6 +9,12 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.0.6.3] – 2026-11-14
+
+### Neu
+- `/wcui speicher`: längster Einzelaufruf je gemessenem Teil (`K.prof`, `peak`),
+  um Ruckler nach dem Kampf zuzuordnen.
+
 ## [1.0.6.2] – 2026-11-13
 
 ### Neu

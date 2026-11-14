@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.0.6.3",
+        date    = "14.11.2026",
+        notes   = {
+            "|cff7C6CFFRuckler aufspüren|r – „/wcui speicher“ nennt jetzt auch die längsten Einzelaufrufe. Kurz vor Kampfende eingeben und die Zeile „Längste Einzelaufrufe“ melden.",
+        },
+    },
+    {
         version = "1.0.6.2",
         date    = "13.11.2026",
         notes   = {
