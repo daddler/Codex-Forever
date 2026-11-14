@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.0.6.13",
+        date    = "15.11.2026",
+        notes   = {
+            "|cff7C6CFFTaschen: freie Plätze ehrlicher|r – „Leer“ nennt jetzt, in welcher Tasche die freien Plätze liegen, und die Reagenzientasche (nimmt nur Handwerksmaterial) steht als eigener Block statt unter „Leer“.",
+        },
+    },
+    {
         version = "1.0.6.12",
         date    = "14.11.2026",
         notes   = {

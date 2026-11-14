@@ -898,12 +898,31 @@ end
 -- Plaetze"; ihre Plaetze mischen sich nicht in die Kategorien.
 function BG.SpecialBag(bag)
     if bag == (_G.BACKPACK_CONTAINER or 0) then return false end
+    -- 1.0.6.13 (Meldung: "Inventar voll, laut Tasche 2 Plaetze frei"): die
+    -- Reagenzientasche nimmt nur Handwerksmaterial - ihre freien Plaetze
+    -- sind keine fuer Beute, auch wenn der Client Taschenart 0 meldet.
+    local bi = _G.Enum and _G.Enum.BagIndex
+    if bi and bi.ReagentBag and bag == bi.ReagentBag then return true end
     local cc = _G.C_Container
     local f = (cc and cc.GetContainerNumFreeSlots) or _G.GetContainerNumFreeSlots
     if type(f) ~= "function" then return false end
     local ok, _, family = pcall(f, bag)
     family = ok and K.Plain(family)
     return type(family) == "number" and family ~= 0
+end
+
+-- Kopf von "Leer": Zahl, dazu in welchen Taschen (ab zwei Taschen).
+function BG.EmptyText(items)
+    local per, order = {}, {}
+    for _, e in ipairs(items) do
+        if not per[e.bag] then per[e.bag] = 0 order[#order + 1] = e.bag end
+        per[e.bag] = per[e.bag] + 1
+    end
+    local t = "  " .. #items
+    if #order == 0 then return t end
+    local parts = {}
+    for _, b in ipairs(order) do parts[#parts + 1] = BG.BagLabel(b) .. (#order > 1 and (" " .. per[b]) or "") end
+    return t .. "  ·  " .. table.concat(parts, ", ")
 end
 
 -- Bloecke nebeneinander, solange sie in die Breite passen (wie Baganator).
@@ -951,7 +970,7 @@ function BG.LayoutCategories(list, size, sp, cols)
             hd:SetPoint("TOPLEFT", grid, "TOPLEFT", px, -py)
             hd:SetSize(math.max(w * cell - sp, 40), BG.HEAD_H)
             hd.cat, hd.items = c, items
-            hd.text:SetText(c.label .. (c.key == "empty" and ("  " .. #items) or "")
+            hd.text:SetText(c.label .. (c.key == "empty" and BG.EmptyText(items) or "")
                 .. ((c.custom and #items == 0) and "  ·  hierher ziehen" or ""))
             hd.text:SetTextColor(unpack(c.key == "new" and C.accent or (c.special and C.textNormal) or C.textMuted))
             hd:Show()

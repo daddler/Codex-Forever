@@ -9,6 +9,14 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.0.6.13] – 2026-11-15
+
+### Behoben (nicht im Spiel bestätigt)
+- Taschen (Meldung: „Inventar voll, laut Anzeige 2 Plätze frei“): die
+  Reagenzientasche (`Enum.BagIndex.ReagentBag`) gilt als Spezialtasche, auch
+  wenn der Client Taschenart 0 meldet; der Kopf „Leer“ nennt die Taschen der
+  freien Plätze (`BG.EmptyText`). Ursache der Meldung nicht gesichert.
+
 ## [1.0.6.12] – 2026-11-14
 
 ### Behoben
