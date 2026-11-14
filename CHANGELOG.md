@@ -9,6 +9,12 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.0.6.14] – 2026-11-15
+
+### Behoben
+- Taschen: Kopf „Leer“ mit Taschennamen lief über den Block hinaus; die
+  Taschen stehen jetzt im Tooltip (`BG.EmptyLines`).
+
 ## [1.0.6.13] – 2026-11-15
 
 ### Behoben (nicht im Spiel bestätigt)

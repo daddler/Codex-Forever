@@ -880,7 +880,17 @@ function BG.NewCatHead()
     end)
     b:SetScript("OnReceiveDrag", function(self) BG.DropOn(self) end)
     b:SetScript("OnEnter", function(self)
-        if self.cat.key == "empty" or self.cat.key == "new" or self.cat.special then return end
+        -- 1.0.6.14 (Bild: Kopfzeile "Leer" lief in den Nachbarblock): die
+        -- Taschen der freien Plaetze stehen im Tooltip, nicht im Kopf.
+        if self.cat.key == "empty" then
+            local tt = _G.GameTooltip
+            tt:SetOwner(self, "ANCHOR_TOP")
+            tt:SetText("Freie Plätze", 1, 1, 1)
+            for _, line in ipairs(BG.EmptyLines(self.items or {})) do tt:AddLine(line, 0.8, 0.8, 0.8) end
+            tt:Show()
+            return
+        end
+        if self.cat.key == "new" or self.cat.special then return end
         local tt = _G.GameTooltip
         tt:SetOwner(self, "ANCHOR_TOP")
         tt:SetText(self.cat.label, 1, 1, 1)
@@ -911,18 +921,15 @@ function BG.SpecialBag(bag)
     return type(family) == "number" and family ~= 0
 end
 
--- Kopf von "Leer": Zahl, dazu in welchen Taschen (ab zwei Taschen).
-function BG.EmptyText(items)
-    local per, order = {}, {}
+-- Freie Plaetze je Tasche, fuer den Tooltip von "Leer".
+function BG.EmptyLines(items)
+    local per, order, out = {}, {}, {}
     for _, e in ipairs(items) do
         if not per[e.bag] then per[e.bag] = 0 order[#order + 1] = e.bag end
         per[e.bag] = per[e.bag] + 1
     end
-    local t = "  " .. #items
-    if #order == 0 then return t end
-    local parts = {}
-    for _, b in ipairs(order) do parts[#parts + 1] = BG.BagLabel(b) .. (#order > 1 and (" " .. per[b]) or "") end
-    return t .. "  ·  " .. table.concat(parts, ", ")
+    for _, b in ipairs(order) do out[#out + 1] = BG.BagLabel(b) .. ": " .. per[b] end
+    return out
 end
 
 -- Bloecke nebeneinander, solange sie in die Breite passen (wie Baganator).
@@ -970,7 +977,7 @@ function BG.LayoutCategories(list, size, sp, cols)
             hd:SetPoint("TOPLEFT", grid, "TOPLEFT", px, -py)
             hd:SetSize(math.max(w * cell - sp, 40), BG.HEAD_H)
             hd.cat, hd.items = c, items
-            hd.text:SetText(c.label .. (c.key == "empty" and BG.EmptyText(items) or "")
+            hd.text:SetText(c.label .. (c.key == "empty" and ("  " .. #items) or "")
                 .. ((c.custom and #items == 0) and "  ·  hierher ziehen" or ""))
             hd.text:SetTextColor(unpack(c.key == "new" and C.accent or (c.special and C.textNormal) or C.textMuted))
             hd:Show()

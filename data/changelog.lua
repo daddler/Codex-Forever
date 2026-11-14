@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.0.6.14",
+        date    = "15.11.2026",
+        notes   = {
+            "|cff7C6CFFTaschen|r – die Zeile über den freien Plätzen läuft nicht mehr in den Nachbarblock; in welcher Tasche sie liegen, zeigt jetzt der Tooltip über „Leer“.",
+        },
+    },
+    {
         version = "1.0.6.13",
         date    = "15.11.2026",
         notes   = {
