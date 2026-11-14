@@ -64,6 +64,70 @@ function DM.GameHasMap()
     return type(dungeon) == "number" and kind == dungeon
 end
 
+-- /wcui dungeonkarte (1.0.6.10): was sagt der Client in dieser Instanz ueber
+-- Ort und Position? Nur gelesen. Gebraucht fuer zwei offene Fragen: gibt das
+-- Spiel in (alten) Dungeons eine Position auf der Karte heraus, und welche
+-- Unterzonen meldet es je Ebene? Messen statt raten.
+local function Ask(fn, ...)
+    if type(fn) ~= "function" then return "gibt es nicht" end
+    local r = { pcall(fn, ...) }
+    if not r[1] then return "Fehler: " .. tostring(r[2]) end
+    local out = {}
+    for i = 2, 9 do
+        local v = r[i]
+        if K.IsSecret(v) then out[#out + 1] = "geheim"
+        elseif type(v) == "nil" then out[#out + 1] = "nil"
+        elseif type(v) == "table" then out[#out + 1] = "Tabelle"
+        else out[#out + 1] = tostring(v) end
+    end
+    while #out > 1 and out[#out] == "nil" do out[#out] = nil end
+    return table.concat(out, ", ")
+end
+DM.Ask = Ask
+
+function DM.Probe()
+    local G, cm = _G, _G.C_Map
+    local lines = {}
+    local function add(k, v) lines[#lines + 1] = k .. ": " .. v end
+    add("In einer Instanz", Ask(G.IsInInstance))
+    add("Instanz (Name, Art, …, Nummer an 8. Stelle)", Ask(G.GetInstanceInfo))
+    local m, id = DM.Current()
+    add("Karte im Codex", m and ((m.name or "?") .. ", " .. #m.floors .. " Ebene(n)" .. (m.drawn and ", Zeichnung" or ", aus dem Client"))
+        or ("keine für Nummer " .. tostring(id)))
+    add("Gebiet", Ask(G.GetRealZoneText))
+    add("Zone", Ask(G.GetZoneText))
+    add("Unterzone", Ask(G.GetSubZoneText))
+    add("Minikarte", Ask(G.GetMinimapZoneText))
+    local best
+    if cm and cm.GetBestMapForUnit then
+        local ok, v = pcall(cm.GetBestMapForUnit, "player")
+        best = ok and K.Plain(v) or nil
+    end
+    add("Karte des Spiels (Nummer)", type(best) == "number" and tostring(best) or "keine")
+    if type(best) == "number" and cm.GetMapInfo then
+        local ok, info = pcall(cm.GetMapInfo, best)
+        if ok and type(info) == "table" then
+            add("Karte des Spiels", tostring(K.Plain(info.name)) .. ", Art " .. tostring(K.Plain(info.mapType))
+                .. ", darüber " .. tostring(K.Plain(info.parentMapID)))
+        end
+        local ok2, pos = pcall(cm.GetPlayerMapPosition, best, "player")
+        if not ok2 then add("Position auf der Karte", "Fehler: " .. tostring(pos))
+        elseif K.IsSecret(pos) then add("Position auf der Karte", "geheim")
+        elseif type(pos) == "nil" then add("Position auf der Karte", "keine (nil)")
+        else
+            local okp, x, y = pcall(pos.GetXY, pos)
+            x, y = okp and K.Plain(x) or nil, okp and K.Plain(y) or nil
+            add("Position auf der Karte", (type(x) == "number" and type(y) == "number")
+                and string.format("%.4f, %.4f", x, y) or "nicht lesbar")
+        end
+        add("Kartengruppe (Ebenen)", Ask(cm.GetMapGroupID, best))
+    end
+    add("Position in der Welt (y, x, z, Instanz)", Ask(G.UnitPosition, "player"))
+    add("Blickrichtung", Ask(G.GetPlayerFacing))
+    add("Spiel zeigt hier selbst eine Dungeonkarte", DM.GameHasMap() and "ja" or "nein")
+    return lines
+end
+
 local function Layout()
     if not (view and view:IsShown()) then return end
     local w, h = K.Plain(view.port:GetWidth()), K.Plain(view.port:GetHeight())

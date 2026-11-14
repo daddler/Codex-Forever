@@ -1789,6 +1789,16 @@ SlashCmdList["WEINTCODEXUI"] = function(msg)
         end
         return
     end
+    if msg == "dungeonkarte" or msg == "dungeonmap" then
+        -- 1.0.6.10: was der Client in dieser Instanz ueber Ort und Position sagt.
+        local DM = WeintCodex.UIDungeonMap
+        local lines = DM and DM.Probe and DM.Probe() or { "Die Dungeonkarte ist nicht geladen." }
+        for _, line in ipairs(lines) do
+            print(WeintCodex.ColorText("accent", "[WeintCodex]") .. " " .. line)
+        end
+        if K.ShowReport then pcall(K.ShowReport, "Dungeonkarte – was der Client hier sagt", lines) end
+        return
+    end
     if msg == "speicher" or msg == "memory" then
         local say = function(line) print(WeintCodex.ColorText("accent", "[WeintCodex]") .. " " .. line) end
         if K.prof.on then say("Die Messung läuft schon.") return end

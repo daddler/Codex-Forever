@@ -1750,6 +1750,33 @@ do
     Check(ok, "Weltkarte: oeffnen ueber den Kartenknopf des Spiels, Taint-Bericht im Fehlerbericht" .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 1.0.6.10: /wcui dungeonkarte - was der Client in der Instanz sagt.
+do
+    local ok, err = pcall(function()
+        local DM = WeintCodex.UIDungeonMap
+        local G = _G
+        local old = { G.IsInInstance, G.GetInstanceInfo, G.C_Map, G.GetSubZoneText, G.UnitPosition }
+        G.IsInInstance = function() return true, "party" end
+        G.GetInstanceInfo = function() return "The Drowned City", "party", 1, "", 5, 0, false, 2970 end
+        G.GetSubZoneText = function() return "Atal'Byzal" end
+        G.UnitPosition = function() return nil end
+        G.C_Map = { GetBestMapForUnit = function() return 1434 end,
+                    GetMapInfo = function() return { name = "Schlingendorntal", mapType = 3, parentMapID = 13 } end,
+                    GetPlayerMapPosition = function() return nil end,
+                    GetMapGroupID = function() return nil end }
+        local text = table.concat(DM.Probe(), "\n")
+        assert(text:find("2970", 1, true), "Instanznummer fehlt")
+        assert(text:find("The Drowned City, 2 Ebene(n), Zeichnung", 1, true), "Karte im Codex nicht genannt")
+        assert(text:find("Unterzone: Atal'Byzal", 1, true), "Unterzone fehlt")
+        assert(text:find("Position auf der Karte: keine (nil)", 1, true), "fehlende Position nicht als fehlend genannt")
+        G.C_Map.GetPlayerMapPosition = function() return { GetXY = function() return 0.25, 0.5 end } end
+        assert(table.concat(DM.Probe(), "\n"):find("0.2500, 0.5000", 1, true), "Position nicht gelesen")
+        assert(DM.Ask(nil) == "gibt es nicht", "fehlende Funktion")
+        G.IsInInstance, G.GetInstanceInfo, G.C_Map, G.GetSubZoneText, G.UnitPosition = old[1], old[2], old[3], old[4], old[5]
+    end)
+    Check(ok, "/wcui dungeonkarte: Instanz, Karte, Unterzone, Position" .. (ok and "" or (": " .. tostring(err))))
+end
+
 -- 1.0.6.7: waehrend WeintCodex Wegpunkt oder Questverfolgung aendert, hoert
 -- die Weltkarte nicht mit - danach wieder wie vorher.
 do

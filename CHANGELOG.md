@@ -9,6 +9,15 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.0.6.10] – 2026-11-14
+
+### Neu
+- `/wcui dungeonkarte` (`DM.Probe`, `ui/dungeonmap.lua`): Instanz und Nummer,
+  Karte im Codex, Zone/Unterzone/Minikarte, Karte des Spiels mit Art,
+  `C_Map.GetPlayerMapPosition`, `UnitPosition`, Blickrichtung – im Chat und im
+  Fenster zum Kopieren. Nur gelesen. Messung für: Position auf der
+  Dungeonkarte, Ebene nach Unterzone.
+
 ## [1.0.6.9] – 2026-11-14
 
 ### Neu

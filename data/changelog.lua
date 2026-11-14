@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.0.6.10",
+        date    = "14.11.2026",
+        notes   = {
+            "|cff7C6CFF„/wcui dungeonkarte“|r – zeigt in einem Dungeon, was das Spiel dort über Ort und Position herausgibt, zum Kopieren. Damit prüfen wir, ob die Dungeonkarte deine Position oder wenigstens die richtige Ebene zeigen kann.",
+        },
+    },
+    {
         version = "1.0.6.9",
         date    = "14.11.2026",
         notes   = {
