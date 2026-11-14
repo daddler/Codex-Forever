@@ -1022,6 +1022,44 @@ function K.InCombat()
     return _G.InCombatLockdown ~= nil and _G.InCombatLockdown() and true or false
 end
 
+-- 1.0.6.7 ("Blockiert: SetPassThroughButtons" beim Oeffnen der Weltkarte im
+-- Kampf, 64x gemeldet; Spur: WaypointLocationDataProvider bzw.
+-- QuestDataProvider -> AcquirePin). URSACHE: aendert ein Addon den Wegpunkt
+-- oder die Questverfolgung, meldet das Spiel das SOFORT, noch in unserem
+-- Aufruf - die Weltkarte baut ihre Nadeln dann als Addon-Code neu (auch
+-- geschlossen) und merkt sich verunreinigte Werte. Beim naechsten Oeffnen
+-- im Kampf liest sie die und wird gesperrt. LOESUNG: waehrend unseres
+-- Aufrufs hoert die Karte auf diese Meldungen nicht; beim naechsten Oeffnen
+-- baut das Spiel alles selbst (sauber) neu auf. Nur fuer Aufrufe bei
+-- geschlossener Karte und ausserhalb des Kampfes gedacht.
+K.MAP_FRAMES = { "WorldMapFrame", "BattlefieldMapFrame" }
+K.MAP_QUIET_EVENTS = { "USER_WAYPOINT_UPDATED", "SUPER_TRACKING_CHANGED", "SUPER_TRACKING_PATH_UPDATED",
+                       "QUEST_WATCH_LIST_CHANGED", "QUEST_POI_UPDATE", "QUEST_LOG_UPDATE" }
+local quietF, quietE = {}, {}
+K.quietRuns = 0
+function K.QuietMap(fn, ...)
+    local n = 0
+    for _, name in ipairs(K.MAP_FRAMES) do
+        local f = _G[name]
+        if type(f) == "table" and type(f.IsEventRegistered) == "function" and f.UnregisterEvent and f.RegisterEvent then
+            for _, e in ipairs(K.MAP_QUIET_EVENTS) do
+                local ok, on = pcall(f.IsEventRegistered, f, e)
+                if ok and K.Plain(on) == true and pcall(f.UnregisterEvent, f, e) then
+                    n = n + 1
+                    quietF[n], quietE[n] = f, e
+                end
+            end
+        end
+    end
+    K.quietRuns = K.quietRuns + 1
+    local ok, a, b = pcall(fn, ...)
+    for i = 1, n do
+        pcall(quietF[i].RegisterEvent, quietF[i], quietE[i])
+        quietF[i], quietE[i] = nil, nil
+    end
+    return ok, a, b
+end
+
 function K.AfterCombat(fn)
     if not K.InCombat() then
         fn()

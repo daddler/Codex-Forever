@@ -777,8 +777,6 @@ Section("Optionale Oberflaeche")
 local K  = WeintCodex.UIKit
 local UO = WeintCodex.UIOptions
 local QA = WeintCodex.UIQuestArrow
--- 1.0.6.7: Zielmarke ab Werk aus - die Pruefungen der Marke laufen mit ihr.
-WeintCodex.UIKit.Set("questarrow", "worldMarker", true)
 
 Check(type(K) == "table" and type(UO) == "table", "UIKit und UIOptions sind geladen")
 for _, key in ipairs({ "general", "nameplates", "unitframes", "questarrow", "comfort" }) do
@@ -1711,6 +1709,38 @@ do
     for i, n in ipairs(names) do _G[n] = saved[i] end
     GT.offSince = nil
     Check(ok, "Erinnerungen: Suche aus, Gruppenbuff fehlt einem Mitspieler" .. (ok and "" or (": " .. tostring(err))))
+end
+
+-- 1.0.6.7: waehrend WeintCodex Wegpunkt oder Questverfolgung aendert, hoert
+-- die Weltkarte nicht mit - danach wieder wie vorher.
+do
+    local ok, err = pcall(function()
+        local K = WeintCodex.UIKit
+        local old = _G.WorldMapFrame
+        local reg = { USER_WAYPOINT_UPDATED = true, SUPER_TRACKING_CHANGED = true, ZONE_CHANGED = true }
+        local log = {}
+        _G.WorldMapFrame = {
+            IsEventRegistered = function(_, e) return reg[e] == true end,
+            UnregisterEvent = function(_, e) reg[e] = nil log[#log + 1] = "-" .. e end,
+            RegisterEvent = function(_, e) reg[e] = true log[#log + 1] = "+" .. e end,
+        }
+        local during
+        local okC, a = K.QuietMap(function(x)
+            during = (reg.USER_WAYPOINT_UPDATED == nil and reg.SUPER_TRACKING_CHANGED == nil and reg.ZONE_CHANGED == true)
+            return x + 1
+        end, 4)
+        assert(okC and a == 5, "Aufruf nicht durchgereicht")
+        assert(during, "Karte hoerte waehrend des Aufrufs mit (oder fremdes Ereignis abgemeldet)")
+        assert(reg.USER_WAYPOINT_UPDATED and reg.SUPER_TRACKING_CHANGED, "Ereignisse nicht wieder angemeldet")
+        assert(#log == 4, "nur angemeldete Ereignisse anfassen: " .. table.concat(log, " "))
+        -- Ein Fehler im Aufruf: trotzdem wieder anmelden.
+        local okE = K.QuietMap(function() error("x") end)
+        assert(not okE and reg.USER_WAYPOINT_UPDATED and reg.SUPER_TRACKING_CHANGED, "nach Fehler nicht wieder angemeldet")
+        _G.WorldMapFrame = old
+        -- Zielmarke bleibt ab Werk an.
+        assert(K.Get("questarrow", "worldMarker") == true, "Zielmarke im Raum ab Werk aus")
+    end)
+    Check(ok, "Karte hoert nicht mit, waehrend WeintCodex den Wegpunkt setzt; Zielmarke ab Werk an" .. (ok and "" or (": " .. tostring(err))))
 end
 
 -- 6.30.19.0: auf der Minikarte kein graues "?" (Abgabe noch nicht fertig).

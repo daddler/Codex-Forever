@@ -272,13 +272,13 @@ function QT.EnterDungeon(instance)
     for _, id in ipairs(Watched()) do
         watched[id] = true
         if not wanted[id] then
-            pcall(ql.RemoveQuestWatch, id)
+            K.QuietMap(ql.RemoveQuestWatch, id)
             mem.removed[#mem.removed + 1] = id
         end
     end
     for id in pairs(wanted) do
         if not watched[id] then
-            pcall(ql.AddQuestWatch, id)
+            K.QuietMap(ql.AddQuestWatch, id)
             mem.added[#mem.added + 1] = id
         end
     end
@@ -287,8 +287,8 @@ end
 function QT.LeaveDungeon()
     local mem, ql = Memory(), QL()
     if not mem or not mem.active or not ql then return end
-    for _, id in ipairs(mem.added or {}) do pcall(ql.RemoveQuestWatch, id) end
-    for _, id in ipairs(mem.removed or {}) do pcall(ql.AddQuestWatch, id) end
+    for _, id in ipairs(mem.added or {}) do K.QuietMap(ql.RemoveQuestWatch, id) end
+    for _, id in ipairs(mem.removed or {}) do K.QuietMap(ql.AddQuestWatch, id) end
     mem.active, mem.removed, mem.added = false, {}, {}
 end
 
@@ -308,7 +308,7 @@ function QT.RepairWatches()
         local ok, info = pcall(ql.GetInfo, i)
         if ok and type(info) == "table" and not info.isHeader and not info.isHidden and info.questID then
             local id = K.Plain(info.questID)
-            if id and pcall(ql.AddQuestWatch, id) then added = added + 1 end
+            if id and K.QuietMap(ql.AddQuestWatch, id) then added = added + 1 end
         end
     end
     return added

@@ -99,10 +99,7 @@ local defaults = {
     arriveDistance = 5,
     markerNear = 100,      -- Zielmarke im Raum erst ab dieser Naehe (6.74.0.0)
     showHeight  = true,    -- Hoehenunterschied und "verdeckt" (6.6.0.1)
-    -- 1.0.6.7: ab Werk aus. Den Wegpunkt des Spiels setzt WeintCodex als
-    -- Addon - danach meldet die Weltkarte beim Oeffnen im Kampf "Blockiert:
-    -- SetPassThroughButtons" (WaypointLocationDataProvider, 64x gemeldet).
-    worldMarker = false,   -- Zielmarke im Raum am Ort des Ziels (6.6.0.1)
+    worldMarker = true,    -- Zielmarke im Raum am Ort des Ziels (6.6.0.1)
     corpse     = true,     -- als Geist zur Leiche
     ghostHealer = false,   -- als Geist zum Geistheiler, wenn der klar naeher ist
     -- Welches Ziel (6.6.2.7): "smart" plant selbst - das naechste lohnende
@@ -712,8 +709,9 @@ function QA.PinGame(t)
         pin.before = okB and before or nil
     end
     QA.pinAt = Now()
-    if not pcall(cm.SetUserWaypoint, point) then QA.pinState = "SetUserWaypoint abgelehnt" return false end
-    pcall(st.SetSuperTrackedUserWaypoint, true)
+    -- 1.0.6.7: die Karte hoert dabei nicht mit (K.QuietMap).
+    if not K.QuietMap(cm.SetUserWaypoint, point) then QA.pinState = "SetUserWaypoint abgelehnt" return false end
+    K.QuietMap(st.SetSuperTrackedUserWaypoint, true)
     pin.map, pin.x, pin.y = t.map, t.x, t.y
     QA.pin, QA.pinState = pin, "gesetzt"
     return true
@@ -760,12 +758,12 @@ function QA.UnpinGame()
     local cm, st = _G.C_Map, _G.C_SuperTrack
     QA.pinAt = Now()
     if pin.before and cm.SetUserWaypoint then
-        pcall(cm.SetUserWaypoint, pin.before)
+        K.QuietMap(cm.SetUserWaypoint, pin.before)
     elseif cm.ClearUserWaypoint then
-        pcall(cm.ClearUserWaypoint)
+        K.QuietMap(cm.ClearUserWaypoint)
     end
     if st and not pin.before and st.SetSuperTrackedUserWaypoint then
-        pcall(st.SetSuperTrackedUserWaypoint, false)
+        K.QuietMap(st.SetSuperTrackedUserWaypoint, false)
     end
     return true
 end
@@ -1385,12 +1383,15 @@ function QA.OwnArrival(t, d)
         QA.ClearCustom()
     else
         local function clear()
+            -- 1.0.6.7: bei offener Karte erst nach dem Schliessen, und die
+            -- Karte hoert nicht mit (K.QuietMap).
+            if MapOpen() then AfterMap(clear) return end
+            if K.InCombat() then K.AfterCombat(clear) return end
             local cm, st = _G.C_Map, _G.C_SuperTrack
-            if cm and cm.ClearUserWaypoint then pcall(cm.ClearUserWaypoint) end
-            if st and st.SetSuperTrackedUserWaypoint then pcall(st.SetSuperTrackedUserWaypoint, false) end
+            if cm and cm.ClearUserWaypoint then K.QuietMap(cm.ClearUserWaypoint) end
+            if st and st.SetSuperTrackedUserWaypoint then K.QuietMap(st.SetSuperTrackedUserWaypoint, false) end
         end
-        -- 1.0.4.4: nie im Kampf (s. QA.UnpinGame).
-        if K.InCombat() then K.AfterCombat(clear) else clear() end
+        clear()
     end
     QA.ownDone = (QA.ownDone or 0) + 1
     return true
@@ -2332,7 +2333,7 @@ K.Register({
                         { value = "yards",  text = "Yards" } } })
             B:Row({ type = "toggle", label = "Name der Quest", key = "showTitle" },
                   { type = "toggle", label = "Zielmarke im Raum", key = "worldMarker",
-                    description = "Eine Nadel genau am Ziel, auf dem Berg oder am Höhleneingang. Für die Quest, die das Spiel verfolgt, Kartenmarkierungen und eigene Ziele (Eingang, Händler, Buch) – dafür setzt WeintCodex den Wegpunkt des Spiels und nimmt ihn danach wieder ab. Nebenwirkung: Öffnest du danach im Kampf die Weltkarte, meldet das Spiel „Blockiert“ – darum ab Werk aus." })
+                    description = "Eine Nadel genau am Ziel, auf dem Berg oder am Höhleneingang. Für die Quest, die das Spiel verfolgt, Kartenmarkierungen und eigene Ziele (Eingang, Händler, Buch) – dafür setzt WeintCodex den Wegpunkt des Spiels und nimmt ihn danach wieder ab." })
             B:Row({ type = "dropdown", label = "Kompass", key = "compass", items = {
                         { value = "off",  text = "Aus" },
                         { value = "both", text = "Pfeil und Kompass" },
