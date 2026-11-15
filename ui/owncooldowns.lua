@@ -1498,12 +1498,54 @@ function OC.DebuffReport()
             out[#out + 1] = "  " .. tostring(K.Plain(a.name)) .. " = " .. tostring(K.Plain(a.spellId))
         end
     end
+    -- 1.0.7.9: woraus ein Feld des Spiels besteht (Zahl doppelt?).
+    for b, n in pairs(slotNumbers) do
+        OC.ScanSlot(b)
+        local parts = {}
+        for _, fs in ipairs(n.foreign) do
+            local ok, t = pcall(fs.GetText, fs)
+            parts[#parts + 1] = tostring(ok and K.Plain(t) or "?") .. "@" .. tostring(K.Plain(fs:GetAlpha()))
+        end
+        local kids = 0
+        if b.GetChildren then kids = select("#", b:GetChildren()) end
+        out[#out + 1] = "Feld: Kinder " .. kids .. ", fremde Schriften " .. #n.foreign .. ": " .. table.concat(parts, ", ")
+    end
     out[#out + 1] = "Selbst gelernt bisher: " .. tostring(OC.learnedDebuffs or 0)
     return out
 end
 
 -- Zahlen der Debuff-Felder (je Feld des Spiels; Lua-Tabelle, nicht am Rahmen).
 slotNumbers = setmetatable({}, { __mode = "k" })
+-- Alle Schriften des Feldes ausser unserer Stapelzahl, auch in Kindern und
+-- Enkeln (die Uhr des Spiels haengt ihre Zahl an einen eigenen Rahmen).
+-- 1.0.7.9: auch spaeter neu gesucht - das Spiel baut Teile erst beim ersten
+-- Zeigen.
+local function ScanFrame(f, n, depth)
+    if not (f and f.GetRegions) then return end
+    for _, r in ipairs({ f:GetRegions() }) do
+        if type(r) == "table" and r.GetObjectType and r:GetObjectType() == "FontString" and not n.own[r] then
+            local dup
+            for _, x in ipairs(n.foreign) do if x == r then dup = true break end end
+            if not dup then n.foreign[#n.foreign + 1] = r end
+        end
+    end
+    if depth < 3 and f.GetChildren then
+        for _, ch in ipairs({ f:GetChildren() }) do ScanFrame(ch, n, depth + 1) end
+    end
+end
+function OC.ScanSlot(button)
+    local n = slotNumbers[button]
+    if not n then return 0 end
+    ScanFrame(button, n, 0)
+    -- Die Zahl unserer eigenen Uhr zaehlt nicht als fremd.
+    if n.cd and n.cd.GetCountdownFontString then
+        local ok, fs = pcall(n.cd.GetCountdownFontString, n.cd)
+        if ok and type(fs) == "table" then
+            for i = #n.foreign, 1, -1 do if n.foreign[i] == fs then table.remove(n.foreign, i) end end
+        end
+    end
+    return #n.foreign
+end
 function OC.SlotNumbers(button, on)
     local n = slotNumbers[button]
     if not n then return end
@@ -1532,23 +1574,8 @@ function OC.EnsureSlot(row, d, cell, size, timer)
                 pcall(button.SetIcon, button, icon)
                 pcall(button.SetDurationCooldown, button, cd)
                 pcall(button.SetApplicationCount, button, count, {})
-                local own = { [count] = true }
-                local foreign = {}
-                local function scan(f)
-                    if not (f and f.GetRegions) then return end
-                    for _, r in ipairs({ f:GetRegions() }) do
-                        if type(r) == "table" and r.GetObjectType and r:GetObjectType() == "FontString" and not own[r] then
-                            foreign[#foreign + 1] = r
-                        end
-                    end
-                end
-                scan(button)
-                if button.GetChildren then
-                    for _, ch in ipairs({ button:GetChildren() }) do
-                        if ch ~= cd then scan(ch) end
-                    end
-                end
-                slotNumbers[button] = { cd = cd, foreign = foreign }
+                slotNumbers[button] = { cd = cd, own = { [count] = true }, foreign = {} }
+                OC.ScanSlot(button)
                 OC.SlotNumbers(button, timer)
                 if button.EnableMouse then pcall(button.EnableMouse, button, false) end
             end,
@@ -1627,6 +1654,11 @@ local function DrawDebuffs(row, size, show)
         return
     end
     if row.auras then row.auras:SetShown(false) end
+    local now = Now()
+    if not OC.slotScanAt or now - OC.slotScanAt > 3 then
+        OC.slotScanAt = now
+        for b in pairs(slotNumbers) do OC.ScanSlot(b) OC.SlotNumbers(b, timer) end
+    end
     if key ~= debuffLayout or OC.debuffDirty or not row.slots then
         debuffLayout, OC.debuffDirty = key, nil
         -- Alte Felder still legen (der Behaelter kennt kein Entfernen).

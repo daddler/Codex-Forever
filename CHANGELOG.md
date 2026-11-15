@@ -9,6 +9,14 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.0.7.9] – 2026-11-15
+
+### Behoben
+- Debuff-Felder: Zahlen blieben trotz Schalter (Bild nach 1.0.7.8). Schriften
+  des Feldes jetzt bis in Enkel gesucht, auch in der Uhr, und außerhalb des
+  Kampfes alle 3 s neu (`OC.ScanSlot`). `/wcui debuffs` nennt je Feld Kinder
+  und gefundene Schriften mit Text und Alpha.
+
 ## [1.0.7.8] – 2026-11-15
 
 ### Behoben
