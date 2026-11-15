@@ -1789,6 +1789,11 @@ SlashCmdList["WEINTCODEXUI"] = function(msg)
         end
         return
     end
+    if msg == "markieren" or msg == "automark" then
+        local AMk = WeintCodex.UIAutoMark
+        print(WeintCodex.ColorText("accent", "[WeintCodex]") .. " Automark: " .. tostring(AMk and AMk.Again and AMk.Again() or "nicht geladen"))
+        return
+    end
     if msg == "dungeonkarte" or msg == "dungeonmap" then
         -- 1.0.6.10: was der Client in dieser Instanz ueber Ort und Position sagt.
         local DM = WeintCodex.UIDungeonMap

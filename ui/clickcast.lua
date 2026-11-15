@@ -238,6 +238,8 @@ end
 -- Rahmens ("*type1" = Ziel, "*type2" = Menue) von selbst.
 local applied = setmetatable({}, { __mode = "k" })
 local hooked = setmetatable({}, { __mode = "k" })
+local allClicks = setmetatable({}, { __mode = "k" })   -- Rahmen, die jede Maustaste annehmen
+CC._allClicks = allClicks
 
 local ATTR_ACTION = { spell = "spell", target = "target", menu = "togglemenu", macro = "macro" }
 
@@ -293,6 +295,22 @@ function CC.ApplyTo(f, list)
         end
     end
     applied[f] = keys
+    -- 1.0.6.17 (Meldung: Segen des Schutzes auf Maustaste 8 landet beim
+    -- Paladin; /wcui klick: "Letzte Klicks: noch keiner"): die Gruppenrahmen
+    -- des Spiels nehmen ab Werk nur Links und Rechts an. Eine Belegung auf
+    -- einer anderen Maustaste erreichte den Rahmen nie - die Taste lief
+    -- durch zur Tastenbelegung des Spiels, und die zaubert auf dich. Hat der
+    -- Rahmen eine solche Belegung, nimmt er jetzt jede Maustaste an (beim
+    -- Loslassen, wie die eigenen Rahmen). Nur ausserhalb des Kampfes
+    -- (CC.Apply wartet), einmal gesetzt bleibt es bis zum Neuladen.
+    local extra = false
+    for _, b in ipairs(list) do
+        if type(b.button) == "number" and b.button > 2 and ATTR_ACTION[b.action] then extra = true break end
+    end
+    if extra and not allClicks[f] and f.RegisterForClicks then
+        local ok = pcall(f.RegisterForClicks, f, "AnyUp")
+        if ok then allClicks[f] = true end
+    end
     CC.HookClick(f)
     CC.HookTooltip(f)
     CC.HookWheel(f)
@@ -372,6 +390,7 @@ function CC.ClickReport()
             .. " · geschützt " .. tostring(f.IsProtected and f:IsProtected())
             .. " · unit " .. tostring(f:GetAttribute("unit"))
             .. " · belegt von WeintCodex " .. tostring(applied[f] ~= nil)
+            .. " · nimmt jede Maustaste " .. tostring(allClicks[f] == true)
         for _, m in ipairs({ "", "*", "shift-", "ctrl-", "alt-" }) do
             local parts = {}
             -- 1.0.6.16: alle Maustasten (bis 1.0.6.15 nur 1 und 2 - eine

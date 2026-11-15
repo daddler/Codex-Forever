@@ -1750,6 +1750,39 @@ do
     Check(ok, "Weltkarte: oeffnen ueber den Kartenknopf des Spiels, Taint-Bericht im Fehlerbericht" .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 1.0.6.17: Rahmen des Spiels nehmen fuer Belegungen ab Maustaste 3 jede
+-- Maustaste an; Automark fragt wieder, wenn die Markierung fehlt.
+do
+    local ok, err = pcall(function()
+        local CC = WeintCodex.UIClickCast
+        local f = stub.NewObject("Button")
+        local attrs, reg = {}, nil
+        f.SetAttribute = function(_, k, v) attrs[k] = v end
+        f.RegisterForClicks = function(_, ...) reg = { ... } end
+        CC.ApplyTo(f, { { button = 1, mod = "", action = "spell", spell = "Lichtblitz" } })
+        assert(reg == nil, "Links/Rechts allein aendert die Klicks des Rahmens")
+        CC.ApplyTo(f, { { button = 8, mod = "", action = "spell", spell = "Segen des Schutzes" } })
+        assert(reg and reg[1] == "AnyUp", "Rahmen nimmt Maustaste 8 nicht an")
+        assert(attrs["type-Button8"] == "macro"
+            and attrs["macrotext-Button8"] == "/cast [@mouseover,exists] Segen des Schutzes", "Taste 8 nicht belegt")
+        reg = nil
+        CC.ApplyTo(f, { { button = 8, mod = "", action = "spell", spell = "Segen des Schutzes" } })
+        assert(reg == nil, "Klicks ein zweites Mal gesetzt")
+
+        local AM, K = WeintCodex.UIAutoMark, WeintCodex.UIKit
+        assert(type(AM.Again) == "function" and type(AM.WithdrawLater) == "function", "Automark: neue Wege fehlen")
+        local has = false
+        for _, e in ipairs(AM.EVENTS) do if e == "RAID_TARGET_UPDATE" then has = true end end
+        assert(has, "Automark hoert nicht auf geaenderte Markierungen")
+        -- Ein neues Angebot uebersteht das nachgereichte Einklappen.
+        AM.state.offer = { { role = "TANK", unit = "player", index = 6, who = "x" } }
+        AM.WithdrawLater()
+        assert(AM.state.offer ~= nil, "frisches Angebot nach dem Kampf wieder eingeklappt")
+        AM.state.offer = nil
+    end)
+    Check(ok, "Klickzauber: Maustaste 8 erreicht den Rahmen; Automark fragt wieder" .. (ok and "" or (": " .. tostring(err))))
+end
+
 -- 1.0.6.12: eine erwartete Sperre (Messenger sendet selbst) ist kein Fehler.
 do
     local ok, err = pcall(function()

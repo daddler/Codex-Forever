@@ -159,6 +159,21 @@ local function Already(unit, index)
     return K.Plain(v) == index
 end
 
+-- Sagt der Client offen, dass die Markierung NICHT (mehr) sitzt? Dann gilt
+-- "erledigt" nicht mehr (1.0.6.17, Meldung: "Automark geht auf einmal nicht
+-- mehr"): bis dahin galt ein Klick fuer den Rest der Instanz, auch wenn die
+-- Markierung nie ankam oder wieder verschwand. Kurz nach dem Klick zaehlt
+-- es nicht - das Spiel braucht einen Moment.
+AM.CLICK_GRACE = 3
+local function Lost(unit, index)
+    if type(_G.GetRaidTargetIndex) ~= "function" then return false end
+    local now = Call(_G.GetTime) or 0
+    if now - (state.clickedAt or -1e9) < AM.CLICK_GRACE then return false end
+    local ok, v = pcall(_G.GetRaidTargetIndex, unit)
+    if not ok or K.IsSecret(v) then return false end
+    return K.Plain(v) ~= index
+end
+
 -- Ein Durchlauf: markiert, was noch nicht markiert ist. Gibt eine Zeile
 -- fuer die Einstellungen zurueck (und merkt sie sich).
 function AM.On()
@@ -188,6 +203,7 @@ function AM.Run()
     if not may then
         AM.Withdraw()
         state.last = "Nicht markiert: " .. why .. "."
+        AM.Tell(state.last)
         return state.last
     end
     local holders = AM.Holders(kind)
@@ -208,6 +224,7 @@ function AM.Run()
             -- davon aendert - dieselbe noch einmal naehme sie ab.
             local who = Who(unit) .. "#" .. index
             if state.done[role] ~= who and Already(unit, index) then state.done[role] = who end
+            if state.done[role] == who and Lost(unit, index) then state.done[role] = nil end
             local done = state.done[role] == who
             if not done then
                 plan[#plan + 1] = { role = role, unit = unit, index = index, who = who }
@@ -217,6 +234,10 @@ function AM.Run()
         end
     end
     state.last = table.concat(parts, " · ")
+    -- Niemand hat eine Rolle: sagen, warum nichts kommt (einmal je Instanz).
+    if not holders.TANK and not holders.HEALER then
+        AM.Tell("Automark: in dieser Gruppe hat niemand eine Rolle – Rechtsklick auf einen Spieler → Rolle festlegen, dann fragt Automark nach.")
+    end
     if #plan > 0 and state.dismissed ~= id then
         AM.Offer(plan)
         -- Einmal je Angebot im Chat: was ein Klick tut und warum es einen braucht.
@@ -323,10 +344,26 @@ function AM.Offer(plan)
     d:Show()
 end
 
+-- Einmal je Instanz und Grund im Chat, warum nicht markiert wird.
+function AM.Tell(text)
+    if not K.Get(KEY, "markChat") then return end
+    local sig = tostring(state.instance) .. "|" .. text
+    if state.why == sig then return end
+    state.why = sig
+    Say(text)
+end
+
+-- Nach dem Kampf einklappen - aber nicht, wenn inzwischen ein neues
+-- Angebot steht (sonst verschwand die frische Abfrage wieder).
+function AM.WithdrawLater()
+    if state.offer then return end
+    AM.Withdraw()
+end
+
 function AM.Withdraw()
     state.offer = nil
     if not dialog then return end
-    if K.InCombat() then K.AfterCombat(AM.Withdraw) return end
+    if K.InCombat() then K.AfterCombat(AM.WithdrawLater) return end
     dialog.secure:SetAttribute("macrotext1", nil)
     dialog:Hide()
 end
@@ -344,6 +381,7 @@ function AM.Clicked(which)
         return
     end
     for _, p in ipairs(state.offer or {}) do state.done[p.role] = p.who end
+    state.clickedAt = Call(_G.GetTime) or 0
     AM.Withdraw()
     if K.InCombat() then return end
     AM.Run()
@@ -354,7 +392,16 @@ end
 --------------------------------------------------
 
 AM.EVENTS = { "PLAYER_ENTERING_WORLD", "ZONE_CHANGED_NEW_AREA", "GROUP_ROSTER_UPDATE",
-              "PLAYER_ROLES_ASSIGNED", "PARTY_LEADER_CHANGED", "PLAYER_REGEN_ENABLED" }
+              "PLAYER_ROLES_ASSIGNED", "PARTY_LEADER_CHANGED", "PLAYER_REGEN_ENABLED",
+              "RAID_TARGET_UPDATE" }
+
+-- "/wcui markieren" (1.0.6.17): noch einmal fragen, egal was diese Sitzung
+-- sich gemerkt hat - und sagen, was Automark gerade sieht.
+function AM.Again()
+    if not AM.On() then return "Automark ist aus (Komfort → Automark)." end
+    state.done, state.dismissed, state.told, state.why, state.clickedAt = {}, nil, nil, nil, nil
+    return AM.Run() or "Noch nichts zu tun."
+end
 
 local events = CreateFrame("Frame")
 events:SetScript("OnEvent", K.Measured("Automark", function(_, event)

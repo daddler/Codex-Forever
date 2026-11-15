@@ -22,6 +22,14 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.0.6.17",
+        date    = "15.11.2026",
+        notes   = {
+            "|cff7C6CFFKlickzauber auf den Seitentasten der Maus|r – die Gruppenrahmen des Spiels nahmen nur Links- und Rechtsklick an; ein Zauber auf Maustaste 3 bis 12 kam dort nie an und landete bei dir. Jetzt erreicht jede Maustaste den Rahmen.",
+            "|cff7C6CFFAutomark fragt wieder|r – fehlt eine Markierung oder ist sie verschwunden, kommt die Abfrage erneut; hat niemand eine Rolle, sagt Automark das im Chat. „/wcui markieren“ fragt jederzeit noch einmal.",
+        },
+    },
+    {
         version = "1.0.6.16",
         date    = "15.11.2026",
         notes   = {

@@ -9,6 +9,22 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.0.6.17] – 2026-11-15
+
+### Behoben (nicht im Spiel bestätigt)
+- Klickzauber: Rahmen mit einer Belegung ab Maustaste 3 bekommen
+  `RegisterForClicks("AnyUp")` (`CC.ApplyTo`, `allClicks`). Die Gruppenrahmen
+  des Spiels nehmen ab Werk nur Links/Rechts – Taste 8 erreichte den Rahmen
+  nie (gemessen: „Letzte Klicks: noch keiner“) und lief zur Tastenbelegung
+  des Spiels durch. Verhalten wie bei Clique (nur Tatsache, kein Code – „All
+  rights reserved“). Linksklick wirkt auf solchen Rahmen beim Loslassen.
+- Automark: „erledigt“ gilt nicht mehr, wenn der Client offen sagt, dass die
+  Markierung fehlt (`Lost`, `RAID_TARGET_UPDATE`); nachgereichtes Einklappen
+  schließt kein frisches Angebot mehr (`AM.WithdrawLater`); Grund im Chat,
+  wenn niemand eine Rolle hat oder der Spieler nicht markieren darf
+  (`AM.Tell`); `/wcui markieren` (`AM.Again`). Ursache der Meldung nicht
+  gemessen.
+
 ## [1.0.6.16] – 2026-11-15
 
 ### Behoben (nicht im Spiel bestätigt)
