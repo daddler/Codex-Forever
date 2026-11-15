@@ -1499,11 +1499,14 @@ function OC.EnsureSlot(row, d, cell, size, timer)
         local ok, s = pcall(c.AddAuraSlot, c, key, "HARMFUL|PLAYER", {
             candidateFilters = { includeSpellIDs = OC.DebuffIDs(d) },
             initializeFrame = function(button)
-                local icon, cd, count, dur = A.StyleIcon(button, size, { timer = timer })
+                -- 1.0.7.6 (Bild: "2x eine Abklingzeit"): die Uhr des Spiels
+                -- zeichnet ihre Zahl selbst, sobald der Behaelter sie fuehrt -
+                -- also nur diese, keine eigene Restzeit daneben.
+                local icon, cd, count = A.StyleIcon(button, size, { timer = false })
                 pcall(button.SetIcon, button, icon)
                 pcall(button.SetDurationCooldown, button, cd)
                 pcall(button.SetApplicationCount, button, count, {})
-                if timer then pcall(button.SetDurationText, button, dur, {}) end
+                if cd.SetHideCountdownNumbers then pcall(cd.SetHideCountdownNumbers, cd, not timer) end
                 if button.EnableMouse then pcall(button.EnableMouse, button, false) end
             end,
         })

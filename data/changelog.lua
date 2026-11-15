@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.0.7.6",
+        date    = "15.11.2026",
+        notes   = {
+            "|cff7C6CFFDebuffs zeigen ihre Restzeit nur noch einmal|r – vorher stand die Zahl doppelt auf dem Symbol.",
+        },
+    },
+    {
         version = "1.0.7.5",
         date    = "15.11.2026",
         notes   = {

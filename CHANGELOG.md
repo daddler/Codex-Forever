@@ -9,6 +9,13 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.0.7.6] – 2026-11-15
+
+### Behoben
+- Debuff-Felder des Abklingzeitmanagers: Restzeit doppelt (eigene Zahl über
+  `SetDurationText` und die Zahl der Uhr des Spiels). Jetzt nur die Uhr,
+  Zahl je nach Schalter „Restzeit“.
+
 ## [1.0.7.5] – 2026-11-15
 
 ### Geändert
