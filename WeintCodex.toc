@@ -2,7 +2,7 @@
 ## Title: |cff7C6CFFWeintCodex|r
 ## Notes: Raid Guide & Intelligence System — Forever Edition
 ## Author: Fabian
-## Version: 1.0.7.0
+## Version: 1.0.7.1
 ## SavedVariables: WeintCodex_SavedData, WeintCompanionDB, WeintCompanionInboxDB, WeintCodex_WhispersAccount
 ## SavedVariablesPerCharacter: WeintCodex_Whispers, WeintCodex_Backup
 
@@ -168,6 +168,7 @@ data/fieldjournal.lua
 data/reprewards.lua
 data/talenttrees.lua
 data/towns.lua
+data/debuffids_nf.lua
 data/lockboxes.lua
 data/questevents.lua
 # Stufen und Sammelberufe je Gebiet (6.26.5.0); gelesen von ui/zoneinfo.lua.

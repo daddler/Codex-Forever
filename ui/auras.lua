@@ -201,6 +201,7 @@ local function StyleIcon(button, size, o)
     dur:SetShown(o and o.timer and true or false)
     return icon, cd, count, dur
 end
+A.StyleIcon = StyleIcon
 
 -- Restzeit in Worten des Spiels: Sekunden als Zahl, ab einer Minute "2m",
 -- ab einer Stunde "1h". Nur fuer offene Zahlen.

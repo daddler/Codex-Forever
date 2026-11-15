@@ -26702,6 +26702,27 @@ do
     Check(ok, "Berufslehrer: Ränge von Forever" .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 1.0.7.1: Debuff-Felder - Nummern von Forever und gelernte Nummern.
+do
+    local ok, err = pcall(function()
+        local OC = WeintCodex.UIOwnCooldowns
+        local G = _G
+        local mark = { "mark", 1130, "Mal des Jägers" }
+        assert(OC.DebuffIDs(mark)[1213268], "Forever-Nummer des Mals fehlt")
+        local saved = { G.C_UnitAuras, G.UnitClass, G.C_Spell }
+        G.UnitClass = function() return "Jäger", "HUNTER" end
+        G.C_Spell = { GetSpellName = function(id) return id == 1978 and "Schlangenbiss" or ("Z" .. id) end,
+                      GetSpellTexture = function() return 1 end }
+        G.C_UnitAuras = { GetAuraDataByIndex = function(_, i) if i == 1 then return { name = "Schlangenbiss", spellId = 999777 } end end }
+        local n = OC.LearnDebuffs(nil)
+        assert(n == 1 and OC.DebuffIDs({ "serpent", 1978, "x" })[999777], "Nummer nicht gelernt")
+        assert(OC.LearnDebuffs(nil) == 0, "doppelt gelernt")
+        G.C_UnitAuras, G.UnitClass, G.C_Spell = saved[1], saved[2], saved[3]
+        G.WeintCodex_SavedData.debuffIds[1978] = nil
+    end)
+    Check(ok, "Debuff-Felder: Nummern von Forever, gelernte Nummern" .. (ok and "" or (": " .. tostring(err))))
+end
+
 if failures == 0 then
     print("BESTANDEN")
     os.exit(0)

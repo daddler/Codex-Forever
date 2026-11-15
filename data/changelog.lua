@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.0.7.1",
+        date    = "15.11.2026",
+        notes   = {
+            "|cff7C6CFFDebuffs am Ziel werden angezeigt|r – die Felder der eigenen Debuffs zeigen jetzt, was liegt, mit Restzeit. Kennt WeintCodex die Nummer eines Debuffs auf Forever noch nicht, lernt es sie, sobald du ihn außerhalb des Kampfes auf ein Ziel wirkst. Stand prüfen: /wcui debuffs.",
+        },
+    },
+    {
         version = "1.0.7.0",
         date    = "15.11.2026",
         notes   = {

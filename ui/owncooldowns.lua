@@ -1341,7 +1341,7 @@ OC.DEBUFFS = {
                 { "wingclip", 2974, "Zurechtstutzen" } },
     WARLOCK = { { "corruption", 172, "Verderbnis" }, { "agony", 980, "Fluch der Pein" },
                 { "immolate", 348, "Feuerbrand" }, { "weakness", 702, "Fluch der Schwäche" },
-                { "reckless", 704, "Fluch der Tollkühnheit" }, { "elements", 1490, "Fluch der Elemente" },
+                { "reckless", 704, "Fluch der Tollkühnheit" }, { "elements", 402792, "Fluch der Elemente" },
                 { "tongues", 1714, "Fluch der Sprachen" } },
     PRIEST  = { { "swp", 589, "Schattenwort: Schmerz" } },
     DRUID   = { { "moonfire", 8921, "Mondfeuer" }, { "faerie", 770, "Feenfeuer" },
@@ -1354,7 +1354,7 @@ OC.DEBUFFS = {
 
 -- Nicht beim Lehrer (Startzauber oder auf Forever anders gelehrt):
 -- Nummer aus Classic, ungeprueft. load_test.lua laesst nur diese durch.
-OC.DEBUFF_UNTRAINED = { [7386] = true, [1079] = true, [1490] = true }
+OC.DEBUFF_UNTRAINED = { [7386] = true, [1079] = true, [402792] = true }
 
 local function PlayerClass()
     if not _G.UnitClass then return nil end
@@ -1391,9 +1391,133 @@ function OC.KnownAnyRank(id)
     return false
 end
 
-local function BuildSlot(row, d, size, timer)
-    local A = WeintCodex.UIAuras
+-- Alle Nummern eines Debuffs: Raenge aus dem Lehrerbestand, Fassungen von
+-- Forever (data/debuffids_nf.lua) und was WeintCodex selbst am Ziel gesehen
+-- hat (OC.LearnDebuffs, je Konto in WeintCodex_SavedData.debuffIds).
+local function Learned()
+    local sd = _G.WeintCodex_SavedData
+    if type(sd) ~= "table" then return nil end
+    sd.debuffIds = sd.debuffIds or {}
+    return sd.debuffIds
+end
+function OC.DebuffIDs(d)
     local GF = WeintCodex.UIGroupFrames
+    local set = {}
+    for id in pairs((GF and GF.RankSet and GF.RankSet(d[2])) or { [d[2]] = true }) do set[id] = true end
+    for _, id in ipairs((WeintCodex.DebuffIDs or {})[d[2]] or {}) do set[id] = true end
+    local l = Learned()
+    for id in pairs(l and l[d[2]] or {}) do set[id] = true end
+    return set
+end
+
+-- 1.0.7.1 (Bild: "es wird nicht angezeigt, welche Debuffs drauf sind"):
+-- Forever fuehrt manche Debuffs unter anderen Nummern. Ausserhalb des
+-- Kampfes liest WeintCodex die eigenen Debuffs am Ziel; heisst einer wie
+-- ein Feld, kommt seine Nummer dazu (gemerkt) und das Feld des Spiels
+-- bekommt die neue Liste. Im Kampf nie (geheim).
+function OC.LearnDebuffs(row)
+    if K.InCombat() then return 0 end
+    local ua = _G.C_UnitAuras
+    if not (ua and ua.GetAuraDataByIndex) then return 0 end
+    local l = Learned()
+    if not l then return 0 end
+    local byName = {}
+    for _, d in ipairs(OC.DEBUFFS[PlayerClass() or ""] or {}) do
+        local n = SpellName(d[2])
+        if n then byName[n] = d end
+    end
+    local added = 0
+    for i = 1, 40 do
+        local ok, a = pcall(ua.GetAuraDataByIndex, "target", i, "HARMFUL|PLAYER")
+        if not ok or type(a) ~= "table" then break end
+        local name, id = K.Plain(a.name), K.Plain(a.spellId)
+        local d = type(name) == "string" and byName[name]
+        if d and type(id) == "number" and not OC.DebuffIDs(d)[id] then
+            l[d[2]] = l[d[2]] or {}
+            l[d[2]][id] = true
+            added = added + 1
+            local c = row and row.slotC
+            if c and c.SetAuraSlotCandidateFilters then
+                pcall(c.SetAuraSlotCandidateFilters, c, d[1], { includeSpellIDs = OC.DebuffIDs(d) })
+            end
+        end
+    end
+    OC.learnedDebuffs = (OC.learnedDebuffs or 0) + added
+    return added
+end
+
+-- Ein Behaelter des Spiels fuer die ganze Reihe, je Debuff ein Feld
+-- (AddAuraSlot) ueber seinem Fehlt-Symbol - so wie Naowh Forever "Raid
+-- Debuffs" (dort im Spiel bewaehrt; eigener Code). Felder lassen sich nicht
+-- entfernen, nur abschalten (SetAuraSlotEnabled).
+local function SlotContainer(row)
+    if row.slotC ~= nil then return row.slotC or nil end
+    local A = WeintCodex.UIAuras
+    if not (A and A.EngineAvailable and A.EngineAvailable()) then row.slotC = false return nil end
+    local ok, c = pcall(CreateFrame, "AuraContainer", nil, row, "CustomAuraContainerTemplate")
+    if not (ok and c and c.AddAuraSlot) then row.slotC = false return nil end
+    c:SetAllPoints(row)
+    c:SetFrameLevel((row:GetFrameLevel() or 1) + 5)
+    if c.EnableMouse then pcall(c.EnableMouse, c, false) end
+    pcall(c.SetUnit, c, "target")
+    row.slotC, row.slotKeys = c, {}
+    return c
+end
+-- /wcui debuffs: Stand der Felder und was am Ziel liegt (nur ausserhalb des Kampfes lesbar).
+function OC.DebuffReport()
+    local out = {}
+    local row = rows.debuffs
+    out[#out + 1] = "Reihe an: " .. tostring(OC.Get("debuffs") and true or false) .. " · Behälter des Spiels: "
+        .. (row and row.slotC and "ja" or (row and row.slotC == false and "NEIN" or "noch nicht gebaut"))
+        .. (OC.slotError and (" · Fehler: " .. OC.slotError) or "")
+    for _, d in ipairs(OC.DebuffList()) do
+        local ids = {}
+        for id in pairs(OC.DebuffIDs(d)) do ids[#ids + 1] = id end
+        table.sort(ids)
+        out[#out + 1] = d[3] .. ": " .. table.concat(ids, ", ") .. ((row and row.slotKeys and row.slotKeys[d[1]]) and "" or "  (kein Feld)")
+    end
+    local ua = _G.C_UnitAuras
+    if ua and ua.GetAuraDataByIndex and not K.InCombat() then
+        out[#out + 1] = "Eigene Debuffs am Ziel jetzt:"
+        for i = 1, 40 do
+            local ok, a = pcall(ua.GetAuraDataByIndex, "target", i, "HARMFUL|PLAYER")
+            if not ok or type(a) ~= "table" then break end
+            out[#out + 1] = "  " .. tostring(K.Plain(a.name)) .. " = " .. tostring(K.Plain(a.spellId))
+        end
+    end
+    out[#out + 1] = "Selbst gelernt bisher: " .. tostring(OC.learnedDebuffs or 0)
+    return out
+end
+
+function OC.EnsureSlot(row, d, cell, size, timer)
+    local c = SlotContainer(row)
+    if not c then return false end
+    local key = d[1]
+    local slot = row.slotKeys[key]
+    if not slot then
+        local A = WeintCodex.UIAuras
+        local ok, s = pcall(c.AddAuraSlot, c, key, "HARMFUL|PLAYER", {
+            candidateFilters = { includeSpellIDs = OC.DebuffIDs(d) },
+            initializeFrame = function(button)
+                local icon, cd, count, dur = A.StyleIcon(button, size, { timer = timer })
+                pcall(button.SetIcon, button, icon)
+                pcall(button.SetDurationCooldown, button, cd)
+                pcall(button.SetApplicationCount, button, count, {})
+                if timer then pcall(button.SetDurationText, button, dur, {}) end
+                if button.EnableMouse then pcall(button.EnableMouse, button, false) end
+            end,
+        })
+        if not (ok and s) then OC.slotError = tostring(s) return false end
+        slot = s
+        row.slotKeys[key] = slot
+    end
+    slot:ClearAllPoints()
+    slot:SetAllPoints(cell)
+    pcall(c.SetAuraSlotEnabled, c, key, true)
+    return true
+end
+
+local function BuildSlot(row, d, size)
     local f = CreateFrame("Frame", nil, row)
     f:SetSize(size, size)
     f.miss = f:CreateTexture(nil, "BACKGROUND")
@@ -1404,11 +1528,6 @@ local function BuildSlot(row, d, size, timer)
     local warn = C.danger
     f.alert = K.Border(f, 2, warn[1], warn[2], warn[3], 1, "OVERLAY")
     f.alert:SetShown(false)
-    local spells = (GF and GF.RankSet and GF.RankSet(d[2])) or { [d[2]] = true }
-    f.auras = A.Create(f, { filter = "HARMFUL|PLAYER", max = 1, size = size, spacing = 0,
-        anchor = "TOPLEFT", growth = "RIGHT", growthV = "DOWN", perRow = 1, timer = timer, spells = spells })
-    f.auras:SetPoint("TOPLEFT", f, "TOPLEFT", 0, 0)
-    f.auras:SetUnit("target")
     f.key = d[1]
     return f
 end
@@ -1454,7 +1573,8 @@ local function DrawDebuffs(row, size, show)
     local key = OC.DebuffLayoutKey(size, vertical, perLine, gap) .. tostring(timer) .. #list
     for _, d in ipairs(list) do key = key .. d[1] end
     if #list == 0 then
-        if row.slots then for _, f in ipairs(row.slots) do f:Hide() f.auras:SetUnit("none") end end
+        if row.slots then for _, f in ipairs(row.slots) do f:Hide() end end
+        if row.slotC then for k in pairs(row.slotKeys) do pcall(row.slotC.SetAuraSlotEnabled, row.slotC, k, false) end end
         DrawGeneric(row, size, vertical, perLine, gap, timer)
         if row.auras then row.auras:SetShown(true) end
         return
@@ -1463,20 +1583,21 @@ local function DrawDebuffs(row, size, show)
     if key ~= debuffLayout or OC.debuffDirty or not row.slots then
         debuffLayout, OC.debuffDirty = key, nil
         -- Alte Felder still legen (der Behaelter kennt kein Entfernen).
-        for _, f in ipairs(row.slots or {}) do f:Hide() pcall(f.auras.SetUnit, f.auras, "none") end
+        for _, f in ipairs(row.slots or {}) do f:Hide() end
+        if row.slotC then for k in pairs(row.slotKeys) do pcall(row.slotC.SetAuraSlotEnabled, row.slotC, k, false) end end
         row.slots = {}
         row.slotPool = row.slotPool or {}
         local per = perLine > 0 and perLine or #list
         if vertical then per = 1 end
         for i, d in ipairs(list) do
-            local pk = d[1] .. ":" .. size .. ":" .. tostring(timer)
+            local pk = d[1] .. ":" .. size
             local f = row.slotPool[pk]
-            if not f then f = BuildSlot(row, d, size, timer) row.slotPool[pk] = f end
+            if not f then f = BuildSlot(row, d, size) row.slotPool[pk] = f end
             f:ClearAllPoints()
             local c, l = (i - 1) % per, math.floor((i - 1) / per)
             f:SetPoint("TOPLEFT", row, "TOPLEFT", c * (size + gap), -l * (size + gap))
-            f.auras:SetUnit("target")
             f:Show()
+            OC.EnsureSlot(row, d, f, size, timer)
             row.slots[i] = f
         end
         local cols = math.min(per, #list)
@@ -1683,6 +1804,14 @@ function OC.Enable()
     rows.small = NewRow("ocd_small", "Abklingzeiten: Weitere", "WeintCodexOwnCooldownsSmall")
     rows.buffs = NewRow("ocd_buffs", "Abklingzeiten: Buffs", "WeintCodexOwnCooldownsBuffs")
     rows.debuffs = NewRow("ocd_debuffs", "Abklingzeiten: Eigene Debuffs", "WeintCodexOwnCooldownsDebuffs")
+    -- 1.0.7.1: Nummern der eigenen Debuffs ausserhalb des Kampfes lernen.
+    local learn = CreateFrame("Frame")
+    pcall(learn.RegisterEvent, learn, "PLAYER_TARGET_CHANGED")
+    pcall(learn.RegisterUnitEvent or learn.RegisterEvent, learn, "UNIT_AURA", "target")
+    learn:SetScript("OnEvent", K.Measured("Eigene Debuffs lernen", function(_, event, unit)
+        if event == "UNIT_AURA" and unit ~= "target" then return end
+        if OC.Get("debuffs") and not K.InCombat() then OC.LearnDebuffs(rows.debuffs) end
+    end))
     local ev = CreateFrame("Frame")
     for _, e in ipairs({ "PLAYER_REGEN_DISABLED", "PLAYER_REGEN_ENABLED", "SPELLS_CHANGED",
         "LEARNED_SPELL_IN_TAB", "PLAYER_ENTERING_WORLD", "SPELL_UPDATE_COOLDOWN", "UNIT_SPELLCAST_SUCCEEDED" }) do

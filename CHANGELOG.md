@@ -9,6 +9,17 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.0.7.1] – 2026-11-15
+
+### Behoben
+- Debuff-Felder zeigten nie, was am Ziel liegt (Bild aus dem Spiel). Jetzt ein
+  Behälter je Reihe mit einem Feld je Debuff (`AddAuraSlot` mit
+  `candidateFilters`, wie Naowh Forever „Raid Debuffs“; eigener Code) statt
+  eines `AddAuraGroup` je Feld. Nummern: Ränge + Forever-Fassungen
+  (`data/debuffids_nf.lua`, erzeugt) + gelernt außerhalb des Kampfes
+  (`OC.LearnDebuffs`, `SavedData.debuffIds`). Fluch der Elemente unter
+  Forevers 402792. Prüfbefehl `/wcui debuffs`.
+
 ## [1.0.7.0] – 2026-11-15
 
 Großes Paket (Wunsch: „Ich will das alles haben“, nach dem Verhalten von
