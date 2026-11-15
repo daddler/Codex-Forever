@@ -63,7 +63,7 @@ OC.SLOTS = { "big", "small", "off" }
 OC.SLOT_TEXT = { big = "Wichtig", small = "Weitere", off = "Aus" }
 OC.MAX_EXTRA = 6     -- eigene Reihen (6.98.0.0)
 OC.COLS_PER_BAND = 3 -- Spalten je Band in den Einstellungen
-OC.DEFAULTS = { big = 40, small = 28, buff = 28, combatOnly = false, numbers = true, glow = true, buffs = true, debuffs = true, dbfHighlight = false, cursorCd = false, gcd = true, coTank = true, swing = true, gearBar = true, trinketBar = true, vertical = false, perLine = 0,
+OC.DEFAULTS = { big = 40, small = 28, buff = 28, combatOnly = false, numbers = true, glow = true, buffs = true, debuffs = true, dbfHighlight = false, cursorCd = false, gcd = true, coTank = true, swing = true, gearBar = true, trinketBar = true, consumables = true, vertical = false, perLine = 0,
     glowColor = "green", glowStrength = 100, glowPulse = true }
 OC.MAX_LIST = 80
 OC.MIN_BASE_CD = 2000   -- ms; darunter ist es die globale Abklingzeit
@@ -2250,6 +2250,11 @@ function OC.BuildSection(B)
             get = function() return OC.Get("trinketBar") and true or false end,
             set = function(v) OC.Set("trinketBar", v and true or false) local GS = WeintCodex.UIGearSets if GS then GS.UpdateTrinkets() end end,
             description = "Deine beiden Schmuckstücke zum Anklicken, mit Abklingzeit. Rechtsklick: anderen Schmuck anlegen." })
+    B:Row({ type = "toggle", label = "Verbrauchsleiste",
+            get = function() return OC.Get("consumables") and true or false end,
+            set = function(v) OC.Set("consumables", v and true or false) local CB = WeintCodex.UIConsumables if CB then CB.Layout() end end,
+            description = "Tränke, Elixiere, Fläschchen, Essen und Verbände aus deinen Taschen zum Anklicken, mit Anzahl und Abklingzeit." },
+          { type = "empty" })
     B:Row({ type = "toggle", label = "Eigene Debuffs am Ziel", disabled = off,
             get = function() return OC.Get("debuffs") and true or false end, set = function(v) OC.Set("debuffs", v and true or false) end,
             description = "Was du selbst auf dein Ziel gewirkt hast (Stiche, Flüche, Rüstung zerreißen …) mit Restzeit – auch im Kampf. Das Spiel zeigt sie, WeintCodex liest sie nicht." },

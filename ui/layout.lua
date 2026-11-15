@@ -91,6 +91,7 @@ K.LAYOUT = {
     swing           = { point = "BOTTOM",      relPoint = "BOTTOM", x = 0, y = 250 },
     gearbar         = { point = "BOTTOMLEFT",  relPoint = "BOTTOMLEFT", x = 20, y = 160 },
     trinketbar      = { point = "BOTTOM",      relPoint = "BOTTOM", x = 260, y = 316 },
+    consumables     = { point = "BOTTOM",      relPoint = "BOTTOM", x = -260, y = 316 },
     cotank          = { point = "BOTTOM",      relPoint = "BOTTOM", x = -330, y = 420 },
     xpbar           = { point = "BOTTOM",      relPoint = "BOTTOM", x = 0, y = 4 },
     damagemeter     = { point = "TOPLEFT",     relPoint = "TOPLEFT", x = 12, y = -36 },

@@ -297,6 +297,7 @@ ui/owncooldowns.lua
 ui/combathelp.lua
 ui/swingtimer.lua
 ui/gearsets.lua
+ui/consumables.lua
 ui/questtracker.lua
 ui/navmesh.lua
 ui/route.lua

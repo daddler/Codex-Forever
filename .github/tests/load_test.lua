@@ -26446,6 +26446,30 @@ do
     Check(ok, "Questpfeil: Nadel am Rand, Wegpunkt der Karte verfolgt" .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 1.0.7.0: Verbrauchsleiste - nur Verbrauchsgut, sichere Knoepfe, im Kampf
+-- keine neue Verteilung.
+do
+    local ok, err = pcall(function()
+        local CB, K = WeintCodex.UIConsumables, WeintCodex.UIKit
+        local G = _G
+        local oldI, oldC, oldIC = G.GetItemInfoInstant, G.C_Container, K.InCombat
+        G.GetItemInfoInstant = function(id) if id == 118 then return id, "", "", "", 0, 0, 1 elseif id == 2589 then return id, "", "", "", 0, 7, 1 end return id, "", "", "", 0, 0, 5 end
+        G.C_Container = {
+            GetContainerNumSlots = function(bag) return bag == 0 and 3 or 0 end,
+            GetContainerItemInfo = function(_, slot) return ({ { itemID = 4540 }, { itemID = 118 }, { itemID = 2589 } })[slot] end,
+        }
+        local list = CB.Scan()
+        assert(#list == 2 and list[1].id == 118 and list[2].id == 4540, "Verbrauchsgut falsch gelesen oder sortiert")
+        K.InCombat = function() return true end
+        CB.dirty = nil
+        CB.Layout()
+        assert(CB.dirty == true, "im Kampf neu verteilt")
+        K.InCombat = oldIC
+        G.GetItemInfoInstant, G.C_Container = oldI, oldC
+    end)
+    Check(ok, "Verbrauchsleiste" .. (ok and "" or (": " .. tostring(err))))
+end
+
 if failures == 0 then
     print("BESTANDEN")
     os.exit(0)
