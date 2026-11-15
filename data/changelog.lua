@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.0.6.25",
+        date    = "15.11.2026",
+        notes   = {
+            "|cff7C6CFFPriester wieder lesbar|r – Name und Leben stehen wieder weiß mit schwarzem Schatten, wie bei allen anderen Klassen.",
+        },
+    },
+    {
         version = "1.0.6.24",
         date    = "15.11.2026",
         notes   = {

@@ -9,6 +9,13 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.0.6.25] – 2026-11-15
+
+### Geändert
+- Gruppenrahmen „Plastisch“: dunkle Schrift auf hellen Klassen zurückgenommen
+  (Rückmeldung: „sieht richtig schlecht aus“, „lass den Namen in weiß“) –
+  weiß mit schwarzem Schatten auf allen Klassen.
+
 ## [1.0.6.24] – 2026-11-15
 
 ### Geändert

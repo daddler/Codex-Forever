@@ -284,16 +284,8 @@ function GF.Paint(c, r, g, b, gone)
         end
         local d = G.gfReliefBack
         Grad(c.bg, d[1], d[2], d[3], 1, d[1] * 1.8, d[2] * 1.8, d[3] * 1.8, 1)
-        -- Helle Klassen (Priester): dunkle Schrift, Weiss auf Weiss liest
-        -- niemand (Bild nach 1.0.6.23).
-        if 0.299 * r + 0.587 * g + 0.114 * b > 0.8 then
-            c.name:SetTextColor(0.08, 0.08, 0.10)
-            c.status:SetTextColor(0.12, 0.12, 0.14)
-            if c.name.SetShadowColor then c.name:SetShadowColor(1, 1, 1, 0.25) c.status:SetShadowColor(1, 1, 1, 0.25) end
-        else
-            c.name:SetTextColor(1, 1, 1)
-            c.status:SetTextColor(0.95, 0.95, 0.95)
-        end
+        c.name:SetTextColor(1, 1, 1)
+        c.status:SetTextColor(0.95, 0.95, 0.95)
         return
     end
     c._wcRel = nil
