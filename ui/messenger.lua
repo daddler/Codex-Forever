@@ -270,6 +270,8 @@ end
 function MS.OpenMenu(c)
     local link = MS.PlayerLink(c)
     if not link or not _G.SetItemRef then return false end
+    local ER = WeintCodex.UIErrors
+    if ER and ER.NoteMenu then ER.NoteMenu(tostring(c.name)) end
     local ok = pcall(_G.SetItemRef, link, "|H" .. link .. "|h" .. tostring(c.name) .. "|h", "RightButton")
     return ok
 end

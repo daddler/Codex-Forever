@@ -1837,6 +1837,18 @@ do
         _G.GetTime = function() return 502 end
         h(ER.events, "ADDON_ACTION_BLOCKED", "WeintCodex", "UNKNOWN()")
         assert(n == 1, "unerwartete Sperre nicht gemeldet")
+        -- 1.0.6.20: "Name kopieren" im eigenen Menue - Fenster statt Fehler.
+        _G.GetTime = function() return 600 end
+        ER.NoteMenu("Brunhild")
+        local shown
+        local oldShow = WeintCodex.UIKit.ShowReport
+        WeintCodex.UIKit.ShowReport = function(_, lines) shown = lines[1] end
+        h(ER.events, "ADDON_ACTION_FORBIDDEN", "WeintCodex", "CopyToClipboard()")
+        assert(n == 1 and shown == "Brunhild", "Name kopieren nicht abgefangen")
+        _G.GetTime = function() return 900 end
+        h(ER.events, "ADDON_ACTION_FORBIDDEN", "WeintCodex", "CopyToClipboard()")
+        assert(n == 2, "altes Menue faengt Sperre ab")
+        WeintCodex.UIKit.ShowReport = oldShow
         _G.GetTime = oldT
         ER.Record = oldRecord
         ER.expectUntil = 0

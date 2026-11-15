@@ -32,6 +32,13 @@ nicht zusammen.
     VoidBox (MIT, Copyright (c) 2026 VoiD911); eigener Code. Aus VuhDo
     (keine Lizenz gefunden) nichts übernommen.
 
+### Behoben (nicht im Spiel bestätigt)
+- „Verboten: CopyToClipboard()“ (Bericht, Krieger 29): „Name kopieren“ im
+  Menü einer Einheit, das WeintCodex selbst geöffnet hat (Flüsterfenster,
+  Menü mit Zusatztaste), ist für Addons gesperrt. Statt des Fehlers öffnet
+  sich ein Fenster mit dem Namen zum Kopieren (`ER.NoteMenu`,
+  `ER.CopyFallback`, zwei Minuten nach dem Öffnen).
+
 ## [1.0.6.19] – 2026-11-15
 
 ### Behoben (nicht im Spiel bestätigt)

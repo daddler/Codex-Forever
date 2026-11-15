@@ -356,6 +356,12 @@ function CC.OpenUnitMenu(f)
     local unit = f and f.GetAttribute and f:GetAttribute("unit")
     unit = K.Plain(unit)
     if type(unit) ~= "string" then return nil end
+    local ER = WeintCodex.UIErrors
+    if ER and ER.NoteMenu and _G.UnitName then
+        local n, r = _G.UnitName(unit)
+        n, r = K.Plain(n), K.Plain(r)
+        if type(n) == "string" then ER.NoteMenu((type(r) == "string" and r ~= "") and (n .. "-" .. r) or n) end
+    end
     if f.OpenMenu and pcall(f.OpenMenu, f) then CC.menuVia = "OpenMenu" return CC.menuVia end
     local open = _G.UnitPopup_OpenMenu
     if type(open) == "function" then

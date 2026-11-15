@@ -333,6 +333,21 @@ local function Clock()
     return type(t) == "number" and t or 0
 end
 function ER.Expect(secs) ER.expectUntil = Clock() + (secs or 1) end
+
+-- Name des Menues, das WeintCodex zuletzt geoeffnet hat.
+ER.MENU_WINDOW = 120
+function ER.NoteMenu(name)
+    if type(name) ~= "string" or name == "" then return end
+    ER.menuName, ER.menuAt = name, Clock()
+end
+function ER.CopyFallback()
+    local name = ER.menuName
+    if not name or Clock() - (ER.menuAt or -1e9) > ER.MENU_WINDOW then return false end
+    local K = WeintCodex.UIKit
+    if K and K.ShowReport and pcall(K.ShowReport, "Name kopieren – markiert, Strg+C", { name }) then return true end
+    print(WeintCodex.ColorText("accent", "[WeintCodex]") .. " Name: " .. name)
+    return true
+end
 function ER.Expected() return (ER.expectUntil or 0) > 0 and Clock() <= ER.expectUntil end
 function ER.ExpectEnd() ER.expectUntil = 0 end
 
@@ -352,6 +367,12 @@ ev:SetScript("OnEvent", WeintCodex.Measured("Fehlerfenster", function(_, event, 
     -- Messengers): ein Teil, der eine Sperre erwartet und selbst auffaengt
     -- (ER.Expect kurz vor dem Versuch), ist kein Fehler.
     if ER.Expected() then return end
+    -- 1.0.6.20 (Bericht: "Verboten: CopyToClipboard()" aus dem Menue einer
+    -- Einheit): ein Menue, das WeintCodex selbst geoeffnet hat (Rechtsklick
+    -- im Fluesterfenster, Menue mit Zusatztaste an Rahmen), gilt dem Spiel
+    -- als vom Addon - "Name kopieren" ist darin gesperrt. Statt eines
+    -- Fehlers ein Fenster mit dem Namen zum Kopieren (Strg+C).
+    if tostring(func) == "CopyToClipboard()" and ER.CopyFallback() then return end
     local msg = (event == "ADDON_ACTION_FORBIDDEN" and "Verboten: " or "Blockiert: ") .. tostring(func or "?")
     local stack = _G.debugstack and _G.debugstack(2) or ""
     ER.Announce(ER.Record("blocked", msg, stack, ER.Extra(func, stack)))
