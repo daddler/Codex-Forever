@@ -9,6 +9,14 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.0.6.24] – 2026-11-15
+
+### Geändert
+- Buffzeiten: Gruppen mit `stack` (Falke) zeigen je Beschwörung ein Symbol
+  mit eigener Uhr (`a.earlier`, Eintrag `e.start`); „×2“ entfällt.
+- Gruppenrahmen „Plastisch“: dunkle Schrift, wenn die Klassenfarbe heller als
+  0,8 (Luminanz) ist; „Wird belebt“ → „Belebt …“ (passte nicht).
+
 ## [1.0.6.23] – 2026-11-15
 
 ### Behoben

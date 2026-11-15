@@ -22,6 +22,14 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.0.6.24",
+        date    = "15.11.2026",
+        notes   = {
+            "|cff7C6CFFJeder Falke mit eigener Uhr|r – sind zwei Falken unterwegs, zeigen die Buffzeiten zwei Symbole, jedes mit seinen verbleibenden Sekunden.",
+            "|cff7C6CFFLesbare Gruppenrahmen auf hellen Klassen|r – auf dem Priester stehen Name und Leben jetzt dunkel statt weiß auf weiß, und „Belebt …“ wird nicht mehr abgeschnitten.",
+        },
+    },
+    {
         version = "1.0.6.23",
         date    = "15.11.2026",
         notes   = {
