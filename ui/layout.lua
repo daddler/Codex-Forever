@@ -85,6 +85,10 @@ K.LAYOUT = {
     ocd_buffs       = { point = "BOTTOM",      relPoint = "BOTTOM", x = 0, y = 396 },
     -- Eigene Debuffs am Ziel (1.0.6.27): ueber den Beschwoerungen
     ocd_debuffs     = { point = "BOTTOM",      relPoint = "BOTTOM", x = 0, y = 508 },
+    -- Kampfhilfen (ui/combathelp.lua, 1.0.7.0): GCD-Leiste unter "Wichtig",
+    -- Co-Tank links neben der Mitte.
+    gcd             = { point = "BOTTOM",      relPoint = "BOTTOM", x = 0, y = 306 },
+    cotank          = { point = "BOTTOM",      relPoint = "BOTTOM", x = -330, y = 420 },
     xpbar           = { point = "BOTTOM",      relPoint = "BOTTOM", x = 0, y = 4 },
     damagemeter     = { point = "TOPLEFT",     relPoint = "TOPLEFT", x = 12, y = -36 },
     bags            = { point = "BOTTOMRIGHT", relPoint = "BOTTOMRIGHT", x = -20, y = 110 },

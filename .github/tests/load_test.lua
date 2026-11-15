@@ -26290,6 +26290,56 @@ do
     Check(ok, "Abklingzeitmanager: eigene Debuffs am Ziel" .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 1.0.7.0: Kampfhilfen und Debuff-Felder - Nummern aus dem Lehrerbestand,
+-- Abklingzeit an der Maus nur bei Druck + Meldung und nur eingeschaltet.
+do
+    local ok, err = pcall(function()
+        local OC, CH, TD = WeintCodex.UIOwnCooldowns, WeintCodex.UICombatHelp, WeintCodex.TrainerData
+        assert(OC and CH and TD, "Abklingzeitmanager, Kampfhilfen oder Lehrerbestand fehlen")
+        local function Has(class, id)
+            for _, list in pairs(TD.CLASSES[class].spells) do
+                for _, sp in ipairs(list) do if sp.id == id then return true end end
+            end
+            return false
+        end
+        for class, list in pairs(OC.DEBUFFS) do
+            for _, d in ipairs(list) do
+                assert(Has(class, d[2]) or OC.DEBUFF_UNTRAINED[d[2]], class .. "/" .. d[1] .. ": " .. d[2] .. " nicht im Lehrerbestand")
+            end
+        end
+        for class, id in pairs(CH.GCD_SPELLS) do
+            assert(Has(class, id) or CH.GCD_STARTER[id], class .. ": GCD-Zauber " .. id .. " nicht im Lehrerbestand")
+        end
+        assert(OC.DEFAULTS.cursorCd == false, "Abklingzeit an der Maus ab Werk an")
+        local G = _G
+        local old = G.rawget(G, "ERR_ABILITY_COOLDOWN")
+        G.ERR_ABILITY_COOLDOWN = "Die Fähigkeit ist noch nicht bereit."
+        local shown = 0
+        local orig = CH.ShowCursor
+        CH.ShowCursor = function() shown = shown + 1 return true end
+        CH.NoteFail(133, 10) CH.NoteError("Die Fähigkeit ist noch nicht bereit.", 10.1)
+        assert(shown == 0, "Abklingzeit an der Maus trotz ausgeschaltet")
+        OC.Set("cursorCd", true)
+        CH.NoteFail(133, 20) CH.NoteError("Die Fähigkeit ist noch nicht bereit.", 20.1)
+        assert(shown == 1, "Druck + Meldung zeigte nichts")
+        CH.NoteFail(133, 30) CH.NoteError("Anderes", 30.1)
+        CH.NoteError("Die Fähigkeit ist noch nicht bereit.", 31)
+        assert(shown == 1, "falsche Meldung oder zu spät gezeigt")
+        OC.Set("cursorCd", false)
+        CH.ShowCursor = orig
+        G.ERR_ABILITY_COOLDOWN = old
+        -- Felder: Liste fuer eine Klasse mit Debuffs, an/aus je Debuff.
+        OC.debuffAll = true
+        assert(#OC.DebuffList("WARLOCK") >= 5, "Felder des Hexenmeisters fehlen")
+        OC.SetDebuffOn("agony", false)
+        for _, d in ipairs(OC.DebuffList("WARLOCK")) do assert(d[1] ~= "agony", "abgewählter Debuff noch da") end
+        OC.SetDebuffOn("agony", true)
+        OC.debuffAll = nil
+        assert(WeintCodex.UIKit.Layout("gcd") and WeintCodex.UIKit.Layout("cotank"), "Plätze der Kampfhilfen fehlen")
+    end)
+    Check(ok, "Kampfhilfen: Debuff-Felder, Abklingzeit an der Maus, GCD, Co-Tank" .. (ok and "" or (": " .. tostring(err))))
+end
+
 if failures == 0 then
     print("BESTANDEN")
     os.exit(0)

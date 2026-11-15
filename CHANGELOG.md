@@ -9,6 +9,25 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.0.7.0] – 2026-11-15
+
+Großes Paket (Wunsch: „Ich will das alles haben“, nach dem Verhalten von
+Naowh Forever – kein Code, dessen Lizenz ist „All Rights Reserved“).
+Enthält auch die nie einzeln veröffentlichten 1.0.6.26 und 1.0.6.27.
+
+### Neu
+- Abklingzeitmanager, Reihe „Eigene Debuffs“: feste Felder je Klasse
+  (`OC.DEBUFFS`, Rang 1 aus Classic/Lehrerbestand, alle Ränge über
+  `GF.RankSet`), je Feld ein eigenes Fehlt-Symbol unter einem Aurenbehälter
+  des Spiels (`HARMFUL|PLAYER`, `spells`), Auswahl je Debuff und „Fehlende
+  hervorheben“ im Menü der Reihe; ohne Liste der Klasse alle eigenen Debuffs.
+  Gezeigt nur mit feindlichem Ziel, gebaut nur außerhalb des Kampfes.
+  `OC.DEBUFF_UNTRAINED`: Nummern ohne Lehrer, ungeprüft.
+- `ui/combathelp.lua`: Abklingzeit an der Maus (`cursorCd`, ab Werk aus,
+  `UNIT_SPELLCAST_FAILED` + Meldung binnen 0,3 s), GCD-Leiste (`gcd`,
+  Grundzauber je Klasse, nur offene Werte), Co-Tank (`coTank`, Aurenbehälter
+  auf dem anderen Tank). Plätze `gcd`, `cotank` in `ui/layout.lua`.
+
 ## [1.0.6.27] – 2026-11-15
 
 ### Neu

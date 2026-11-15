@@ -63,7 +63,7 @@ OC.SLOTS = { "big", "small", "off" }
 OC.SLOT_TEXT = { big = "Wichtig", small = "Weitere", off = "Aus" }
 OC.MAX_EXTRA = 6     -- eigene Reihen (6.98.0.0)
 OC.COLS_PER_BAND = 3 -- Spalten je Band in den Einstellungen
-OC.DEFAULTS = { big = 40, small = 28, buff = 28, combatOnly = false, numbers = true, glow = true, buffs = true, debuffs = true, vertical = false, perLine = 0,
+OC.DEFAULTS = { big = 40, small = 28, buff = 28, combatOnly = false, numbers = true, glow = true, buffs = true, debuffs = true, dbfHighlight = false, cursorCd = false, gcd = true, coTank = true, vertical = false, perLine = 0,
     glowColor = "green", glowStrength = 100, glowPulse = true }
 OC.MAX_LIST = 80
 OC.MIN_BASE_CD = 2000   -- ms; darunter ist es die globale Abklingzeit
@@ -1320,37 +1320,180 @@ end
 -- nichts davon. Groesse/Anordnung nur ausserhalb des Kampfes (die Felder
 -- des Behaelters verweigern sich, solange Auren geheim sind); zeigen und
 -- verbergen ueber die Deckkraft, das geht immer.
+-- 1.0.6.28 ("ich will das alles haben", Verhalten nach Naowh Forever
+-- "Raid Debuffs", kein Code - All Rights Reserved): je Klasse feste Felder
+-- fuer die eigenen Debuffs. Im Feld liegt unten ein eigenes, abgedunkeltes
+-- Symbol ("fehlt"), darueber ein Aurenbehaelter des Spiels fuer genau
+-- diesen Zauber (alle Raenge). Liegt der Debuff, zeigt das Spiel ihn mit
+-- Restzeit und deckt das Fehlt-Symbol ab - auch im Kampf, ohne dass
+-- WeintCodex eine Aura liest. Nummern aus Classic (Lehrerbestand): wo
+-- Forever neu nummeriert, bleibt das Feld "fehlt" - ungeprueft.
+OC.DEBUFFS = {
+    WARRIOR = { { "sunder", 7386, "Rüstung zerreißen" }, { "rend", 772, "Verwunden" },
+                { "demo", 1160, "Demoralisierender Ruf" }, { "thunder", 6343, "Donnerknall" },
+                { "hamstring", 1715, "Kniesehne" } },
+    ROGUE   = { { "rupture", 1943, "Blutung" }, { "expose", 8647, "Rüstung schwächen" },
+                { "garrote", 703, "Erdrosseln" } },
+    HUNTER  = { { "mark", 1130, "Mal des Jägers" }, { "serpent", 1978, "Schlangenbiss" },
+                { "scorpid", 3043, "Skorpidstich" }, { "viper", 3034, "Vipernbiss" },
+                { "wingclip", 2974, "Zurechtstutzen" } },
+    WARLOCK = { { "corruption", 172, "Verderbnis" }, { "agony", 980, "Fluch der Pein" },
+                { "immolate", 348, "Feuerbrand" }, { "weakness", 702, "Fluch der Schwäche" },
+                { "reckless", 704, "Fluch der Tollkühnheit" }, { "elements", 1490, "Fluch der Elemente" },
+                { "tongues", 1714, "Fluch der Sprachen" } },
+    PRIEST  = { { "swp", 589, "Schattenwort: Schmerz" } },
+    DRUID   = { { "moonfire", 8921, "Mondfeuer" }, { "faerie", 770, "Feenfeuer" },
+                { "rake", 1822, "Krallenhieb" }, { "rip", 1079, "Zerfetzen" },
+                { "roar", 99, "Demoralisierendes Gebrüll" } },
+    SHAMAN  = { { "flameshock", 8050, "Flammenschock" } },
+    MAGE    = {},
+    PALADIN = {},
+}
+
+-- Nicht beim Lehrer (Startzauber oder auf Forever anders gelehrt):
+-- Nummer aus Classic, ungeprueft. load_test.lua laesst nur diese durch.
+OC.DEBUFF_UNTRAINED = { [7386] = true, [1079] = true, [1490] = true }
+
+local function PlayerClass()
+    if not _G.UnitClass then return nil end
+    local _, c = _G.UnitClass("player")
+    c = K.Plain(c)
+    return type(c) == "string" and c or nil
+end
+
+function OC.DebuffOn(key)
+    local v = OC.Get("dbf_" .. key)
+    if v == nil then return true end
+    return v and true or false
+end
+function OC.SetDebuffOn(key, on)
+    OC.Set("dbf_" .. key, on and true or false)
+    OC.debuffDirty = true
+    OC.Refresh()
+end
+-- Was die Reihe zeigt: Felder der Klasse, die an sind und gelernt.
+function OC.DebuffList(class)
+    local out = {}
+    for _, d in ipairs(OC.DEBUFFS[class or PlayerClass() or ""] or {}) do
+        if OC.DebuffOn(d[1]) and (OC.debuffAll or Known(d[2]) or OC.KnownAnyRank(d[2])) then
+            out[#out + 1] = d
+        end
+    end
+    return out
+end
+function OC.KnownAnyRank(id)
+    local GF = WeintCodex.UIGroupFrames
+    local set = GF and GF.RankSet and GF.RankSet(id)
+    if not set then return false end
+    for x in pairs(set) do if Known(x) then return true end end
+    return false
+end
+
+local function BuildSlot(row, d, size, timer)
+    local A = WeintCodex.UIAuras
+    local GF = WeintCodex.UIGroupFrames
+    local f = CreateFrame("Frame", nil, row)
+    f:SetSize(size, size)
+    f.miss = f:CreateTexture(nil, "BACKGROUND")
+    f.miss:SetAllPoints(f)
+    f.miss:SetTexture(Texture(d[2]))
+    f.miss:SetTexCoord(0.08, 0.92, 0.08, 0.92)
+    f.edge = K.Border(f, 1, 0, 0, 0, 1, "BORDER")
+    local warn = C.danger
+    f.alert = K.Border(f, 2, warn[1], warn[2], warn[3], 1, "OVERLAY")
+    f.alert:SetShown(false)
+    local spells = (GF and GF.RankSet and GF.RankSet(d[2])) or { [d[2]] = true }
+    f.auras = A.Create(f, { filter = "HARMFUL|PLAYER", max = 1, size = size, spacing = 0,
+        anchor = "TOPLEFT", growth = "RIGHT", growthV = "DOWN", perRow = 1, timer = timer, spells = spells })
+    f.auras:SetPoint("TOPLEFT", f, "TOPLEFT", 0, 0)
+    f.auras:SetUnit("target")
+    f.key = d[1]
+    return f
+end
+
 local debuffLayout
 function OC.DebuffLayoutKey(size, vertical, perLine, gap)
     return size .. ":" .. tostring(vertical) .. ":" .. perLine .. ":" .. gap
 end
+local function DrawGeneric(row, size, vertical, perLine, gap, timer)
+    local A = WeintCodex.UIAuras
+    local max = 8
+    local per = perLine > 0 and math.min(perLine, max) or max
+    local o = { filter = "HARMFUL|PLAYER", max = max, size = size, spacing = gap,
+        anchor = "TOPLEFT", growth = "RIGHT", growthV = "DOWN", timer = timer, perRow = vertical and 1 or per }
+    if not row.auras then
+        row.auras = A.Create(row, o)
+        row.auras:SetPoint("TOPLEFT", row, "TOPLEFT", 0, 0)
+        row.auras:SetUnit("target")
+    elseif row._wcGen ~= OC.DebuffLayoutKey(size, vertical, perLine, gap) .. tostring(timer) then
+        pcall(row.auras.ApplyLayout, row.auras, o)
+    end
+    row._wcGen = OC.DebuffLayoutKey(size, vertical, perLine, gap) .. tostring(timer)
+    local cols = vertical and 1 or per
+    local lines = math.ceil(max / cols)
+    row:SetSize(cols * size + (cols - 1) * gap, lines * size + (lines - 1) * gap)
+end
+
 local function DrawDebuffs(row, size, show)
     local A = WeintCodex.UIAuras
     if not (row and A and A.Create) then return end
     local vertical = OC.RowOpt("debuffs", "vertical") and true or false
     local perLine = tonumber(OC.RowOpt("debuffs", "perLine")) or 0
     local gap = tonumber(OC.RowOpt("debuffs", "gap")) or 4
-    local max = 8
-    local per = perLine > 0 and math.min(perLine, max) or max
-    local o = { filter = "HARMFUL|PLAYER", max = max, size = size, spacing = gap,
-        anchor = "TOPLEFT", growth = "RIGHT", growthV = "DOWN", timer = OC.Get("numbers") and true or false,
-        perRow = vertical and 1 or per }
-    if not row.auras then
-        row.auras = A.Create(row, o)
-        row.auras:SetPoint("TOPLEFT", row, "TOPLEFT", 0, 0)
-        row.auras:SetUnit("target")
-        debuffLayout = OC.DebuffLayoutKey(size, vertical, perLine, gap)
-    else
-        local key = OC.DebuffLayoutKey(size, vertical, perLine, gap) .. tostring(o.timer)
-        if key ~= debuffLayout and not K.InCombat() then
-            debuffLayout = key
-            pcall(row.auras.ApplyLayout, row.auras, o)
-        end
+    local timer = OC.Get("numbers") and true or false
+    local on = (show and OC.Get("debuffs") and OC.HasEnemyTarget()) or row._unlock
+    row:SetAlpha(on and 1 or 0)
+    -- Bauen und umstellen nur ausserhalb des Kampfes.
+    if K.InCombat() then
+        if row.slots then OC.PaintSlots(row) end
+        return
     end
-    local cols = vertical and 1 or per
-    local lines = math.ceil(max / cols)
-    row:SetSize(cols * size + (cols - 1) * gap, (row._unlock and 1 or lines) * size + (row._unlock and 0 or (lines - 1) * gap))
-    row:SetAlpha((show and OC.Get("debuffs") or row._unlock) and 1 or 0)
+    local list = OC.DebuffList()
+    local key = OC.DebuffLayoutKey(size, vertical, perLine, gap) .. tostring(timer) .. #list
+    for _, d in ipairs(list) do key = key .. d[1] end
+    if #list == 0 then
+        if row.slots then for _, f in ipairs(row.slots) do f:Hide() f.auras:SetUnit("none") end end
+        DrawGeneric(row, size, vertical, perLine, gap, timer)
+        if row.auras then row.auras:SetShown(true) end
+        return
+    end
+    if row.auras then row.auras:SetShown(false) end
+    if key ~= debuffLayout or OC.debuffDirty or not row.slots then
+        debuffLayout, OC.debuffDirty = key, nil
+        -- Alte Felder still legen (der Behaelter kennt kein Entfernen).
+        for _, f in ipairs(row.slots or {}) do f:Hide() pcall(f.auras.SetUnit, f.auras, "none") end
+        row.slots = {}
+        row.slotPool = row.slotPool or {}
+        local per = perLine > 0 and perLine or #list
+        if vertical then per = 1 end
+        for i, d in ipairs(list) do
+            local pk = d[1] .. ":" .. size .. ":" .. tostring(timer)
+            local f = row.slotPool[pk]
+            if not f then f = BuildSlot(row, d, size, timer) row.slotPool[pk] = f end
+            f:ClearAllPoints()
+            local c, l = (i - 1) % per, math.floor((i - 1) / per)
+            f:SetPoint("TOPLEFT", row, "TOPLEFT", c * (size + gap), -l * (size + gap))
+            f.auras:SetUnit("target")
+            f:Show()
+            row.slots[i] = f
+        end
+        local cols = math.min(per, #list)
+        local lines = math.ceil(#list / per)
+        row:SetSize(cols * size + (cols - 1) * gap, lines * size + (lines - 1) * gap)
+    end
+    OC.PaintSlots(row)
+end
+
+-- Fehlt-Symbol: abgedunkelt, oder mit "Fehlende hervorheben" hell mit
+-- rotem Rand. Ob der Debuff liegt, weiss WeintCodex nicht - das Feld des
+-- Spiels liegt einfach darueber.
+function OC.PaintSlots(row)
+    local hl = OC.Get("dbfHighlight") and true or false
+    for _, f in ipairs(row.slots or {}) do
+        f.miss:SetDesaturated(not hl)
+        f.miss:SetAlpha(hl and 1 or 0.45)
+        f.alert:SetShown(hl)
+    end
 end
 
 -- Reihe zeigen? Allgemein sichtbar und - je Reihe - "nur im Kampf".
@@ -1889,6 +2032,19 @@ function OC.RowMenu(owner, id)
         root:CreateCheckbox("Nur im Kampf zeigen", function() return OC.RowOpt(id, "combatOnly") and true or false end,
             function() OC.SetRowOpt(id, "combatOnly", not OC.RowOpt(id, "combatOnly")) end)
         if d then root:CreateButton("Reihe löschen", function() OC.RemoveRow(id) OC.Relayout() end) end
+        if id == "debuffs" then
+            root:CreateCheckbox("Fehlende hervorheben", function() return OC.Get("dbfHighlight") and true or false end,
+                function() OC.Set("dbfHighlight", not OC.Get("dbfHighlight")) OC.Refresh() end)
+            local list = OC.DEBUFFS[PlayerClass() or ""] or {}
+            if #list > 0 then
+                local sub = root:CreateButton("Welche Debuffs")
+                for _, dd in ipairs(list) do
+                    local k = dd[1]
+                    sub:CreateCheckbox(dd[3], function() return OC.DebuffOn(k) end,
+                        function() OC.SetDebuffOn(k, not OC.DebuffOn(k)) end)
+                end
+            end
+        end
     end)
 end
 
@@ -2072,6 +2228,18 @@ function OC.BuildSection(B)
           { type = "button", label = "Reihe der eigenen Debuffs", text = "Debuffs-Reihe einstellen …",
             tooltip = "Größe, Anordnung, Symbole je Zeile, Abstand und „Nur im Kampf“ für deine Debuffs auf dem Ziel. Größe und Anordnung ändern sich erst nach dem Kampf.",
             onClick = function() OC.RowMenu(UIParent, "debuffs") end })
+    B:Row({ type = "toggle", label = "Abklingzeit an der Maus",
+            get = function() return OC.Get("cursorCd") and true or false end, set = function(v) OC.Set("cursorCd", v and true or false) end,
+            description = "Drückst du etwas, das noch abklingt, stehen Symbol, Name und Restzeit kurz an der Maus." },
+          { type = "toggle", label = "GCD-Leiste",
+            get = function() return OC.Get("gcd") and true or false end,
+            set = function(v) OC.Set("gcd", v and true or false) local CH = WeintCodex.UICombatHelp if CH then CH.UpdateGcd() end end,
+            description = "Die globale Abklingzeit als schmale Leiste. Verschieben im Gestaltungsmodus." })
+    B:Row({ type = "toggle", label = "Co-Tank-Rahmen",
+            get = function() return OC.Get("coTank") and true or false end,
+            set = function(v) OC.Set("coTank", v and true or false) local CH = WeintCodex.UICombatHelp if CH then CH.UpdateCoTank() end end,
+            description = "Bist du Tank, zeigt ein kleiner Rahmen den anderen Tank mit Leben und Debuffs." },
+          { type = "empty" })
     B:Row({ type = "toggle", label = "Eigene Debuffs am Ziel", disabled = off,
             get = function() return OC.Get("debuffs") and true or false end, set = function(v) OC.Set("debuffs", v and true or false) end,
             description = "Was du selbst auf dein Ziel gewirkt hast (Stiche, Flüche, Rüstung zerreißen …) mit Restzeit – auch im Kampf. Das Spiel zeigt sie, WeintCodex liest sie nicht." },

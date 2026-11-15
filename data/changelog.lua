@@ -22,10 +22,15 @@
 
 WeintCodex_ChangelogData = {
     {
-        version = "1.0.6.27",
+        version = "1.0.7.0",
         date    = "15.11.2026",
         notes   = {
-            "|cff7C6CFFEigene Debuffs im Abklingzeitmanager|r – eine neue Reihe zeigt, was du selbst auf dein Ziel gewirkt hast, mit Restzeit, auch im Kampf. Verschieben im Gestaltungsmodus, einstellen unter Abklingzeitmanager → Erweitert.",
+            "|cff7C6CFFDeine Debuffs im Blick|r – der Abklingzeitmanager hat eine neue Reihe mit festen Feldern für die Debuffs deiner Klasse (Schlangenbiss, Verderbnis, Rüstung zerreißen …): liegt er auf dem Ziel, siehst du ihn mit Restzeit, fehlt er, erscheint er abgedunkelt – auch im Kampf. Welche Felder, und ob Fehlende rot hervorgehoben werden, stellst du im Menü der Reihe ein.",
+            "|cff7C6CFFGCD-Leiste|r – die globale Abklingzeit als schmale Leiste unter deinen wichtigsten Zaubern.",
+            "|cff7C6CFFCo-Tank-Rahmen|r – bist du Tank, siehst du den anderen Tank mit Leben und seinen Debuffs.",
+            "|cff7C6CFFAbklingzeit an der Maus|r – auf Wunsch: drückst du etwas, das noch abklingt, stehen Symbol, Name und Restzeit kurz an der Maus. Ab Werk aus.",
+            "|cff7C6CFFFalken in eigener Reihe|r – die Laufzeiten der Falken stehen getrennt von den Aspekten, der zweite Falke setzt die Uhr des ersten nicht mehr neu.",
+            "|cff7C6CFFGruppenrahmen|r – der Name bleibt auf allen Klassen weiß mit Schatten.",
         },
     },
     {

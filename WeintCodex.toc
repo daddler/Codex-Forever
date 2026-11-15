@@ -2,7 +2,7 @@
 ## Title: |cff7C6CFFWeintCodex|r
 ## Notes: Raid Guide & Intelligence System — Forever Edition
 ## Author: Fabian
-## Version: 1.0.6.27
+## Version: 1.0.7.0
 ## SavedVariables: WeintCodex_SavedData, WeintCompanionDB, WeintCompanionInboxDB, WeintCodex_WhispersAccount
 ## SavedVariablesPerCharacter: WeintCodex_Whispers, WeintCodex_Backup
 
@@ -292,6 +292,8 @@ ui/cooldowns.lua
 ui/cdmsetup.lua
 # Eigener Abklingzeitmanager (Wahl Blizzard/WeintCodex auf der Seite Abklingzeitmanager).
 ui/owncooldowns.lua
+# Kampfhilfen: Abklingzeit an der Maus, GCD-Leiste, Co-Tank (1.0.7.0).
+ui/combathelp.lua
 ui/questtracker.lua
 ui/navmesh.lua
 ui/route.lua
