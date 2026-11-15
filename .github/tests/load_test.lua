@@ -26256,8 +26256,14 @@ do
         assert(BT.active.falcon, "Abgleich nahm den Falken weg")
         assert(math.ceil(BT.Remaining("falcon", 105)) == 13, "Uhr des Falken falsch")
         BT.OnCast(999001, 106)
-        assert(BT.count.falcon == 2, "zweiter Falke nicht gezaehlt")
-        assert(BT.Remaining("falcon", 125) == nil, "Falke lief nicht ab")
+        local n = 0
+        for _, e in ipairs(BT.Entries(107)) do if e.group.key == "falcon" then n = n + 1 end end
+        assert(n == 2, "zwei Falken, aber " .. n .. " Symbol(e)")
+        BT.OnCast(999001, 108)
+        n = 0
+        for _, e in ipairs(BT.Entries(109)) do if e.group.key == "falcon" then n = n + 1 end end
+        assert(n == 2, "dritter Falke: mehr als zwei Symbole")
+        assert(BT.Remaining("falcon", 127) == nil, "Falke lief nicht ab")
     end)
     G.C_Spell, G.C_UnitAuras = saved[1], saved[2]
     BT.Clear()

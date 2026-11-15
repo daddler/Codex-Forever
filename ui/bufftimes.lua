@@ -311,12 +311,19 @@ function BT.OnCast(spellID, now, fighting)
     end
     st.tracked = st.tracked + 1
     -- Mehrere gleichzeitig (Falken): zaehlen, solange der vorige laeuft.
-    if g.stack then
-        local running = cur and cur.duration and cur.start + cur.duration > now
-        BT.count = BT.count or {}
-        BT.count[g.key] = math.min(g.stack, running and (BT.count[g.key] or 1) + 1 or 1)
-    end
+    -- Mehrere gleichzeitig (Falken): je einer mit eigener Uhr. Der neue
+    -- ersetzt den aeltesten, wenn schon alle Plaetze laufen.
+    local prevStart = cur and cur.duration and cur.start + cur.duration > now and cur.start or nil
     cur = cur or {}
+    if g.stack then
+        local old = cur.earlier or {}
+        for i = #old, 1, -1 do
+            if old[i] + g.duration <= now then table.remove(old, i) end
+        end
+        if prevStart then old[#old + 1] = prevStart end
+        while #old > g.stack - 1 do table.remove(old, 1) end
+        cur.earlier = old
+    end
     cur.spell, cur.start = spellID, now
     cur.duration = (not g.variable) and g.duration or nil
     BT.active[g.key] = cur
@@ -452,7 +459,7 @@ local function Put(g, spell, state, left)
     local n = #entries + 1
     local e = pool[n] or {}
     pool[n] = e
-    e.group, e.spell, e.state, e.left = g, spell, state, left
+    e.group, e.spell, e.state, e.left, e.start = g, spell, state, left, nil
     entries[n] = e
 end
 function BT.Entries(now, fighting, showMissing, sample)
@@ -462,6 +469,16 @@ function BT.Entries(now, fighting, showMissing, sample)
         local left = BT.Remaining(g.key, now)
         local a = BT.active[g.key]
         if a then
+            -- Fruehere, noch laufende (Falken) zuerst, jeder mit eigener Uhr.
+            if a.earlier and left then
+                for _, st0 in ipairs(a.earlier) do
+                    local l0 = st0 + a.duration - now
+                    if l0 > 0 then
+                        Put(g, a.spell, "time", l0)
+                        entries[#entries].start = st0
+                    end
+                end
+            end
             Put(g, a.spell, left and "time" or (g.variable and "runs") or "on", left)
         elseif fighting and showMissing and g.remind and BT.Learned(g) then
             -- 6.87.2.0 (Beta-Test mit Bild: nach Richturteil ein weisses
@@ -546,7 +563,7 @@ function BT.Update()
             b.icon:SetTexture(Texture(e.spell))
             local a = BT.active[e.group.key]
             if e.state == "time" and a then
-                b.cd:SetCooldown(a.start, a.duration)
+                b.cd:SetCooldown(e.start or a.start, a.duration)
             else
                 b.cd:Clear()
             end
@@ -554,8 +571,7 @@ function BT.Update()
             b.mark:SetText(e.state == "missing" and "!" or "")
             local g = e.group
             if e.state == "time" and g.showLeft and e.left then
-                local n = BT.count and BT.count[g.key] or 1
-                b.state:SetText(string.format(n > 1 and "%d ×%d" or "%d", math.ceil(e.left), n))
+                b.state:SetText(string.format("%d", math.ceil(e.left)))
             else
                 b.state:SetText(e.state == "on" and "an" or e.state == "runs" and "läuft" or "")
             end
