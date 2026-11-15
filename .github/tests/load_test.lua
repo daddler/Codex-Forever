@@ -26656,6 +26656,26 @@ do
     Check(ok, "Helfer: Voreinstellungen, Beute-Feed, Flugpunkte, Timer" .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 1.0.7.0: Instanz-Tracker - neue Kopie ueber zoneUID, gleicher Name kurz
+-- danach = gleicher Besuch, Zaehlung der letzten Stunde.
+do
+    local ok, err = pcall(function()
+        local GT = WeintCodex.UIGroupTools
+        assert(GT.ZoneUID("Creature-0-4372-389-12345-11517-0000ABC") == "12345", "zoneUID falsch gelesen")
+        assert(GT.ZoneUID("Player-4372-0ABC") == nil and GT.ZoneUID("Creature-0-4372-0-0-11517-1") == nil, "Spieler oder draußen als Kopie gelesen")
+        local runs = {}
+        GT.Enter("Flammenschlund", 1000, runs) GT.SeeUID("11", runs) GT.Leave(1300)
+        GT.Enter("Flammenschlund", 1400, runs) GT.SeeUID("11", runs) GT.Leave(1500)
+        GT.Enter("Flammenschlund", 1600, runs) GT.SeeUID("22", runs) GT.Leave(1700)
+        GT.Enter("Todesminen", 1800, runs)
+        assert(GT.CountHour(2000, runs) == 3, "Zählung falsch: " .. GT.CountHour(2000, runs))
+        assert(GT.CountHour(1000 + 3700, runs) < 3, "ältere als eine Stunde gezählt")
+        GT.Leave(1900)
+        assert(GT.DEFAULTS.instTracker == false, "Instanz-Tracker ab Werk an")
+    end)
+    Check(ok, "Instanz-Tracker" .. (ok and "" or (": " .. tostring(err))))
+end
+
 if failures == 0 then
     print("BESTANDEN")
     os.exit(0)

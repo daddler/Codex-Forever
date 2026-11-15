@@ -1893,6 +1893,16 @@ SlashCmdList["WEINTCODEXUI"] = function(msg)
         O.Show("comfort", O.PageIndex("comfort", "sammeln"))
         return
     end
+    if msg == "instanzen" or msg == "instances" then
+        local GT = WeintCodex.UIGroupTools
+        if GT and GT.Report then K.ShowReport("Instanzen", GT.Report()) end
+        return
+    end
+    if msg == "inspekt" or msg == "inspect" or msg == "betrachten" then
+        local GT = WeintCodex.UIGroupTools
+        if GT and GT.Open then GT.Open() end
+        return
+    end
     if msg == "talente" or msg == "talentplaner" or msg == "talents" then
         local TB = WeintCodex.UITalentBuilds
         if TB and TB.Open then TB.Open() end

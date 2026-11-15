@@ -331,6 +331,7 @@ ui/auctionsell.lua
 ui/fieldjournal.lua
 ui/talentbuilds.lua
 ui/qolextra.lua
+ui/grouptools.lua
 ui/inventory.lua
 # Auktionspreise von anderen Spielern (6.18.0.0): Gilde, ForeverGuide nur zuhoeren.
 ui/auctionshare.lua

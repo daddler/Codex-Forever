@@ -450,7 +450,9 @@ local function Build(B)
             description = "Welche Fertigkeit im Schlossknacken eine Kassette braucht." })
     B:Row({ type = "toggle", label = "Flugpunkte erinnern", key = "flightRemind",
             description = "Hinweis im Chat, wenn ein Flugpunkt in diesem Gebiet noch nicht entdeckt ist. Erst, nachdem du einmal eine Flugkarte geöffnet hast." },
-          { type = "empty" })
+          { type = "toggle", label = "Instanzen zählen", key = "instTracker",
+            description = "Beim Betreten: wie viele neue Instanzen du in der letzten Stunde betreten hast (Grenze 10 je Konto). Beim Verlassen: wie lange. Liste: /wcui instanzen." })
+    B:Note("Gruppe betrachten – Stufe und Gegenstandsstufe aller in der Gruppe: /wcui inspekt.")
 end
 
 local mod = K.Module(KEY)
