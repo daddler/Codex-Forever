@@ -124,6 +124,7 @@ TR.SECTIONS = {
     { key = "missing", label = "Vorstufe fehlt",     color = "warningBright" },
     { key = "soon",    label = "Nächste Stufen",     color = "infoBright", byLevel = true },
     { key = "later",   label = "Später",             color = "textMuted",  byLevel = true },
+    { key = "quest",   label = "Über Quests",        color = "infoBright" },
     { key = "talent",  label = "Braucht ein Talent", color = "textMuted" },
     { key = "pet",     label = "Tierausbildung",     color = "textMuted" },
     { key = "known",   label = "Gelernt",            color = "textDim" },
@@ -160,6 +161,25 @@ function TR.Categorize(state)
         table.insert(out.sections[key], sp)
         out.total[key] = out.total[key] + sp.cost
     end
+    -- 1.0.7.0 (Abgleich mit Naowh): Zauber, die kein Lehrer lehrt, sondern
+    -- eine Quest belohnt (data/trainer_quests.lua, `community`). Kosten 0,
+    -- gezeigt mit "Quest" statt Preis; gelernt fragt den Client.
+    for _, q in ipairs((T.QUEST_SPELLS or {})[state.class] or {}) do
+        local okRace = true
+        if q[3] then
+            okRace = false
+            for _, r in ipairs(q[3]) do if r == state.race then okRace = true end end
+        end
+        if okRace then
+            local sp = { id = q[2], level = q[1], cost = 0, quest = true }
+            local key = KnownOrReplaced(state.class, sp.id) and "known" or "quest"
+            table.insert(out.sections[key], sp)
+        end
+    end
+    table.sort(out.sections.quest, function(a, b)
+        if a.level ~= b.level then return a.level < b.level end
+        return a.id < b.id
+    end)
     return out
 end
 
@@ -421,7 +441,7 @@ local function SpellRow(body, y, w, sp, opts)
     if icon then ic:SetTexture(icon) else ic:SetColorTexture(C.surface3[1], C.surface3[2], C.surface3[3], 1) end
     if opts.dim then ic:SetDesaturated(true) end
 
-    local cost = WeintCodex.Label(row, TR.Money(sp.cost), { size = 11, justify = "RIGHT",
+    local cost = WeintCodex.Label(row, sp.quest and ("Quest · Stufe " .. sp.level) or TR.Money(sp.cost), { size = 11, justify = "RIGHT",
         color = opts.costColor or "textMuted", font = WeintCodex.Fonts.mono })
     cost:SetPoint("RIGHT", row, "RIGHT", -4, 0)
     local label = name or ("Zauber " .. sp.id)
@@ -485,6 +505,7 @@ local SECTION_NOTE = {
     missing = "Erst die Vorstufe lernen – das kann auch ein anderer Zauber sein. Der Lehrer zeigt diesen Rang sonst nicht an.",
     talent  = "Der Lehrer lehrt das erst, wenn du das Talent dazu hast.",
     pet     = "Lehrt der Tierausbilder deinem Begleiter. Ob er es schon kann, weiß nur der Tierausbilder.",
+    quest   = "Lehrt kein Lehrer – du bekommst sie als Belohnung einer Quest, meist einer Klassenquest (Reiter „Klassenquests“). Unbestätigt.",
 }
 
 local function SectionHead(body, y, w, sec, count, cost)
@@ -495,7 +516,7 @@ local function SectionHead(body, y, w, sec, count, cost)
     local eb = WeintCodex.Eyebrow(head, sec.label, { color = sec.color, size = 10 })
     eb:SetPoint("BOTTOMLEFT", head, "BOTTOMLEFT", 0, 8)
     local info = count .. (count == 1 and " Zauber" or " Zauber")
-    if sec.key ~= "pet" and sec.key ~= "known" then info = info .. " · " .. TR.Money(cost) end
+    if sec.key ~= "pet" and sec.key ~= "known" and sec.key ~= "quest" then info = info .. " · " .. TR.Money(cost) end
     local right = WeintCodex.Label(head, info, { size = 11, color = "textDim", justify = "RIGHT" })
     right:SetPoint("BOTTOMRIGHT", head, "BOTTOMRIGHT", -4, 7)
     local line = head:CreateTexture(nil, "ARTWORK")

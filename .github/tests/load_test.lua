@@ -26340,6 +26340,23 @@ do
     Check(ok, "Kampfhilfen: Debuff-Felder, Abklingzeit an der Maus, GCD, Co-Tank" .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 1.0.7.0: Zauber ueber Quests auf der Lehrerseite (data/trainer_quests.lua).
+do
+    local ok, err = pcall(function()
+        local T, TR = WeintCodex.TrainerData, WeintCodex.Trainer
+        assert(T.QUEST_SPELLS and T.QUEST_SPELLS.HUNTER, "Questzauber fehlen")
+        local cat = TR.Categorize({ class = "HUNTER", level = 12, race = 1 })
+        local found
+        for _, sp in ipairs(cat.sections.quest) do if sp.id == 1515 then found = sp end end
+        assert(found and found.quest and found.cost == 0, "Wildtier zähmen nicht unter „Über Quests“")
+        local own = TR.Categorize({ class = "PRIEST", level = 20, race = 5 })
+        for _, sp in ipairs(own.sections.quest) do
+            assert(sp.id ~= 1277455, "Questzauber einer fremden Rasse gezeigt")
+        end
+    end)
+    Check(ok, "Lehrer: Zauber über Quests" .. (ok and "" or (": " .. tostring(err))))
+end
+
 if failures == 0 then
     print("BESTANDEN")
     os.exit(0)
