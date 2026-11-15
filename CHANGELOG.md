@@ -9,6 +9,15 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.0.6.15] – 2026-11-15
+
+### Behoben (nicht im Spiel bestätigt)
+- Klickzauber (Meldung: „Segen des Schutzes auf Maustaste 8 landet in der
+  Gruppe beim Paladin selbst“): jede Zauber-Belegung an Rahmen ist jetzt ein
+  Makro `/cast [@mouseover,exists] Zauber` – bisher nur mit Zusatztaste
+  (1.0.5.45). Ursache nicht gemessen; Verdacht: Selbstzauber-Taste von der
+  Maussoftware mitgeschickt oder automatisches Selbstzaubern.
+
 ## [1.0.6.14] – 2026-11-15
 
 ### Behoben

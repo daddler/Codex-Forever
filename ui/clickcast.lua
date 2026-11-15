@@ -250,7 +250,13 @@ function CC.ApplyTo(f, list)
         if kind and not CC.IsKey(b) and not CC.IsFree(b) and not (b.action == "spell" and not b.spell)
            and not (b.action == "macro" and not b.macro) then
             local t = b.mod .. "type" .. CC.Suffix(b.button)
-            if b.action == "spell" and b.mod ~= "" then
+            -- 1.0.6.15 (Meldung: "Segen des Schutzes auf Maustaste 8 landet in
+            -- der Gruppe beim Paladin selbst"): auch ohne Zusatztaste als
+            -- Makro mit ausdruecklichem Ziel. Mit "type=spell" entscheidet das
+            -- Spiel - Selbstzauber-Taste (auch von Maussoftware mitgeschickt),
+            -- automatisches Selbstzaubern bei einem Ziel, das der Zauber nicht
+            -- nehmen will - und landet beim Spieler, ohne zu sagen, warum.
+            if b.action == "spell" then
                 -- 1.0.5.45 (gemessen mit /wcui klick: "alt-RightButton ->
                 -- type=spell", Schild landete trotzdem beim Priester): mit
                 -- gedrueckter Selbstzauber-Taste (ab Werk Alt) zaubert das
@@ -273,6 +279,7 @@ function CC.ApplyTo(f, list)
             end
             keys[#keys + 1] = t
             if b.action == "spell" then
+                -- Der Name bleibt daneben stehen (Tooltip, /wcui klick).
                 local s = b.mod .. "spell" .. CC.Suffix(b.button)
                 f:SetAttribute(s, CC.SpellAttr(b))
                 keys[#keys + 1] = s

@@ -7474,7 +7474,8 @@ do
         for _, f in ipairs(frames) do
             assert(f:GetAttribute("shift-type1") == "macro" and f:GetAttribute("shift-spell1") == "Blitzheilung",
                 "Umschalt + Links nicht belegt")
-            assert(f:GetAttribute("type2") == "spell" and f:GetAttribute("spell2") == "Erneuerung",
+            assert(f:GetAttribute("type2") == "macro" and f:GetAttribute("spell2") == "Erneuerung"
+                and f:GetAttribute("macrotext2") == "/cast [@mouseover,exists] Erneuerung",
                 "Rechts nicht belegt")
         end
         assert(f1:GetAttribute("*type1") == "target", "Grundeinstellung des Rahmens angefasst")

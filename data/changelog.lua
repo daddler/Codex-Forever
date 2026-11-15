@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.0.6.15",
+        date    = "15.11.2026",
+        notes   = {
+            "|cff7C6CFFKlickzauber landen beim angeklickten Rahmen|r – auch ohne Zusatztaste wirkt ein Klickzauber jetzt ausdrücklich auf den Spieler unter der Maus. Bisher konnte das Spiel ihn auf dich selbst umlenken, etwa Segen des Schutzes auf einer Seitentaste der Maus.",
+        },
+    },
+    {
         version = "1.0.6.14",
         date    = "15.11.2026",
         notes   = {
