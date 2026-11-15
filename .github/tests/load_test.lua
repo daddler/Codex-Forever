@@ -26408,6 +26408,29 @@ do
     Check(ok, "Ausrüstungssets und Schmuckleiste" .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 1.0.7.0: Verkaufen im Auktionshaus - unterbieten um 1 Silber, nie das
+-- eigene Angebot, unbekannter Preis nie als 0.
+do
+    local ok, err = pcall(function()
+        local AS = WeintCodex.UIAuctionSell
+        assert(AS.Undercut(12345) == 12300 and AS.Undercut(12300) == 12200 and AS.Undercut(50) == 100, "Unterbieten falsch")
+        local G = _G
+        local old = G.C_AuctionHouse
+        G.C_AuctionHouse = {
+            GetNumCommoditySearchResults = function() return 3 end,
+            GetCommoditySearchResultInfo = function(_, i)
+                return ({ { unitPrice = 900, containsOwnerItem = true }, { unitPrice = 1500 }, { unitPrice = 2000 } })[i]
+            end,
+        }
+        local id, best = AS.Cheapest("COMMODITY_SEARCH_RESULTS_UPDATED", 2589)
+        G.C_AuctionHouse = old
+        assert(id == 2589 and best == 1500, "eigenes Angebot unterboten oder falsch gelesen: " .. tostring(best))
+        local src = io.open(ROOT .. "/ui/auctionsell.lua"):read("*a")
+        assert(src:find('"Preis unbekannt"', 1, true), "unbekannter Preis ohne Wort")
+    end)
+    Check(ok, "Auktionshaus: Verkaufsliste und Unterbieten" .. (ok and "" or (": " .. tostring(err))))
+end
+
 if failures == 0 then
     print("BESTANDEN")
     os.exit(0)

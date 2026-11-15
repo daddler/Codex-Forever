@@ -983,6 +983,11 @@ local function Build(B)
             description = "In den Taschen: was der ganze Stapel kostet." })
     B:Row({ type = "toggle", label = "Auch beim Stöbern merken", key = "ahPassive", disabled = off,
             description = "Was deine eigene Suche im Auktionshaus zeigt, ohne Scan." })
+    B:Section("Verkaufen", "Neben dem Auktionshaus deine Taschen, die wertvollsten zuerst – Klick legt den Gegenstand in den Verkauf. Eingestellt wird mit dem Knopf des Spiels.")
+    B:Row({ type = "toggle", label = "Verkaufsliste", key = "ahSell",
+            description = "Liste deiner Taschen neben dem Auktionshaus, nach Wert sortiert." },
+          { type = "toggle", label = "Automatisch unterbieten", key = "ahUndercut",
+            description = "Setzt den Preis 1 Silber unter das günstigste Angebot, das nicht deins ist." })
     B:Section("Preise von anderen Spielern", "Dein eigener Scan geht immer vor. Fremde Preise stehen im Tooltip als „von Spielern“; einer, der mehr als dreimal so hoch oder niedrig ist wie der bekannte, zählt erst, wenn ein zweiter Spieler ihn bestätigt.")
     B:Row({ type = "toggle", label = "Mit der Gilde teilen", key = "ahShareGuild", disabled = off,
             description = "Hat ein Gildenmitglied mit WeintCodex frischere Preise, kommen sie zu dir – und deine zu ihm." },
