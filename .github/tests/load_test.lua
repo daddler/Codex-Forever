@@ -26640,7 +26640,7 @@ do
     local ok, err = pcall(function()
         local QX, K = WeintCodex.UIQoLExtra, WeintCodex.UIKit
         for k, v in pairs(QX.DEFAULTS) do
-            if k ~= "lockboxTip" and k ~= "mouseRingCombat" then assert(not v or v == 0, k .. " ab Werk an") end
+            if k ~= "lockboxTip" and k ~= "mouseRingCombat" and k ~= "pickpocketMsg" then assert(not v or v == 0, k .. " ab Werk an") end
         end
         local G = _G
         local o1, o2 = G.LOOT_ITEM_SELF, G.LOOT_ITEM_SELF_MULTIPLE
@@ -26721,6 +26721,28 @@ do
         G.WeintCodex_SavedData.debuffIds[1978] = nil
     end)
     Check(ok, "Debuff-Felder: Nummern von Forever, gelernte Nummern" .. (ok and "" or (": " .. tostring(err))))
+end
+
+-- 1.0.7.2: Taschendiebstahl gruen gemeldet, nur kurz nach dem eigenen Zauber;
+-- Stadt-Pins mit Filter je Art.
+do
+    local ok, err = pcall(function()
+        local QX, MK = WeintCodex.UIQoLExtra, WeintCodex.UIMapMarks
+        local shown
+        local orig = QX.PickpocketShow
+        QX.PickpocketShow = function(t) shown = t end
+        QX.ppAt = -100
+        assert(not QX.PickpocketLoot("[Ring]", 1, 0), "ohne Taschendiebstahl gemeldet")
+        assert(QX.IsPickpocket(921), "Taschendiebstahl nicht erkannt")
+        QX.ppAt = 50
+        assert(QX.PickpocketLoot("[Ring]", 2, 55) and shown == "Taschendiebstahl: [Ring] ×2", "Meldung falsch: " .. tostring(shown))
+        assert(not QX.PickpocketLoot("[Ring]", 1, 70), "nach dem Fenster noch gemeldet")
+        QX.PickpocketShow = orig
+        for _, cat in ipairs(MK.TOWN_ORDER) do assert(MK.TOWN_ICON[cat] and MK.TOWN_TEXT[cat], cat .. ": Symbol oder Name fehlt") end
+        assert(MK.TownWants("mail") and not MK.TownWants("vendor"), "Filter ab Werk falsch")
+        assert(MK.FilterMenu and MK.EnsureFilterButton, "Filter an der Karte fehlt")
+    end)
+    Check(ok, "Taschendiebstahl-Meldung, Stadt-Pins mit Filter" .. (ok and "" or (": " .. tostring(err))))
 end
 
 if failures == 0 then

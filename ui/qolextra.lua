@@ -35,6 +35,7 @@ local KEY = "comfort"
 QX.DEFAULTS = {
     crosshair = false, mouseRing = false, mouseRingCombat = true, combatTimer = false,
     healerMana = false, spellQueue = 0, lootFeed = false, lockboxTip = true, flightRemind = false,
+    pickpocketMsg = true,
 }
 
 local function Get(k) return K.IsActive(KEY) and K.Get(KEY, k) end
@@ -314,6 +315,35 @@ function QX.ParseLoot(msg)
 end
 
 --------------------------------------------------
+-- Taschendiebstahl (1.0.7.2, Wunsch: "bei Fehlschlag kommt die rote
+-- Meldung, beim Erfolg nichts - toll waere eine Meldung in gruen")
+--------------------------------------------------
+-- Nach dem eigenen Taschendiebstahl (Zauber 921 oder gleicher Name) zeigt,
+-- was binnen QX.PP_WINDOW Sekunden an Beute und Geld kommt, die Leiste des
+-- Spiels fuer Meldungen (UIErrorsFrame) in Gruen - dieselbe Stelle wie die
+-- rote Meldung beim Fehlschlag. Nur Schurken; Schalter pickpocketMsg.
+QX.PP_SPELL, QX.PP_WINDOW = 921, 10
+QX.ppAt = -100
+function QX.IsPickpocket(id)
+    if K.IsSecret(id) or type(id) ~= "number" then return false end
+    if id == QX.PP_SPELL then return true end
+    local cs = _G.C_Spell
+    local a = cs and cs.GetSpellName and K.Plain(cs.GetSpellName(id))
+    local b = cs and cs.GetSpellName and K.Plain(cs.GetSpellName(QX.PP_SPELL))
+    return type(a) == "string" and a == b
+end
+function QX.PickpocketShow(text)
+    local ef = _G.UIErrorsFrame
+    local g = C.successBright or C.success
+    if ef and ef.AddMessage then ef:AddMessage(text, g[1], g[2], g[3], 1) end
+end
+function QX.PickpocketLoot(link, n, now)
+    if not Get("pickpocketMsg") or (now or Now()) - QX.ppAt > QX.PP_WINDOW then return false end
+    QX.PickpocketShow("Taschendiebstahl: " .. link .. (n and n > 1 and (" ×" .. n) or ""))
+    return true
+end
+
+--------------------------------------------------
 -- Schliesskassetten (Tooltip)
 --------------------------------------------------
 
@@ -400,14 +430,27 @@ function QX.Enable()
     local ev = CreateFrame("Frame")
     for _, n in ipairs({ "PLAYER_REGEN_DISABLED", "PLAYER_REGEN_ENABLED", "GROUP_ROSTER_UPDATE",
         "PLAYER_ROLES_ASSIGNED", "UNIT_POWER_UPDATE", "CHAT_MSG_LOOT", "TAXIMAP_OPENED",
-        "ZONE_CHANGED", "ZONE_CHANGED_NEW_AREA", "PLAYER_ENTERING_WORLD" }) do
+        "ZONE_CHANGED", "ZONE_CHANGED_NEW_AREA", "PLAYER_ENTERING_WORLD",
+        "UNIT_SPELLCAST_SUCCEEDED", "CHAT_MSG_MONEY" }) do
         pcall(ev.RegisterEvent, ev, n)
     end
-    ev:SetScript("OnEvent", K.Measured("Helfer", function(_, event, a1)
+    ev:SetScript("OnEvent", K.Measured("Helfer", function(_, event, a1, _, a3)
+        if event == "UNIT_SPELLCAST_SUCCEEDED" then
+            if a1 == "player" and QX.IsPickpocket(a3) then QX.ppAt = Now() end
+            return
+        end
+        if event == "CHAT_MSG_MONEY" then
+            if Get("pickpocketMsg") and Now() - QX.ppAt <= QX.PP_WINDOW and type(a1) == "string" and not K.IsSecret(a1) then
+                local amount = a1:match(":%s*(.-)%.?$") or a1
+                QX.PickpocketShow("Taschendiebstahl: " .. amount)
+            end
+            return
+        end
         if event == "UNIT_POWER_UPDATE" then if hm and hm:IsShown() then QX.PowerHM(a1) end return end
         if event == "CHAT_MSG_LOOT" then
-            if not Get("lootFeed") then return end
             local link, n = QX.ParseLoot(a1)
+            if link then QX.PickpocketLoot(link, n) end
+            if not Get("lootFeed") then return end
             if link then
                 local id = tonumber(link:match("item:(%d+)"))
                 local icon = id and _G.C_Item and _G.C_Item.GetItemIconByID and _G.C_Item.GetItemIconByID(id)
@@ -452,6 +495,9 @@ local function Build(B)
             description = "Hinweis im Chat, wenn ein Flugpunkt in diesem Gebiet noch nicht entdeckt ist. Erst, nachdem du einmal eine Flugkarte geöffnet hast." },
           { type = "toggle", label = "Instanzen zählen", key = "instTracker",
             description = "Beim Betreten: wie viele neue Instanzen du in der letzten Stunde betreten hast (Grenze 10 je Konto). Beim Verlassen: wie lange. Liste: /wcui instanzen." })
+    B:Row({ type = "toggle", label = "Taschendiebstahl melden", key = "pickpocketMsg",
+            description = "Schurke: was du gestohlen hast, groß in Grün in der Bildschirmmitte – wo bei Fehlschlag die rote Meldung steht." },
+          { type = "empty" })
     B:Note("Gruppe betrachten – Stufe und Gegenstandsstufe aller in der Gruppe: /wcui inspekt.")
 end
 

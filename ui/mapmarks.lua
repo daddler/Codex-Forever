@@ -49,7 +49,26 @@ MK.DEFAULTS = {
 MK.TOWN_TEXT = { vendor = "Gemischtwaren", repair = "Reparieren", profession = "Berufslehrer", class = "Klassenlehrer",
     trade = "Handwerkswaren", food = "Essen und Trinken", flight = "Flugmeister", stable = "Stallmeister",
     inn = "Gasthaus", bank = "Bank", auction = "Auktionshaus", reagents = "Reagenzien", ammo = "Munition", mail = "Briefkasten" }
-MK.TOWN = 10
+MK.TOWN = 18
+-- 1.0.7.2 (Bild: "die Symbole sind da, aber nicht zu erkennen, was wer ist"):
+-- je Art ein Symbol aus dem Spiel (Gegenstands-/Zaubersymbole, die jeder
+-- Client hat) und ein Filter direkt an der Karte. Ab Werk ohne Haendler fuer
+-- Gemischtwaren, Handwerkswaren, Essen, Reagenzien und Munition.
+MK.TOWN_ICON = {
+    vendor = "Interface\\Icons\\INV_Misc_Bag_10", repair = "Interface\\Icons\\Trade_BlackSmithing",
+    profession = "Interface\\Icons\\INV_Misc_Book_09", class = "Interface\\Icons\\INV_Misc_Book_11",
+    trade = "Interface\\Icons\\INV_Fabric_Linen_01", food = "Interface\\Icons\\INV_Misc_Food_15",
+    stable = "Interface\\Icons\\Ability_Hunter_BeastTaming", inn = "Interface\\Icons\\INV_Misc_Rune_01",
+    bank = "Interface\\Icons\\INV_Misc_Coin_02", auction = "Interface\\Icons\\INV_Hammer_16",
+    reagents = "Interface\\Icons\\INV_Misc_Dust_01", ammo = "Interface\\Icons\\INV_Ammo_Arrow_01",
+    mail = "Interface\\Icons\\INV_Letter_15",
+}
+MK.TOWN_ORDER = { "mail", "bank", "auction", "inn", "repair", "class", "profession", "stable",
+    "vendor", "trade", "food", "reagents", "ammo" }
+MK.TOWN_DEFAULT = { mail = true, bank = true, auction = true, inn = true, repair = true, class = true,
+    profession = true, stable = true, vendor = false, trade = false, food = false, reagents = false, ammo = false }
+for cat, on in pairs(MK.TOWN_DEFAULT) do MK.DEFAULTS["mapTown_" .. cat] = on end
+function MK.TownWants(cat) return K.Get(KEY, "mapTown_" .. cat) and true or false end
 MK.SMALL = 0.7       -- auf dem Kontinent kleiner (es sind ueber zweihundert)
 MK.VEHICLE = { "Schiff", "Zeppelin", "Tram", "Portal" }
 MK.FACTION = { "Allianz", "Horde", "neutral" }
@@ -150,7 +169,7 @@ local function AddZone(out, d, zone, x0, x1, y0, y1)
             local ok = K.Get(KEY, "mapMarksOther") or fac == nil or fac == "AH" or me == nil
                 or (me == 1 and fac == "A") or (me == 2 and fac == "H")
             -- Klassenlehrer nur der eigenen Klasse; Flugmeister zeichnet die eigene Art.
-            if ok and t[3] ~= "flight" and (t[3] ~= "class" or t[5] == cls) then
+            if ok and t[3] ~= "flight" and (t[3] ~= "class" or t[5] == cls) and MK.TownWants(t[3]) then
                 local x, y = P(t[1] / 100, t[2] / 100)
                 out[#out + 1] = { kind = "town", x = x, y = y, cat = t[3], small = small }
             end
@@ -272,8 +291,16 @@ local function NewPin(canvas)
     local diamond = K.MEDIA .. "diamond"
     p.flight = { Layer(p, diamond, 1, BLACK, MK.HALO, 2), Layer(p, diamond, 2, w, MK.RIM, 0), Layer(p, diamond, 3, g, 1, -2) }
     p.travel = { Layer(p, disc, 1, BLACK, MK.HALO, 2), Layer(p, disc, 2, g, 1, 0), Layer(p, disc, 3, w, MK.RIM, -4) }
-    local tc = GC.townPin
-    p.town = { Layer(p, disc, 1, BLACK, MK.HALO, 2), Layer(p, disc, 2, w, MK.RIM, 0), Layer(p, disc, 3, tc, 1, -2) }
+    -- Stadt: dunkler Hof, heller Ring, darin das Symbol der Art.
+    local ring = p:CreateTexture(nil, "ARTWORK", nil, 2)
+    ring:SetAllPoints(p)
+    ring:SetColorTexture(w[1], w[2], w[3], MK.RIM)
+    local icon = p:CreateTexture(nil, "ARTWORK", nil, 3)
+    icon:SetPoint("TOPLEFT", p, "TOPLEFT", 1, -1)
+    icon:SetPoint("BOTTOMRIGHT", p, "BOTTOMRIGHT", -1, 1)
+    icon:SetTexCoord(0.08, 0.92, 0.08, 0.92)
+    p.townIcon = icon
+    p.town = { Layer(p, disc, 1, BLACK, MK.HALO, 4), ring, icon }
     p.rim, p.dot = p.spirit[2], p.spirit[3]
     p.shade, p.arrow = p.crossing[1], p.crossing[3]
     p:SetAlpha(MK.ALPHA)
@@ -294,8 +321,9 @@ local function Dress(p, e)
     local size = e.kind == "crossing" and MK.ARROW or (e.kind == "town" and MK.TOWN or MK.SPIRIT)
     p:SetSize(size, size)
     if e.kind == "town" then
+        p.townIcon:SetTexture(MK.TOWN_ICON[e.cat] or MK.TOWN_ICON.vendor)
         local c = e.cat == "mail" and GC.mailPin or GC.townPin
-        p.town[3]:SetVertexColor(c[1], c[2], c[3], 1)
+        p.town[2]:SetColorTexture(c[1], c[2], c[3], 1)
     end
     for _, kind in ipairs({ "spirit", "crossing", "flight", "travel", "town" }) do
         for _, t in ipairs(p[kind]) do t:SetShown(e.kind == kind) end
@@ -376,7 +404,64 @@ end
 --------------------------------------------------
 
 local driver
+-- 1.0.7.2 (Wunsch: "an der Map direkt filtern, was man sehen moechte"):
+-- ein Knopf oben rechts auf der Karte mit allen Arten zum An- und Abhaken.
+function MK.FilterMenu(owner)
+    local MU = _G.MenuUtil
+    if not (MU and MU.CreateContextMenu) then return end
+    local function toggle(key) K.Set(KEY, key, not K.Get(KEY, key)) MK.Forget() end
+    MU.CreateContextMenu(owner, function(_, root)
+        if root.CreateTitle then root:CreateTitle("Auf der Karte zeigen") end
+        for _, it in ipairs({ { "mapSpirit", "Geistheiler" }, { "mapCrossings", "Übergänge" },
+            { "mapFlight", "Flugmeister" }, { "mapTravel", "Schiffe, Zeppeline, Portale" }, { "mapTown", "Städte" } }) do
+            local k = it[1]
+            root:CreateCheckbox(it[2], function() return K.Get(KEY, k) and true or false end, function() toggle(k) end)
+        end
+        if root.CreateDivider then root:CreateDivider() end
+        if root.CreateTitle then root:CreateTitle("In Städten") end
+        for _, cat in ipairs(MK.TOWN_ORDER) do
+            local k = "mapTown_" .. cat
+            local label = "|T" .. MK.TOWN_ICON[cat] .. ":14:14|t " .. MK.TOWN_TEXT[cat]
+            root:CreateCheckbox(label, function() return K.Get(KEY, k) and true or false end, function()
+                toggle(k)
+                if not K.Get(KEY, "mapTown") and K.Get(KEY, k) then K.Set(KEY, "mapTown", true) end
+            end)
+        end
+    end)
+end
+local function EnsureFilterButton(wm)
+    if MK.filterBtn or not K.IsActive(KEY) then return end
+    local host = wm.ScrollContainer or wm
+    local b = CreateFrame("Button", "WeintCodexMapFilter", wm)
+    b:SetSize(26, 26)
+    b:SetPoint("TOPRIGHT", host, "TOPRIGHT", -6, -6)
+    b:SetFrameLevel((K.Plain(host:GetFrameLevel()) or 1) + 20)
+    local bg = b:CreateTexture(nil, "BACKGROUND")
+    bg:SetAllPoints(b)
+    local p = C.bgPanel
+    bg:SetColorTexture(p[1], p[2], p[3], 0.9)
+    K.Border(b, 1, 0, 0, 0, 1, "BORDER")
+    local ic = b:CreateTexture(nil, "ARTWORK")
+    ic:SetPoint("TOPLEFT", b, "TOPLEFT", 4, -4)
+    ic:SetPoint("BOTTOMRIGHT", b, "BOTTOMRIGHT", -4, 4)
+    ic:SetTexture(K.MEDIA .. "pin")
+    b:SetScript("OnClick", function(self) MK.FilterMenu(self) end)
+    b:SetScript("OnEnter", function(self)
+        local gt = _G.GameTooltip
+        if not gt then return end
+        gt:SetOwner(self, "ANCHOR_LEFT")
+        gt:SetText("WeintCodex: was die Karte zeigt")
+        gt:AddLine("Geistheiler, Übergänge, Flugmeister, Reisen und die Dienste in Städten an- und abhaken.", 0.8, 0.8, 0.8, true)
+        gt:Show()
+    end)
+    b:SetScript("OnLeave", function() if _G.GameTooltip then _G.GameTooltip:Hide() end end)
+    MK.filterBtn = b
+end
+MK.EnsureFilterButton = EnsureFilterButton
+
 local function EnsureDriver()
+    local wm0 = _G.WorldMapFrame
+    if type(wm0) == "table" then pcall(EnsureFilterButton, wm0) end
     if driver then return driver end
     local wm = _G.WorldMapFrame
     if type(wm) ~= "table" then return nil end
@@ -469,7 +554,8 @@ MK.mmTicker = mmTicker
 local ev = CreateFrame("Frame")
 ev:SetScript("OnEvent", WeintCodex.Measured("Karte: Geistheiler, Übergänge", function(_, event, name)
     if event == "ADDON_LOADED" and name ~= "Blizzard_WorldMap" then return end
-    if MK.Active() then EnsureDriver() end
+    if MK.Active() then EnsureDriver()
+    elseif _G.WorldMapFrame then pcall(EnsureFilterButton, _G.WorldMapFrame) end
 end))
 
 local function Apply()
@@ -479,12 +565,14 @@ local function Apply()
     for _, p in ipairs(mmPins) do p.entry = nil end
     mmTicker:SetShown(MK.MinimapActive())
     if not MK.MinimapActive() then MMHide() end
+    -- Der Filterknopf soll auch da sein, wenn noch nichts an ist.
+    pcall(ev.RegisterEvent, ev, "ADDON_LOADED")
+    if _G.WorldMapFrame then pcall(EnsureFilterButton, _G.WorldMapFrame) end
+    if MK.filterBtn then MK.filterBtn:SetShown(K.IsActive(KEY) and true or false) end
     if MK.Active() then
-        pcall(ev.RegisterEvent, ev, "ADDON_LOADED")
         EnsureDriver()
         MK.Place()
     else
-        pcall(ev.UnregisterEvent, ev, "ADDON_LOADED")
         HideAll()
         shownMap, shownCount = nil, 0
     end

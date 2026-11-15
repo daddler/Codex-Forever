@@ -22,6 +22,14 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.0.7.2",
+        date    = "15.11.2026",
+        notes   = {
+            "|cff7C6CFFStädte auf der Karte lesbar|r – jede Art hat jetzt ihr eigenes Symbol (Amboss, Brief, Münzen …), und ein neuer Knopf oben rechts auf der Weltkarte lässt dich an- und abhaken, was du sehen willst. Ab Werk ohne Gemischtwaren-, Handwerks-, Essens-, Reagenzien- und Munitionshändler.",
+            "|cff7C6CFFTaschendiebstahl in Grün|r – was du gestohlen hast, steht jetzt groß in der Bildschirmmitte, wo bei Fehlschlag die rote Meldung erscheint.",
+        },
+    },
+    {
         version = "1.0.7.1",
         date    = "15.11.2026",
         notes   = {

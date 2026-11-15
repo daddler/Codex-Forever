@@ -9,6 +9,17 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.0.7.2] – 2026-11-15
+
+### Geändert
+- Stadt-Pins (Bild: „nicht zu erkennen, was wer ist“): Symbol je Art
+  (`MK.TOWN_ICON`, Symbole aus dem Client), Filter je Art (`mapTown_<Art>`)
+  und Knopf auf der Weltkarte (`MK.FilterMenu`) für alle Kartenmarken.
+
+### Neu
+- Taschendiebstahl: Beute und Geld binnen 10 s nach dem eigenen Zauber 921
+  in Grün über `UIErrorsFrame` (`pickpocketMsg`, an).
+
 ## [1.0.7.1] – 2026-11-15
 
 ### Behoben
