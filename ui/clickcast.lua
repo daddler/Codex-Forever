@@ -247,7 +247,9 @@ function CC.ApplyTo(f, list)
     local keys = {}
     for _, b in ipairs(list) do
         local kind = ATTR_ACTION[b.action]
-        if kind and not CC.IsKey(b) and not CC.IsFree(b) and not (b.action == "spell" and not b.spell)
+        -- 1.0.6.16: eine Maustaste "überall" gilt auch auf dem Rahmen - ein
+        -- Klick auf den Rahmen geht an den Rahmen, nicht an die Taste.
+        if kind and not CC.IsKey(b) and not CC.WHEEL[b.button] and not (b.action == "spell" and not b.spell)
            and not (b.action == "macro" and not b.macro) then
             local t = b.mod .. "type" .. CC.Suffix(b.button)
             -- 1.0.6.15 (Meldung: "Segen des Schutzes auf Maustaste 8 landet in
@@ -372,15 +374,31 @@ function CC.ClickReport()
             .. " · belegt von WeintCodex " .. tostring(applied[f] ~= nil)
         for _, m in ipairs({ "", "*", "shift-", "ctrl-", "alt-" }) do
             local parts = {}
-            for b = 1, 2 do
-                local t = f:GetAttribute(m .. "type" .. b)
-                if t ~= nil then parts[#parts + 1] = b .. "=" .. tostring(t) .. (t == "spell" and (" " .. tostring(f:GetAttribute(m .. "spell" .. b))) or "") end
+            -- 1.0.6.16: alle Maustasten (bis 1.0.6.15 nur 1 und 2 - eine
+            -- Belegung auf Taste 8 fehlte im Bericht), mit Zauber/Makro.
+            for b = 1, 12 do
+                local sfx = CC.Suffix(b)
+                local t = f:GetAttribute(m .. "type" .. sfx)
+                if t ~= nil then
+                    local what = f:GetAttribute(m .. "spell" .. sfx) or f:GetAttribute(m .. "macrotext" .. sfx)
+                    parts[#parts + 1] = b .. "=" .. tostring(t) .. (what ~= nil and (" " .. tostring(what)) or "")
+                end
             end
             if #parts > 0 then out[#out + 1] = "   " .. (m == "" and "ohne" or m) .. ": " .. table.concat(parts, ", ") end
         end
     else
         out[#out + 1] = "Kein Rahmen unter der Maus – Maus auf den Spieler- oder Zielrahmen, dann /wcui klick."
     end
+    -- Belegungen auf Tasten und "überall": was die Taste wirklich ausloest.
+    local keys = {}
+    for k, v in pairs(CC.keyBound or {}) do
+        local n = tostring(v):match("WeintCodexClickKey(%d+)")
+        local btn = n and CC.keyButtons and CC.keyButtons[tonumber(n)]
+        keys[#keys + 1] = "   " .. k .. " → " .. tostring(btn and (btn:GetAttribute("macrotext") or btn:GetAttribute("macro")) or v)
+    end
+    table.sort(keys)
+    out[#out + 1] = "Tasten und „überall“: " .. (#keys == 0 and "keine" or "")
+    for _, l in ipairs(keys) do out[#out + 1] = l end
     out[#out + 1] = "Letzte Klicks auf belegte Rahmen (neueste zuerst):"
     if #CC.lastClicks == 0 then out[#out + 1] = "   noch keiner" end
     for _, l in ipairs(CC.lastClicks) do out[#out + 1] = "   " .. l end
@@ -523,6 +541,7 @@ end
 
 local keyOwner
 local keyButtons = {}
+CC.keyButtons = keyButtons
 local wheelKeys
 local wheelHooked = setmetatable({}, { __mode = "k" })
 CC.keyBound = {}   -- [Taste] = was darauf liegen soll

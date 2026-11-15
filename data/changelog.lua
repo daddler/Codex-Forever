@@ -22,6 +22,14 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.0.6.16",
+        date    = "15.11.2026",
+        notes   = {
+            "|cff7C6CFFKlickzauber „überall“ auch auf den Rahmen|r – eine Maustaste, die überall zaubert, wirkt beim Klick auf einen Gruppenrahmen jetzt auf diesen Spieler.",
+            "|cff7C6CFF„/wcui klick“|r nennt alle Maustasten des Rahmens und was jede Tasten-Belegung wirklich auslöst.",
+        },
+    },
+    {
         version = "1.0.6.15",
         date    = "15.11.2026",
         notes   = {

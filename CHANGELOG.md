@@ -9,6 +9,15 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.0.6.16] – 2026-11-15
+
+### Behoben (nicht im Spiel bestätigt)
+- Klickzauber: Maustasten mit „überall“ auch als Attribut auf den Rahmen
+  (bisher nur Vorrang-Belegung; ein Klick auf einen Rahmen erreicht die
+  Belegung womöglich nicht). Weiter Segen des Schutzes auf Taste 8.
+- `/wcui klick`: Maustasten 1–12 statt 1–2 (Taste 8 fehlte im Bericht), dazu
+  Makrotext jeder Tasten-/„überall“-Belegung.
+
 ## [1.0.6.15] – 2026-11-15
 
 ### Behoben (nicht im Spiel bestätigt)
