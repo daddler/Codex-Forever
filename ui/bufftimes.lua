@@ -183,12 +183,16 @@ local function SpellName(id)
         if ok and not K.IsSecret(n) and type(n) == "string" and n ~= "" then return n end
     end
 end
+local EMPTY_NAMES = {}
 local function NameMap()
     if _G.next(nameGroup) == nil then
         for _, gr in ipairs(BT.Groups and BT.Groups() or {}) do
             for _, sid in ipairs(gr.spells) do
                 local sn = SpellName(sid)
                 if sn and not nameGroup[sn] then nameGroup[sn] = gr end
+            end
+            for _, sn in ipairs(gr.names or EMPTY_NAMES) do
+                if not nameGroup[sn] then nameGroup[sn] = gr end
             end
         end
     end
@@ -300,6 +304,12 @@ function BT.OnCast(spellID, now, fighting)
         return "off"
     end
     st.tracked = st.tracked + 1
+    -- Mehrere gleichzeitig (Falken): zaehlen, solange der vorige laeuft.
+    if g.stack then
+        local running = cur and cur.duration and cur.start + cur.duration > now
+        BT.count = BT.count or {}
+        BT.count[g.key] = math.min(g.stack, running and (BT.count[g.key] or 1) + 1 or 1)
+    end
     cur = cur or {}
     cur.spell, cur.start = spellID, now
     cur.duration = (not g.variable) and g.duration or nil
@@ -534,7 +544,13 @@ function BT.Update()
             end
             b.icon:SetDesaturated(e.state == "missing")
             b.mark:SetText(e.state == "missing" and "!" or "")
-            b.state:SetText(e.state == "on" and "an" or e.state == "runs" and "läuft" or "")
+            local g = e.group
+            if e.state == "time" and g.showLeft and e.left then
+                local n = BT.count and BT.count[g.key] or 1
+                b.state:SetText(string.format(n > 1 and "%d ×%d" or "%d", math.ceil(e.left), n))
+            else
+                b.state:SetText(e.state == "on" and "an" or e.state == "runs" and "läuft" or "")
+            end
             b:Show()
         else
             b:Hide()

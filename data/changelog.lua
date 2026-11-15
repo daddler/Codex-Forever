@@ -22,6 +22,14 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.0.6.22",
+        date    = "15.11.2026",
+        notes   = {
+            "|cff7C6CFFGruppenrahmen mit Tiefe|r – neues Aussehen „Plastisch“ ab Werk: Balken in Klassenfarbe mit Verlauf, Glanz oben, Schatten unten und Kanten, sodass jeder Rahmen gewölbt wirkt. „Dunkel“ und „Klassenfarbe“ bleiben unter Gruppenrahmen → Aussehen wählbar.",
+            "|cff7C6CFFFalke beschwören im Blick|r – Jäger sehen in der Reihe der Buffzeiten ein Symbol mit den verbleibenden Sekunden des Falken, bei zwei Falken mit „×2“.",
+        },
+    },
+    {
         version = "1.0.6.21",
         date    = "15.11.2026",
         notes   = {

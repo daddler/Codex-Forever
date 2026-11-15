@@ -9,6 +9,20 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.0.6.22] – 2026-11-15
+
+### Geändert
+- Gruppenrahmen (Wunsch: „mehr dreidimensional, mehr Pepp“): Aussehen
+  `relief` ab Werk – Lebensbalken mit senkrechtem Verlauf
+  (`gfReliefLow`/`gfReliefHigh`), Glanz oben (`gfGloss`), Schatten unten
+  (`gfShade`), Kanten (`gfBevelHi`/`gfBevelLo`), Hintergrund `gfReliefBack`.
+
+### Neu
+- Buffzeiten: Jäger-Gruppe `falcon` („Falke beschwören“, neu auf Forever,
+  Nummer unbekannt – über den Namen erkannt), 18 s laut Tooltip, Restzeit als
+  Zahl, bis zu zwei Falken (`stack`). Im Kampf nur, wenn der Client die
+  Zaubernummer nicht geheim liefert.
+
 ## [1.0.6.21] – 2026-11-15
 
 ### Geändert
