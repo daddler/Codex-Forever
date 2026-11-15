@@ -26256,9 +26256,12 @@ do
         assert(BT.active.falcon, "Abgleich nahm den Falken weg")
         assert(math.ceil(BT.Remaining("falcon", 105)) == 13, "Uhr des Falken falsch")
         BT.OnCast(999001, 106)
+        BT.OnCast(999001, 106.1)   -- doppelte Meldung derselben Beschwoerung
         local n = 0
         for _, e in ipairs(BT.Entries(107)) do if e.group.key == "falcon" then n = n + 1 end end
         assert(n == 2, "zwei Falken, aber " .. n .. " Symbol(e)")
+        local e1 = BT.Entries(107)
+        assert(math.ceil(e1[1].left) == 11 and math.ceil(e1[2].left) == 17, "Uhr des ersten Falken neu gesetzt")
         BT.OnCast(999001, 108)
         n = 0
         for _, e in ipairs(BT.Entries(109)) do if e.group.key == "falcon" then n = n + 1 end end

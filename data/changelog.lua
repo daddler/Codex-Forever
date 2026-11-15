@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.0.6.26",
+        date    = "15.11.2026",
+        notes   = {
+            "|cff7C6CFFZweiter Falke ohne Verwechslung|r – beschwörst du einen zweiten Falken, läuft die Uhr des ersten weiter, statt neu zu starten.",
+        },
+    },
+    {
         version = "1.0.6.25",
         date    = "15.11.2026",
         notes   = {

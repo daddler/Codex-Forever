@@ -313,6 +313,11 @@ function BT.OnCast(spellID, now, fighting)
     -- Mehrere gleichzeitig (Falken): zaehlen, solange der vorige laeuft.
     -- Mehrere gleichzeitig (Falken): je einer mit eigener Uhr. Der neue
     -- ersetzt den aeltesten, wenn schon alle Plaetze laufen.
+    -- 1.0.6.26 (Bild: erster Falke 14 s, nach dem zweiten beide 17 s): das
+    -- Spiel meldet eine Beschwoerung zweimal (Zauber und Beschwoerung mit
+    -- demselben Namen). Eine Wiederholung binnen einer halben Sekunde ist
+    -- derselbe Falke.
+    if g.stack and cur and cur.start and now - cur.start < 0.5 then return "start" end
     local prevStart = cur and cur.duration and cur.start + cur.duration > now and cur.start or nil
     cur = cur or {}
     if g.stack then

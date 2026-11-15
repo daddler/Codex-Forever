@@ -9,6 +9,13 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.0.6.26] – 2026-11-15
+
+### Behoben
+- Buffzeiten: zweiter Falke setzte die Uhr des ersten neu (Bilder: 14 s →
+  beide 17 s). Vermutlich meldet der Client die Beschwörung doppelt; bei
+  `stack`-Gruppen zählt eine Wiederholung binnen 0,5 s nicht.
+
 ## [1.0.6.25] – 2026-11-15
 
 ### Geändert
