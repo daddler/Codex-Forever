@@ -85,6 +85,12 @@ BT.CLASSES = {
             13161,                                      -- des Wildtiers
             20043, 20190,                               -- der Wildnis 1-2
           } },
+        -- 1.0.6.23 (Spieler mit Bild des Tooltips): "Falke beschwoeren", neu
+        -- auf Forever, Nummer unbekannt - erkannt ueber den Namen. 18 s laut
+        -- Tooltip, bis zu zwei Falken; Restzeit als Zahl. noAura: keine Aura
+        -- auf dem Spieler, der Abgleich darf ihn nie wegnehmen.
+        { key = "falcon", label = "Falke", duration = 18 * SEC, showLeft = true, noAura = true,
+          stack = 2, spells = {}, names = { "Falke beschwören" } },
     },
     MAGE = {
         { key = "armor", label = "Rüstung", remind = true,
@@ -384,7 +390,9 @@ function BT.Reconcile(now, fighting)
     local named = BT.ScanAuraNames()
     for _, g in ipairs(BT.Groups()) do
         local a = BT.active[g.key]
-        if g.weapon then
+        if g.noAura then
+            -- nur die eigene Uhr
+        elseif g.weapon then
             local left = BT.MainHandEnchant()
             if left == false then
                 if a then BT.active[g.key] = nil st.removed = st.removed + 1 end

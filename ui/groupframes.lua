@@ -510,8 +510,8 @@ end
 function Btn:PlaceName()
     local c = self._wc
     local x = 4
-    if c.role:IsShown() then x = x + 13 end
-    if c.leader:IsShown() then x = x + 13 end
+    if c.role:IsShown() then x = x + 16 end
+    if c.leader:IsShown() then x = x + 16 end
     c.name:ClearAllPoints()
     c.name:SetPoint("TOPLEFT", c, "TOPLEFT", x, -4)
     c.name:SetWidth(math.max(16, (self._wcW or 100) - x - (self._wcSW or 30) - 6))
@@ -633,19 +633,22 @@ end
 -- behandeln kann.
 -- 1.0.6.21: ohne Plakette - auf dem dunklen Balken stehen die Symbole
 -- frei; nur ein Schatten dahinter.
-local BADGE, BADGE_ICON = 12, 11
+local BADGE, BADGE_ICON = 15, 14
 local function Badge(parent)
     local f = CreateFrame("Frame", nil, parent)
     f:SetSize(BADGE, BADGE)
     f:SetFrameLevel((parent:GetFrameLevel() or 1) + 1)
+    -- 1.0.6.23 ("Rollen schwer zu erkennen"): dasselbe Symbol schwarz und
+    -- etwas groesser dahinter - ein Umriss, keine Plakette.
     local sh = f:CreateTexture(nil, "BACKGROUND")
-    sh:SetPoint("TOPLEFT", f, "TOPLEFT", 1, -1)
-    sh:SetSize(BADGE_ICON, BADGE_ICON)
-    sh:SetColorTexture(0, 0, 0, 0)
+    sh:SetPoint("CENTER", f, "CENTER", 0, 0)
+    sh:SetSize(BADGE_ICON + 3, BADGE_ICON + 3)
+    sh:SetVertexColor(0, 0, 0, 0.95)
+    f.outline = sh
     f.icon = f:CreateTexture(nil, "ARTWORK")
     f.icon:SetSize(BADGE_ICON, BADGE_ICON)
     f.icon:SetPoint("CENTER", f, "CENTER", 0, 0)
-    function f:SetTexture(t) self.icon:SetTexture(t) end
+    function f:SetTexture(t) self.icon:SetTexture(t) self.outline:SetTexture(t) self.outline:SetVertexColor(0, 0, 0, 0.95) end
     function f:SetVertexColor(r, g, b, a) self.icon:SetVertexColor(r, g, b, a) end
     f:Hide()
     return f

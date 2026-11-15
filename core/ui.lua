@@ -225,9 +225,9 @@ WeintCodex.GameColors = {
     gfReliefLow   = {0.450, 0, 0, 1},
     gfReliefHigh  = {0.900, 0, 0, 1},
     gfReliefBack  = {0.060, 0.062, 0.072, 1.0},
-    gfGloss       = {1.000, 1.000, 1.000, 0.22},
-    gfShade       = {0.000, 0.000, 0.000, 0.35},
-    gfBevelHi     = {1.000, 1.000, 1.000, 0.30},
+    gfGloss       = {1.000, 1.000, 1.000, 0.07},
+    gfShade       = {0.000, 0.000, 0.000, 0.22},
+    gfBevelHi     = {1.000, 1.000, 1.000, 0.18},
     gfBevelLo     = {0.000, 0.000, 0.000, 0.60},
     -- 1.0.6.20: Bannring der Gruppenrahmen, Farbe je Bannart.
     dispelMagic   = {0.200, 0.600, 1.000, 1.0},

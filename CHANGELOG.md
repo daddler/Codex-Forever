@@ -9,6 +9,19 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.0.6.23] – 2026-11-15
+
+### Behoben
+- Buffzeiten: „Falke beschwören“ fehlte in 1.0.6.22 ganz – die Gruppe kam
+  nie in `BT.CLASSES.HUNTER` (Ersetzung im Code griff nicht, ungeprüft).
+  Jetzt drin, mit `noAura` (der Abgleich ohne Aura auf dem Spieler hätte sie
+  sofort wieder entfernt). Prüflauf im load_test.
+
+### Geändert
+- Gruppenrahmen „Plastisch“ (Rückmeldung: Glanz irritiert, Rollen schwer zu
+  erkennen): `gfGloss` 0,22 → 0,07, `gfShade` 0,35 → 0,22, `gfBevelHi`
+  0,30 → 0,18; Rolle/Krone 14 px mit schwarzem Umriss aus demselben Symbol.
+
 ## [1.0.6.22] – 2026-11-15
 
 ### Geändert

@@ -26239,6 +26239,32 @@ do
     Check(ok, "/wcui speicher: neue Teile gemessen, gehaltene Daten geschätzt" .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 1.0.6.23: Falke beschwoeren (Jaeger) - ueber den Namen erkannt, und der
+-- Abgleich ausserhalb des Kampfes nimmt ihn nicht weg (er ist keine Aura).
+do
+    local BT = WeintCodex.UIBuffTimes
+    local G = _G
+    local saved = { G.C_Spell, G.C_UnitAuras }
+    local ok, err = pcall(function()
+        G.C_Spell = { GetSpellName = function(id) return id == 999001 and "Falke beschwören" or nil end }
+        G.C_UnitAuras = { GetAuraDataByIndex = function() return nil end }
+        BT.SetClass("HUNTER")
+        BT.Clear()
+        local r = BT.OnCast(999001, 100)
+        assert(r == "start", "Falke nicht erkannt: " .. tostring(r))
+        BT.Reconcile(101, false)
+        assert(BT.active.falcon, "Abgleich nahm den Falken weg")
+        assert(math.ceil(BT.Remaining("falcon", 105)) == 13, "Uhr des Falken falsch")
+        BT.OnCast(999001, 106)
+        assert(BT.count.falcon == 2, "zweiter Falke nicht gezaehlt")
+        assert(BT.Remaining("falcon", 125) == nil, "Falke lief nicht ab")
+    end)
+    G.C_Spell, G.C_UnitAuras = saved[1], saved[2]
+    BT.Clear()
+    Check(ok, "Buffzeiten: Falke beschwören erkannt und nicht vom Abgleich entfernt"
+        .. (ok and "" or (": " .. tostring(err))))
+end
+
 if failures == 0 then
     print("BESTANDEN")
     os.exit(0)
@@ -26246,3 +26272,4 @@ end
 
 print(failures .. " Pruefung(en) fehlgeschlagen.")
 os.exit(1)
+

@@ -22,6 +22,14 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.0.6.23",
+        date    = "15.11.2026",
+        notes   = {
+            "|cff7C6CFFFalke beschwören wird jetzt angezeigt|r – Jäger sehen in der Reihe der Buffzeiten ein Symbol mit den verbleibenden Sekunden des Falken, bei zwei Falken mit „×2“. In der letzten Fassung fehlte er noch.",
+            "|cff7C6CFFRuhigere Gruppenrahmen|r – der Glanz auf „Plastisch“ ist dezenter, Rolle und Krone sind größer und schwarz umrandet, damit sie auf jeder Klassenfarbe erkennbar sind.",
+        },
+    },
+    {
         version = "1.0.6.22",
         date    = "15.11.2026",
         notes   = {
