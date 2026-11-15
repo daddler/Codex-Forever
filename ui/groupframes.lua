@@ -257,6 +257,7 @@ GF._Grad = Grad
 function GF.Paint(c, r, g, b, gone)
     local G = WeintCodex.GameColors
     local look = Opt("look")
+    if c.name.SetShadowColor then c.name:SetShadowColor(0, 0, 0, 0.9) c.status:SetShadowColor(0, 0, 0, 0.9) end
     if c.relief then c.relief:SetShown(look ~= "dark" or gone) end
     if gone then
         K.PaintBar(c.health, G.gfGone[1], G.gfGone[2], G.gfGone[3])
@@ -283,8 +284,16 @@ function GF.Paint(c, r, g, b, gone)
         end
         local d = G.gfReliefBack
         Grad(c.bg, d[1], d[2], d[3], 1, d[1] * 1.8, d[2] * 1.8, d[3] * 1.8, 1)
-        c.name:SetTextColor(1, 1, 1)
-        c.status:SetTextColor(0.95, 0.95, 0.95)
+        -- Helle Klassen (Priester): dunkle Schrift, Weiss auf Weiss liest
+        -- niemand (Bild nach 1.0.6.23).
+        if 0.299 * r + 0.587 * g + 0.114 * b > 0.8 then
+            c.name:SetTextColor(0.08, 0.08, 0.10)
+            c.status:SetTextColor(0.12, 0.12, 0.14)
+            if c.name.SetShadowColor then c.name:SetShadowColor(1, 1, 1, 0.25) c.status:SetShadowColor(1, 1, 1, 0.25) end
+        else
+            c.name:SetTextColor(1, 1, 1)
+            c.status:SetTextColor(0.95, 0.95, 0.95)
+        end
         return
     end
     c._wcRel = nil
@@ -339,7 +348,7 @@ local function StatusText(fs, unit)
     -- Was gleich passiert, vor dem Zustand: "Tot" allein verschweigt,
     -- dass schon jemand wiederbelebt.
     if K.Bool(_G.UnitHasIncomingResurrection and _G.UnitHasIncomingResurrection(unit), false) then
-        fs:SetText("Wird belebt") return
+        fs:SetText("Belebt …") return
     end
     local sm = _G.C_IncomingSummon
     if sm and sm.HasIncomingSummon and K.Bool(sm.HasIncomingSummon(unit), false) then
@@ -1059,7 +1068,7 @@ function GF.ShowTest(on, n)
         b:PlaceName()
         c.targetRing:SetShown(i == 2 and Opt("targetRing") and true or false)
         if t.res then
-            c.status:SetText("Wird belebt")
+            c.status:SetText("Belebt …")
         elseif t.dead then
             c.status:SetText("Tot")
         elseif Opt("statusText") == "percent" then

@@ -12535,7 +12535,7 @@ do
         assert(not c.role:IsShown(), "Rolle geraten, obwohl keine zugewiesen ist")
         _G.UnitHasIncomingResurrection = function() return true end
         b:Refresh()
-        assert(c.status:GetText() == "Wird belebt", "Wiederbelebung nicht genannt: " .. tostring(c.status:GetText()))
+        assert(c.status:GetText() == "Belebt …", "Wiederbelebung nicht genannt: " .. tostring(c.status:GetText()))
         b:Flash()
         assert(c._flashLeft, "Treffer blitzt nicht")
         _G.UnitGetIncomingHeals, _G.UnitGetTotalAbsorbs, _G.UnitGroupRolesAssigned,
