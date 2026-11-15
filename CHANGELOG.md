@@ -16,6 +16,12 @@ nicht zusammen.
   beide 17 s). Vermutlich meldet der Client die Beschwörung doppelt; bei
   `stack`-Gruppen zählt eine Wiederholung binnen 0,5 s nicht.
 
+### Geändert
+- Buffzeiten: Gruppen mit `ownRow` (Falke) in eigener Reihe
+  `WeintCodexSummonTimes` (Mover `summontimes`, „Beschwörungen“,
+  `ui/layout.lua`), nicht mehr beim Aspekt und nicht im Abklingzeitmanager
+  (`BT.Entries(..., own)`).
+
 ## [1.0.6.25] – 2026-11-15
 
 ### Geändert

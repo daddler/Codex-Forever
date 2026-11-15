@@ -26,6 +26,7 @@ WeintCodex_ChangelogData = {
         date    = "15.11.2026",
         notes   = {
             "|cff7C6CFFZweiter Falke ohne Verwechslung|r – beschwörst du einen zweiten Falken, läuft die Uhr des ersten weiter, statt neu zu starten.",
+            "|cff7C6CFFFalken in eigener Reihe|r – die Laufzeiten der Falken stehen getrennt von den Aspekten und lassen sich im Gestaltungsmodus als „Beschwörungen“ frei verschieben.",
         },
     },
     {

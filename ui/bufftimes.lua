@@ -89,7 +89,7 @@ BT.CLASSES = {
         -- auf Forever, Nummer unbekannt - erkannt ueber den Namen. 18 s laut
         -- Tooltip, bis zu zwei Falken; Restzeit als Zahl. noAura: keine Aura
         -- auf dem Spieler, der Abgleich darf ihn nie wegnehmen.
-        { key = "falcon", label = "Falke", duration = 18 * SEC, showLeft = true, noAura = true,
+        { key = "falcon", label = "Falke", duration = 18 * SEC, showLeft = true, noAura = true, ownRow = true,
           stack = 2, spells = {}, names = { "Falke beschwören" } },
     },
     MAGE = {
@@ -467,10 +467,13 @@ local function Put(g, spell, state, left)
     e.group, e.spell, e.state, e.left, e.start = g, spell, state, left, nil
     entries[n] = e
 end
-function BT.Entries(now, fighting, showMissing, sample)
+-- own: true = nur Gruppen mit eigener Reihe (Falken), sonst alle anderen.
+-- Der Abklingzeitmanager fragt ohne own: Beschwoerungen bleiben draussen.
+function BT.Entries(now, fighting, showMissing, sample, own)
     for i = #entries, 1, -1 do entries[i] = nil end
     now = now or Now()
     for _, g in ipairs(BT.Groups()) do
+      if (g.ownRow and true or false) == (own and true or false) then
         local left = BT.Remaining(g.key, now)
         local a = BT.active[g.key]
         if a then
@@ -494,6 +497,7 @@ function BT.Entries(now, fighting, showMissing, sample)
         elseif sample then
             Put(g, g.spells[1], "on", nil)
         end
+      end
     end
     return entries
 end
@@ -540,18 +544,19 @@ local function Icon(parent)
     return b
 end
 
-function BT.Update()
-    if not row then return end
-    -- Der eigene Abklingzeitmanager zeigt dieselben Buffs in seiner Reihe.
+local row2
+local function Draw(row, own)
+    -- Der eigene Abklingzeitmanager zeigt dieselben Buffs in seiner Reihe
+    -- (nicht die Beschwoerungen der eigenen Reihe).
     local OC = WeintCodex.UIOwnCooldowns
-    if OC and OC.OwnsBuffs and OC.OwnsBuffs() and not row._unlock then
+    if not own and OC and OC.OwnsBuffs and OC.OwnsBuffs() and not row._unlock then
         for _, b in ipairs(row.icons) do b:Hide() end
         row:SetSize(28, 28)
         return
     end
     local on = Opt("castTimes") ~= false
     -- Im Gestaltungsmodus zeigt jede Gruppe ein Symbol (wo die Reihe steht).
-    local list = BT.Entries(Now(), BT.fighting or K.InCombat(), Opt("castMissing") ~= false, row._unlock)
+    local list = BT.Entries(Now(), BT.fighting or K.InCombat(), Opt("castMissing") ~= false, row._unlock, own)
     if not on and not row._unlock then for i = #list, 1, -1 do list[i] = nil end end
     local s = tonumber(Opt("castSize")) or 28
     local gap = 4
@@ -585,6 +590,11 @@ function BT.Update()
             b:Hide()
         end
     end
+end
+
+function BT.Update()
+    if row then Draw(row, false) end
+    if row2 then Draw(row2, true) end
 end
 
 -- Ein ruhiger Takt (eine Sekunde): Ablauf und Abgleich. Keine Tabelle,
@@ -641,6 +651,13 @@ function BT.Enable()
     row.icons = {}
     row.WCShowForUnlock = function(self, on) self._unlock = on and true or nil BT.Update() end
     K.RegisterMover(row, "bufftimes", "Buffzeiten", K.Layout("bufftimes"))
+    -- 1.0.6.26 (Wunsch: Laufzeiten vom Aspekt abkoppeln): Beschwoerungen
+    -- (Falken) in einer eigenen, eigens verschiebbaren Reihe.
+    row2 = CreateFrame("Frame", "WeintCodexSummonTimes", UIParent)
+    row2:SetSize(28, 28)
+    row2.icons = {}
+    row2.WCShowForUnlock = function(self, on) self._unlock = on and true or nil BT.Update() end
+    K.RegisterMover(row2, "summontimes", "Beschwörungen", K.Layout("summontimes"))
     local ev = CreateFrame("Frame")
     for _, e in ipairs({ "UNIT_SPELLCAST_SUCCEEDED", "PLAYER_REGEN_DISABLED", "PLAYER_REGEN_ENABLED",
         "PLAYER_DEAD", "UNIT_AURA", "UNIT_INVENTORY_CHANGED", "PLAYER_ENTERING_WORLD" }) do

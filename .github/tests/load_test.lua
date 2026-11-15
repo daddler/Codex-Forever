@@ -26258,14 +26258,15 @@ do
         BT.OnCast(999001, 106)
         BT.OnCast(999001, 106.1)   -- doppelte Meldung derselben Beschwoerung
         local n = 0
-        for _, e in ipairs(BT.Entries(107)) do if e.group.key == "falcon" then n = n + 1 end end
+        for _, e in ipairs(BT.Entries(107, nil, nil, nil, true)) do if e.group.key == "falcon" then n = n + 1 end end
         assert(n == 2, "zwei Falken, aber " .. n .. " Symbol(e)")
-        local e1 = BT.Entries(107)
+        local e1 = BT.Entries(107, nil, nil, nil, true)
         assert(math.ceil(e1[1].left) == 11 and math.ceil(e1[2].left) == 17, "Uhr des ersten Falken neu gesetzt")
         BT.OnCast(999001, 108)
         n = 0
-        for _, e in ipairs(BT.Entries(109)) do if e.group.key == "falcon" then n = n + 1 end end
+        for _, e in ipairs(BT.Entries(109, nil, nil, nil, true)) do if e.group.key == "falcon" then n = n + 1 end end
         assert(n == 2, "dritter Falke: mehr als zwei Symbole")
+        for _, e in ipairs(BT.Entries(110)) do assert(e.group.key ~= "falcon", "Falke in der Reihe der Aspekte") end
         assert(BT.Remaining("falcon", 127) == nil, "Falke lief nicht ab")
     end)
     G.C_Spell, G.C_UnitAuras = saved[1], saved[2]
