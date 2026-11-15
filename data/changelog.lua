@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.0.7.7",
+        date    = "15.11.2026",
+        notes   = {
+            "|cff7C6CFFAuch die übrigen Aurensymbole zeigen ihre Restzeit nur einmal|r – Debuff-Reihe, Buffs und Rahmen hatten noch eine zweite, um eine Sekunde versetzte Zahl.",
+        },
+    },
+    {
         version = "1.0.7.6",
         date    = "15.11.2026",
         notes   = {

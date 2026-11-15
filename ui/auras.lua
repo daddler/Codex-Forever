@@ -279,10 +279,11 @@ local function BuildEngine(self, minimal)
             if not okC then Note("SetDurationCooldown", errC) end
             local okA, errA = pcall(button.SetApplicationCount, button, count, {})
             if not okA then Note("SetApplicationCount", errA) end
-            if o.timer then
-                local okD, errD = pcall(button.SetDurationText, button, dur, {})
-                if not okD then Note("SetDurationText", errD) end
-            end
+            -- 1.0.7.7 (Bild: Restzeit doppelt, "17" und "18"): sobald der
+            -- Behaelter die Uhr fuehrt, zeichnet sie ihre Zahl selbst. Also
+            -- nur diese Zahl, keine zweite ueber SetDurationText.
+            if cd.SetHideCountdownNumbers then pcall(cd.SetHideCountdownNumbers, cd, not o.timer) end
+            if dur and dur.Hide then dur:Hide() end
         end,
     })
     pcall(c.SetAuraGroupMaxFrameCount, c, "wc", o.max)

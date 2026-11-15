@@ -9,6 +9,12 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.0.7.7] – 2026-11-15
+
+### Behoben
+- Aurensymbole im Engine-Weg (`ui/auras.lua`): keine eigene Restzeit mehr über
+  `SetDurationText` neben der Zahl der Uhr des Spiels (Bild: „17“ und „18“).
+
 ## [1.0.7.6] – 2026-11-15
 
 ### Behoben

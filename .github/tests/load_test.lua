@@ -6062,8 +6062,10 @@ do
         end
         local o = A.Create(UIParent, { filter = "HARMFUL", max = 4, size = 24, timer = true })
         assert(o.engine and o.frame._anchoredBeforeGroup, "Container nicht vor der ersten Gruppe verankert")
-        assert(registered.icon and registered.cd and registered.count and registered.dur,
+        assert(registered.icon and registered.cd and registered.count,
             "Knopf hat nicht alles angemeldet")
+        -- 1.0.7.7: keine zweite Restzeit neben der Zahl der Uhr des Spiels.
+        assert(not registered.dur, "Restzeit doppelt angemeldet")
         failNext = true
         local o2 = A.Create(UIParent, { filter = "HARMFUL", max = 4, size = 24 })
         assert(o2.engine, "nach einem Fehlschlag kein vereinfachter Container")
