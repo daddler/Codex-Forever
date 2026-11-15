@@ -296,6 +296,7 @@ ui/owncooldowns.lua
 # Kampfhilfen: Abklingzeit an der Maus, GCD-Leiste, Co-Tank (1.0.7.0).
 ui/combathelp.lua
 ui/swingtimer.lua
+ui/gearsets.lua
 ui/questtracker.lua
 ui/navmesh.lua
 ui/route.lua

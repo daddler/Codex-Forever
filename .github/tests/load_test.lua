@@ -26382,6 +26382,32 @@ do
     Check(ok, "Swing-Timer: Schläge vom Client, nichts geraten" .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 1.0.7.0: Ausruestungssets - Sets vom Ausruestungsmanager, im Kampf
+-- wartet der Wunsch; Schmuckknoepfe sind sichere Knoepfe.
+do
+    local ok, err = pcall(function()
+        local GS, K = WeintCodex.UIGearSets, WeintCodex.UIKit
+        local G = _G
+        local oldES, oldIC = G.C_EquipmentSet, K.InCombat
+        local used
+        G.C_EquipmentSet = {
+            GetEquipmentSetIDs = function() return { 1, 2 } end,
+            GetEquipmentSetInfo = function(id) return id == 1 and "Tank" or "Schaden", 134400, id, id == 2 end,
+            UseEquipmentSet = function(id) used = id end,
+        }
+        local sets = GS.Sets()
+        assert(#sets == 2 and sets[2].equipped and sets[1].name == "Tank", "Sets falsch gelesen")
+        K.InCombat = function() return true end
+        assert(GS.Use(1) == "later" and used == nil and GS.pending == 1, "im Kampf gewechselt")
+        K.InCombat = oldIC
+        assert(GS.Use(1) == true and used == 1 and GS.pending == nil, "nach dem Kampf nicht gewechselt")
+        G.C_EquipmentSet = oldES
+        local src = io.open(ROOT .. "/ui/gearsets.lua"):read("*a")
+        assert(src:find('"SecureActionButtonTemplate"', 1, true), "Schmuck nicht über sichere Knöpfe")
+    end)
+    Check(ok, "Ausrüstungssets und Schmuckleiste" .. (ok and "" or (": " .. tostring(err))))
+end
+
 if failures == 0 then
     print("BESTANDEN")
     os.exit(0)
