@@ -1537,21 +1537,15 @@ function OC.ScanSlot(button)
     local n = slotNumbers[button]
     if not n then return 0 end
     ScanFrame(button, n, 0)
-    -- Die Zahl unserer eigenen Uhr zaehlt nicht als fremd.
-    if n.cd and n.cd.GetCountdownFontString then
-        local ok, fs = pcall(n.cd.GetCountdownFontString, n.cd)
-        if ok and type(fs) == "table" then
-            for i = #n.foreign, 1, -1 do if n.foreign[i] == fs then table.remove(n.foreign, i) end end
-        end
-    end
+    -- Auch die Zahl unserer Uhr zaehlt als fremd: das Spiel schaltet sie an.
     return #n.foreign
 end
 function OC.SlotNumbers(button, on)
     local n = slotNumbers[button]
     if not n then return end
-    local hasForeign = #n.foreign > 0
-    for _, fs in ipairs(n.foreign) do fs:SetAlpha(on and 1 or 0) end
-    OC.CountdownShown(n.cd, on and not hasForeign)
+    for _, fs in ipairs(n.foreign) do fs:SetAlpha(0) end
+    OC.CountdownShown(n.cd, false)
+    n.holder:SetAlpha(on and 1 or 0)
 end
 
 function OC.EnsureSlot(row, d, cell, size, timer)
@@ -1570,11 +1564,28 @@ function OC.EnsureSlot(row, d, cell, size, timer)
                 -- 1.0.7.8: blieb doppelt - das Feld des Spiels bringt eine
                 -- eigene Zahl mit. Genau eine Zahl: die des Feldes, wenn es
                 -- eine hat, sonst die unserer Uhr; beide folgen dem Schalter.
-                local icon, cd, count = A.StyleIcon(button, size, { timer = false })
+                -- 1.0.7.9: feste Regel statt Raten. Das Spiel schaltet die
+                -- Zahlen, die es dem Feld gibt, selbst an (Schalter half nicht).
+                -- Darum: JEDE fremde Schrift im Feld dauerhaft unsichtbar
+                -- (Alpha fasst das Spiel nicht an); die Restzeit schreibt das
+                -- Spiel in UNSERE Schrift, die in einem eigenen Rahmen liegt -
+                -- und nur dessen Alpha folgt dem Schalter.
+                local icon, cd, count, dur = A.StyleIcon(button, size, { timer = true })
+                local holder = CreateFrame("Frame", nil, button)
+                holder:SetAllPoints(button)
+                holder:SetFrameLevel((K.Plain(button:GetFrameLevel()) or 1) + 6)
+                if holder.EnableMouse then holder:EnableMouse(false) end
+                dur:SetParent(holder)
+                dur:ClearAllPoints()
+                dur:SetPoint("CENTER", button, "CENTER", 0, 0)
+                dur:SetJustifyH("CENTER")
+                K.SetFont(dur, math.max(10, math.floor(size * 0.5)))
+                dur:Show()
                 pcall(button.SetIcon, button, icon)
                 pcall(button.SetDurationCooldown, button, cd)
                 pcall(button.SetApplicationCount, button, count, {})
-                slotNumbers[button] = { cd = cd, own = { [count] = true }, foreign = {} }
+                pcall(button.SetDurationText, button, dur, {})
+                slotNumbers[button] = { cd = cd, holder = holder, own = { [count] = true, [dur] = true }, foreign = {} }
                 OC.ScanSlot(button)
                 OC.SlotNumbers(button, timer)
                 if button.EnableMouse then pcall(button.EnableMouse, button, false) end

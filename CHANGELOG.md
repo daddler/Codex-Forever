@@ -12,9 +12,12 @@ nicht zusammen.
 ## [1.0.7.9] – 2026-11-15
 
 ### Behoben
-- Debuff-Felder: Zahlen blieben trotz Schalter (Bild nach 1.0.7.8). Schriften
-  des Feldes jetzt bis in Enkel gesucht, auch in der Uhr, und außerhalb des
-  Kampfes alle 3 s neu (`OC.ScanSlot`). `/wcui debuffs` nennt je Feld Kinder
+- Debuff-Felder: Zahlen blieben trotz Schalter (Bild nach 1.0.7.8) – das
+  Spiel schaltet die Zahlen, die es dem Feld gibt, selbst an. Jetzt fest:
+  jede fremde Schrift im Feld (bis in Enkel, auch die der Uhr, außerhalb des
+  Kampfes alle 3 s neu gesucht, `OC.ScanSlot`) dauerhaft Alpha 0; die
+  Restzeit schreibt das Spiel über `SetDurationText` in unsere Schrift in
+  einem eigenen Rahmen, dessen Alpha allein dem Schalter folgt. `/wcui debuffs` nennt je Feld Kinder
   und gefundene Schriften mit Text und Alpha.
 
 ## [1.0.7.8] – 2026-11-15

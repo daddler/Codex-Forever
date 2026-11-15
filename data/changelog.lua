@@ -25,7 +25,7 @@ WeintCodex_ChangelogData = {
         version = "1.0.7.9",
         date    = "15.11.2026",
         notes   = {
-            "|cff7C6CFFDebuff-Restzeit folgt jetzt dem Schalter|r – auch die Zahlen, die das Spiel erst beim ersten Zeigen an das Feld hängt, werden erfasst und mit „Restzeit in Zahlen“ ein- und ausgeblendet.",
+            "|cff7C6CFFDebuffs mit genau einer Restzeit|r – in der Mitte des Symbols, und sie folgt „Restzeit in Zahlen“ wie alle anderen Reihen.",
         },
     },
     {
