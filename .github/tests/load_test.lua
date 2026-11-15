@@ -1780,6 +1780,11 @@ do
         assert(AM.state.offer ~= nil, "frisches Angebot nach dem Kampf wieder eingeklappt")
         AM.state.offer = nil
     end)
+        local hv = CC.HoverList({ { button = 8, mod = "", action = "spell", spell = "Segen des Schutzes" },
+                                  { button = 1, mod = "", action = "spell", spell = "Lichtblitz" } })
+        assert(#hv == 1 and hv[1].button == 8, "Seitentaste nicht fuers Ueberfahren gewaehlt")
+        assert(CC.HOVER_ENTER:find("SetBindingClick", 1, true) and CC.HOVER_LEAVE:find("ClearBindings", 1, true),
+            "Schnipsel fuers Ueberfahren fehlen")
     Check(ok, "Klickzauber: Maustaste 8 erreicht den Rahmen; Automark fragt wieder" .. (ok and "" or (": " .. tostring(err))))
 end
 

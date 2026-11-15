@@ -9,6 +9,16 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.0.6.18] – 2026-11-15
+
+### Behoben (nicht im Spiel bestätigt)
+- Klickzauber auf Maustaste 3–12: gemessen mit 1.0.6.17 – Rahmen auf „jede
+  Maustaste“, Taste 8 belegt, trotzdem kommt nur Links an. Jetzt legt ein
+  geschützter Schnipsel beim Überfahren eines Rahmens die Taste auf einen
+  eigenen Knopf (`CC.ApplyHover`, `SecureHandlerBaseTemplate`, `WrapScript`
+  OnEnter/OnLeave, `SetBindingClick`/`ClearBindings`), Makro
+  `/cast [@mouseover,exists] Zauber`. Verhalten wie Clique, eigener Code.
+
 ## [1.0.6.17] – 2026-11-15
 
 ### Behoben (nicht im Spiel bestätigt)

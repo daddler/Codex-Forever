@@ -391,6 +391,7 @@ function CC.ClickReport()
             .. " · unit " .. tostring(f:GetAttribute("unit"))
             .. " · belegt von WeintCodex " .. tostring(applied[f] ~= nil)
             .. " · nimmt jede Maustaste " .. tostring(allClicks[f] == true)
+            .. " · Seitentasten beim Überfahren " .. tostring(CC._hoverWrapped and CC._hoverWrapped[f] == true)
         for _, m in ipairs({ "", "*", "shift-", "ctrl-", "alt-" }) do
             local parts = {}
             -- 1.0.6.16: alle Maustasten (bis 1.0.6.15 nur 1 und 2 - eine
@@ -492,9 +493,84 @@ function CC.Apply()
         if not seen[f] then CC.ApplyTo(f, {}) end
     end
     CC.ApplyKeys(list)
+    CC.ApplyHover(list, seen)
     CC.SyncSelfCast(list)
     return true
 end
+
+--------------------------------------------------
+-- MAUSTASTEN AB 3 BEIM UEBERFAHREN (1.0.6.18). Gemessen (/wcui klick,
+-- 1.0.6.17): der Rahmen ist auf "jede Maustaste" gestellt, belegt mit
+-- "8=macro Segen des Schutzes" - und trotzdem kommt kein Klick mit Taste 8
+-- an; nur Links. Die Rahmen des Spiels nehmen Seitentasten nicht (sie
+-- setzen ihre Klicks wohl selbst zurueck). Solche Klicks gehen an die
+-- Tastenbelegung des Spiels. Also dort ansetzen, wie Clique es fuer Tasten
+-- tut (nur das Verhalten, kein Code): faehrt die Maus auf einen Rahmen,
+-- legt ein geschuetzter Schnipsel (SecureHandler, laeuft auch im Kampf)
+-- die Maustaste auf einen eigenen Knopf mit "/cast [@mouseover] Zauber";
+-- beim Verlassen wird sie wieder freigegeben. Nur ueber den Rahmen, die
+-- Belegung des Spielers bleibt sonst unberuehrt.
+--------------------------------------------------
+local hoverHeader, hoverButtons, hoverWrapped = nil, {}, setmetatable({}, { __mode = "k" })
+CC.hoverButtons = hoverButtons
+CC.HOVER_ENTER = [[
+    local n = owner:GetAttribute("wc-n") or 0
+    for i = 1, n do
+        owner:SetBindingClick(true, owner:GetAttribute("wc-key" .. i), owner:GetAttribute("wc-btn" .. i), "LeftButton")
+    end
+]]
+CC.HOVER_LEAVE = [[ owner:ClearBindings() ]]
+
+function CC.HoverList(list)
+    local out = {}
+    for _, b in ipairs(list) do
+        if type(b.button) == "number" and b.button > 2 and (b.action == "spell" or b.action == "target")
+           and not (b.action == "spell" and not b.spell) then
+            out[#out + 1] = b
+        end
+    end
+    return out
+end
+
+function CC.ApplyHover(list, frames)
+    if K.InCombat() then return false end
+    local want = CC.HoverList(list)
+    if #want == 0 and not hoverHeader then return true end
+    if not hoverHeader then
+        local ok, h = pcall(CreateFrame, "Frame", "WeintCodexClickHover", UIParent, "SecureHandlerBaseTemplate")
+        if not ok or not h or not h.WrapScript then return false end
+        hoverHeader = h
+        CC.hoverHeader = h
+    end
+    local h = hoverHeader
+    pcall(h.Execute, h, "owner = self")
+    if h.ClearBindings then pcall(h.ClearBindings, h) end
+    for i, b in ipairs(want) do
+        local btn = hoverButtons[i]
+        if not btn then
+            local ok, made = pcall(CreateFrame, "Button", "WeintCodexClickHover" .. i, UIParent, "SecureActionButtonTemplate")
+            if not ok or not made then break end
+            btn = made
+            if btn.RegisterForClicks then btn:RegisterForClicks("AnyUp", "AnyDown") end
+            btn:SetAttribute("type", "macro")
+            hoverButtons[i] = btn
+        end
+        btn:SetAttribute("macrotext", b.action == "spell" and ("/cast [@mouseover,exists] " .. CC.SpellAttr(b))
+            or "/target [@mouseover,exists]")
+        h:SetAttribute("wc-key" .. i, string.upper(b.mod or "") .. "BUTTON" .. b.button)
+        h:SetAttribute("wc-btn" .. i, "WeintCodexClickHover" .. i)
+    end
+    h:SetAttribute("wc-n", #want)
+    for f in pairs(frames or {}) do
+        if not hoverWrapped[f] and f.GetObjectType then
+            local ok = pcall(h.WrapScript, h, f, "OnEnter", CC.HOVER_ENTER)
+            ok = ok and pcall(h.WrapScript, h, f, "OnLeave", CC.HOVER_LEAVE)
+            if ok then hoverWrapped[f] = true end
+        end
+    end
+    return true
+end
+CC._hoverWrapped = hoverWrapped
 
 -- 1.0.5.49 (gemessen im Spiel: "Schild ging auch mit dem Fix nicht, erst
 -- Selbstzauber-Taste deaktivieren hat es gebracht"): haelt der Spieler

@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.0.6.18",
+        date    = "15.11.2026",
+        notes   = {
+            "|cff7C6CFFKlickzauber auf Seitentasten, zweiter Anlauf|r – fährt die Maus über einen Gruppenrahmen, liegt der Zauber für Maustaste 3 bis 12 jetzt direkt auf der Taste, auch im Kampf. Die Rahmen des Spiels nehmen diese Tasten selbst nicht an.",
+        },
+    },
+    {
         version = "1.0.6.17",
         date    = "15.11.2026",
         notes   = {
