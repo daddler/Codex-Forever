@@ -45,6 +45,23 @@ Enthält auch die nie einzeln veröffentlichten 1.0.6.26 und 1.0.6.27.
   Weltkarte wird verfolgt (`QA.TrackUserWaypoint`, nach dem Schließen der
   Karte, nie im Kampf).
 
+- `ui/talentbuilds.lua` + `data/talenttrees.lua` (erzeugt von
+  `import_naowh_talents.lua`, nur Bäume aus dem Client, keine Builds):
+  Talentplaner `/wcui talente`, Regeln (Ränge, 5 je Reihe, Vorbedingung, 51),
+  Speichern je Konto (`SavedData.talentBuilds`), Teilen `WCTB1:KLASSE:…`,
+  Folgen je Charakter mit Hinweis bei freien Punkten.
+- `ui/consumables.lua`: Verbrauchsleiste (Klasse 0, sichere Knöpfe, Verteilung
+  nur außerhalb des Kampfes). `ui/smallhelpers.lua`: Druiden-Mana, Fokus-
+  Zauberleiste, Tarnungserinnerung.
+- `ui/attunements.lua` + `data/attunements.lua`: Einstimmungen, Ketten aus der
+  Questdatenbank, Tracker, `/wcui einstimmung`.
+- `ui/auctionsell.lua`: Ansichten „Meine Auktionen“ (`QueryOwnedAuctions`,
+  „vielleicht unterboten“, Zurückziehen per Klick) und „Einkaufsliste“
+  (`ui/shopping.lua`, je Charakter, Knopf auf der Berufsseite).
+- `ui/fieldjournal.lua` + `data/fieldjournal.lua`, `data/reprewards.lua`
+  (erzeugt von `import_naowh_extra.lua`): Tooltip, gezählte eigene Fänge,
+  `/wcui feldbuch`, `/wcui ruf`.
+
 ### Daten
 - Abgleich mit Naowh Forever 1.2.33 (`import_naowh.py`, `NF_VERSION`;
   `import_naowh_prof.py`): Beute u. a. Shaper's Terrace, +153 Questzeilen,

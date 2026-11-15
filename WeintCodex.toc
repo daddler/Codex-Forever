@@ -164,6 +164,7 @@ data/questdb.lua
 data/attunements.lua
 data/fieldjournal.lua
 data/reprewards.lua
+data/talenttrees.lua
 data/questevents.lua
 # Stufen und Sammelberufe je Gebiet (6.26.5.0); gelesen von ui/zoneinfo.lua.
 data/zoneinfo.lua
@@ -325,6 +326,7 @@ ui/auctionprices.lua
 ui/shopping.lua
 ui/auctionsell.lua
 ui/fieldjournal.lua
+ui/talentbuilds.lua
 ui/inventory.lua
 # Auktionspreise von anderen Spielern (6.18.0.0): Gilde, ForeverGuide nur zuhoeren.
 ui/auctionshare.lua

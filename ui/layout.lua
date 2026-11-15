@@ -96,6 +96,7 @@ K.LAYOUT = {
     focuscast       = { point = "CENTER",      relPoint = "CENTER", x = 260, y = 120 },
     stealthwarn     = { point = "CENTER",      relPoint = "CENTER", x = 0, y = 180 },
     attunements     = { point = "RIGHT",       relPoint = "RIGHT", x = -20, y = -120 },
+    talenthint      = { point = "TOP",         relPoint = "TOP", x = 0, y = -140 },
     cotank          = { point = "BOTTOM",      relPoint = "BOTTOM", x = -330, y = 420 },
     xpbar           = { point = "BOTTOM",      relPoint = "BOTTOM", x = 0, y = 4 },
     damagemeter     = { point = "TOPLEFT",     relPoint = "TOPLEFT", x = 12, y = -36 },

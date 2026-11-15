@@ -26568,6 +26568,41 @@ do
     Check(ok, "Feldbuch und Ruf-Belohnungen" .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 1.0.7.0: Talentplaner - Regeln wie im Spiel, Teilen hin und zurueck.
+do
+    local ok, err = pcall(function()
+        local TB = WeintCodex.UITalentBuilds
+        local tree = WeintCodex.TalentTrees.WARRIOR
+        assert(tree, "Bäume fehlen")
+        for class, t in pairs(WeintCodex.TalentTrees) do
+            for node, e in pairs(t) do
+                assert(e[3] >= 1 and e[3] <= 7 and e[4] >= 1 and e[4] <= 3 and e[5] >= 1 and e[5] <= 4, class .. "/" .. node .. ": Lage außerhalb des Baums")
+                if e[6] then assert(t[e[6]], class .. "/" .. node .. ": Vorbedingung fehlt") end
+            end
+        end
+        -- erste Reihe Baum 1 suchen, zweite Reihe Baum 1
+        local r1, r2
+        for node, e in pairs(tree) do
+            if e[4] == 1 and e[3] == 1 and e[2] >= 5 and not e[6] then r1 = r1 or node end
+            if e[4] == 1 and e[3] == 2 and not e[6] then r2 = r2 or node end
+        end
+        assert(r1 and r2, "keine Talente zum Prüfen")
+        local pts = {}
+        assert(not TB.Add("WARRIOR", pts, r2), "Reihe 2 ohne 5 Punkte erlaubt")
+        for _ = 1, tree[r1][2] do assert(TB.Add("WARRIOR", pts, r1)) end
+        assert(not TB.Add("WARRIOR", pts, r1), "über den höchsten Rang")
+        if #pts >= 5 then
+            assert(TB.Add("WARRIOR", pts, r2), "Reihe 2 nach 5 Punkten verboten")
+            assert(not TB.Remove("WARRIOR", pts, r1), "Punkt entfernt, an dem Reihe 2 hängt")
+        end
+        local text = TB.Export("WARRIOR", pts)
+        local class, back = TB.Import(text)
+        assert(class == "WARRIOR" and #back == #pts and back[1] == pts[1], "Teilen hin und zurück kaputt")
+        assert(TB.Import("Hallo") == nil, "fremder Text angenommen")
+    end)
+    Check(ok, "Talentplaner: Regeln, Teilen" .. (ok and "" or (": " .. tostring(err))))
+end
+
 if failures == 0 then
     print("BESTANDEN")
     os.exit(0)

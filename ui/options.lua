@@ -1893,6 +1893,11 @@ SlashCmdList["WEINTCODEXUI"] = function(msg)
         O.Show("comfort", O.PageIndex("comfort", "sammeln"))
         return
     end
+    if msg == "talente" or msg == "talentplaner" or msg == "talents" then
+        local TB = WeintCodex.UITalentBuilds
+        if TB and TB.Open then TB.Open() end
+        return
+    end
     if msg == "feldbuch" or msg == "field" then
         local FJ = WeintCodex.UIFieldJournal
         if FJ and FJ.Report then K.ShowReport("Feldbuch", FJ.Report()) end
