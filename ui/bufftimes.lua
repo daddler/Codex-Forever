@@ -532,6 +532,10 @@ local function Icon(parent)
     b.cd:SetAllPoints(b)
     if b.cd.SetDrawEdge then b.cd:SetDrawEdge(false) end
     if b.cd.SetReverse then b.cd:SetReverse(true) end
+    -- 1.0.7.10 (Bilder: Falke mit zwei Zahlen, "1"/"12", "17"/"18", "9"/"9"):
+    -- die Uhr zeigte ihre eigene Zahl UND unsere Sekunden darunter. Die Zahl
+    -- der Uhr ist immer aus; die Sekunden sind die eine Zahl.
+    if b.cd.SetHideCountdownNumbers then b.cd:SetHideCountdownNumbers(true) end
     local top = CreateFrame("Frame", nil, b)
     top:SetAllPoints(b)
     top:SetFrameLevel((b.cd:GetFrameLevel() or 1) + 2)
@@ -581,8 +585,17 @@ local function Draw(row, own)
             b.icon:SetDesaturated(e.state == "missing")
             b.mark:SetText(e.state == "missing" and "!" or "")
             local g = e.group
-            if e.state == "time" and g.showLeft and e.left then
+            -- Wie der Abklingzeitmanager: "Restzeit in Zahlen" gilt auch hier.
+            local OCm = WeintCodex.UIOwnCooldowns
+            local numbers = not (OCm and OCm.Get) or OCm.Get("numbers") and true or false
+            if b.cd.GetCountdownFontString then
+                local okF, fs = pcall(b.cd.GetCountdownFontString, b.cd)
+                if okF and type(fs) == "table" and fs.SetAlpha then fs:SetAlpha(0) end
+            end
+            if e.state == "time" and g.showLeft and e.left and numbers then
                 b.state:SetText(string.format("%d", math.ceil(e.left)))
+            elseif e.state == "time" then
+                b.state:SetText("")
             else
                 b.state:SetText(e.state == "on" and "an" or e.state == "runs" and "läuft" or "")
             end

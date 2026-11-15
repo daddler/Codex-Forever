@@ -22,6 +22,14 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.0.7.10",
+        date    = "15.11.2026",
+        notes   = {
+            "|cff7C6CFFDein Falke zeigt seine Sekunden nur noch einmal|r – die Reihe „Beschwörungen“ hatte die Zahl der Uhr und die eigenen Sekunden übereinander. Sie folgt jetzt auch „Restzeit in Zahlen“.",
+            "|cff7C6CFFDebuff-Restzeit reagiert sofort auf den Schalter|r – auch mitten im Kampf, und „/wcui debuffs“ wirft im Kampf keinen Fehler mehr.",
+        },
+    },
+    {
         version = "1.0.7.9",
         date    = "15.11.2026",
         notes   = {

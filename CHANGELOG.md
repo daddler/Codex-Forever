@@ -9,6 +9,16 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.0.7.10] – 2026-11-15
+
+### Behoben
+- Die doppelte Zahl der Bilder seit 1.0.7.5 war die Reihe „Beschwörungen“
+  (`ui/bufftimes.lua`): Uhr mit Zahl plus `b.state` mit Sekunden. Zahl der
+  Uhr immer aus; Sekunden folgen `numbers` des Abklingzeitmanagers.
+- Debuff-Felder: Alpha der eigenen Restzeit auch im Kampf; Teile des Spiels
+  nur außerhalb (im Kampf gesperrt, Fehlerbericht `GetRegions` aus
+  `/wcui debuffs`).
+
 ## [1.0.7.9] – 2026-11-15
 
 ### Behoben

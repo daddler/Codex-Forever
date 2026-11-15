@@ -1499,15 +1499,20 @@ function OC.DebuffReport()
         end
     end
     -- 1.0.7.9: woraus ein Feld des Spiels besteht (Zahl doppelt?).
-    for b, n in pairs(slotNumbers) do
+    if K.InCombat() then out[#out + 1] = "Felder: im Kampf gesperrt – außerhalb des Kampfes noch einmal." end
+    for b, n in pairs(K.InCombat() and {} or slotNumbers) do
         OC.ScanSlot(b)
         local parts = {}
         for _, fs in ipairs(n.foreign) do
             local ok, t = pcall(fs.GetText, fs)
-            parts[#parts + 1] = tostring(ok and K.Plain(t) or "?") .. "@" .. tostring(K.Plain(fs:GetAlpha()))
+            local okA, al = pcall(fs.GetAlpha, fs)
+            parts[#parts + 1] = tostring(ok and K.Plain(t) or "?") .. "@" .. tostring(okA and K.Plain(al) or "?")
         end
         local kids = 0
-        if b.GetChildren then kids = select("#", b:GetChildren()) end
+        if b.GetChildren then
+            local okK, k = pcall(function() return select("#", b:GetChildren()) end)
+            kids = okK and k or "?"
+        end
         out[#out + 1] = "Feld: Kinder " .. kids .. ", fremde Schriften " .. #n.foreign .. ": " .. table.concat(parts, ", ")
     end
     out[#out + 1] = "Selbst gelernt bisher: " .. tostring(OC.learnedDebuffs or 0)
@@ -1536,6 +1541,9 @@ end
 function OC.ScanSlot(button)
     local n = slotNumbers[button]
     if not n then return 0 end
+    -- 1.0.7.10 (Fehlerbericht): im Kampf sind die Felder des Spiels fuer
+    -- Addons gesperrt (GetRegions: forbidden object) - nur ausserhalb.
+    if K.InCombat() then return #n.foreign end
     ScanFrame(button, n, 0)
     -- Auch die Zahl unserer Uhr zaehlt als fremd: das Spiel schaltet sie an.
     return #n.foreign
@@ -1543,9 +1551,11 @@ end
 function OC.SlotNumbers(button, on)
     local n = slotNumbers[button]
     if not n then return end
-    for _, fs in ipairs(n.foreign) do fs:SetAlpha(0) end
-    OC.CountdownShown(n.cd, false)
     n.holder:SetAlpha(on and 1 or 0)
+    -- Die Teile des Spiels nur ausserhalb des Kampfes anfassen (gesperrt).
+    if K.InCombat() then return end
+    for _, fs in ipairs(n.foreign) do pcall(fs.SetAlpha, fs, 0) end
+    OC.CountdownShown(n.cd, false)
 end
 
 function OC.EnsureSlot(row, d, cell, size, timer)
@@ -1650,6 +1660,8 @@ local function DrawDebuffs(row, size, show)
     local on = (show and OC.Get("debuffs") and OC.HasEnemyTarget()) or row._unlock
     row:SetAlpha(on and 1 or 0)
     -- Bauen und umstellen nur ausserhalb des Kampfes.
+    -- Die Zahl folgt dem Schalter auch im Kampf (nur Alpha unseres Rahmens).
+    for b in pairs(slotNumbers) do OC.SlotNumbers(b, timer) end
     if K.InCombat() then
         if row.slots then OC.PaintSlots(row) end
         return
