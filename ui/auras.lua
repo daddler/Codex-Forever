@@ -283,6 +283,10 @@ local function BuildEngine(self, minimal)
             -- Behaelter die Uhr fuehrt, zeichnet sie ihre Zahl selbst. Also
             -- nur diese Zahl, keine zweite ueber SetDurationText.
             if cd.SetHideCountdownNumbers then pcall(cd.SetHideCountdownNumbers, cd, not o.timer) end
+            if cd.GetCountdownFontString then
+                local okF, fs = pcall(cd.GetCountdownFontString, cd)
+                if okF and type(fs) == "table" and fs.SetAlpha then fs:SetAlpha(o.timer and 1 or 0) end
+            end
             if dur and dur.Hide then dur:Hide() end
         end,
     })

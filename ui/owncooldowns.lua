@@ -1001,6 +1001,19 @@ function OC.HasEnemyTarget()
 end
 local fighting = false
 
+-- 1.0.7.8 (Bild: Zahl trotz "Restzeit in Zahlen" aus, Debuffs doppelt):
+-- SetHideCountdownNumbers allein haelt nicht ueberall - die Zahl der Uhr
+-- zusaetzlich ueber ihre Schrift ein- und ausblenden.
+function OC.CountdownShown(cd, on)
+    if not cd then return end
+    if cd.SetHideCountdownNumbers then pcall(cd.SetHideCountdownNumbers, cd, not on) end
+    if cd.GetCountdownFontString then
+        local ok, fs = pcall(cd.GetCountdownFontString, cd)
+        if ok and type(fs) == "table" and fs.SetAlpha then fs:SetAlpha(on and 1 or 0) end
+    end
+end
+
+local slotNumbers
 local function Icon(parent)
     local b = CreateFrame("Frame", nil, parent)
     b.icon = b:CreateTexture(nil, "ARTWORK")
@@ -1220,7 +1233,7 @@ local function DrawSpells(row, slot, size, show)
             i = i + 1
             local b = row.icons[i]
             b.icon:SetTexture(e.tex)
-            if b.cd.SetHideCountdownNumbers then b.cd:SetHideCountdownNumbers(not numbers) end
+            OC.CountdownShown(b.cd, numbers)
             local st, rawD
             -- 1.0.5.43: die Uhr des Spiels nur nach einem Ereignis fragen
             -- (jede Abfrage legt beim Client neue Tabellen an). Dazwischen
@@ -1306,7 +1319,7 @@ local function DrawBuffs(row, size, show)
         b.icon:SetTexture(Texture(e.spell))
         local a = BT.active[e.group.key]
         if e.state == "time" and a then b.cd:SetCooldown(a.start, a.duration) else b.cd:Clear() end
-        if b.cd.SetHideCountdownNumbers then b.cd:SetHideCountdownNumbers(not OC.Get("numbers")) end
+        OC.CountdownShown(b.cd, OC.Get("numbers") and true or false)
         b.icon:SetDesaturated(e.state == "missing")
         OC.ShowGlow(b, false)
         b.state:SetText(e.state == "on" and "an" or e.state == "runs" and "läuft" or e.state == "missing" and "!" or "")
@@ -1489,6 +1502,16 @@ function OC.DebuffReport()
     return out
 end
 
+-- Zahlen der Debuff-Felder (je Feld des Spiels; Lua-Tabelle, nicht am Rahmen).
+slotNumbers = setmetatable({}, { __mode = "k" })
+function OC.SlotNumbers(button, on)
+    local n = slotNumbers[button]
+    if not n then return end
+    local hasForeign = #n.foreign > 0
+    for _, fs in ipairs(n.foreign) do fs:SetAlpha(on and 1 or 0) end
+    OC.CountdownShown(n.cd, on and not hasForeign)
+end
+
 function OC.EnsureSlot(row, d, cell, size, timer)
     local c = SlotContainer(row)
     if not c then return false end
@@ -1502,11 +1525,31 @@ function OC.EnsureSlot(row, d, cell, size, timer)
                 -- 1.0.7.6 (Bild: "2x eine Abklingzeit"): die Uhr des Spiels
                 -- zeichnet ihre Zahl selbst, sobald der Behaelter sie fuehrt -
                 -- also nur diese, keine eigene Restzeit daneben.
+                -- 1.0.7.8: blieb doppelt - das Feld des Spiels bringt eine
+                -- eigene Zahl mit. Genau eine Zahl: die des Feldes, wenn es
+                -- eine hat, sonst die unserer Uhr; beide folgen dem Schalter.
                 local icon, cd, count = A.StyleIcon(button, size, { timer = false })
                 pcall(button.SetIcon, button, icon)
                 pcall(button.SetDurationCooldown, button, cd)
                 pcall(button.SetApplicationCount, button, count, {})
-                if cd.SetHideCountdownNumbers then pcall(cd.SetHideCountdownNumbers, cd, not timer) end
+                local own = { [count] = true }
+                local foreign = {}
+                local function scan(f)
+                    if not (f and f.GetRegions) then return end
+                    for _, r in ipairs({ f:GetRegions() }) do
+                        if type(r) == "table" and r.GetObjectType and r:GetObjectType() == "FontString" and not own[r] then
+                            foreign[#foreign + 1] = r
+                        end
+                    end
+                end
+                scan(button)
+                if button.GetChildren then
+                    for _, ch in ipairs({ button:GetChildren() }) do
+                        if ch ~= cd then scan(ch) end
+                    end
+                end
+                slotNumbers[button] = { cd = cd, foreign = foreign }
+                OC.SlotNumbers(button, timer)
                 if button.EnableMouse then pcall(button.EnableMouse, button, false) end
             end,
         })
@@ -1514,6 +1557,7 @@ function OC.EnsureSlot(row, d, cell, size, timer)
         slot = s
         row.slotKeys[key] = slot
     end
+    for b in pairs(slotNumbers) do OC.SlotNumbers(b, timer) end
     slot:ClearAllPoints()
     slot:SetAllPoints(cell)
     pcall(c.SetAuraSlotEnabled, c, key, true)

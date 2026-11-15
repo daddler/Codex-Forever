@@ -22,6 +22,14 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.0.7.8",
+        date    = "15.11.2026",
+        notes   = {
+            "|cff7C6CFFEigene Debuffs mit genau einer Restzeit|r – das Feld des Spiels brachte eine eigene Zahl mit; jetzt steht nur noch eine da.",
+            "|cff7C6CFF„Restzeit in Zahlen“ gilt für alle Reihen|r – auch für eigene Reihen und die Debuffs, nicht nur für die untere.",
+        },
+    },
+    {
         version = "1.0.7.7",
         date    = "15.11.2026",
         notes   = {

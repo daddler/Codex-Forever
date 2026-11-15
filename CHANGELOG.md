@@ -9,6 +9,16 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.0.7.8] – 2026-11-15
+
+### Behoben
+- Debuff-Felder weiter doppelt: das Feld des Spiels hat eine eigene Zahl.
+  Fremde Schriften des Feldes werden gesammelt (`OC.SlotNumbers`); genau eine
+  Zahl, die des Feldes, sonst die unserer Uhr, beide nach `numbers`.
+- „Restzeit in Zahlen“ wirkte nur auf einer Reihe: `SetHideCountdownNumbers`
+  hielt nicht überall; zusätzlich die Schrift der Uhr über Alpha
+  (`OC.CountdownShown`, auch `ui/auras.lua`).
+
 ## [1.0.7.7] – 2026-11-15
 
 ### Behoben
