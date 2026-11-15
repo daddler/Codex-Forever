@@ -25,6 +25,7 @@ WeintCodex_ChangelogData = {
         version = "1.0.7.0",
         date    = "15.11.2026",
         notes   = {
+            "|cff7C6CFFDas große Paket|r – viele neue Helfer, alle ab Werk aus, damit deine Oberfläche bleibt, wie du sie eingerichtet hast. Einschalten: Abklingzeitmanager → Erweitert (Kampfhelfer, Leisten, Einstimmungen), Komfort → Helfer, Komfort → Karte, Komfort → Auktionshaus, Erinnerungen → Buffzeiten (Falken).",
             "|cff7C6CFFDeine Debuffs im Blick|r – der Abklingzeitmanager hat eine neue Reihe mit festen Feldern für die Debuffs deiner Klasse (Schlangenbiss, Verderbnis, Rüstung zerreißen …): liegt er auf dem Ziel, siehst du ihn mit Restzeit, fehlt er, erscheint er abgedunkelt – auch im Kampf. Welche Felder, und ob Fehlende rot hervorgehoben werden, stellst du im Menü der Reihe ein.",
             "|cff7C6CFFGCD-Leiste|r – die globale Abklingzeit als schmale Leiste unter deinen wichtigsten Zaubern.",
             "|cff7C6CFFCo-Tank-Rahmen|r – bist du Tank, siehst du den anderen Tank mit Leben und seinen Debuffs.",
@@ -33,7 +34,7 @@ WeintCodex_ChangelogData = {
             "|cff7C6CFFGruppenrahmen|r – der Name bleibt auf allen Klassen weiß mit Schatten.",
             "|cff7C6CFFSwing-Timer|r – eine Leiste je Waffe bis zum nächsten automatischen Schlag, mit der Dauer, die das Spiel selbst meldet.",
             "|cff7C6CFFAusrüstungssets und Schmuckleiste|r – deine Sets als Leiste zum Anklicken (im Kampf wartet der Wechsel bis danach), „+“ speichert, was du trägst; deine beiden Schmuckstücke zum Benutzen, Rechtsklick legt anderen Schmuck an.",
-            "|cff7C6CFFLeichter verkaufen|r – neben dem Auktionshaus stehen deine Taschen, die wertvollsten zuerst; ein Klick legt den Gegenstand in den Verkauf. Auf Wunsch setzt WeintCodex den Preis 1 Silber unter das günstigste fremde Angebot (Komfort → Auktionshaus, ab Werk aus).",
+            "|cff7C6CFFLeichter verkaufen|r – neben dem Auktionshaus stehen deine Taschen, die wertvollsten zuerst; ein Klick legt den Gegenstand in den Verkauf (Komfort → Auktionshaus). Auf Wunsch setzt WeintCodex den Preis 1 Silber unter das günstigste fremde Angebot (Komfort → Auktionshaus, ab Werk aus).",
             "|cff7C6CFFDie richtigen Berufslehrer|r – welcher Lehrer dir den nächsten Rang beibringt, stimmt jetzt für Forever: bei über der Hälfte der Lehrer war bisher der Stand aus Classic hinterlegt. Grün steht, wer deinen nächsten Rang lehrt, der nächstgelegene oben.",
             "|cff7C6CFFLehrer: Zauber aus Quests|r – die Lehrerseite zeigt jetzt auch, was du nicht beim Lehrer, sondern als Belohnung einer Quest lernst.",
             "|cff7C6CFFNadel am Bildschirmrand|r – liegt dein Ziel außerhalb des Bildschirms, zeigt ein Pfeil um die Mitte herum die Richtung, statt dass die Nadel verschwindet. Ein Wegpunkt, den du auf der Weltkarte setzt, wird jetzt gleich verfolgt.",

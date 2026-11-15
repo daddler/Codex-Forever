@@ -83,7 +83,10 @@ Enthält auch die nie einzeln veröffentlichten 1.0.6.26 und 1.0.6.27.
   für einen Rang keine Lehrer: Classic, wenn es den Lehrer dort gibt
   (`classic`), sonst „mindestens bis …“ (`known`). Kräuterkunde und
   Kürschnerei ohne Forever-Daten: weiter Classic.
-- Auktionshaus: automatisch unterbieten ab Werk aus (`ahUndercut = false`).
+- Ab Werk aus (Wunsch: bestehende Oberflächen unverändert): `debuffs`, `gcd`,
+  `coTank`, `swing`, `gearBar`, `trinketBar`, `consumables`, `druidMana`,
+  `focusCast`, `stealthWarn`, `attuneTracker` (OC), `summonTimes` (Falken,
+  Erinnerungen), `ahSell`, `ahUndercut`.
 
 ### Daten
 - Abgleich mit Naowh Forever 1.2.33 (`import_naowh.py`, `NF_VERSION`;

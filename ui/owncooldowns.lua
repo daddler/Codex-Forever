@@ -63,7 +63,9 @@ OC.SLOTS = { "big", "small", "off" }
 OC.SLOT_TEXT = { big = "Wichtig", small = "Weitere", off = "Aus" }
 OC.MAX_EXTRA = 6     -- eigene Reihen (6.98.0.0)
 OC.COLS_PER_BAND = 3 -- Spalten je Band in den Einstellungen
-OC.DEFAULTS = { big = 40, small = 28, buff = 28, combatOnly = false, numbers = true, glow = true, buffs = true, debuffs = true, dbfHighlight = false, cursorCd = false, gcd = true, coTank = true, swing = true, gearBar = true, trinketBar = true, consumables = true, druidMana = true, focusCast = true, stealthWarn = true, attuneTracker = true, vertical = false, perLine = 0,
+-- 1.0.7.0: alles Neue ab Werk AUS (Wunsch: bestehende Oberflaechen
+-- sollen nach dem Update unveraendert bleiben) - einschalten unter Erweitert.
+OC.DEFAULTS = { big = 40, small = 28, buff = 28, combatOnly = false, numbers = true, glow = true, buffs = true, debuffs = false, dbfHighlight = false, cursorCd = false, gcd = false, coTank = false, swing = false, gearBar = false, trinketBar = false, consumables = false, druidMana = false, focusCast = false, stealthWarn = false, attuneTracker = false, vertical = false, perLine = 0,
     glowColor = "green", glowStrength = 100, glowPulse = true }
 OC.MAX_LIST = 80
 OC.MIN_BASE_CD = 2000   -- ms; darunter ist es die globale Abklingzeit

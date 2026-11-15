@@ -74,6 +74,7 @@ local defaults = {
     castTimes     = true,     -- eigene Buffs aus dem Wirken mit Uhr
     castMissing   = true,     -- im Kampf "fehlt" (grau mit "!")
     castSize      = 28,       -- Symbolgroesse
+    summonTimes   = false,    -- 1.0.7.0: Beschwoerungen (Falken) in eigener Reihe, ab Werk aus
     -- 1.0.3.9 (Spielerwunsch: "Erinnerung, wenn ich einen Talentpunkt
     -- vergeben kann"):
     talentPoints  = true,

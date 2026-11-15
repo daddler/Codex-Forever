@@ -26248,6 +26248,7 @@ do
     local ok, err = pcall(function()
         G.C_Spell = { GetSpellName = function(id) return id == 999001 and "Falke beschwören" or nil end }
         G.C_UnitAuras = { GetAuraDataByIndex = function() return nil end }
+        WeintCodex.UIKit.Set("reminders", "summonTimes", true)
         BT.SetClass("HUNTER")
         BT.Clear()
         local r = BT.OnCast(999001, 100)
@@ -26284,7 +26285,7 @@ do
         assert(src:find('SetUnit("target")', 1, true), "Debuffs nicht am Ziel")
         assert(src:find('"ocd_debuffs"', 1, true) and WeintCodex.UIKit.Layout("ocd_debuffs"), "Platz der Debuffs-Reihe fehlt")
         local OC = WeintCodex.UIOwnCooldowns
-        assert(OC.DEFAULTS.debuffs == true and OC.ROW_LABEL.debuffs, "Schalter oder Name der Reihe fehlt")
+        assert(OC.DEFAULTS.debuffs == false and OC.ROW_LABEL.debuffs, "Schalter oder Name der Reihe fehlt")
         assert(tonumber(OC.RowOpt("debuffs", "size")), "Größe der Debuffs-Reihe fehlt")
     end)
     Check(ok, "Abklingzeitmanager: eigene Debuffs am Ziel" .. (ok and "" or (": " .. tostring(err))))
@@ -26477,6 +26478,8 @@ do
         local SH, K = WeintCodex.UISmallHelpers, WeintCodex.UIKit
         local G = _G
         local oc, of, os_, om, oi = G.UnitClass, G.GetShapeshiftFormID, G.IsStealthed, G.IsMounted, K.InCombat
+        WeintCodex.UIOwnCooldowns.Set("druidMana", true)
+        WeintCodex.UIOwnCooldowns.Set("stealthWarn", true)
         G.UnitClass = function() return "Druide", "DRUID" end
         G.GetShapeshiftFormID = function() return 5 end
         assert(SH.ManaShown(), "Bärengestalt ohne Mana-Leiste")

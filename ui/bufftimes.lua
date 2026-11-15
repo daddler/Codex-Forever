@@ -473,7 +473,8 @@ function BT.Entries(now, fighting, showMissing, sample, own)
     for i = #entries, 1, -1 do entries[i] = nil end
     now = now or Now()
     for _, g in ipairs(BT.Groups()) do
-      if (g.ownRow and true or false) == (own and true or false) then
+      -- 1.0.7.0: Beschwoerungen (Falken) nur mit Schalter summonTimes (ab Werk aus).
+      if (g.ownRow and true or false) == (own and true or false) and (not g.ownRow or sample or Opt("summonTimes")) then
         local left = BT.Remaining(g.key, now)
         local a = BT.active[g.key]
         if a then
@@ -695,6 +696,8 @@ function BT.BuildPage(B)
             disabled = function() return Opt("castTimes") == false end,
             description = "Im Kampf grau mit „!“, wenn z. B. kein Siegel aktiv ist – nur für Zauber, die du gelernt hast." })
     B:Row({ type = "slider", label = "Größe", key = "castSize", min = 20, max = 56, step = 2,
-            format = function(v) return string.format("%d px", v) end }, nil)
+            format = function(v) return string.format("%d px", v) end },
+          { type = "toggle", label = "Beschwörungen (Falken)", key = "summonTimes",
+            description = "Jäger: jeder Falke mit seinen Sekunden, in eigener Reihe („Beschwörungen“ im Gestaltungsmodus)." })
     B:Note("Verschieben im Gestaltungsmodus. Dauer unbekannt (Zerhäckseln): „läuft“ ohne Uhr; ohne Dauer (Aspekt, Gestalt): „an“.")
 end
