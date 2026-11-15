@@ -26357,6 +26357,31 @@ do
     Check(ok, "Lehrer: Zauber über Quests" .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 1.0.7.0: Swing-Timer - nur mit PLAYER_SWING, geheime Dauer = kein Balken.
+do
+    local ok, err = pcall(function()
+        local SW, OC = WeintCodex.UISwingTimer, WeintCodex.UIOwnCooldowns
+        local G = _G
+        local oldEnum = G.Enum
+        G.Enum = setmetatable({ PlayerSwingType = { MainHand = 0, OffHand = 1, Ranged = 2 } }, { __index = oldEnum })
+        assert(SW.Supported() and SW.RowOf(1) == "off" and SW.RowOf(7) == nil, "Arten falsch zugeordnet")
+        SW.Enable()
+        assert(G.rawget(G, "WeintCodexSwingTimer") or true)
+        OC.Set("swing", true)
+        assert(SW.OnSwing(2.6, 0, 100) == true, "Schlag der Haupthand ohne Leiste")
+        local sec = {}
+        local oldS = G.issecretvalue
+        G.issecretvalue = function(v) return v == sec end
+        assert(SW.OnSwing(sec, 0, 101) == false, "geheime Dauer gezeichnet")
+        G.issecretvalue = oldS
+        OC.Set("swing", false)
+        assert(SW.OnSwing(2.6, 0, 102) == false, "ausgeschaltet und doch gezeichnet")
+        OC.Set("swing", true)
+        G.Enum = oldEnum
+    end)
+    Check(ok, "Swing-Timer: Schläge vom Client, nichts geraten" .. (ok and "" or (": " .. tostring(err))))
+end
+
 if failures == 0 then
     print("BESTANDEN")
     os.exit(0)

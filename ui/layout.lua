@@ -88,6 +88,7 @@ K.LAYOUT = {
     -- Kampfhilfen (ui/combathelp.lua, 1.0.7.0): GCD-Leiste unter "Wichtig",
     -- Co-Tank links neben der Mitte.
     gcd             = { point = "BOTTOM",      relPoint = "BOTTOM", x = 0, y = 306 },
+    swing           = { point = "BOTTOM",      relPoint = "BOTTOM", x = 0, y = 250 },
     cotank          = { point = "BOTTOM",      relPoint = "BOTTOM", x = -330, y = 420 },
     xpbar           = { point = "BOTTOM",      relPoint = "BOTTOM", x = 0, y = 4 },
     damagemeter     = { point = "TOPLEFT",     relPoint = "TOPLEFT", x = 12, y = -36 },
