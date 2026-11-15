@@ -1601,6 +1601,17 @@ local function RecipeInspector(r)
         blocks[#blocks + 1] = { type = "divider" }
         blocks[#blocks + 1] = { type = "header", text = "Reagenzien" }
         blocks[#blocks + 1] = { type = "card", lines = lines }
+        -- 1.0.7.0: Einkaufsliste (ui/shopping.lua), gezeigt am Auktionshaus.
+        local SL = WeintCodex.UIShopping
+        if SL and r.spell then
+            local n = SL.Count(r.spell)
+            blocks[#blocks + 1] = { type = "button", label = n > 0 and ("Einkaufsliste: " .. n .. "× – noch einmal") or "Auf die Einkaufsliste",
+                onClick = function() SL.Add(r.spell, 1) PRO.SelectRecipe(r) end }
+            if n > 0 then
+                blocks[#blocks + 1] = { type = "button", label = "Von der Einkaufsliste nehmen",
+                    onClick = function() SL.Clear(r.spell) PRO.SelectRecipe(r) end }
+            end
+        end
     end
     local PT = WeintCodex.ProfTools
     if PT and PT.RecipeBlocks then PT.RecipeBlocks(r, blocks) end

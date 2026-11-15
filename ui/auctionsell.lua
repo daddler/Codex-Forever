@@ -176,11 +176,13 @@ local function Row(i)
     r.name:SetPoint("RIGHT", r.value, "LEFT", -6, 0)
     r.name:SetJustifyH("LEFT")
     r.name:SetWordWrap(false)
-    r:SetScript("OnClick", function(self) AS.Post(self.bag, self.slot) end)
+    r:SetScript("OnClick", function(self) if self.act then self.act(self) end end)
     r:SetScript("OnEnter", function(self)
-        if not (_G.GameTooltip and self.bag) then return end
+        if not _G.GameTooltip then return end
         _G.GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
-        _G.GameTooltip:SetBagItem(self.bag, self.slot)
+        if self.bag then _G.GameTooltip:SetBagItem(self.bag, self.slot)
+        elseif self.itemID then _G.GameTooltip:SetItemByID(self.itemID) else return end
+        if self.hint then _G.GameTooltip:AddLine(self.hint, 0.7, 0.7, 0.7, true) end
         _G.GameTooltip:Show()
     end)
     r:SetScript("OnLeave", function() if _G.GameTooltip then _G.GameTooltip:Hide() end end)
@@ -196,30 +198,126 @@ function AS.Post(bag, slot)
     return ok and pcall(f.SetPostItem, f, loc) and true or false
 end
 
+--------------------------------------------------
+-- Meine Auktionen (1.0.7.0, nach "My Auctions")
+--------------------------------------------------
+-- Die eigenen Auktionen vom Client (QueryOwnedAuctions). Unterboten heisst:
+-- das guenstigste bekannte Angebot je Stueck (Auktionspreise) liegt unter
+-- deinem - ob es von dir selbst stammt, weiss der Speicher nicht; darum
+-- "vielleicht unterboten". Zurueckziehen nur auf Klick, eine je Klick.
+AS.owned = {}
+function AS.QueryOwned()
+    local ah = _G.C_AuctionHouse
+    if ah and ah.QueryOwnedAuctions then pcall(ah.QueryOwnedAuctions, {}) end
+end
+function AS.ReadOwned()
+    local out = AS.owned
+    for i = #out, 1, -1 do out[i] = nil end
+    local ah = _G.C_AuctionHouse
+    if not (ah and ah.GetNumOwnedAuctions and ah.GetOwnedAuctionInfo) then return out end
+    local ok, n = pcall(ah.GetNumOwnedAuctions)
+    local ap = AP()
+    for i = 1, (ok and tonumber(K.Plain(n)) or 0) do
+        local ok2, a = pcall(ah.GetOwnedAuctionInfo, i)
+        if ok2 and type(a) == "table" and a.auctionID then
+            local key = a.itemKey or {}
+            local id = K.Plain(key.itemID)
+            local q = tonumber(K.Plain(a.quantity)) or 1
+            local buy = tonumber(K.Plain(a.buyoutAmount))
+            local each = buy and math.floor(buy / math.max(1, q) + 0.5) or nil
+            local known = ap and ap.Lookup and type(id) == "number" and ap.Lookup(id)
+            local under = each and known and known.price and known.price < each or false
+            out[#out + 1] = { auctionID = a.auctionID, id = id, link = a.itemLink, count = q, each = each,
+                sold = K.Plain(a.status) == 1, under = under }
+        end
+    end
+    table.sort(out, function(a, b)
+        if a.under ~= b.under then return a.under end
+        return (a.id or 0) < (b.id or 0)
+    end)
+    return out
+end
+function AS.Cancel(auctionID)
+    local ah = _G.C_AuctionHouse
+    if not (ah and ah.CancelAuction and auctionID) then return false end
+    return pcall(ah.CancelAuction, auctionID) and true or false
+end
+
+-- Im Auktionshaus nach einem Gegenstand suchen (Suchfeld des Spiels).
+function AS.Search(id)
+    local f = _G.rawget(_G, "AuctionHouseFrame")
+    local sb = f and f.SearchBar
+    local name = _G.C_Item and _G.C_Item.GetItemNameByID and _G.C_Item.GetItemNameByID(id)
+    if not (sb and type(name) == "string") then return false end
+    local box = sb.SearchBox
+    if box and box.SetText then box:SetText(name) end
+    if sb.StartSearch then return pcall(sb.StartSearch, sb) and true or false end
+    return false
+end
+
+AS.MODES = { { key = "sell", text = "Verkaufen" }, { key = "own", text = "Meine Auktionen" }, { key = "shop", text = "Einkaufsliste" } }
+AS.mode = "sell"
+
 local rows = {}
+local function Fill(i, e)
+    local r = rows[i] or Row(i)
+    rows[i] = r
+    if not e then r.bag, r.itemID, r.act, r.hint = nil, nil, nil, nil r:Hide() return end
+    r.bag, r.slot, r.itemID, r.act, r.hint = e.bag, e.slot, e.id, e.act, e.hint
+    r.icon:SetTexture(e.icon or (_G.C_Item and _G.C_Item.GetItemIconByID and e.id and _G.C_Item.GetItemIconByID(e.id)) or 134400)
+    r.name:SetText(e.text or "")
+    r.value:SetText(e.value or "")
+    r:Show()
+end
+
+local listOut = {}
+function AS.Rows()
+    for i = #listOut, 1, -1 do listOut[i] = nil end
+    local ap = AP()
+    local money = function(c) return ap and ap.Money and ap.Money(c) or tostring(c) end
+    if AS.mode == "sell" then
+        for _, e in ipairs(AS.BagItems()) do
+            listOut[#listOut + 1] = { bag = e.bag, slot = e.slot, id = e.id, icon = e.icon,
+                text = (e.link or "") .. (e.count > 1 and (" ×" .. e.count) or ""),
+                value = e.price and money(e.price * e.count) or "Preis unbekannt",
+                act = function(row) AS.Post(row.bag, row.slot) end }
+        end
+    elseif AS.mode == "own" then
+        for _, a in ipairs(AS.owned) do
+            listOut[#listOut + 1] = { id = a.id,
+                text = (a.under and (WeintCodex.ColorText("danger", "!") .. " ") or "") .. (a.link or ("Gegenstand " .. tostring(a.id))) .. (a.count > 1 and (" ×" .. a.count) or ""),
+                value = a.sold and "verkauft" or (a.each and money(a.each) or "–"),
+                hint = a.under and "Vielleicht unterboten: das günstigste bekannte Angebot liegt darunter (kann auch deins sein). Klick: zurückziehen." or "Klick: zurückziehen.",
+                act = not a.sold and function() if AS.Cancel(a.auctionID) then AS.QueryOwned() end end or nil }
+        end
+    else
+        local SL = WeintCodex.UIShopping
+        local needs = SL and SL.Needs() or {}
+        for _, n in ipairs(needs) do
+            local e = ap and ap.Lookup and ap.Lookup(n.id)
+            local name = _G.C_Item and _G.C_Item.GetItemNameByID and _G.C_Item.GetItemNameByID(n.id)
+            listOut[#listOut + 1] = { id = n.id,
+                text = (n.missing > 0 and (n.missing .. "× ") or (WeintCodex.ColorText("success", "fertig") .. " ")) .. (type(name) == "string" and name or ("Gegenstand " .. n.id)),
+                value = n.missing > 0 and (e and e.price and money(e.price * n.missing) or "Preis unbekannt") or (n.have .. "/" .. n.need),
+                hint = "Brauchst " .. n.need .. ", hast " .. n.have .. ". Klick: im Auktionshaus suchen.",
+                act = function() AS.Search(n.id) end }
+        end
+    end
+    return listOut
+end
+
 function AS.Refresh()
     if not panel then return end
     local f = _G.rawget(_G, "AuctionHouseFrame")
     local show = Get("ahSell") and f and f.IsShown and f:IsShown()
     panel:SetShown(show and true or false)
     if not show then return end
-    local list = AS.BagItems()
-    local ap = AP()
-    for i = 1, AS.ROWS do
-        local r = rows[i] or Row(i)
-        rows[i] = r
-        local e = list[i]
-        if e then
-            r.bag, r.slot = e.bag, e.slot
-            r.icon:SetTexture(e.icon or 134400)
-            r.name:SetText((e.link or "") .. (e.count > 1 and (" ×" .. e.count) or ""))
-            r.value:SetText(e.price and ap and ap.Money and ap.Money(e.price * e.count) or "Preis unbekannt")
-            r:Show()
-        else
-            r.bag = nil
-            r:Hide()
-        end
-    end
+    for _, t in ipairs(panel.tabs) do t:SetAlpha(t.mode == AS.mode and 1 or 0.55) end
+    local list = AS.Rows()
+    for i = 1, AS.ROWS do Fill(i, list[i]) end
+    local empty = { sell = "Nichts zu verkaufen.", own = "Keine eigenen Auktionen.",
+        shop = "Die Einkaufsliste ist leer – Rezepte kommen auf der Berufsseite dazu." }
+    panel.empty:SetText(empty[AS.mode])
     panel.empty:SetShown(#list == 0)
 end
 
@@ -235,12 +333,29 @@ local function Build()
     local b = C.bgPanel
     bg:SetColorTexture(b[1], b[2], b[3], 0.95)
     K.Border(panel, 1, 0, 0, 0, 1, "BORDER")
-    local title = K.NewText(panel, 12)
-    title:SetPoint("TOPLEFT", panel, "TOPLEFT", 8, -10)
-    title:SetText("Verkaufen – wertvollste zuerst")
+    panel.tabs = {}
+    local x = 8
+    for _, m in ipairs(AS.MODES) do
+        local t = CreateFrame("Button", nil, panel)
+        t.mode = m.key
+        t.text = K.NewText(t, 11)
+        t.text:SetPoint("LEFT", t, "LEFT", 0, 0)
+        t.text:SetText(m.text)
+        local w = (t.text.GetStringWidth and K.Plain(t.text:GetStringWidth())) or 70
+        t:SetSize((type(w) == "number" and w or 70) + 4, 20)
+        t:SetPoint("TOPLEFT", panel, "TOPLEFT", x, -6)
+        x = x + t:GetWidth() + 10
+        t:SetScript("OnClick", function(self)
+            AS.mode = self.mode
+            if self.mode == "own" then AS.QueryOwned() end
+            AS.Refresh()
+        end)
+        panel.tabs[#panel.tabs + 1] = t
+    end
     panel.empty = K.NewText(panel, 11)
     panel.empty:SetPoint("TOPLEFT", panel, "TOPLEFT", 8, -36)
-    panel.empty:SetText("Nichts zu verkaufen.")
+    panel.empty:SetPoint("RIGHT", panel, "RIGHT", -8, 0)
+    panel.empty:SetJustifyH("LEFT")
 end
 
 local ev = CreateFrame("Frame")
@@ -255,6 +370,9 @@ local function OnEvent(_, event, arg)
         if panel then panel:Hide() end
     elseif event == "BAG_UPDATE_DELAYED" then
         if panel and panel:IsShown() then AS.Refresh() end
+    elseif event == "OWNED_AUCTIONS_UPDATED" then
+        AS.ReadOwned()
+        if panel and panel:IsShown() then AS.Refresh() end
     else
         AS.OnResults(event, arg)
     end
@@ -264,7 +382,7 @@ AS.OnEvent = OnEvent
 
 function AS.Apply()
     local on = Get("ahSell") or Get("ahUndercut")
-    for _, e in ipairs({ "AUCTION_HOUSE_SHOW", "AUCTION_HOUSE_CLOSED", "BAG_UPDATE_DELAYED",
+    for _, e in ipairs({ "AUCTION_HOUSE_SHOW", "AUCTION_HOUSE_CLOSED", "BAG_UPDATE_DELAYED", "OWNED_AUCTIONS_UPDATED",
         "COMMODITY_SEARCH_RESULTS_UPDATED", "ITEM_SEARCH_RESULTS_UPDATED" }) do
         if on then pcall(ev.RegisterEvent, ev, e) else pcall(ev.UnregisterEvent, ev, e) end
     end

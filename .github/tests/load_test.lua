@@ -26497,6 +26497,31 @@ do
     Check(ok, "Kleine Helfer: Druiden-Mana, Tarnung" .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 1.0.7.0: Einkaufsliste - Reagenzien zusammengerechnet, Vorhandenes ab.
+do
+    local ok, err = pcall(function()
+        local SL, AS = WeintCodex.UIShopping, WeintCodex.UIAuctionSell
+        local PRO = WeintCodex.Professions
+        local r = PRO.Recipes("alchemy")[1]
+        assert(r and #r.reagents > 0, "kein Rezept zum Prüfen")
+        SL.Clear(r.spell)
+        SL.Add(r.spell, 2)
+        local needs, recipes = SL.Needs(function(id) return id == r.reagents[1][1] and 1 or 0 end)
+        assert(#recipes == 1 and recipes[1].count == 2, "Rezept nicht auf der Liste")
+        local first
+        for _, n in ipairs(needs) do if n.id == r.reagents[1][1] then first = n end end
+        assert(first and first.need == 2 * r.reagents[1][2] and first.missing == first.need - 1, "Bedarf falsch gerechnet")
+        SL.Clear(r.spell)
+        assert(SL.Count(r.spell) == 0, "nicht von der Liste genommen")
+        AS.mode = "shop"
+        assert(type(AS.Rows()) == "table", "Ansicht Einkaufsliste kaputt")
+        AS.mode = "own"
+        assert(type(AS.Rows()) == "table", "Ansicht Meine Auktionen kaputt")
+        AS.mode = "sell"
+    end)
+    Check(ok, "Einkaufsliste und Meine Auktionen" .. (ok and "" or (": " .. tostring(err))))
+end
+
 if failures == 0 then
     print("BESTANDEN")
     os.exit(0)
