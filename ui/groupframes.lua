@@ -80,6 +80,11 @@ local defaults = {
     hitFlash    = true,      -- kurzes rotes Aufblitzen bei einem Treffer
     -- 1.0.6.20: HoT-Felder (je ein Zauber, alle Raenge), Bannring,
     -- Sortierung, Tankrahmen.
+    -- 1.0.6.21 ("muss schoener"): Aussehen. "dark" = dunkler Balken, das
+    -- fehlende Leben in Klassenfarbe, Name in Klassenfarbe (wie VuhDo/Cell);
+    -- "class" = Balken in Klassenfarbe, Name weiss.
+    look        = "dark",
+    targetRing  = true,
     hots        = true,
     hotSize     = 14,
     hotTimer    = true,
@@ -234,6 +239,31 @@ local function HealthColor(unit)
     return c.r, c.g, c.b
 end
 
+-- Farben eines Knopfs nach dem Aussehen. gone: tot oder offline.
+function GF.Paint(c, r, g, b, gone)
+    local G = WeintCodex.GameColors
+    if gone then
+        K.PaintBar(c.health, G.gfGone[1], G.gfGone[2], G.gfGone[3])
+        c.bg:SetColorTexture(G.gfGone[1], G.gfGone[2], G.gfGone[3], 1)
+        c.name:SetTextColor(G.gfGoneText[1], G.gfGoneText[2], G.gfGoneText[3])
+        c.status:SetTextColor(G.gfGoneText[1], G.gfGoneText[2], G.gfGoneText[3])
+        return
+    end
+    if Opt("look") == "class" then
+        K.PaintBar(c.health, r * 0.85, g * 0.85, b * 0.85)
+        local bg = K.GetColor(KEY, "bgColor")
+        c.bg:SetColorTexture(bg.r, bg.g, bg.b, 1)
+        c.name:SetTextColor(1, 1, 1)
+        c.status:SetTextColor(0.92, 0.92, 0.92)
+    else
+        local f, m = G.gfDarkFill, G.gfMissing[1]
+        K.PaintBar(c.health, f[1], f[2], f[3])
+        c.bg:SetColorTexture(r * m, g * m, b * m, 1)
+        c.name:SetTextColor(r, g, b)
+        c.status:SetTextColor(0.78, 0.78, 0.80)
+    end
+end
+
 local function StatusText(fs, unit)
     if _G.UnitIsConnected and not K.Bool(_G.UnitIsConnected(unit), true) then
         fs:SetText("Offline") return
@@ -300,16 +330,17 @@ function Btn:Layout(w, h)
     c.power:SetHeight(math.max(1, ph))
     if ph > 0 then c.power:Show() else c.power:Hide() end
 
-    local bg = K.GetColor(KEY, "bgColor")
-    c.bg:SetColorTexture(bg.r, bg.g, bg.b, 1)
     c.border:SetShown(Opt("showBorder"))
     local bc = K.GetColor(KEY, "borderColor")
     c.border:SetColor(bc.r, bc.g, bc.b, 1)
 
     K.SetFont(c.name, Opt("nameSize"))
-    K.SetFont(c.status, math.max(8, Opt("nameSize") - 1))
-    c.name:SetWidth(math.max(20, w - 8))
-    c.status:SetWidth(math.max(20, w - 8))
+    K.SetFont(c.status, math.max(8, Opt("nameSize") - 2))
+    -- Name oben links (hinter Rolle/Krone), Leben oben rechts, eine Zeile.
+    self._wcSW = math.max(26, math.floor(w * 0.3))
+    c.status:SetWidth(self._wcSW)
+    self._wcW = w
+    self:PlaceName()
 
     -- Heilung und Schild: so breit wie der Lebensbalken, links an der
     -- Kante seiner Fuellung. Wie weit sie reichen, rechnet der Client
@@ -377,12 +408,10 @@ function Btn:Refresh()
     if type(max) ~= "nil" then GZ.Range(c.health, 0, max) end
     local cur = _G.UnitHealth and _G.UnitHealth(unit)
     if type(cur) ~= "nil" then GZ.Set(c.health, cur, snap) end
-    if K.Bool(_G.UnitIsConnected and _G.UnitIsConnected(unit), true) then
-        K.PaintBar(c.health, HealthColor(unit))
-    else
-        local g = K.ColorDefault("tapped")
-        K.PaintBar(c.health, g.r, g.g, g.b)
-    end
+    local gone = not K.Bool(_G.UnitIsConnected and _G.UnitIsConnected(unit), true)
+        or K.Bool(_G.UnitIsDeadOrGhost and _G.UnitIsDeadOrGhost(unit), false)
+    local hr, hg, hb = HealthColor(unit)
+    GF.Paint(c, hr, hg, hb, gone)
 
     if Opt("power") then
         local pmax = _G.UnitPowerMax and _G.UnitPowerMax(unit)
@@ -406,6 +435,25 @@ function Btn:Refresh()
 
     K.ShowRaidIcon(c.raid, unit)
     self:UpdateThreat()
+    self:UpdateTarget()
+end
+
+-- Name hinter Rolle und Krone; Breite bis vor das Leben.
+function Btn:PlaceName()
+    local c = self._wc
+    local x = 4
+    if c.role:IsShown() then x = x + 13 end
+    if c.leader:IsShown() then x = x + 13 end
+    c.name:ClearAllPoints()
+    c.name:SetPoint("TOPLEFT", c, "TOPLEFT", x, -4)
+    c.name:SetWidth(math.max(16, (self._wcW or 100) - x - (self._wcSW or 30) - 6))
+end
+
+-- Dein Ziel: feiner heller Rand.
+function Btn:UpdateTarget()
+    local c, unit = self._wc, self._wcUnit
+    local on = unit and Opt("targetRing") and K.Bool(_G.UnitIsUnit and _G.UnitIsUnit(unit, "target"), false)
+    c.targetRing:SetShown(on and true or false)
 end
 
 function Btn:UpdatePrediction()
@@ -447,9 +495,10 @@ function Btn:UpdateRole()
     if r then
         c.leader:SetPoint("LEFT", c.role, "RIGHT", 1, 0)
     else
-        c.leader:SetPoint("TOPLEFT", c, "TOPLEFT", 1, -1)
+        c.leader:SetPoint("TOPLEFT", c, "TOPLEFT", 3, -3)
     end
     c.leader:SetShown(lead and true or false)
+    self:PlaceName()
 end
 
 -- Bereitschaftscheck: Haken, Kreuz oder "?" in der Mitte. Nach dem Ende
@@ -514,15 +563,17 @@ end
 -- Eine kleine Plakette: dunkler Grund, 1 px Rand, Symbol darauf. Kennt
 -- SetTexture/SetVertexColor wie eine Textur, damit der Rest sie so
 -- behandeln kann.
-local BADGE, BADGE_ICON = 15, 13
+-- 1.0.6.21: ohne Plakette - auf dem dunklen Balken stehen die Symbole
+-- frei; nur ein Schatten dahinter.
+local BADGE, BADGE_ICON = 12, 11
 local function Badge(parent)
     local f = CreateFrame("Frame", nil, parent)
     f:SetSize(BADGE, BADGE)
     f:SetFrameLevel((parent:GetFrameLevel() or 1) + 1)
-    local bg = f:CreateTexture(nil, "BACKGROUND")
-    bg:SetAllPoints(f)
-    local k = WeintCodex.GameColors.kachelFill
-    K.LookFill(bg, 0.9, K.Border(f, 1, 0, 0, 0, 1, "BORDER"))
+    local sh = f:CreateTexture(nil, "BACKGROUND")
+    sh:SetPoint("TOPLEFT", f, "TOPLEFT", 1, -1)
+    sh:SetSize(BADGE_ICON, BADGE_ICON)
+    sh:SetColorTexture(0, 0, 0, 0)
     f.icon = f:CreateTexture(nil, "ARTWORK")
     f.icon:SetSize(BADGE_ICON, BADGE_ICON)
     f.icon:SetPoint("CENTER", f, "CENTER", 0, 0)
@@ -557,11 +608,24 @@ local function Style(b)
     host:SetAllPoints(c)
     host:SetFrameLevel((c.health:GetFrameLevel() or 1) + 3)
     c.name = K.NewText(host)
-    c.name:SetPoint("TOP", c, "TOP", 0, -5)
+    c.name:SetPoint("TOPLEFT", c, "TOPLEFT", 4, -4)
+    c.name:SetJustifyH("LEFT")
     c.name:SetWordWrap(false)
     c.status = K.NewText(host)
-    c.status:SetPoint("CENTER", c, "CENTER", 0, -6)
+    c.status:SetPoint("TOPRIGHT", c, "TOPRIGHT", -4, -5)
+    c.status:SetJustifyH("RIGHT")
     c.status:SetWordWrap(false)
+    for _, fs in ipairs({ c.name, c.status }) do
+        if fs.SetShadowOffset then fs:SetShadowOffset(1, -1) fs:SetShadowColor(0, 0, 0, 0.9) end
+    end
+    local tc = WeintCodex.Colors.textBright
+    c.targetRing = K.Border(host, 1, tc[1], tc[2], tc[3], 0.9, "OVERLAY")
+    c.targetRing:SetShown(false)
+    local hv = WeintCodex.GameColors.gfHover
+    c.hover = host:CreateTexture(nil, "OVERLAY", nil, -2)
+    c.hover:SetAllPoints(c)
+    c.hover:SetColorTexture(hv[1], hv[2], hv[3], hv[4])
+    c.hover:Hide()
     -- Schrift sofort: der Kopfrahmen setzt die Einheit (und damit den
     -- ersten Text) womoeglich, bevor Layout gelaufen ist - und Text ohne
     -- Schrift ist im Client ein Fehler.
@@ -569,7 +633,7 @@ local function Style(b)
     K.SetFont(c.status, math.max(8, Opt("nameSize") - 1))
     c.raid = K.NewRaidIcon(host, 14)
     -- Oben rechts: oben links stehen Rolle und Krone.
-    c.raid:SetPoint("TOPRIGHT", c, "TOPRIGHT", -2, -2)
+    c.raid:SetPoint("CENTER", c, "CENTER", 0, 0)
 
     -- Heilung und Schild in einer Klammer ueber dem Lebensbalken.
     c.clip = CreateFrame("Frame", nil, c)
@@ -594,7 +658,7 @@ local function Style(b)
     -- Klassenfarbe gingen sie unter (Beta-Test 6.3.2.4: "sehr
     -- undurchsichtig, schwer zu erkennen").
     c.role = Badge(host)
-    c.role:SetPoint("TOPLEFT", c, "TOPLEFT", 1, -1)
+    c.role:SetPoint("TOPLEFT", c, "TOPLEFT", 3, -3)
     c.leader = Badge(host)
     c.leader:SetTexture(K.MEDIA .. "icon_leader")
     local lc = WeintCodex.GameColors.leader
@@ -646,6 +710,7 @@ local function Style(b)
     b:SetAttribute("*type1", "target")
     b:SetAttribute("*type2", "togglemenu")
     b:SetScript("OnEnter", function(self)
+        self._wc.hover:Show()
         if not self._wcUnit then return end
         if _G.UnitFrame_OnEnter then
             self.unit = self._wcUnit
@@ -657,6 +722,7 @@ local function Style(b)
         end
     end)
     b:SetScript("OnLeave", function(self)
+        self._wc.hover:Hide()
         if _G.UnitFrame_OnLeave then _G.UnitFrame_OnLeave(self) else GameTooltip:Hide() end
     end)
     allButtons[#allButtons + 1] = b
@@ -888,10 +954,10 @@ function GF.ShowTest(on, n)
         c.health:SetValue(t.dead and 0 or t.hp)
         local cc = _G.RAID_CLASS_COLORS and _G.RAID_CLASS_COLORS[t.class]
         if Opt("classColor") and cc then
-            K.PaintBar(c.health, cc.r, cc.g, cc.b)
+            GF.Paint(c, cc.r, cc.g, cc.b, t.dead)
         else
             local hc = K.GetColor(KEY, "healthColor")
-            K.PaintBar(c.health, hc.r, hc.g, hc.b)
+            GF.Paint(c, hc.r, hc.g, hc.b, t.dead)
         end
         c.power:SetMinMaxValues(0, 1)
         c.power:SetValue(t.power or 0)
@@ -916,8 +982,10 @@ function GF.ShowTest(on, n)
         end
         c.role:SetShown(r and true or false)
         c.leader:ClearAllPoints()
-        if r then c.leader:SetPoint("LEFT", c.role, "RIGHT", 1, 0) else c.leader:SetPoint("TOPLEFT", c, "TOPLEFT", 1, -1) end
+        if r then c.leader:SetPoint("LEFT", c.role, "RIGHT", 1, 0) else c.leader:SetPoint("TOPLEFT", c, "TOPLEFT", 3, -3) end
         c.leader:SetShown((t.leader and Opt("leaderIcon")) and true or false)
+        b:PlaceName()
+        c.targetRing:SetShown(i == 2 and Opt("targetRing") and true or false)
         if t.res then
             c.status:SetText("Wird belebt")
         elseif t.dead then
@@ -975,6 +1043,10 @@ local function RestyleLater()
 end
 
 local function OnEvent(_, event, unit, ...)
+    if event == "PLAYER_TARGET_CHANGED" then
+        for _, b in ipairs(allButtons) do if b:IsShown() and b.UpdateTarget then b:UpdateTarget() end end
+        return
+    end
     if event == "GROUP_ROSTER_UPDATE" or event == "PLAYER_ENTERING_WORLD" then
         RestyleLater()
     end
@@ -1077,7 +1149,7 @@ local function Enable()
     for e in pairs(PART_EVENTS) do pcall(events.RegisterEvent, events, e) end
     for _, e in ipairs({ "GROUP_ROSTER_UPDATE", "PLAYER_ENTERING_WORLD", "RAID_TARGET_UPDATE",
         "UNIT_THREAT_SITUATION_UPDATE", "READY_CHECK", "READY_CHECK_CONFIRM", "READY_CHECK_FINISHED",
-        "PARTY_LEADER_CHANGED", "PLAYER_ROLES_ASSIGNED" }) do pcall(events.RegisterEvent, events, e) end
+        "PARTY_LEADER_CHANGED", "PLAYER_ROLES_ASSIGNED", "PLAYER_TARGET_CHANGED" }) do pcall(events.RegisterEvent, events, e) end
     events:SetScript("OnEvent", K.Measured("Gruppenrahmen", OnEvent))
     ticker:SetScript("OnUpdate", K.Measured("Gruppenrahmen", OnTick))
 end
@@ -1137,6 +1209,11 @@ K.Register({
                     gameEditMode = true })
             B:Note("Die folgenden Einstellungen gelten für die eigenen Kacheln; bei den Rahmen des Spiels wirken Rand, Farben und Schriftgröße.")
             B:Section("Farben und Rahmen")
+            B:Row({ type = "dropdown", label = "Aussehen", key = "look", items = {
+                        { value = "dark",  text = "Dunkel – fehlendes Leben in Klassenfarbe" },
+                        { value = "class", text = "Klassenfarbe – Balken farbig" } },
+                    description = "Dunkel: wer Leben verliert, leuchtet in seiner Klassenfarbe auf – gut für Heiler. Klassenfarbe: der klassische Balken." },
+                  { type = "toggle", label = "Rand um dein Ziel", key = "targetRing" })
             B:Row({ type = "toggle", label = "Klassenfarbe", key = "classColor" },
                   { type = "toggle", label = "Roter Rand bei Aggro", key = "aggroBorder" })
             B:Row({ type = "slider", label = "Deckkraft außer Reichweite", key = "rangeAlpha", min = 10, max = 100, step = 5,
@@ -1153,10 +1230,6 @@ K.Register({
                     description = "Was du selbst entfernen kannst." },
                   { type = "toggle", label = "Buffs", key = "buffs",
                     description = "Unten links im Rahmen, z. B. Segen, Intelligenz, Mal der Wildnis." })
-            B:Row({ type = "toggle", label = "Ziel der Mitspieler", key = "groupTargets",
-                    description = "Unter dem Namen „» Ziel“ – in deiner Akzentfarbe, wenn es auch dein Ziel ist." },
-                  { type = "toggle", label = "Fehlende Buffs deiner Klasse", key = "groupOtherBuffs",
-                    description = "Oben rechts, rot: wem dein Gruppenbuff fehlt – Magier Intelligenz, Druide Mal der Wildnis, Priester Seelenstärke, Paladin Segen. Nur, was du gelernt hast; gelesen außerhalb des Kampfes." })
             B:Section("Mehr im Rahmen")
             B:Row({ type = "toggle", label = "Eingehende Heilung", key = "healPrediction",
                     description = "Ein heller grüner Balken hinter dem Leben: so weit reichen Heilungen, die gerade gewirkt werden." },
@@ -1165,6 +1238,11 @@ K.Register({
             B:Note("Wer gerade wiederbelebt oder beschworen wird, steht unter dem Namen („Wird belebt“, „Beschwörung“). Schaden, der erst noch kommt, kennt das Spiel nicht – das Aufblitzen zeigt Treffer in dem Moment, in dem sie landen.")
             -- 6.10.1.0: Farbtoene, Rand, Groessen und Kleinigkeiten zugeklappt.
             B:Advanced()
+            B:Section("Mitspieler")
+            B:Row({ type = "toggle", label = "Ziel der Mitspieler", key = "groupTargets",
+                    description = "Unter dem Namen „» Ziel“ – in deiner Akzentfarbe, wenn es auch dein Ziel ist." },
+                  { type = "toggle", label = "Fehlende Buffs deiner Klasse", key = "groupOtherBuffs",
+                    description = "Oben rechts, rot: wem dein Gruppenbuff fehlt – Magier Intelligenz, Druide Mal der Wildnis, Priester Seelenstärke, Paladin Segen. Nur, was du gelernt hast; gelesen außerhalb des Kampfes." })
             B:Section("Farben und Rand")
             B:Row({ type = "color", label = "Lebensbalken sonst", key = "healthColor" },
                   { type = "color", label = "Hintergrund", key = "bgColor" })

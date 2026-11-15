@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.0.6.21",
+        date    = "15.11.2026",
+        notes   = {
+            "|cff7C6CFFGruppenrahmen in neuem Look|r – dunkle Balken, das fehlende Leben leuchtet in der Klassenfarbe auf, der Name steht in Klassenfarbe oben links, das Leben oben rechts. Rolle und Krone ohne Plakette, ein feiner Rand um dein Ziel, Tote und Offline deutlich abgedunkelt. Der klassische Balken in Klassenfarbe bleibt unter Gruppenrahmen → Aussehen wählbar.",
+        },
+    },
+    {
         version = "1.0.6.20",
         date    = "15.11.2026",
         notes   = {

@@ -213,6 +213,13 @@ WeintCodex.Colors = C
 --------------------------------------------------
 
 WeintCodex.GameColors = {
+    -- 1.0.6.21: Gruppenrahmen "Dunkel": Lebensbalken, fehlendes Leben
+    -- (Anteil der Klassenfarbe), Tote/Offline, Hervorhebung.
+    gfDarkFill    = {0.150, 0.155, 0.175, 1.0},
+    gfMissing     = {0.550, 0.0, 0.0, 1.0},   -- nur [1] zaehlt: Helligkeit der Klassenfarbe hinter dem Balken
+    gfGone        = {0.090, 0.090, 0.100, 1.0},
+    gfGoneText    = {0.500, 0.500, 0.520, 1.0},
+    gfHover       = {1.000, 1.000, 1.000, 0.08},
     -- 1.0.6.20: Bannring der Gruppenrahmen, Farbe je Bannart.
     dispelMagic   = {0.200, 0.600, 1.000, 1.0},
     dispelCurse   = {0.600, 0.200, 1.000, 1.0},

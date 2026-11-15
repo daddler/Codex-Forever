@@ -9,6 +9,19 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.0.6.21] – 2026-11-15
+
+### Geändert
+- Gruppenrahmen (Wunsch: „muss schöner“, Bild der Beispielgruppe): Aussehen
+  `look` – `dark` (ab Werk: Balken `gfDarkFill`, fehlendes Leben als
+  Hintergrund in Klassenfarbe × `gfMissing`, Name in Klassenfarbe) oder
+  `class` (Balken in Klassenfarbe × 0,85, Name weiß). `GF.Paint`. Name oben
+  links hinter Rolle/Krone (`Btn:PlaceName`), Leben oben rechts, Schatten
+  hinter Text, Rolle/Krone ohne Plakette (12 px), Zielmarkierung mittig,
+  Rand um das eigene Ziel (`targetRing`, `PLAYER_TARGET_CHANGED`), helle
+  Fläche beim Überfahren, Tote/Offline `gfGone`. „Ziel der Mitspieler“ und
+  „Fehlende Buffs“ unter „Erweitert“ (15 sichtbare Einstellungen).
+
 ## [1.0.6.20] – 2026-11-15
 
 ### Neu (nicht im Spiel bestätigt)
