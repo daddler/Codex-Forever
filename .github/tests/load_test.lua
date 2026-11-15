@@ -1750,6 +1750,40 @@ do
     Check(ok, "Weltkarte: oeffnen ueber den Kartenknopf des Spiels, Taint-Bericht im Fehlerbericht" .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 1.0.6.20: eigene Gruppenrahmen - HoT-Felder, Sortierung, Tanks, Vorschau.
+do
+    local ok, err = pcall(function()
+        local GF, K = WeintCodex.UIGroupFrames, WeintCodex.UIKit
+        local oldClass = _G.UnitClass
+        _G.UnitClass = function() return "Priester", "PRIEST" end
+        assert(GF.HotSpell(1) == 139 and GF.HotSpell(2) == 17, "Vorschlag der Klasse fehlt")
+        assert(GF.HotSpell(3) == nil, "leeres Feld hat einen Zauber")
+        local set = GF.RankSet(139)
+        assert(set[139] and GF.RankSet(139) == set, "Rangmenge nicht gemerkt")
+        local n = 0 for _ in pairs(set) do n = n + 1 end
+        assert(n > 1, "Raenge von Erneuerung fehlen")
+        assert(#GF.HotItems(1) >= 3, "Auswahl der Felder leer")
+        -- Ein Knopf bekommt seine HoT-Felder.
+        local b = CreateFrame("Button", nil, UIParent)
+        GF._Style(b)
+        b:Layout(120, 40)
+        local hots = _G.rawget(b._wc, "wcHots")
+        assert(hots and hots[1] and hots[2] and not hots[3], "HoT-Felder nicht angelegt")
+        assert(hots[1].opts.filter == "HELPFUL|PLAYER" and hots[1].opts.spells == set, "HoT-Feld ohne Zauberfilter")
+        -- Sortierung als Attribute des Kopfrahmens.
+        local attrs = {}
+        local h = { SetAttribute = function(_, k, v) attrs[k] = v end }
+        K.Set("groupframes", "raidSort", "role")
+        GF.SortAttributes("raid", h)
+        assert(attrs.groupBy == "ASSIGNEDROLE" and attrs.groupingOrder:find("^TANK"), "Sortierung nach Rolle")
+        K.Set("groupframes", "raidSort", "group")
+        GF.SortAttributes("raid", h)
+        assert(attrs.groupBy == "GROUP", "Sortierung nach Gruppe")
+        _G.UnitClass = oldClass
+    end)
+    Check(ok, "Gruppenrahmen 2.0: HoT-Felder mit Raengen, Sortierung, Vorschau" .. (ok and "" or (": " .. tostring(err))))
+end
+
 -- 1.0.6.17: Rahmen des Spiels nehmen fuer Belegungen ab Maustaste 3 jede
 -- Maustaste an; Automark fragt wieder, wenn die Markierung fehlt.
 do
@@ -6668,7 +6702,7 @@ do
     local ok, err = pcall(function()
         local GG = WeintCodex.UIGameGroup
         assert(GG, "ui/gamegroup.lua nicht geladen")
-        assert(K.Module("groupframes").defaults.source == "game", "Standard ist nicht der Rahmen des Spiels")
+        assert(K.Module("groupframes").defaults.source == "own", "Standard sind nicht die eigenen Rahmen (1.0.6.20)")
         -- Ein Rahmen, wie das Spiel ihn anlegt.
         local f = CreateFrame("Button", "CompactPartyFrameMember1", UIParent)
         _G.CompactPartyFrameMember1 = f

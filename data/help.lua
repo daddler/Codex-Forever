@@ -103,6 +103,7 @@ P["unitframes/pet"] = { title = "Einheitenrahmen · Begleiter", text = "Rahmen d
 P["groupframes/allgemein"] = { title = "Gruppenrahmen · Allgemein",
     text = "Rahmen für Gruppe und Schlachtzug. Für Heiler: Klickzauber stellst du unter Komfort → Klickzauber ein.",
     words = "raidframes partyframes heiler heilen" }
+P["groupframes/hots"] = { title = "Gruppenrahmen · HoTs & Bannen", text = "Bis zu vier eigene Zauber je Rahmen an frei gewählten Plätzen, auch im Kampf; farbiger Ring, wenn jemand etwas trägt, das du bannen kannst.", words = "hot heal erneuerung verjüngung bannen dispel ring" }
 P["groupframes/gruppe"] = { title = "Gruppenrahmen · Gruppe", text = "Rahmen der Fünfergruppe.", words = "party" }
 P["groupframes/raid"] = { title = "Gruppenrahmen · Schlachtzug", text = "Rahmen im Schlachtzug.", words = "raid" }
 P["groupframes/gruppenwerkzeuge"] = { title = "Gruppenrahmen · Gruppenwerkzeuge", text = "Die Leiste der Gruppenwerkzeuge: eingeklappt, erst bei Mausberührung, Menü des Spiels ausblenden.", words = "marker ready pull" }

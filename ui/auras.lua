@@ -284,6 +284,14 @@ local function BuildEngine(self, minimal)
             end
         end,
     })
+    pcall(c.SetAuraGroupMaxFrameCount, c, "wc", o.max)
+    -- 1.0.6.20: nur bestimmte Zauber (HoT-Felder der Gruppenrahmen). Das
+    -- Spiel vergleicht selbst - Lua liest keine Aura. Technik nach VoidBox
+    -- (MIT, VoiD911): SetAuraGroupCandidateFilters mit includeSpellIDs.
+    if o.spells then
+        local okF, errF = pcall(c.SetAuraGroupCandidateFilters, c, "wc", { includeSpellIDs = o.spells })
+        if not okF then Note("SetAuraGroupCandidateFilters", errF) end
+    end
     return c
 end
 
@@ -576,6 +584,12 @@ function Obj:Refresh()
                 if shown >= o.max then break end
                 local aura = AuraAt(unit, i, o.filter)
                 if not aura then break end
+                local want = true
+                if o.spells then
+                    local sid = K.Plain(aura.spellId)
+                    want = type(sid) == "number" and o.spells[sid] == true
+                end
+                if want then
                 shown = shown + 1
                 local b = self.buttons[shown]
                 if not b then
@@ -584,6 +598,7 @@ function Obj:Refresh()
                 end
                 Place(self, b, shown)
                 PaintLegacy(b, unit, aura)
+                end
             end
         end)
         if not ok then K.Report("auren", err) end
@@ -613,6 +628,7 @@ function Obj:ApplyLayout(opts)
         return
     end
     if old.size == new.size and old.spacing == new.spacing and old.filter == new.filter
+       and old.spells == new.spells
        and old.anchor == new.anchor and old.growth == new.growth and old.growthV == new.growthV
        and old.perRow == new.perRow and (old.timer and true or false) == (new.timer and true or false) then
         pcall(self.frame.SetAuraGroupMaxFrameCount, self.frame, "wc", new.max)
@@ -633,6 +649,78 @@ function Obj:ApplyLayout(opts)
     for _, p in ipairs(self.points) do c:SetPoint(unpack(p)) end
     if self.shown == false then c:Hide() end
     self:SetUnit(self.unit)
+end
+
+--------------------------------------------------
+-- BANNRING (1.0.6.20). Im Kampf gibt Forever keine Aura heraus, also kann
+-- Lua den Rand eines Rahmens nicht nach einem Debuff faerben. Stattdessen
+-- ein Container mit Filter "HARMFUL|RAID" (was der Spieler bannen kann) und
+-- EINEM unsichtbaren Knopf, dem vier Randstreifen um den Rahmen gehoeren:
+-- das Spiel zeigt den Knopf - und damit den Ring - nur, solange so ein
+-- Debuff liegt, und faerbt die Streifen nach der Bannart ueber eine Kurve.
+-- Technik nach VoidBox (MIT, Copyright (c) 2026 VoiD911), dort nach
+-- Forever Unit Frames; hier eigener Code, Farben aus core/ui.lua.
+--------------------------------------------------
+A.RING_SIZE = 3
+local ringCurve
+local function RingCurve()
+    if ringCurve then return ringCurve end
+    local cu = _G.C_CurveUtil
+    if not (cu and cu.CreateColorCurve and _G.CreateColor) then return nil end
+    local ok, curve = pcall(cu.CreateColorCurve)
+    if not ok or not curve then return nil end
+    if _G.Enum and _G.Enum.LuaCurveType then pcall(curve.SetType, curve, _G.Enum.LuaCurveType.Step) end
+    local G = WeintCodex.GameColors
+    local D = { [1] = G.dispelMagic, [2] = G.dispelCurse, [3] = G.dispelDisease, [4] = G.dispelPoison, [9] = G.dispelEnrage }
+    for _, id in ipairs({ 0, 1, 2, 3, 4, 9 }) do
+        local c = D[id]
+        pcall(curve.AddPoint, curve, id, c and _G.CreateColor(c[1], c[2], c[3], 1) or _G.CreateColor(0, 0, 0, 0))
+    end
+    ringCurve = curve
+    return curve
+end
+
+function A.DispelRing(frame)
+    if not A.EngineAvailable() or not RingCurve() then return nil end
+    local ok, c = pcall(function()
+        local box = CreateFrame("AuraContainer", nil, frame, "CustomAuraContainerTemplate")
+        pcall(box.SetEditModePreviewEnabled, box, false)
+        box:SetSize(1, 1)
+        box:SetPoint("TOPLEFT", frame, "TOPLEFT")
+        box:AddAuraGroup("wcRing", "HARMFUL|RAID", {
+            maxFrameCount = 1,
+            layout = { elementWidth = 1, elementHeight = 1 },
+            initializeFrame = function(button)
+                pcall(button.SetMouseClickEnabled, button, false)
+                pcall(button.SetMouseMotionEnabled, button, false)
+                local o = { customDispelColorCurve = RingCurve() }
+                if _G.Enum and _G.Enum.CustomAuraButtonDispelTypeTextureStyle then
+                    o.style = _G.Enum.CustomAuraButtonDispelTypeTextureStyle.PreserveAsset
+                end
+                local s = A.RING_SIZE
+                for side = 1, 4 do
+                    local e = button:CreateTexture(nil, "OVERLAY", nil, 7)
+                    e:SetColorTexture(1, 1, 1, 1)
+                    if side == 1 then
+                        e:SetPoint("TOPLEFT", frame, "TOPLEFT") e:SetPoint("TOPRIGHT", frame, "TOPRIGHT") e:SetHeight(s)
+                    elseif side == 2 then
+                        e:SetPoint("BOTTOMLEFT", frame, "BOTTOMLEFT") e:SetPoint("BOTTOMRIGHT", frame, "BOTTOMRIGHT") e:SetHeight(s)
+                    elseif side == 3 then
+                        e:SetPoint("TOPLEFT", frame, "TOPLEFT") e:SetPoint("BOTTOMLEFT", frame, "BOTTOMLEFT") e:SetWidth(s)
+                    else
+                        e:SetPoint("TOPRIGHT", frame, "TOPRIGHT") e:SetPoint("BOTTOMRIGHT", frame, "BOTTOMRIGHT") e:SetWidth(s)
+                    end
+                    pcall(button.AddDispelTypeTexture, button, e, o)
+                end
+            end,
+        })
+        pcall(box.SetAuraGroupMaxFrameCount, box, "wcRing", 1)
+        box:SetFrameLevel((frame:GetFrameLevel() or 1) + 10)
+        return box
+    end)
+    if not ok then Note("Bannring", c) return nil end
+    stats.rings = (stats.rings or 0) + 1
+    return c
 end
 
 --------------------------------------------------

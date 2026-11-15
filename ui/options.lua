@@ -1789,6 +1789,14 @@ SlashCmdList["WEINTCODEXUI"] = function(msg)
         end
         return
     end
+    local gt = msg:match("^gruppentest%s*(%d*)$")
+    if gt then
+        local GFm = WeintCodex.UIGroupFrames
+        local n = tonumber(gt) or 5
+        if GFm and GFm.ShowTest then GFm.ShowTest(n > 0, n) end
+        print(WeintCodex.ColorText("accent", "[WeintCodex]") .. (n > 0 and (" Beispielgruppe mit " .. n .. " Spielern – nur allein sichtbar. Weg mit /wcui gruppentest 0.") or " Beispielgruppe weg."))
+        return
+    end
     if msg == "markieren" or msg == "automark" then
         local AMk = WeintCodex.UIAutoMark
         print(WeintCodex.ColorText("accent", "[WeintCodex]") .. " Automark: " .. tostring(AMk and AMk.Again and AMk.Again() or "nicht geladen"))

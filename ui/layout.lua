@@ -58,6 +58,8 @@ K.LAYOUT = {
     -- Breite und steht oben links.
     gf_party        = { point = "TOPRIGHT",    relPoint = "BOTTOM", x = -(AXIS + UF_W + 18), y = 440 },
     gf_raid         = { point = "TOPLEFT",     relPoint = "TOPLEFT", x = 20, y = -260 },
+    -- 1.0.6.20: Tanks fuer sich, ueber dem Schlachtzug.
+    gf_tank         = { point = "TOPLEFT",     relPoint = "TOPLEFT", x = 20, y = -150 },
 
     -- Rand
     -- OBEN MITTE (6.35.1.0, Beta-Test: "im Gestaltungsmodus ist vieles

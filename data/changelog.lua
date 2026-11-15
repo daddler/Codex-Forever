@@ -22,6 +22,15 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.0.6.20",
+        date    = "15.11.2026",
+        notes   = {
+            "|cff7C6CFFNeue Gruppen- und Schlachtzugsrahmen|r – ab jetzt eigene Rahmen statt der des Spiels, gebaut für Heiler: bis zu vier HoT-Felder je Rahmen an frei wählbaren Plätzen (auch im Kampf, alle Ränge), ein farbiger Ring, wenn jemand etwas trägt, das du bannen kannst, Sortierung nach Gruppe, Rolle, Klasse oder Name und auf Wunsch ein eigener Rahmen für die Tanks.",
+            "|cff7C6CFFKlickzauber auf allen Maustasten|r – auf den neuen Rahmen wirken Links, Rechts, Mitte, Seitentasten und Mausrad zuverlässig auf den Spieler unter der Maus. Einstellen unter Komfort → Klickzauber.",
+            "|cff7C6CFFVorschau|r – „/wcui gruppentest 20“ zeigt eine Beispielgruppe mit 5, 10, 20 oder 40 Spielern, damit du ohne Gruppe einstellen kannst. Die Rahmen des Spiels bleiben unter Gruppenrahmen → Allgemein wählbar.",
+        },
+    },
+    {
         version = "1.0.6.19",
         date    = "15.11.2026",
         notes   = {

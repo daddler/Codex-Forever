@@ -37,7 +37,12 @@ local defaults = {
     -- angezeigt"): "game" = die des Spiels im WeintCodex-Stil
     -- (ui/gamegroup.lua) - nur sie zeigen Auren im Kampf; "own" = die
     -- eigenen Kacheln dieses Moduls, ohne Auren im Kampf.
-    source = "game",
+    -- 1.0.6.20 ("Gruppenrahmen wie VuhDo/VoidBox"): ab Werk die eigenen.
+    -- Die Rahmen des Spiels liessen sich nicht zuverlaessig fuer Klickzauber
+    -- nutzen (Seitentasten kamen nie an, Blizzard setzt Klicks zurueck);
+    -- HoTs zeigen die eigenen jetzt ueber die Container des Spiels mit
+    -- Zauberfilter (VoidBox-Technik) - auch im Kampf.
+    source = "own",
     partyEnabled = true,
     partyWidth = 120, partyHeight = 40, partySpacing = 4,
     partyShowPlayer = true,
@@ -73,7 +78,129 @@ local defaults = {
     leaderIcon  = true,      -- Krone beim Gruppenleiter
     readyCheck  = true,      -- Haken / Kreuz / ? beim Bereitschaftscheck
     hitFlash    = true,      -- kurzes rotes Aufblitzen bei einem Treffer
+    -- 1.0.6.20: HoT-Felder (je ein Zauber, alle Raenge), Bannring,
+    -- Sortierung, Tankrahmen.
+    hots        = true,
+    hotSize     = 14,
+    hotTimer    = true,
+    hot1 = -1, hot2 = -1, hot3 = 0, hot4 = 0,   -- -1 = Vorschlag der Klasse, 0 = leer
+    hot1Pos = "RIGHT", hot2Pos = "LEFT", hot3Pos = "CENTER", hot4Pos = "TOPRIGHT",
+    dispelRing  = true,
+    partySort   = "group",   -- group | role | class | name
+    raidSort    = "group",
+    tankEnabled = false,
+    tankWidth = 120, tankHeight = 40, tankSpacing = 4,
 }
+
+--------------------------------------------------
+-- HoT-Felder (1.0.6.20)
+--------------------------------------------------
+-- Je Feld ein Zauber des Spielers; das Spiel zeigt ihn, solange er auf dem
+-- Mitspieler liegt - auch im Kampf, weil Lua nichts liest (Filter
+-- "HELPFUL|PLAYER" plus Zauberliste, siehe ui/auras.lua). Alle Raenge eines
+-- Zaubers zaehlen (Rangketten aus data/trainer.lua). Vorschlaege je Klasse:
+-- Zaubernummern aus Classic (Art classic); der Name kommt vom Client.
+GF.CLASS_HOTS = {
+    PRIEST  = { 139, 17, 6346, 1243, 14752 },
+    DRUID   = { 774, 8936, 1126, 467, 29166 },
+    PALADIN = { 1022, 6940, 1044, 19740, 19742, 20217 },
+    MAGE    = { 1459, 1008, 604, 130 },
+    SHAMAN  = { 546, 131 },
+    WARLOCK = { 5697, 132 },
+}
+GF.HOT_POSITIONS = { "TOPLEFT", "TOP", "TOPRIGHT", "LEFT", "CENTER", "RIGHT", "BOTTOMLEFT", "BOTTOM", "BOTTOMRIGHT" }
+GF.HOT_POS_TEXT = { TOPLEFT = "Oben links", TOP = "Oben Mitte", TOPRIGHT = "Oben rechts", LEFT = "Links",
+    CENTER = "Mitte", RIGHT = "Rechts", BOTTOMLEFT = "Unten links", BOTTOM = "Unten Mitte", BOTTOMRIGHT = "Unten rechts" }
+
+local function PlayerClass()
+    if not _G.UnitClass then return nil end
+    local _, c = _G.UnitClass("player")
+    c = K.Plain(c)
+    return type(c) == "string" and c or nil
+end
+
+-- Zauber eines Feldes: Nummer oder nil. -1 = Vorschlag der Klasse.
+function GF.HotSpell(i)
+    local v = tonumber(K.Get(KEY, "hot" .. i)) or 0
+    if v == -1 then
+        local list = GF.CLASS_HOTS[PlayerClass() or ""] or {}
+        return list[i]
+    end
+    return v > 0 and v or nil
+end
+
+-- Alle Raenge als Menge {[id] = true}; gleiche Tabelle fuer gleiche
+-- Nummer (der Baustein baut nur bei neuer Tabelle neu).
+local rankSets = {}
+function GF.RankSet(id)
+    if type(id) ~= "number" then return nil end
+    if rankSets[id] then return rankSets[id] end
+    local set = { [id] = true }
+    local T = WeintCodex.TrainerData
+    local class = PlayerClass()
+    if T and T.RankChain and class then
+        local chain = T.RankChain(class, id)
+        for _, x in ipairs(chain or {}) do set[x] = true end
+    end
+    -- Hoehere Raenge setzen beim Lehrer den vorigen voraus (Erneuerung
+    -- 139 -> 6074 -> 6075 ...). Gefolgt wird nur, wo der Name passt - sofern
+    -- der Client ihn nennt; ohne Namen jeder Zauber mit genau dieser einen
+    -- Voraussetzung.
+    if T and T.Spells and class then
+        local base = GF.SpellName(id)
+        local list = T.Spells(class)
+        local grew = true
+        while grew do
+            grew = false
+            for _, sp in ipairs(list) do
+                local req = sp.requiredIds
+                if not set[sp.id] and type(req) == "table" and #req == 1 and set[req[1]] then
+                    local n = GF.SpellName(sp.id)
+                    if (base == nil and n == nil) or (base ~= nil and n == base) then
+                        set[sp.id] = true
+                        grew = true
+                    end
+                end
+            end
+        end
+    end
+    rankSets[id] = set
+    return set
+end
+
+function GF.SpellName(id)
+    local cs = _G.C_Spell
+    if type(id) ~= "number" then return nil end
+    if cs and cs.GetSpellName then
+        local ok, n = pcall(cs.GetSpellName, id)
+        n = ok and K.Plain(n) or nil
+        if type(n) == "string" and n ~= "" then return n end
+    elseif _G.GetSpellInfo then
+        local ok, n = pcall(_G.GetSpellInfo, id)
+        n = ok and K.Plain(n) or nil
+        if type(n) == "string" and n ~= "" then return n end
+    end
+    return nil
+end
+
+-- Auswahl fuer ein Feld: leer, Vorschlag, die Zauber der Klasse.
+function GF.HotItems(i)
+    local items = { { value = 0, text = "Leer" } }
+    local list = GF.CLASS_HOTS[PlayerClass() or ""] or {}
+    if list[i] then
+        items[#items + 1] = { value = -1, text = "Vorschlag: " .. (GF.SpellName(list[i]) or ("Zauber " .. list[i])) }
+    end
+    for _, id in ipairs(list) do
+        items[#items + 1] = { value = id, text = GF.SpellName(id) or ("Zauber " .. id) }
+    end
+    return items
+end
+
+function GF.PosItems()
+    local items = {}
+    for _, p in ipairs(GF.HOT_POSITIONS) do items[#items + 1] = { value = p, text = GF.HOT_POS_TEXT[p] } end
+    return items
+end
 
 local function Opt(k) return K.Get(KEY, k) end
 
@@ -202,6 +329,34 @@ function Btn:Layout(w, h)
     c.debuffs:ClearAllPoints()
     c.debuffs:SetPoint("BOTTOMRIGHT", c, "BOTTOMRIGHT", -2, ph + 3)
     c.debuffs:SetShown(Opt("debuffs"))
+    -- HoT-Felder: angelegt beim ersten Bedarf, je Feld ein Container.
+    c.wcHots = _G.rawget(c, "wcHots") or {}
+    local hs = Opt("hotSize") or 14
+    for i = 1, 4 do
+        local id = Opt("hots") and GF.HotSpell(i) or nil
+        local o = c.wcHots[i]
+        if id then
+            local opts = { filter = "HELPFUL|PLAYER", max = 1, size = hs, spacing = 0, anchor = "TOPLEFT",
+                growth = "RIGHT", growthV = "DOWN", perRow = 1, spells = GF.RankSet(id), timer = Opt("hotTimer") }
+            if not o then
+                o = WeintCodex.UIAuras.Create(c.hotHost, opts)
+                c.wcHots[i] = o
+                o:SetUnit(self._wcUnit)
+            else
+                o:ApplyLayout(opts)
+            end
+            local pos = Opt("hot" .. i .. "Pos") or "CENTER"
+            local inset = pos:find("LEFT") and 2 or (pos:find("RIGHT") and -2 or 0)
+            local dy = pos:find("TOP") and -2 or (pos:find("BOTTOM") and (ph + 3) or 0)
+            o:ClearAllPoints()
+            o:SetPoint(pos, c, pos, inset, dy)
+            o:SetShown(true)
+        elseif o then
+            o:SetShown(false)
+        end
+    end
+    if _G.rawget(c, "ring") then c.ring:SetShown(Opt("dispelRing") and true or false) end
+
     if c.buffs then
         c.buffs:ApplyLayout({ filter = "HELPFUL", max = Opt("buffMax"), size = Opt("buffSize"), spacing = 1,
             anchor = "BOTTOMLEFT", growth = "RIGHT", growthV = "UP", perRow = Opt("buffMax") })
@@ -459,6 +614,11 @@ local function Style(b)
     local fc = WeintCodex.GameColors.groupHitFlash
     c.flash:SetColorTexture(fc[1], fc[2], fc[3], fc[4])
     c.flash:SetShown(false)
+    -- HoT-Felder ueber allem anderen im Knopf (Layout legt sie an).
+    c.hotHost = CreateFrame("Frame", nil, c)
+    c.hotHost:SetAllPoints(c)
+    c.hotHost:SetFrameLevel((host:GetFrameLevel() or 1) + 2)
+    if not b._wcTest then c.ring = WeintCodex.UIAuras.DispelRing(c) end
     c.debuffs = WeintCodex.UIAuras.Create(host, { filter = "HARMFUL|RAID", max = 3, size = 16,
         spacing = 1, anchor = "BOTTOMRIGHT", growth = "LEFT", growthV = "UP", perRow = 3 })
     c.buffs = WeintCodex.UIAuras.Create(host, { filter = "HELPFUL", max = 4, size = 14,
@@ -474,6 +634,8 @@ local function Style(b)
         Remap()
         self._wc.debuffs:SetUnit(value)
         if self._wc.buffs then self._wc.buffs:SetUnit(value) end
+        for _, o in pairs(_G.rawget(self._wc, "wcHots") or {}) do o:SetUnit(value) end
+        if _G.rawget(self._wc, "ring") then pcall(self._wc.ring.SetUnit, self._wc.ring, value or "none") end
         self:Refresh()
     end)
     b:HookScript("OnShow", function(self) self:Refresh() self:UpdateRange() end)
@@ -525,8 +687,46 @@ end
 -- stehen: der Client liest "point" beim Anordnen ohne Rueckfall, und ohne
 -- das Attribut bricht er in SecureGroupHeaders.lua ab (so geschehen in
 -- 6.0.0.3 - die Gruppenrahmen kamen nie zustande).
+-- Sortierung (1.0.6.20). Nur Attribute des Kopfrahmens - kein Schnipsel.
+GF.SORT_TEXT = { group = "Nach Gruppe", role = "Nach Rolle (Tank, Heiler, Schaden)", class = "Nach Klasse", name = "Nach Name" }
+GF.CLASS_ORDER = "WARRIOR,PALADIN,PRIEST,DRUID,SHAMAN,MAGE,WARLOCK,HUNTER,ROGUE"
+function GF.SortAttributes(kind, h)
+    if kind == "tank" then
+        h:SetAttribute("groupBy", nil)
+        h:SetAttribute("sortMethod", "NAME")
+        return
+    end
+    local mode = Opt(kind .. "Sort") or "group"
+    if mode == "role" then
+        h:SetAttribute("groupBy", "ASSIGNEDROLE")
+        h:SetAttribute("groupingOrder", "TANK,HEALER,DAMAGER,NONE")
+        h:SetAttribute("sortMethod", "NAME")
+    elseif mode == "class" then
+        h:SetAttribute("groupBy", "CLASS")
+        h:SetAttribute("groupingOrder", GF.CLASS_ORDER)
+        h:SetAttribute("sortMethod", "NAME")
+    elseif mode == "name" then
+        h:SetAttribute("groupBy", nil)
+        h:SetAttribute("sortMethod", "NAME")
+    elseif kind == "raid" then
+        h:SetAttribute("groupBy", "GROUP")
+        h:SetAttribute("groupingOrder", "1,2,3,4,5,6,7,8")
+        h:SetAttribute("sortMethod", "INDEX")
+    else
+        h:SetAttribute("groupBy", nil)
+        h:SetAttribute("sortMethod", "INDEX")
+    end
+end
+
 local function LayoutAttributes(kind, h)
+    GF.SortAttributes(kind, h)
     local sp = Opt(kind .. "Spacing")
+    if kind == "tank" then
+        h:SetAttribute("point", "TOP")
+        h:SetAttribute("xOffset", 0)
+        h:SetAttribute("yOffset", -sp)
+        return
+    end
     if kind == "raid" then
         -- Untereinander (ab Werk): je Gruppe eine Spalte. Nebeneinander:
         -- je Gruppe eine Zeile (6.27.2.0).
@@ -557,7 +757,9 @@ local function Configure(kind)
         b:Refresh()
     end
     LayoutAttributes(kind, h)
-    if kind == "raid" and Opt("raidHorizontal") then
+    if kind == "tank" then
+        hd.anchor:SetSize(w, 5 * ht + 4 * sp)
+    elseif kind == "raid" and Opt("raidHorizontal") then
         hd.anchor:SetSize(5 * w + 4 * sp, 8 * ht + 7 * sp)
     elseif kind == "raid" then
         hd.anchor:SetSize(8 * w + 7 * sp, 5 * ht + 4 * sp)
@@ -572,13 +774,21 @@ end
 
 local function CreateHeader(kind)
     local isRaid = (kind == "raid")
-    local name = isRaid and "WeintCodexRaidHeader" or "WeintCodexPartyHeader"
+    local isTank = (kind == "tank")
+    local name = isTank and "WeintCodexTankHeader" or (isRaid and "WeintCodexRaidHeader" or "WeintCodexPartyHeader")
     local h = CreateFrame("Frame", name, UIParent, "SecureGroupHeaderTemplate")
     h:SetAttribute("template", "SecureUnitButtonTemplate")
     h:SetAttribute("templateType", "Button")
     h:SetAttribute("sortMethod", "INDEX")
     local max
-    if isRaid then
+    if isTank then
+        -- Alle mit der Rolle Tank, in Gruppe und Schlachtzug.
+        h:SetAttribute("showRaid", true)
+        h:SetAttribute("showParty", true)
+        h:SetAttribute("showPlayer", true)
+        h:SetAttribute("roleFilter", "TANK")
+        max = 5
+    elseif isRaid then
         h:SetAttribute("showRaid", true)
         h:SetAttribute("groupBy", "GROUP")
         h:SetAttribute("groupingOrder", "1,2,3,4,5,6,7,8")
@@ -605,15 +815,15 @@ local function CreateHeader(kind)
     anchor:SetSize(100, 100)
     anchor.WCShowForUnlock = function() end
     headers[kind] = { header = h, anchor = anchor, max = max }
-    K.RegisterMover(anchor, kind == "raid" and "gf_raid" or "gf_party",
-        isRaid and "Schlachtzug" or "Gruppe",
-        K.Layout(isRaid and "gf_raid" or "gf_party"), { secure = true })
+    local mkey = "gf_" .. kind
+    K.RegisterMover(anchor, mkey, isTank and "Tanks" or (isRaid and "Schlachtzug" or "Gruppe"),
+        K.Layout(mkey), { secure = true })
 
     Configure(kind)
 
     if _G.RegisterStateDriver then
-        _G.RegisterStateDriver(h, "visibility", isRaid and "[group:raid] show; hide"
-            or "[group:party,nogroup:raid] show; hide")
+        _G.RegisterStateDriver(h, "visibility", isTank and "[group] show; hide"
+            or (isRaid and "[group:raid] show; hide" or "[group:party,nogroup:raid] show; hide"))
     end
 end
 
@@ -648,25 +858,31 @@ local function TestButton(i)
     return b
 end
 
-function GF.ShowTest(on)
-    local hd = headers.party
-    for i = 1, #TEST_PARTY do
-        local b = testButtons[i]
-        if b then b:Hide() end
-    end
+-- n (1.0.6.20, /wcui gruppentest 5|10|20|40): so viele Beispielspieler,
+-- ab sechs im Schlachtzugsrahmen (je fuenf eine Gruppe).
+GF.testCount = 5
+function GF.ShowTest(on, n)
+    if n then GF.testCount = math.max(1, math.min(40, math.floor(n))) end
+    for _, b in pairs(testButtons) do b:Hide() end
+    n = GF.testCount
+    local kind = (n > 5 and headers.raid) and "raid" or "party"
+    local hd = headers[kind]
     if not on or not hd or (hd.header.IsVisible and hd.header:IsVisible()) then return end
-    local w, ht, sp = Opt("partyWidth"), Opt("partyHeight"), Opt("partySpacing")
-    local horiz = Opt("partyHorizontal")
-    for i, t in ipairs(TEST_PARTY) do
+    local w, ht, sp = Opt(kind .. "Width"), Opt(kind .. "Height"), Opt(kind .. "Spacing")
+    local horiz = Opt(kind .. "Horizontal")
+    for i = 1, n do
+        local t = TEST_PARTY[(i - 1) % #TEST_PARTY + 1]
         local b = TestButton(i)
         local c = b._wc
         b:SetSize(w, ht)
         b:Layout(w, ht)
         b:ClearAllPoints()
+        local slot, grp = (i - 1) % 5, math.floor((i - 1) / 5)
+        if kind == "party" then slot, grp = i - 1, 0 end
         if horiz then
-            b:SetPoint("TOPLEFT", hd.anchor, "TOPLEFT", (i - 1) * (w + sp), 0)
+            b:SetPoint("TOPLEFT", hd.anchor, "TOPLEFT", slot * (w + sp), -grp * (ht + sp))
         else
-            b:SetPoint("TOPLEFT", hd.anchor, "TOPLEFT", 0, -(i - 1) * (ht + sp))
+            b:SetPoint("TOPLEFT", hd.anchor, "TOPLEFT", grp * (w + sp), -slot * (ht + sp))
         end
         c.health:SetMinMaxValues(0, 1)
         c.health:SetValue(t.dead and 0 or t.hp)
@@ -681,7 +897,7 @@ function GF.ShowTest(on)
         c.power:SetValue(t.power or 0)
         local pc = t.ptoken and _G.PowerBarColor and _G.PowerBarColor[t.ptoken]
         if type(pc) == "table" and pc.r then K.PaintBar(c.power, pc.r, pc.g, pc.b) end
-        c.name:SetText(t.name)
+        c.name:SetText(n > 5 and (t.name .. " " .. i) or t.name)
         for _, pair in ipairs({ { c.heal, "healPrediction", t.heal }, { c.absorb, "absorbs", t.absorb } }) do
             local bar, key, v = pair[1], pair[2], pair[3]
             if v and Opt(key) then
@@ -741,11 +957,18 @@ local PART_EVENTS = {
 -- Gruppe: alle Knoepfe einrichten (wer schon eingerichtet ist, bleibt
 -- unberuehrt). Einen Takt spaeter, damit der Kopfrahmen zuerst dran war;
 -- im Kampf erst danach.
+-- Klickzauber auf neue Knoepfe (auch die Seitentasten beim Ueberfahren).
+function GF.ApplyClicks()
+    local CC = WeintCodex.UIClickCast
+    if CC and CC.Apply and not K.InCombat() then pcall(CC.Apply) end
+end
+
 local function RestyleLater()
     local function run()
         K.AfterCombat(function()
             for kind in pairs(headers) do Configure(kind) end
             Remap()
+            GF.ApplyClicks()
         end)
     end
     if _G.C_Timer and _G.C_Timer.After then _G.C_Timer.After(0, run) else run() end
@@ -846,7 +1069,9 @@ local function Enable()
             K.HideBlizzard("CompactRaidFrameContainer")
             K.HideBlizzard("CompactRaidFrameManager")
         end
+        if Opt("tankEnabled") then CreateHeader("tank") end
         Remap()
+        GF.ApplyClicks()
     end)
     for e in pairs(UNIT_EVENTS) do pcall(events.RegisterEvent, events, e) end
     for e in pairs(PART_EVENTS) do pcall(events.RegisterEvent, events, e) end
@@ -879,6 +1104,7 @@ local function OnSetting(key)
     K.AfterCombat(function()
         for kind in pairs(headers) do Configure(kind) end
         GF.ApplyGameOrientation(key)
+        GF.ApplyClicks()
     end)
 end
 
@@ -891,7 +1117,7 @@ local function px(v) return string.format("%d px", v) end
 K.Register({
     key = KEY, group = "ui", order = 25,
     title = "Gruppenrahmen",
-    description = "Gruppe und Schlachtzug im WeintCodex-Stil: Rahmen des Spiels mit HoTs, Buffs, Schilden und Debuffs auch im Kampf – oder eigene Kacheln. Klickzauber: Komfort.",
+    description = "Eigene Gruppen- und Schlachtzugsrahmen: HoT-Felder, Bannring, Sortierung, Tanks für sich, Klickzauber auf allen Maustasten.",
     defaults = defaults,
     Enable = Enable,
     OnSetting = OnSetting,
@@ -899,9 +1125,9 @@ K.Register({
         { key = "allgemein", label = "Allgemein", build = function(B)
             B:Section("Welche Rahmen")
             B:Row({ type = "dropdown", label = "Rahmen", key = "source", reload = true, items = {
-                        { value = "game", text = "Des Spiels im WeintCodex-Stil" },
-                        { value = "own",  text = "Eigene Kacheln" } },
-                    description = "Nur die Rahmen des Spiels zeigen HoTs, Buffs, Schilde und Debuffs auch im Kampf – Forever gibt sie Addons dort nicht heraus. Lage und Größe dann im Bearbeitungsmodus des Spiels." },
+                        { value = "own",  text = "Eigene Rahmen (empfohlen)" },
+                        { value = "game", text = "Des Spiels im WeintCodex-Stil" } },
+                    description = "Eigene Rahmen: HoT-Felder, Bannring, Sortierung, Tankrahmen und Klickzauber auf allen Maustasten. Die Rahmen des Spiels bleiben als Rückweg." },
                   { type = "empty" })
             B:Row({ type = "button", label = "Rahmen des Spiels", text = "Einrichten",
                     tooltip = "Legt das Layout „WeintCodex“ im Bearbeitungsmodus an: schlachtzugsartige Gruppenrahmen, ohne Blizzards Linien, an den WeintCodex-Plätzen. Danach neu laden. Auch mit /wcui einrichten.",
@@ -968,6 +1194,23 @@ K.Register({
                   { type = "toggle", label = "Bereitschaftscheck", key = "readyCheck",
                     description = "Haken, Kreuz oder „?“ in der Mitte; das Ergebnis bleibt ein paar Sekunden stehen." })
         end },
+        { key = "hots", label = "HoTs & Bannen", build = function(B)
+            local off = function() return not K.Get(KEY, "hots") end
+            B:Section("HoT-Felder", "Bis zu vier eigene Zauber je Rahmen, jeder an seinem Platz – das Spiel zeigt sie, solange sie liegen, auch im Kampf. Alle Ränge eines Zaubers zählen. Nur deine eigenen.")
+            B:Row({ type = "toggle", label = "HoT-Felder anzeigen", key = "hots" },
+                  { type = "toggle", label = "Restzeit als Zahl", key = "hotTimer", disabled = off })
+            for i = 1, 4 do
+                B:Row({ type = "dropdown", label = "Feld " .. i, key = "hot" .. i, items = GF.HotItems(i), disabled = off },
+                      { type = "dropdown", label = "Platz", key = "hot" .. i .. "Pos", items = GF.PosItems(), disabled = off })
+            end
+            B:Row({ type = "slider", label = "Größe", key = "hotSize", min = 8, max = 28, step = 1, format = px, disabled = off },
+                  { type = "empty" })
+            B:Section("Bannen")
+            B:Row({ type = "toggle", label = "Farbiger Ring bei bannbaren Debuffs", key = "dispelRing", reload = true,
+                    description = "Liegt auf jemandem, was du bannen kannst, bekommt sein Rahmen einen Ring in der Farbe der Art: Magie blau, Fluch lila, Krankheit braun, Gift grün. Auch im Kampf." },
+                  { type = "empty" })
+            B:Note("Vorschläge je Klasse sind Zauber aus Classic; kennt das Spiel einen nicht, steht dort „Zauber“ mit Nummer. Mit Rechtsklick-Zaubern auf die Rahmen: Komfort → Klickzauber.")
+        end },
         { key = "gruppe", label = "Gruppe", build = function(B)
             local off = function() return not K.Get(KEY, "partyEnabled") end
             B:Section("Gruppe (bis fünf)")
@@ -979,6 +1222,12 @@ K.Register({
             B:Row({ type = "slider", label = "Abstand", key = "partySpacing", min = 0, max = 20, step = 1, format = px, disabled = off },
                   { type = "toggle", label = "Nebeneinander", key = "partyHorizontal", disabled = off,
                     description = "Aus: untereinander (senkrecht). An: nebeneinander (waagerecht). Gilt auch für die Rahmen des Spiels." })
+            B:Row({ type = "dropdown", label = "Sortierung", key = "partySort", disabled = off, items = {
+                        { value = "group", text = "Wie die Gruppe" }, { value = "role", text = GF.SORT_TEXT.role },
+                        { value = "class", text = GF.SORT_TEXT.class }, { value = "name", text = GF.SORT_TEXT.name } } },
+                  { type = "button", label = "Vorschau", text = "Beispielgruppe zeigen",
+                    tooltip = "Fünf Beispielspieler, solange du allein bist. Wieder weg mit /wcui test.",
+                    onClick = function() GF.ShowTest(true, 5) end })
         end },
         { key = "raid", label = "Schlachtzug", build = function(B)
             local off = function() return not K.Get(KEY, "raidEnabled") end
@@ -991,6 +1240,17 @@ K.Register({
             B:Row({ type = "slider", label = "Abstand", key = "raidSpacing", min = 0, max = 12, step = 1, format = px, disabled = off },
                   { type = "toggle", label = "Gruppen nebeneinander", key = "raidHorizontal", disabled = off,
                     description = "Aus: jede Gruppe eine Spalte (senkrecht). An: jede Gruppe eine Zeile (waagerecht). Gilt auch für die Rahmen des Spiels." })
+            B:Row({ type = "dropdown", label = "Sortierung", key = "raidSort", disabled = off, items = {
+                        { value = "group", text = GF.SORT_TEXT.group }, { value = "role", text = GF.SORT_TEXT.role },
+                        { value = "class", text = GF.SORT_TEXT.class }, { value = "name", text = GF.SORT_TEXT.name } } },
+                  { type = "dropdown", label = "Vorschau", key = "_gfTest", items = {
+                        { value = 10, text = "10 Spieler" }, { value = 20, text = "20 Spieler" }, { value = 40, text = "40 Spieler" } },
+                    set = function(v) GF.ShowTest(true, v) end })
+            B:Section("Tanks für sich")
+            B:Row({ type = "toggle", label = "Eigener Rahmen für Tanks", key = "tankEnabled", reload = true,
+                    description = "Alle mit der Rolle Tank noch einmal in einem eigenen Rahmen – verschiebbar im Gestaltungsmodus. Nur, wem das Spiel die Rolle zugewiesen hat." },
+                  { type = "slider", label = "Breite der Tanks", key = "tankWidth", min = 60, max = 220, step = 1, format = px,
+                    disabled = function() return not K.Get(KEY, "tankEnabled") end })
             B:Note("Die Seitenleiste des Spiels (Zielmarkierungen, Bereitschaftscheck) verschwindet mit den Schlachtzugsrahmen. Markierungen gehen weiter über Tastenbelegung oder das Einheitenmenü.")
         end },
     },

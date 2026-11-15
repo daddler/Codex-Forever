@@ -9,6 +9,29 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.0.6.20] – 2026-11-15
+
+### Neu (nicht im Spiel bestätigt)
+- Gruppenrahmen 2.0 (Wunsch: „wie VuhDo oder VoidBox, mit Klickzaubern“):
+  `source` ab Werk `own` (die eigenen Rahmen); die Rahmen des Spiels bleiben
+  wählbar. Wer `game` ausdrücklich gewählt hatte, behält es.
+  - HoT-Felder (`hot1..4`, `hotNPos`, `hotSize`, `hotTimer`): je Feld ein
+    Container `HELPFUL|PLAYER` mit `includeSpellIDs` (alle Ränge:
+    `T.RankChain` und Lehrer-Voraussetzungen mit gleichem Namen,
+    `GF.RankSet`). Vorschläge je Klasse `GF.CLASS_HOTS` (Classic-Nummern).
+  - Bannring (`UIAuras.DispelRing`, `dispelRing`): Container `HARMFUL|RAID`,
+    vier Randstreifen, Farbe über eine Kurve des Spiels
+    (`GameColors.dispel*`).
+  - Sortierung (`partySort`/`raidSort`: Gruppe, Rolle, Klasse, Name) über
+    Attribute des Kopfrahmens; Tankrahmen (`tankEnabled`, `roleFilter TANK`,
+    Platz `gf_tank`).
+  - Vorschau `/wcui gruppentest N` (bis 40, ab 6 im Schlachtzugsrahmen).
+  - Klickzauber nach jedem Neuaufbau (`GF.ApplyClicks`), Seitentasten über
+    das Überfahren (1.0.6.18).
+  - Technik der Aurenbehälter mit Zauberfilter und des Bannrings nach
+    VoidBox (MIT, Copyright (c) 2026 VoiD911); eigener Code. Aus VuhDo
+    (keine Lizenz gefunden) nichts übernommen.
+
 ## [1.0.6.19] – 2026-11-15
 
 ### Behoben (nicht im Spiel bestätigt)

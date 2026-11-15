@@ -4822,3 +4822,27 @@ Nicht gemessen auf Forever:
 - ob die Beschreibungen der Zauber von Gegnern geladen sind.
 
 In allen drei Fällen fehlt die Angabe nur, falsch gezeigt wird nichts.
+
+## Gruppenrahmen 2.0 *(1.0.6.20, `ui/groupframes.lua`)*
+
+Ab Werk die eigenen Rahmen (`source = "own"`), die Rahmen des Spiels
+(`ui/gamegroup.lua`) bleiben als Rückweg. Grund: Klickzauber auf den Rahmen
+des Spiels waren nicht zu halten – Seitentasten kommen dort nie an (das
+Spiel liefert Klicks nur für Maustaste 1–5, gemessen 1.0.6.17), und Blizzard
+setzt die Klicks seiner Rahmen selbst.
+
+* **HoT-Felder:** vier Felder, je ein Zauber und ein Platz. Container des
+  Spiels mit Filter `HELPFUL|PLAYER` und `includeSpellIDs` – Lua liest keine
+  Aura, deshalb auch im Kampf. Alle Ränge: Rangketten aus `data/trainer.lua`
+  und Lehrer-Voraussetzungen mit gleichem Namen (`GF.RankSet`). `-1` =
+  Vorschlag der Klasse (`GF.CLASS_HOTS`, Classic-Nummern, Art `classic`).
+* **Bannring:** `UIAuras.DispelRing`, Container `HARMFUL|RAID` mit einem
+  unsichtbaren Knopf und vier Randstreifen, gefärbt vom Spiel über eine
+  Kurve (`GameColors.dispelMagic` usw.).
+* **Sortierung und Tanks:** nur Attribute der Kopfrahmen (`groupBy`,
+  `groupingOrder`, `sortMethod`, `roleFilter`), kein Schnipsel.
+* **Vorschau:** `/wcui gruppentest N`.
+* Technik nach VoidBox (MIT, VoiD911), eigener Code.
+
+Nicht im Spiel geprüft: ob die Container mit Zauberfilter auf Forever die
+HoTs im Kampf zeigen (VoidBox meldet es so).

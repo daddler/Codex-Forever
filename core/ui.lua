@@ -213,6 +213,12 @@ WeintCodex.Colors = C
 --------------------------------------------------
 
 WeintCodex.GameColors = {
+    -- 1.0.6.20: Bannring der Gruppenrahmen, Farbe je Bannart.
+    dispelMagic   = {0.200, 0.600, 1.000, 1.0},
+    dispelCurse   = {0.600, 0.200, 1.000, 1.0},
+    dispelDisease = {0.600, 0.400, 0.000, 1.0},
+    dispelPoison  = {0.000, 0.600, 0.100, 1.0},
+    dispelEnrage  = {1.000, 0.200, 0.000, 1.0},
     -- Gelb des Quest-„!“ im Spiel (Questgegenstand in den Taschen).
     questBang      = {1.000, 0.820, 0.000, 1.0},
     -- 1.0.5.9: Stufe nach Schwierigkeit, Farben wie im klassischen Spiel.
