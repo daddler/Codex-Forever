@@ -1267,7 +1267,9 @@ local function BuildMarker()
     local bs, beamH = QA.MARK_BADGE, QA.MARK_BEAM
     marker = CreateFrame("Frame", "WeintCodexQuestArrowMarker", UIParent)
     marker:SetSize(bs, bs + beamH)
-    marker:SetFrameStrata("LOW")
+    -- 1.0.7.0 (Vergleich mit Naowh): unter Minikarte, Leisten und Tracker -
+    -- die Marke des Spiels liegt ebenso ganz unten.
+    marker:SetFrameStrata("BACKGROUND")
     marker:EnableMouse(false)
     local a, d, bg = C.accentBright, C.accent or C.accentBright, C.bgPanel
     local M = K.MEDIA
@@ -1427,12 +1429,72 @@ function QA.MarkerText(d3, flat, units)
     return QA.FormatDistance(d, units)
 end
 
+-- 1.0.7.0 (Vergleich mit Naowh Forever, Verhalten nachgebaut): liegt das
+-- Ziel ausserhalb des Bildschirms, verschwand die Nadel. Jetzt laeuft ein
+-- Pfeil auf einem Oval um die Mitte (QA.EDGE_RING der Breite/Hoehe) in
+-- Richtung des Ziels - nicht am Rand, wo Minikarte, Tracker und Leisten
+-- sitzen. Die Richtung kommt vom Punkt, an den das Spiel seinen
+-- Navigationsrahmen am Rand festhaelt; WeintCodex rechnet nichts in die Welt.
+QA.EDGE_RING = 0.32
+-- Punkt auf dem Oval und Winkel (0 = oben, gegen den Uhrzeigersinn) fuer
+-- einen Punkt dx, dy vom Mittelpunkt. nil ohne Richtung.
+function QA.EdgePoint(dx, dy, w, h)
+    if type(dx) ~= "number" or type(dy) ~= "number" or (dx == 0 and dy == 0) then return nil end
+    local rx, ry = w * QA.EDGE_RING, h * QA.EDGE_RING
+    local a = math.atan2(dy, dx)
+    local x, y = rx * math.cos(a), ry * math.sin(a)
+    return x, y, a - math.pi / 2
+end
+local edge
+local function PlaceEdge(n, text)
+    if not (n and n.frame and n.frame.GetCenter and K.Get(KEY, "worldMarker")) then
+        if edge then edge:Hide() end
+        return false
+    end
+    local ok, fx, fy = pcall(n.frame.GetCenter, n.frame)
+    fx, fy = ok and K.Plain(fx), ok and K.Plain(fy)
+    local cx, cy = UIParent:GetCenter()
+    local fs = (n.frame.GetEffectiveScale and K.Plain(n.frame:GetEffectiveScale())) or 1
+    local us = UIParent:GetEffectiveScale()
+    if type(fx) ~= "number" or type(fy) ~= "number" or type(fs) ~= "number" then
+        if edge then edge:Hide() end
+        return false
+    end
+    local x, y, rot = QA.EdgePoint(fx * fs / us - cx, fy * fs / us - cy, UIParent:GetWidth(), UIParent:GetHeight())
+    if not x then if edge then edge:Hide() end return false end
+    if not edge then
+        edge = CreateFrame("Frame", "WeintCodexQuestArrowEdge", UIParent)
+        edge:SetSize(36, 36)
+        edge:SetFrameStrata("BACKGROUND")
+        edge:EnableMouse(false)
+        edge.arrow = edge:CreateTexture(nil, "ARTWORK")
+        edge.arrow:SetAllPoints(edge)
+        edge.arrow:SetTexture(K.MEDIA .. "arrow")
+        local a = C.accentBright
+        edge.arrow:SetVertexColor(a[1], a[2], a[3], 1)
+        edge.label = K.NewText(edge, 11)
+        edge.label:SetPoint("TOP", edge, "BOTTOM", 0, -2)
+        edge.label:SetShadowOffset(1, -1)
+    end
+    edge:ClearAllPoints()
+    edge:SetPoint("CENTER", UIParent, "CENTER", x, y)
+    edge.arrow:SetRotation(rot)
+    SetTxt(edge.label, text)
+    edge:SetAlpha(n.occluded and QA.MARK_HIDDEN or 0.9)
+    edge:Show()
+    return true
+end
+QA.PlaceEdge = PlaceEdge
+
 local function PlaceMarker(n, text, key)
     if not K.Get(KEY, "worldMarker") or not n or not n.frame or not n.onScreen then
         if marker then marker:Hide() end
         QA.markShown, QA.markTime = 0, nil
+        if n and n.frame and not n.onScreen and not n.inRange then PlaceEdge(n, text)
+        elseif edge then edge:Hide() end
         return false
     end
+    if edge then edge:Hide() end
     -- 6.73.3.0 (Beta-Test mit /wcui pfeil: "Wegpunkt gesetzt, verfolgt,
     -- auf dem Bildschirm ja" - und keine Marke zu sehen): bis hierher trat
     -- die eigene Marke zurueck, sobald SuperTrackedFrame des Spiels sichtbar
@@ -1808,6 +1870,7 @@ function QA.Update(force)
     if WeintCodex.UIRoute then WeintCodex.UIRoute.HideMinimap() end
     -- Die Zielmarke zeigt sich nur, wenn dieser Durchlauf sie setzt.
     if marker then marker:Hide() end
+    if edge then edge:Hide() end
     if not frame or frame._unlock then return end
     if not K.IsActive(KEY) then frame:Hide() return end
     if K.Get(KEY, "hideInCombat") and K.InCombat() then frame:Hide() return end
@@ -2167,7 +2230,31 @@ local function OnSmartEvent(event, questID, game)
     Refresh()
 end
 
+-- 1.0.7.0 (Vergleich mit Naowh Forever): klickt der Spieler auf der
+-- Weltkarte einen Wegpunkt, setzt das Spiel ihn, verfolgt ihn aber nicht -
+-- dann gibt es keine Navigation und keine Nadel. WeintCodex verfolgt ihn
+-- selbst: einen Takt spaeter, bei offener Karte erst nach dem Schliessen
+-- (sonst wird die Karte verunreinigt), nie im Kampf, nie den eigenen.
+function QA.TrackUserWaypoint()
+    if not K.Get(KEY, "worldMarker") or QA.PinBusy() then return false end
+    local cm, st = _G.C_Map, _G.C_SuperTrack
+    if not (cm and cm.HasUserWaypoint and st and st.SetSuperTrackedUserWaypoint and st.IsSuperTrackingUserWaypoint) then return false end
+    local function act()
+        if K.InCombat() then K.AfterCombat(act) return end
+        local okH, has = pcall(cm.HasUserWaypoint)
+        local okT, tracked = pcall(st.IsSuperTrackingUserWaypoint)
+        if not (okH and K.Bool(has, false)) or (okT and K.Bool(tracked, false)) then return end
+        K.QuietMap(st.SetSuperTrackedUserWaypoint, true)
+        QA.trackedUserPins = (QA.trackedUserPins or 0) + 1
+    end
+    if MapOpen() then AfterMap(act)
+    elseif _G.C_Timer and _G.C_Timer.After then _G.C_Timer.After(0, act)
+    else act() end
+    return true
+end
+
 local function OnEvent(_, event, questID)
+    if event == "USER_WAYPOINT_UPDATED" then QA.TrackUserWaypoint() end
     if REPLAN[event] then QA.PlanDirty() end
     local st = _G.C_SuperTrack
     local game = st and st.GetSuperTrackedQuestID and st.GetSuperTrackedQuestID()

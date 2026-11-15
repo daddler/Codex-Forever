@@ -28,6 +28,23 @@ Enthält auch die nie einzeln veröffentlichten 1.0.6.26 und 1.0.6.27.
   Grundzauber je Klasse, nur offene Werte), Co-Tank (`coTank`, Aurenbehälter
   auf dem anderen Tank). Plätze `gcd`, `cotank` in `ui/layout.lua`.
 
+- `ui/swingtimer.lua`: Swing-Timer aus `PLAYER_SWING` (Dauer, `Enum.PlayerSwingType`),
+  ohne das Ereignis aus, geheime Dauer = kein Balken; Schalter `swing`, Platz `swing`.
+- `ui/gearsets.lua`: Leiste der Sets aus `C_EquipmentSet` (im Kampf gemerkt bis
+  `PLAYER_REGEN_ENABLED`), „+“ legt ein Set an, Rechtsklick überschreiben/löschen;
+  Schmuckleiste aus zwei `SecureActionButtonTemplate` (Platz 13/14), Rechtsklick
+  außerhalb des Kampfes legt Schmuck aus den Taschen an. Schalter `gearBar`, `trinketBar`.
+- `ui/auctionsell.lua`: Verkaufsliste neben dem Auktionshaus (Wert aus
+  `AP.Lookup`, unbekannt = „Preis unbekannt“, `SetPostItem`), automatisch
+  unterbieten (1 Silber unter dem günstigsten fremden Angebot, ohne
+  `containsOwnerItem`); Preisfeld über Retail-Namen gesucht, ungemessen.
+- Lehrer: Abschnitt „Über Quests“ aus `data/trainer_quests.lua` (erzeugt von
+  `import_naowh_training.py`, 45 Zauber, `community`).
+- Questpfeil: Nadel außerhalb des Bildschirms als Pfeil auf einem Oval
+  (`QA.EdgePoint`, `QA.EDGE_RING`), Marke auf Schicht BACKGROUND, Wegpunkt der
+  Weltkarte wird verfolgt (`QA.TrackUserWaypoint`, nach dem Schließen der
+  Karte, nie im Kampf).
+
 ### Daten
 - Abgleich mit Naowh Forever 1.2.33 (`import_naowh.py`, `NF_VERSION`;
   `import_naowh_prof.py`): Beute u. a. Shaper's Terrace, +153 Questzeilen,

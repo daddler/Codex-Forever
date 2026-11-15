@@ -26431,6 +26431,21 @@ do
     Check(ok, "Auktionshaus: Verkaufsliste und Unterbieten" .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 1.0.7.0: Nadel am Rand (Oval statt Verschwinden) und Wegpunkt der Karte
+-- wird verfolgt.
+do
+    local ok, err = pcall(function()
+        local QA = WeintCodex.UIQuestArrow
+        local x, y, rot = QA.EdgePoint(0, 500, 1000, 800)
+        assert(math.abs(x) < 0.01 and math.abs(y - 800 * QA.EDGE_RING) < 0.01 and math.abs(rot) < 0.01, "Ziel oben falsch auf dem Oval")
+        local x2, _, rot2 = QA.EdgePoint(-300, 0, 1000, 800)
+        assert(math.abs(x2 + 1000 * QA.EDGE_RING) < 0.01 and math.abs(rot2 - math.pi / 2) < 0.01, "Ziel links falsch")
+        assert(QA.EdgePoint(0, 0, 1000, 800) == nil, "ohne Richtung trotzdem ein Pfeil")
+        assert(QA.PlaceEdge and QA.TrackUserWaypoint, "Rand oder Verfolgen fehlt")
+    end)
+    Check(ok, "Questpfeil: Nadel am Rand, Wegpunkt der Karte verfolgt" .. (ok and "" or (": " .. tostring(err))))
+end
+
 if failures == 0 then
     print("BESTANDEN")
     os.exit(0)
