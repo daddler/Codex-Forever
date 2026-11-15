@@ -62,6 +62,20 @@ Enthält auch die nie einzeln veröffentlichten 1.0.6.26 und 1.0.6.27.
   (erzeugt von `import_naowh_extra.lua`): Tooltip, gezählte eigene Fänge,
   `/wcui feldbuch`, `/wcui ruf`.
 
+- Lehrer: Preise vom Lehrer (`TRAINER_SHOW`, Zuordnung über Name und Rang,
+  je Charakter `trainerPrices`), Dämonenbücher des gerufenen Dämons
+  (`data/grimoires.lua`, `IsSpellKnown(id, true)`).
+- Weltkarte: Stadt-Pins (`mapTown`, `data/towns.lua`: Dienste, Briefkästen,
+  Klassenlehrer nur der eigenen Klasse), Farben `townPin`/`mailPin`.
+- `ui/qolextra.lua`, Komfortseite „Helfer“ (alles ab Werk aus): Fadenkreuz,
+  Mausring, Kampftimer, Heiler-Mana, `SpellQueueWindow` über `PF.SetCVar`,
+  Beute-Feed aus `CHAT_MSG_LOOT`, Schließkassetten (`data/lockboxes.lua`),
+  Flugpunkt-Erinnerung nach `TAXIMAP_OPENED`.
+- `ui/grouptools.lua`: Instanz-Tracker (kontoweit, 10 je Stunde laut
+  Gemeinschaft, Kopie über zoneUID), Gruppe betrachten `/wcui inspekt`.
+- Bereits vorhanden, nicht doppelt gebaut: Haltbarkeit, „Begleiter fehlt“,
+  Sperren, Gebietsübergänge, Laufwege, Makros, Aktionsleisten.
+
 ### Daten
 - Abgleich mit Naowh Forever 1.2.33 (`import_naowh.py`, `NF_VERSION`;
   `import_naowh_prof.py`): Beute u. a. Shaper's Terrace, +153 Questzeilen,
