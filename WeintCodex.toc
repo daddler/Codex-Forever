@@ -162,6 +162,8 @@ data/nav_blocked.lua
 # Questhilfe: Quests, Geber, Ziele (6.30.0.0, erzeugt); gelesen von ui/questhelper.lua.
 data/questdb.lua
 data/attunements.lua
+data/fieldjournal.lua
+data/reprewards.lua
 data/questevents.lua
 # Stufen und Sammelberufe je Gebiet (6.26.5.0); gelesen von ui/zoneinfo.lua.
 data/zoneinfo.lua
@@ -322,6 +324,7 @@ ui/rares.lua
 ui/auctionprices.lua
 ui/shopping.lua
 ui/auctionsell.lua
+ui/fieldjournal.lua
 ui/inventory.lua
 # Auktionspreise von anderen Spielern (6.18.0.0): Gilde, ForeverGuide nur zuhoeren.
 ui/auctionshare.lua

@@ -26547,6 +26547,27 @@ do
     Check(ok, "Einstimmungen: Ketten, Stand, Geber" .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 1.0.7.0: Feldbuch und Ruf-Belohnungen - Tooltipzeilen, nur Eigenes gezaehlt.
+do
+    local ok, err = pcall(function()
+        local FJ = WeintCodex.UIFieldJournal
+        local fish = WeintCodex.FieldJournalData.fish[1]
+        assert(FJ.Of(fish.item) and FJ.Of(fish.item).kind == "fish", "Fisch nicht erkannt")
+        assert(FJ.Lines(fish.item), "Fisch ohne Tooltipzeile")
+        local before = FJ.Caught(fish.item) or 0
+        assert(FJ.Count(fish.item, 2) and FJ.Caught(fish.item) == before + 2, "Fang nicht gezählt")
+        assert(FJ.Count(2589, 1) == false, "fremder Gegenstand gezählt")
+        local any
+        for _, f in pairs(WeintCodex.RepRewardsData.factions) do any = f.tiers[1][2][1] break end
+        local rw = FJ.RewardOf(any)
+        assert(rw and rw.standing, "Ruf-Belohnung nicht erkannt")
+        local lines = FJ.Lines(any)
+        assert(lines and lines[#lines][1]:find("^Ruf: "), "Ruf-Belohnung ohne Tooltipzeile")
+        assert(#FJ.Report() > 10 and #FJ.RepReport() > 10, "Berichte leer")
+    end)
+    Check(ok, "Feldbuch und Ruf-Belohnungen" .. (ok and "" or (": " .. tostring(err))))
+end
+
 if failures == 0 then
     print("BESTANDEN")
     os.exit(0)

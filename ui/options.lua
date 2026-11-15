@@ -1893,6 +1893,16 @@ SlashCmdList["WEINTCODEXUI"] = function(msg)
         O.Show("comfort", O.PageIndex("comfort", "sammeln"))
         return
     end
+    if msg == "feldbuch" or msg == "field" then
+        local FJ = WeintCodex.UIFieldJournal
+        if FJ and FJ.Report then K.ShowReport("Feldbuch", FJ.Report()) end
+        return
+    end
+    if msg == "ruf" or msg == "reputation" then
+        local FJ = WeintCodex.UIFieldJournal
+        if FJ and FJ.RepReport then K.ShowReport("Ruf-Belohnungen", FJ.RepReport()) end
+        return
+    end
     if msg == "einstimmung" or msg == "einstimmungen" or msg == "attune" then
         local AT = WeintCodex.UIAttunements
         if AT and AT.Print then AT.Print() end
