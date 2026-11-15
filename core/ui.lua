@@ -220,6 +220,15 @@ WeintCodex.GameColors = {
     gfGone        = {0.090, 0.090, 0.100, 1.0},
     gfGoneText    = {0.500, 0.500, 0.520, 1.0},
     gfHover       = {1.000, 1.000, 1.000, 0.08},
+    -- 1.0.6.22 Aussehen "plastisch": nur [1] zaehlt bei Low/High (Faktor
+    -- der Klassenfarbe unten/oben), Glanz und Schatten mit Deckkraft.
+    gfReliefLow   = {0.450, 0, 0, 1},
+    gfReliefHigh  = {0.900, 0, 0, 1},
+    gfReliefBack  = {0.060, 0.062, 0.072, 1.0},
+    gfGloss       = {1.000, 1.000, 1.000, 0.22},
+    gfShade       = {0.000, 0.000, 0.000, 0.35},
+    gfBevelHi     = {1.000, 1.000, 1.000, 0.30},
+    gfBevelLo     = {0.000, 0.000, 0.000, 0.60},
     -- 1.0.6.20: Bannring der Gruppenrahmen, Farbe je Bannart.
     dispelMagic   = {0.200, 0.600, 1.000, 1.0},
     dispelCurse   = {0.600, 0.200, 1.000, 1.0},

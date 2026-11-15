@@ -83,7 +83,9 @@ local defaults = {
     -- 1.0.6.21 ("muss schoener"): Aussehen. "dark" = dunkler Balken, das
     -- fehlende Leben in Klassenfarbe, Name in Klassenfarbe (wie VuhDo/Cell);
     -- "class" = Balken in Klassenfarbe, Name weiss.
-    look        = "dark",
+    -- 1.0.6.22 ("mehr dreidimensional, mehr Pepp"): "relief" = Balken in
+    -- Klassenfarbe mit Verlauf, Glanz oben, Schatten unten, Kanten.
+    look        = "relief",
     targetRing  = true,
     hots        = true,
     hotSize     = 14,
@@ -240,8 +242,22 @@ local function HealthColor(unit)
 end
 
 -- Farben eines Knopfs nach dem Aussehen. gone: tot oder offline.
+local function Grad(tex, r1, g1, b1, a1, r2, g2, b2, a2)
+    -- Unten nach oben. Ohne Verlauf im Client: die obere Farbe flach.
+    if tex.SetGradient and _G.CreateColor then
+        tex:SetColorTexture(1, 1, 1, 1)
+        tex:SetGradient("VERTICAL", _G.CreateColor(r1, g1, b1, a1), _G.CreateColor(r2, g2, b2, a2))
+    else
+        tex:SetColorTexture(r2, g2, b2, a2)
+    end
+end
+GF._Grad = Grad
+
+-- Farben eines Knopfs nach dem Aussehen. gone: tot oder offline.
 function GF.Paint(c, r, g, b, gone)
     local G = WeintCodex.GameColors
+    local look = Opt("look")
+    if c.relief then c.relief:SetShown(look ~= "dark" or gone) end
     if gone then
         K.PaintBar(c.health, G.gfGone[1], G.gfGone[2], G.gfGone[3])
         c.bg:SetColorTexture(G.gfGone[1], G.gfGone[2], G.gfGone[3], 1)
@@ -249,7 +265,30 @@ function GF.Paint(c, r, g, b, gone)
         c.status:SetTextColor(G.gfGoneText[1], G.gfGoneText[2], G.gfGoneText[3])
         return
     end
-    if Opt("look") == "class" then
+    if look == "relief" then
+        -- Der Balken selbst traegt den Verlauf; PaintBar darf danach nicht
+        -- glauben, seine Farbe stehe noch.
+        local tex = c.health:GetStatusBarTexture()
+        local lo, hi = G.gfReliefLow[1], G.gfReliefHigh[1]
+        if tex and c._wcRel ~= r + g * 7 + b * 49 then
+            c._wcRel = r + g * 7 + b * 49
+            c.health._wcR = nil
+            if tex.SetGradient and _G.CreateColor then
+                tex:SetVertexColor(1, 1, 1, 1)
+                tex:SetGradient("VERTICAL", _G.CreateColor(r * lo, g * lo, b * lo, 1),
+                    _G.CreateColor(r * hi, g * hi, b * hi, 1))
+            else
+                tex:SetVertexColor(r * hi, g * hi, b * hi, 1)
+            end
+        end
+        local d = G.gfReliefBack
+        Grad(c.bg, d[1], d[2], d[3], 1, d[1] * 1.8, d[2] * 1.8, d[3] * 1.8, 1)
+        c.name:SetTextColor(1, 1, 1)
+        c.status:SetTextColor(0.95, 0.95, 0.95)
+        return
+    end
+    c._wcRel = nil
+    if look == "class" then
         K.PaintBar(c.health, r * 0.85, g * 0.85, b * 0.85)
         local bg = K.GetColor(KEY, "bgColor")
         c.bg:SetColorTexture(bg.r, bg.g, bg.b, 1)
@@ -262,6 +301,35 @@ function GF.Paint(c, r, g, b, gone)
         c.name:SetTextColor(r, g, b)
         c.status:SetTextColor(0.78, 0.78, 0.80)
     end
+end
+
+-- Plastik: Glanz in der oberen Haelfte, Schatten unten, helle Oberkante,
+-- dunkle Unterkante. Liegt ueber dem Leben, unter Text und Symbolen.
+local function Relief(c, host)
+    local G = WeintCodex.GameColors
+    local f = CreateFrame("Frame", nil, c)
+    f:SetAllPoints(c)
+    f:SetFrameLevel((host:GetFrameLevel() or 2) - 1)
+    local gl, sh, hi, lo = G.gfGloss, G.gfShade, G.gfBevelHi, G.gfBevelLo
+    local gloss = f:CreateTexture(nil, "ARTWORK")
+    gloss:SetPoint("TOPLEFT", f, "TOPLEFT", 1, -1)
+    gloss:SetPoint("BOTTOMRIGHT", f, "RIGHT", -1, 0)
+    Grad(gloss, gl[1], gl[2], gl[3], 0.02, gl[1], gl[2], gl[3], gl[4])
+    local shade = f:CreateTexture(nil, "ARTWORK")
+    shade:SetPoint("TOPLEFT", f, "LEFT", 1, -2)
+    shade:SetPoint("BOTTOMRIGHT", f, "BOTTOMRIGHT", -1, 1)
+    Grad(shade, sh[1], sh[2], sh[3], sh[4], sh[1], sh[2], sh[3], 0)
+    local top = f:CreateTexture(nil, "OVERLAY")
+    top:SetPoint("TOPLEFT", f, "TOPLEFT", 1, -1)
+    top:SetPoint("TOPRIGHT", f, "TOPRIGHT", -1, -1)
+    top:SetHeight(1)
+    top:SetColorTexture(hi[1], hi[2], hi[3], hi[4])
+    local bot = f:CreateTexture(nil, "OVERLAY")
+    bot:SetPoint("BOTTOMLEFT", f, "BOTTOMLEFT", 1, 1)
+    bot:SetPoint("BOTTOMRIGHT", f, "BOTTOMRIGHT", -1, 1)
+    bot:SetHeight(1)
+    bot:SetColorTexture(lo[1], lo[2], lo[3], lo[4])
+    return f
 end
 
 local function StatusText(fs, unit)
@@ -622,6 +690,7 @@ local function Style(b)
     c.targetRing = K.Border(host, 1, tc[1], tc[2], tc[3], 0.9, "OVERLAY")
     c.targetRing:SetShown(false)
     local hv = WeintCodex.GameColors.gfHover
+    c.relief = Relief(c, host)
     c.hover = host:CreateTexture(nil, "OVERLAY", nil, -2)
     c.hover:SetAllPoints(c)
     c.hover:SetColorTexture(hv[1], hv[2], hv[3], hv[4])
@@ -1210,9 +1279,10 @@ K.Register({
             B:Note("Die folgenden Einstellungen gelten für die eigenen Kacheln; bei den Rahmen des Spiels wirken Rand, Farben und Schriftgröße.")
             B:Section("Farben und Rahmen")
             B:Row({ type = "dropdown", label = "Aussehen", key = "look", items = {
+                        { value = "relief", text = "Plastisch – Klassenfarbe mit Glanz und Tiefe" },
                         { value = "dark",  text = "Dunkel – fehlendes Leben in Klassenfarbe" },
                         { value = "class", text = "Klassenfarbe – Balken farbig" } },
-                    description = "Dunkel: wer Leben verliert, leuchtet in seiner Klassenfarbe auf – gut für Heiler. Klassenfarbe: der klassische Balken." },
+                    description = "Plastisch: gewölbte Balken mit Glanz. Dunkel: wer Leben verliert, leuchtet in seiner Klassenfarbe auf – gut für Heiler. Klassenfarbe: der klassische Balken." },
                   { type = "toggle", label = "Rand um dein Ziel", key = "targetRing" })
             B:Row({ type = "toggle", label = "Klassenfarbe", key = "classColor" },
                   { type = "toggle", label = "Roter Rand bei Aggro", key = "aggroBorder" })
