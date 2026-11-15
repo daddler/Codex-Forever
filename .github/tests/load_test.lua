@@ -26470,6 +26470,33 @@ do
     Check(ok, "Verbrauchsleiste" .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 1.0.7.0: kleine Helfer - Druiden-Mana nur in Baer/Katze, Tarnung nur
+-- ausserhalb des Kampfes und nicht beim Reiten.
+do
+    local ok, err = pcall(function()
+        local SH, K = WeintCodex.UISmallHelpers, WeintCodex.UIKit
+        local G = _G
+        local oc, of, os_, om, oi = G.UnitClass, G.GetShapeshiftFormID, G.IsStealthed, G.IsMounted, K.InCombat
+        G.UnitClass = function() return "Druide", "DRUID" end
+        G.GetShapeshiftFormID = function() return 5 end
+        assert(SH.ManaShown(), "Bärengestalt ohne Mana-Leiste")
+        G.GetShapeshiftFormID = function() return nil end
+        assert(not SH.ManaShown(), "Normalgestalt mit Mana-Leiste")
+        G.UnitClass = function() return "Schurke", "ROGUE" end
+        G.IsStealthed = function() return false end
+        G.IsMounted = function() return false end
+        K.InCombat = function() return false end
+        assert(SH.StealthMissing(), "ungetarnter Schurke nicht erinnert")
+        G.IsMounted = function() return true end
+        assert(not SH.StealthMissing(), "beim Reiten erinnert")
+        G.IsMounted = function() return false end
+        K.InCombat = function() return true end
+        assert(not SH.StealthMissing(), "im Kampf erinnert")
+        G.UnitClass, G.GetShapeshiftFormID, G.IsStealthed, G.IsMounted, K.InCombat = oc, of, os_, om, oi
+    end)
+    Check(ok, "Kleine Helfer: Druiden-Mana, Tarnung" .. (ok and "" or (": " .. tostring(err))))
+end
+
 if failures == 0 then
     print("BESTANDEN")
     os.exit(0)
