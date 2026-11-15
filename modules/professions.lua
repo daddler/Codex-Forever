@@ -471,10 +471,20 @@ function PRO.Trainers(key, faction, max)
     local here, pc, px, py = PlayerPos()
     local out = {}
     local list = {}
-    for _, t in ipairs(P and P.TRAINERS and P.TRAINERS[key] or {}) do list[#list + 1] = t end
-    -- 1.0.5.54: Lehrer, die nur Naowh Forever kennt - ohne bekannten Rang.
-    for _, t in ipairs(P and P.NF_TRAINERS and P.NF_TRAINERS[key] or {}) do
-        list[#list + 1] = { t[1], t[2], t[4], t[5], t[6], t[3] or nil, nil }
+    -- 1.0.7.0 (Wunsch: "welcher Lehrer ab welchem Skilllevel - das muss
+    -- richtig funktionieren"): die Raenge der Lehrer auf Forever
+    -- (data/proftrainers_nf.lua) ersetzen die aus Classic ganz, wo es sie
+    -- gibt. Classic nannte z. B. Ainethil als Fachmann der Alchemie - auf
+    -- Forever lehren das nur Rogvar, Kylanna Windwhisper und Shurome.
+    local nf = P and P.NF_TRAINER_RANK and P.NF_TRAINER_RANK[key]
+    if nf then
+        for _, t in ipairs(nf) do list[#list + 1] = { t[1], t[2], t[3], t[4], t[5], t[6], t[7], known = t.known, classic = t.classic } end
+    else
+        for _, t in ipairs(P and P.TRAINERS and P.TRAINERS[key] or {}) do list[#list + 1] = t end
+        -- 1.0.5.54: Lehrer, die nur Naowh Forever kennt - ohne bekannten Rang.
+        for _, t in ipairs(P and P.NF_TRAINERS and P.NF_TRAINERS[key] or {}) do
+            list[#list + 1] = { t[1], t[2], t[4], t[5], t[6], t[3] or nil, nil }
+        end
     end
     for _, t in ipairs(list) do
         local fr = t[6]
@@ -484,7 +494,7 @@ function PRO.Trainers(key, faction, max)
                 local c, wx, wy = WorldPos(t[3], t[4] / 100, t[5] / 100)
                 if c == pc then dist = math.sqrt((wx - px) ^ 2 + (wy - py) ^ 2) end
             end
-            out[#out + 1] = { id = t[1], name = t[2], map = t[3], x = t[4], y = t[5], faction = fr, rank = t[7],
+            out[#out + 1] = { id = t[1], name = t[2], map = t[3], x = t[4], y = t[5], faction = fr, rank = t[7], known = t.known, classic = t.classic,
                               next = need ~= nil and t[7] ~= nil and t[7] >= need, here = here ~= nil and t[3] == here, dist = dist }
         end
     end
@@ -1230,7 +1240,10 @@ local function TrainerRow(body, y, w, t, profName)
             gt:SetOwner(self, "ANCHOR_RIGHT")
             local tb, tm = C.textBright, C.textMuted
             gt:SetText(tt.name, tb[1], tb[2], tb[3])
-            gt:AddLine((self.prof or "") .. ": " .. (PRO.RANK_TEXT[tt.rank] or "Rang unbekannt"), tm[1], tm[2], tm[3], true)
+            gt:AddLine((self.prof or "") .. ": " .. (PRO.RANK_TEXT[tt.rank]
+                or (tt.known and PRO.RANK_CAP[tt.known] and ("mindestens bis " .. PRO.RANK_CAP[tt.known] .. ", darüber unbekannt"))
+                or "Rang unbekannt"), tm[1], tm[2], tm[3], true)
+            if tt.classic then gt:AddLine("Höchster Rang wie in Classic – für Forever unbestätigt.", tm[1], tm[2], tm[3], true) end
             if tt.next then
                 local g = C.successBright
                 gt:AddLine("Lehrt deinen nächsten Rang", g[1], g[2], g[3], true)
@@ -1264,7 +1277,8 @@ local function TrainerRow(body, y, w, t, profName)
     -- (6.14.0.1: "Fachmann · bis 300 · Hinterl..." schnitt den Ort ab).
     local parts = {}
     if zone then parts[1] = zone elseif not t.map then parts[1] = "Lage unbekannt" end
-    if PRO.RANK_CAP[t.rank] then parts[#parts + 1] = "bis " .. PRO.RANK_CAP[t.rank] end
+    if PRO.RANK_CAP[t.rank] then parts[#parts + 1] = "bis " .. PRO.RANK_CAP[t.rank]
+    elseif t.known and PRO.RANK_CAP[t.known] then parts[#parts + 1] = "mind. bis " .. PRO.RANK_CAP[t.known] end
     row.map:SetShown(t.map ~= nil)
     row.sub:SetText(table.concat(parts, "  ·  "))
     row:Show()

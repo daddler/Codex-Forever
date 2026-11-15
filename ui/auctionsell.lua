@@ -28,7 +28,7 @@ local K = WeintCodex.UIKit
 local C = WeintCodex.Colors
 local KEY = "comfort"
 
-AS.DEFAULTS = { ahSell = true, ahUndercut = true }
+AS.DEFAULTS = { ahSell = true, ahUndercut = false }
 AS.ROWS = 14
 AS.ROW_H = 24
 AS.W = 250

@@ -26676,6 +26676,29 @@ do
     Check(ok, "Instanz-Tracker" .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 1.0.7.0: Berufslehrer - Raenge von Forever statt Classic. Alchemie bis
+-- 300 lehren auf Forever nur Rogvar, Kylanna Windwhisper und Shurome.
+do
+    local ok, err = pcall(function()
+        local PRO = WeintCodex.Professions
+        local list, need = PRO.Trainers("alchemy", nil, 225)
+        assert(need == 4, "nächster Rang nach 225 falsch: " .. tostring(need))
+        local art = {}
+        for _, t in ipairs(list) do if t.next then art[#art + 1] = t.name end end
+        table.sort(art)
+        assert(table.concat(art, ",") == "Kylanna Windwhisper,Master Mycologist Shurome,Rogvar", "Fachmann Alchemie: " .. table.concat(art, ","))
+        for _, t in ipairs(list) do
+            if t.name == "Ainethil" then assert(t.rank == 3 and not t.next, "Ainethil noch als Fachmann") end
+        end
+        assert(list[1].next, "Lehrer des nächsten Rangs nicht oben")
+        local h = PRO.Trainers("alchemy", "Horde", 225)
+        for _, t in ipairs(h) do assert(t.faction ~= "Alliance", "Allianz-Lehrer für die Horde") end
+        -- Kraeuterkunde: ohne Daten von Forever bleibt Classic.
+        assert(#PRO.Trainers("herbalism") > 0, "Kräuterkunde ohne Lehrer")
+    end)
+    Check(ok, "Berufslehrer: Ränge von Forever" .. (ok and "" or (": " .. tostring(err))))
+end
+
 if failures == 0 then
     print("BESTANDEN")
     os.exit(0)

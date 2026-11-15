@@ -76,6 +76,15 @@ Enthält auch die nie einzeln veröffentlichten 1.0.6.26 und 1.0.6.27.
 - Bereits vorhanden, nicht doppelt gebaut: Haltbarkeit, „Begleiter fehlt“,
   Sperren, Gebietsübergänge, Laufwege, Makros, Aktionsleisten.
 
+- Berufslehrer: Ränge auf Forever aus `data/proftrainers_nf.lua` (erzeugt von
+  `import_naowh_proftrainers.lua` aus Naowh Forever, dort je Rang die Lehrer –
+  „von Hand aus Wowhead Forever“), ersetzen Classic ganz (`PRO.Trainers`).
+  233 Lehrer, bei 126 wich der Rang ab, 51 waren ohne Rang. Nennt die Quelle
+  für einen Rang keine Lehrer: Classic, wenn es den Lehrer dort gibt
+  (`classic`), sonst „mindestens bis …“ (`known`). Kräuterkunde und
+  Kürschnerei ohne Forever-Daten: weiter Classic.
+- Auktionshaus: automatisch unterbieten ab Werk aus (`ahUndercut = false`).
+
 ### Daten
 - Abgleich mit Naowh Forever 1.2.33 (`import_naowh.py`, `NF_VERSION`;
   `import_naowh_prof.py`): Beute u. a. Shaper's Terrace, +153 Questzeilen,
