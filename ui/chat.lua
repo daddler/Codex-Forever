@@ -344,7 +344,12 @@ local function ApplyFrame(cf, d)
         d.editBorder:SetColor(b[1], b[2], b[3], 1)
         d.editBg:Show()
         K.SetFont(d.edit, Opt("fontSize"))
-        if d.edit.header then K.SetFont(d.edit.header, Opt("fontSize")) end
+        -- 1.0.6.19 (Fehlerbericht: "ChatFrameEditBox.lua:713: attempt to
+        -- perform arithmetic on a secret number value (execution tainted by
+        -- 'WeintCodex')" beim Klick auf einen Chatreiter): das Spiel rechnet
+        -- mit der Breite der Kopfzeile ("Sagen:", "An Name:"). Mit unserer
+        -- Schrift ist diese Breite fuer verunreinigte Aufrufe geheim - die
+        -- Kopfzeile behaelt deshalb die Schrift des Spiels.
         -- Buendig an der Kachel: gleiche Breite, direkt darunter (bzw.
         -- ueber der Reiterzeile).
         K.AfterCombat(function()

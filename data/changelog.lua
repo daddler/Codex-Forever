@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.0.6.19",
+        date    = "15.11.2026",
+        notes   = {
+            "|cff7C6CFFKein Fehler mehr beim Wechseln der Chatreiter|r („secret number value“ aus der Eingabezeile) – die Kopfzeile der Eingabe („Sagen:“, „An …:“) behält dafür die Schrift des Spiels.",
+        },
+    },
+    {
         version = "1.0.6.18",
         date    = "15.11.2026",
         notes   = {

@@ -9,6 +9,15 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.0.6.19] – 2026-11-15
+
+### Behoben (nicht im Spiel bestätigt)
+- `ChatFrameEditBox.lua:713: attempt to perform arithmetic on a secret number
+  value (execution tainted by 'WeintCodex')` beim Klick auf einen Chatreiter:
+  `UpdateHeader` rechnet mit der Breite der Kopfzeile; `K.SetFont` auf
+  `editBox.header` (`ui/chat.lua`) entfernt. Woher die verunreinigte
+  Ausführung kommt, ist nicht gemessen.
+
 ## [1.0.6.18] – 2026-11-15
 
 ### Behoben (nicht im Spiel bestätigt)
