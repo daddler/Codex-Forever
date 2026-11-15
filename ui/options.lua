@@ -1893,6 +1893,11 @@ SlashCmdList["WEINTCODEXUI"] = function(msg)
         O.Show("comfort", O.PageIndex("comfort", "sammeln"))
         return
     end
+    if msg == "einstimmung" or msg == "einstimmungen" or msg == "attune" then
+        local AT = WeintCodex.UIAttunements
+        if AT and AT.Print then AT.Print() end
+        return
+    end
     if msg == "selten" or msg == "rares" or msg == "rare" then
         local RA = WeintCodex.UIRares
         if RA and RA.Report then K.ShowReport("Seltene Gegner", RA.Report()) end

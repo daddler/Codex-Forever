@@ -63,7 +63,7 @@ OC.SLOTS = { "big", "small", "off" }
 OC.SLOT_TEXT = { big = "Wichtig", small = "Weitere", off = "Aus" }
 OC.MAX_EXTRA = 6     -- eigene Reihen (6.98.0.0)
 OC.COLS_PER_BAND = 3 -- Spalten je Band in den Einstellungen
-OC.DEFAULTS = { big = 40, small = 28, buff = 28, combatOnly = false, numbers = true, glow = true, buffs = true, debuffs = true, dbfHighlight = false, cursorCd = false, gcd = true, coTank = true, swing = true, gearBar = true, trinketBar = true, consumables = true, druidMana = true, focusCast = true, stealthWarn = true, vertical = false, perLine = 0,
+OC.DEFAULTS = { big = 40, small = 28, buff = 28, combatOnly = false, numbers = true, glow = true, buffs = true, debuffs = true, dbfHighlight = false, cursorCd = false, gcd = true, coTank = true, swing = true, gearBar = true, trinketBar = true, consumables = true, druidMana = true, focusCast = true, stealthWarn = true, attuneTracker = true, vertical = false, perLine = 0,
     glowColor = "green", glowStrength = 100, glowPulse = true }
 OC.MAX_LIST = 80
 OC.MIN_BASE_CD = 2000   -- ms; darunter ist es die globale Abklingzeit
@@ -2266,6 +2266,11 @@ function OC.BuildSection(B)
             get = function() return OC.Get("stealthWarn") and true or false end,
             set = function(v) OC.Set("stealthWarn", v and true or false) local SH = WeintCodex.UISmallHelpers if SH then SH.UpdateStealth() end end,
             description = "Schurke oder Druide in Katzengestalt: Hinweis, wenn du außerhalb des Kampfes nicht getarnt bist." })
+    B:Row({ type = "toggle", label = "Einstimmungen verfolgen",
+            get = function() return OC.Get("attuneTracker") and true or false end,
+            set = function(v) OC.Set("attuneTracker", v and true or false) local AT = WeintCodex.UIAttunements if AT then AT.Update() end end,
+            description = "Schlüssel und Einstimmungen (Maraudon, Schwarzfelstiefen, Scholomance …): der nächste Schritt der Questkette, Klick setzt den Questpfeil. Alles im Chat: /wcui einstimmung." },
+          { type = "empty" })
     B:Row({ type = "toggle", label = "Eigene Debuffs am Ziel", disabled = off,
             get = function() return OC.Get("debuffs") and true or false end, set = function(v) OC.Set("debuffs", v and true or false) end,
             description = "Was du selbst auf dein Ziel gewirkt hast (Stiche, Flüche, Rüstung zerreißen …) mit Restzeit – auch im Kampf. Das Spiel zeigt sie, WeintCodex liest sie nicht." },

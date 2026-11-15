@@ -161,6 +161,7 @@ data/nav/nav2991_1.lua
 data/nav_blocked.lua
 # Questhilfe: Quests, Geber, Ziele (6.30.0.0, erzeugt); gelesen von ui/questhelper.lua.
 data/questdb.lua
+data/attunements.lua
 data/questevents.lua
 # Stufen und Sammelberufe je Gebiet (6.26.5.0); gelesen von ui/zoneinfo.lua.
 data/zoneinfo.lua
@@ -340,6 +341,7 @@ ui/layer.lua
 ui/mapmarks.lua
 # Questhilfe auf der Weltkarte (6.30.0.0, Komfort): Verhalten von Questie, eigener Code.
 ui/questhelper.lua
+ui/attunements.lua
 # Stufen und Sammelberufe auf der Weltkarte (6.26.5.0, Seite "Karte").
 ui/zoneinfo.lua
 # Neues beim Lehrer nach dem Stufenaufstieg (6.26.7.0, Komfort, auch ohne Oberflaeche).

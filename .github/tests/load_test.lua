@@ -26522,6 +26522,31 @@ do
     Check(ok, "Einkaufsliste und Meine Auktionen" .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 1.0.7.0: Einstimmungen - Kette rueckwaerts aus der Questdatenbank,
+-- Stand je Schritt, Geber mit Ort.
+do
+    local ok, err = pcall(function()
+        local AT = WeintCodex.UIAttunements
+        local chain = AT.Chain(7046)
+        assert(#chain >= 2 and chain[#chain].id == 7046 and chain[#chain - 1].id == 7044, "Kette von Maraudon falsch")
+        local st = AT.State(chain, function(id) return id == chain[1].id end)
+        assert(st.done == 1 and st.next == chain[2], "Stand falsch")
+        local done = AT.State(chain, function() return true end)
+        assert(done.state == "done" and done.next == nil, "fertig nicht erkannt")
+        local unk = AT.State(chain, function() return nil end)
+        assert(unk.state == "unknown", "unbekannt als offen gezählt")
+        local map, x = AT.GiverPlace(8888)
+        assert(map == 1428 and x and x > 0 and x < 1, "Ort des Gebers falsch")
+        for _, a in ipairs(WeintCodex.AttunementData.list) do
+            for _, side in ipairs({ "A", "H" }) do
+                local q = AT.FinalQuest(a, side)
+                assert(WeintCodex.QuestDBData.q[q], a.id .. ": Quest " .. tostring(q) .. " nicht in der Questdatenbank")
+            end
+        end
+    end)
+    Check(ok, "Einstimmungen: Ketten, Stand, Geber" .. (ok and "" or (": " .. tostring(err))))
+end
+
 if failures == 0 then
     print("BESTANDEN")
     os.exit(0)
