@@ -25,7 +25,8 @@ WeintCodex_ChangelogData = {
         version = "1.0.7.5",
         date    = "15.11.2026",
         notes   = {
-            "|cff7C6CFFDein Pfeil auf der Minikarte bleibt frei|r – Symbole direkt um dich herum werden ausgeblendet, damit sie den Spielerpfeil nicht mehr verdecken.",
+            "|cff7C6CFFDein Pfeil auf der Minikarte bleibt frei|r – Stadt-, Quest- und Sammelsymbole direkt um dich herum werden ausgeblendet, damit sie den Spielerpfeil nicht mehr verdecken.",
+            "|cff7C6CFFMinikarte ruhiger|r – dort stehen von den Städten nur noch Bank, Auktionshaus, Briefkasten, Gasthaus und Reparieren.",
         },
     },
     {

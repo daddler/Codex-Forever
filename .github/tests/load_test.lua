@@ -1987,7 +1987,7 @@ do
         K.PlayerWorld = function() return 0, 100, 100 end
         QH.MinimapYards = function() return 100 end
         QH.MinimapActive = function() return true end
-        local done = { kind = "turnin", faint = false, quests = { 1 }, x = 0.5, y = 0.5, wc = 0, wn = 110, ww = 100 }
+        local done = { kind = "turnin", faint = false, quests = { 1 }, x = 0.5, y = 0.5, wc = 0, wn = 140, ww = 100 }
         local open = { kind = "turnin", faint = true, quests = { 2 }, x = 0.5, y = 0.5, wc = 0, wn = 120, ww = 100 }
         QH.ForMap = function() return { done, open } end
         _G.Minimap.GetWidth = function() return 200 end

@@ -1221,6 +1221,14 @@ end
 
 -- Lage eines Eintrags auf der Minikarte in Bildpunkten vom Mittelpunkt,
 -- oder nil (andere Welt, ausserhalb). `pc, pn, pw`: Spieler in der Welt.
+-- 1.0.7.5 (Bild: "der Spielerpfeil muss ueber den Symbolen sein"): den Pfeil
+-- zeichnet die Minikarte selbst, jedes Kind liegt darueber - also bleibt um
+-- die Mitte jedes eigene Symbol weg (Questhilfe, Karte, Sammel-Atlas).
+QH.MM_CLEAR = 12
+function QH.UnderArrow(dx, dy)
+    return dx ~= nil and dy ~= nil and dx * dx + dy * dy < QH.MM_CLEAR * QH.MM_CLEAR
+end
+
 function QH.MinimapOffset(e, mapID, pc, pn, pw, yards, half, facing, square)
     if e.wc == nil then
         local c, n, w = K.ToWorld(mapID, e.x, e.y)
@@ -1269,6 +1277,7 @@ function QH.PlaceMinimap()
         if not (e.kind == "turnin" and e.faint) then
             dx, dy = QH.MinimapOffset(e, mapID, pc, pn, pw, yards, half, facing, square)
         end
+        if QH.UnderArrow(dx, dy) then dx = nil end
         if dx then
             n = n + 1
             local p = mmPins[n]

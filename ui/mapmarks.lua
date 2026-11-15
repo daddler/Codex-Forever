@@ -592,7 +592,8 @@ function MK.MinimapActive()
 end
 -- Stadt-Pins auf der Minikarte: naeher als so viele Bildpunkte = ein Pin.
 MK.MM_MERGE = 11
-MK.MM_CLEAR = 12   -- um den Spielerpfeil kein Symbol
+-- 1.0.7.5 (Bild: Minikarte zu voll): dort nur diese Arten.
+MK.MM_TOWN = { bank = true, auction = true, mail = true, inn = true, repair = true }
 local mmX, mmY = {}, {}
 
 function MK.PlaceMinimap()
@@ -624,7 +625,9 @@ function MK.PlaceMinimap()
         -- 1.0.7.5 (Bild: "der Spielerpfeil muss ueber den Symbolen sein"): den
         -- Pfeil zeichnet die Minikarte selbst, jedes Kind liegt darueber -
         -- also bleibt die Mitte frei.
-        if dx and dx * dx + dy * dy < MK.MM_CLEAR * MK.MM_CLEAR then dx = nil end
+        if QH.UnderArrow(dx, dy) then dx = nil end
+        -- Auf der Minikarte nur die wichtigen Dienste (MK.MM_TOWN).
+        if dx and e.kind == "town" and not MK.MM_TOWN[e.cat] then dx = nil end
         -- Stadt: schon ein Stadt-Pin in der Naehe? Dann dort mitzaehlen
         -- (Liste ist nach Rang sortiert, der erste nennt die wichtigste Art).
         if dx and e.kind == "town" then
@@ -752,7 +755,7 @@ function MK.BuildRows(B)
           { type = "toggle", label = "Städte: Händler, Lehrer, Briefkästen", key = "mapTown",
             description = "Kleine Punkte für Händler, Reparieren, Lehrer, Bank, Auktionshaus, Gasthaus – Briefkästen in eigener Farbe. Maus darauf: was es ist." })
     B:Row({ type = "toggle", label = "Städte auch auf der Minikarte", key = "mapTownMinimap",
-            description = "Dieselben Symbole in deiner Nähe; dicht beieinander mit Zahl. Maus darauf: was es ist.",
+            description = "Bank, Auktionshaus, Briefkasten, Gasthaus und Reparieren in deiner Nähe; dicht beieinander mit Zahl. Maus darauf: was es ist.",
             disabled = function() return not K.Get(KEY, "mapTown") end })
     B:EndAdvanced()
 end

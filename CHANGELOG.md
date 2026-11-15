@@ -13,8 +13,10 @@ nicht zusammen.
 
 ### Geändert
 - Minikarte: kein eigenes Symbol näher als 12 Bildpunkte an der Mitte
-  (`MK.MM_CLEAR`) – der Spielerpfeil gehört der Minikarte selbst, Kinder
-  liegen immer darüber.
+  (`QH.UnderArrow`, gilt für Stadt-Pins, Questhilfe und Sammel-Atlas) – der
+  Spielerpfeil gehört der Minikarte selbst, Kinder liegen immer darüber.
+- Stadt-Pins auf der Minikarte nur Bank, Auktionshaus, Briefkasten, Gasthaus,
+  Reparieren (`MK.MM_TOWN`).
 
 ## [1.0.7.4] – 2026-11-15
 

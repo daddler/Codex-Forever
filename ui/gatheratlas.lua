@@ -1480,6 +1480,7 @@ function GA.PlaceMinimap()
         if count >= GA.MAX_MINI then break end
         if GA.ShowsOnMini(e.kind) then
             local dx, dy = QH.MinimapOffset(e, mapID, pc, pn, pw, yards, half, facing, square)
+            if QH.UnderArrow and QH.UnderArrow(dx, dy) then dx = nil end
             if dx then
                 count = count + 1
                 local p = mmPins[count]
