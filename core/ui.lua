@@ -220,6 +220,9 @@ WeintCodex.GameColors = {
     gfGone        = {0.090, 0.090, 0.100, 1.0},
     gfGoneText    = {0.500, 0.500, 0.520, 1.0},
     gfHover       = {1.000, 1.000, 1.000, 0.08},
+    -- 1.0.7.0 Stadt-Pins der Weltkarte (ui/mapmarks.lua)
+    townPin       = {0.890, 0.780, 0.420, 1.0},
+    mailPin       = {0.420, 0.700, 0.950, 1.0},
     -- 1.0.6.22 Aussehen "plastisch": nur [1] zaehlt bei Low/High (Faktor
     -- der Klassenfarbe unten/oben), Glanz und Schatten mit Deckkraft.
     gfReliefLow   = {0.450, 0, 0, 1},

@@ -569,7 +569,7 @@ end
 --   Handel, Gespraeche Auktionshaus, Fluestern, Gespraeche
 QoL.PAGE_ORDER = {
     automatik = 1, anzeigen = 2,
-    rausda = 10, automark = 11, klickzauber = 12, entfluchen = 12.5, makros = 13,
+    rausda = 10, automark = 11, klickzauber = 12, entfluchen = 12.5, makros = 13, helfer = 13.5,
     karte = 20, questhilfe = 20.5, sammeln = 21, glitzern = 22, selten = 23,
     auktion = 30, fluestern = 31, gespraeche = 32,
 }

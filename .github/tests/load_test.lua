@@ -20679,10 +20679,10 @@ do
         end
         local order = table.concat(keys, ",")
         local pal = WeintCodex.UIPaladinBuffs.IsPaladin()
-        assert(order == "automatik,anzeigen,zeiger,rausda,automark,klickzauber,entfluchen,makros," .. (pal and "segen," or "") .. "ringe,pvp,boss,boss_bars,boss_sounds,boss_bosses,karte,questhilfe,sammeln,glitzern,selten,flugspiele,auktion,post,fluestern,danke,gespraeche",
+        assert(order == "automatik,anzeigen,zeiger,rausda,automark,klickzauber,entfluchen,makros,helfer," .. (pal and "segen," or "") .. "ringe,pvp,boss,boss_bars,boss_sounds,boss_bosses,karte,questhilfe,sammeln,glitzern,selten,flugspiele,auktion,post,fluestern,danke,gespraeche",
             "Reihenfolge: " .. order)
         local d = pal and 0 or -1
-        assert(O.PageIndex("comfort", "gespraeche") == 26 + d and O.PageIndex("comfort", "fluestern") == 24 + d, "Index nach Sortieren")
+        assert(O.PageIndex("comfort", "gespraeche") == 27 + d and O.PageIndex("comfort", "fluestern") == 25 + d, "Index nach Sortieren")
         for _, h in ipairs(WL.HELPERS) do
             local mod = K.Module(h.module)
             assert(mod and mod.group ~= "ui" or h.module == "groupframes", h.label .. ": haengt an einem Modul der Oberflaeche")
@@ -26629,6 +26629,31 @@ do
             saved[1], saved[2], saved[3], saved[4], saved[5], saved[6]
     end)
     Check(ok, "Lehrer: Preise vom Lehrer, Dämonenbücher" .. (ok and "" or (": " .. tostring(err))))
+end
+
+-- 1.0.7.0: Helfer - ab Werk aus, Beute aus der Meldung des Spiels,
+-- Flugpunkte erst nach einer Flugkarte, Zauber-Warteschlange ueber PF.
+do
+    local ok, err = pcall(function()
+        local QX, K = WeintCodex.UIQoLExtra, WeintCodex.UIKit
+        for k, v in pairs(QX.DEFAULTS) do
+            if k ~= "lockboxTip" and k ~= "mouseRingCombat" then assert(not v or v == 0, k .. " ab Werk an") end
+        end
+        local G = _G
+        local o1, o2 = G.LOOT_ITEM_SELF, G.LOOT_ITEM_SELF_MULTIPLE
+        G.LOOT_ITEM_SELF = "Ihr erhaltet Beute: %s."
+        G.LOOT_ITEM_SELF_MULTIPLE = "Ihr erhaltet Beute: %sx%d."
+        local l1, n1 = QX.ParseLoot("Ihr erhaltet Beute: |Hitem:2589|h[Leinenstoff]|h.")
+        local l2, n2 = QX.ParseLoot("Ihr erhaltet Beute: |Hitem:2589|h[Leinenstoff]|hx4.")
+        G.LOOT_ITEM_SELF, G.LOOT_ITEM_SELF_MULTIPLE = o1, o2
+        assert(l1 and n1 == 1 and l2 and n2 == 4, "Beute falsch gelesen: " .. tostring(l1) .. "/" .. tostring(n2))
+        assert(QX.ParseLoot("Jemand anders erhält Beute") == nil, "fremde Beute gelesen")
+        assert(QX.MissingFlight("Brachland", "Das Wegekreuz") == nil, "Flugpunkt ohne Flugkarte behauptet")
+        assert(QX.FormatTime(125) == "2:05", "Kampftimer falsch")
+        local src = io.open(ROOT .. "/ui/qolextra.lua"):read("*a")
+        assert(src:find('PF.SetCVar("SpellQueueWindow"', 1, true), "Warteschlange nicht über PF.SetCVar")
+    end)
+    Check(ok, "Helfer: Voreinstellungen, Beute-Feed, Flugpunkte, Timer" .. (ok and "" or (": " .. tostring(err))))
 end
 
 if failures == 0 then

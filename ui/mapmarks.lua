@@ -42,7 +42,14 @@ MK.DEFAULTS = {
     -- 6.30.16.0 (Wunsch: "die Schiffsanleger muessten auch auf der
     -- Minimap zu sehen sein"): Reisen auch auf der Minikarte.
     mapTravelMinimap = true,
+    -- 1.0.7.0 (Vergleich mit Naowh Forever "Town Pins"): Dienste in Staedten
+    -- und Briefkaesten (data/towns.lua, erzeugt, `community`).
+    mapTown      = false,
 }
+MK.TOWN_TEXT = { vendor = "Gemischtwaren", repair = "Reparieren", profession = "Berufslehrer", class = "Klassenlehrer",
+    trade = "Handwerkswaren", food = "Essen und Trinken", flight = "Flugmeister", stable = "Stallmeister",
+    inn = "Gasthaus", bank = "Bank", auction = "Auktionshaus", reagents = "Reagenzien", ammo = "Munition", mail = "Briefkasten" }
+MK.TOWN = 10
 MK.SMALL = 0.7       -- auf dem Kontinent kleiner (es sind ueber zweihundert)
 MK.VEHICLE = { "Schiff", "Zeppelin", "Tram", "Portal" }
 MK.FACTION = { "Allianz", "Horde", "neutral" }
@@ -60,11 +67,11 @@ MK.HALO = 0.35       -- dunkler Hof
 MK.RIM = 0.7         -- heller Rand
 MK.TICK = 0.05
 
-local WANT = { spirit = "mapSpirit", crossing = "mapCrossings", flight = "mapFlight", travel = "mapTravel" }
+local WANT = { spirit = "mapSpirit", crossing = "mapCrossings", flight = "mapFlight", travel = "mapTravel", town = "mapTown" }
 function MK.Wants(kind)
     return K.IsActive(KEY) and K.Get(KEY, WANT[kind]) and true or false
 end
-function MK.Active() return MK.Wants("spirit") or MK.Wants("crossing") or MK.Wants("flight") or MK.Wants("travel") end
+function MK.Active() return MK.Wants("spirit") or MK.Wants("crossing") or MK.Wants("flight") or MK.Wants("travel") or MK.Wants("town") end
 
 -- Eigene Fraktion: 1 Allianz, 2 Horde, nil unbekannt (dann alle).
 local function MyFaction()
@@ -134,6 +141,21 @@ local function AddZone(out, d, zone, x0, x1, y0, y1)
             end
         end
     end
+    if not small and MK.Wants("town") then
+        local towns = WeintCodex.TownData and WeintCodex.TownData.maps[zone]
+        local me = MyFaction()
+        local cls = _G.UnitClass and select(2, _G.UnitClass("player"))
+        for _, t in ipairs(towns or {}) do
+            local fac = t[4]
+            local ok = K.Get(KEY, "mapMarksOther") or fac == nil or fac == "AH" or me == nil
+                or (me == 1 and fac == "A") or (me == 2 and fac == "H")
+            -- Klassenlehrer nur der eigenen Klasse; Flugmeister zeichnet die eigene Art.
+            if ok and t[3] ~= "flight" and (t[3] ~= "class" or t[5] == cls) then
+                local x, y = P(t[1] / 100, t[2] / 100)
+                out[#out + 1] = { kind = "town", x = x, y = y, cat = t[3], small = small }
+            end
+        end
+    end
     if MK.Wants("travel") then
         local list = d.travel and d.travel[zone]
         for i = 1, list and #list or 0, 5 do
@@ -199,6 +221,8 @@ local function Tooltip(self)
         gt:SetText("Flugmeister (" .. MK.FACTION[e.faction] .. ")", t[1], t[2], t[3])
         local z = MK.MapName(e.zone)
         if z then gt:AddLine(z, C.textNormal[1], C.textNormal[2], C.textNormal[3]) end
+    elseif e.kind == "town" then
+        gt:SetText(MK.TOWN_TEXT[e.cat] or e.cat, t[1], t[2], t[3])
     elseif e.kind == "travel" then
         gt:SetText(MK.VEHICLE[e.vehicle] .. " nach " .. (MK.MapName(e.to) or "?"), t[1], t[2], t[3])
         gt:AddLine(MK.FACTION[e.faction], C.textNormal[1], C.textNormal[2], C.textNormal[3])
@@ -248,6 +272,8 @@ local function NewPin(canvas)
     local diamond = K.MEDIA .. "diamond"
     p.flight = { Layer(p, diamond, 1, BLACK, MK.HALO, 2), Layer(p, diamond, 2, w, MK.RIM, 0), Layer(p, diamond, 3, g, 1, -2) }
     p.travel = { Layer(p, disc, 1, BLACK, MK.HALO, 2), Layer(p, disc, 2, g, 1, 0), Layer(p, disc, 3, w, MK.RIM, -4) }
+    local tc = GC.townPin
+    p.town = { Layer(p, disc, 1, BLACK, MK.HALO, 2), Layer(p, disc, 2, w, MK.RIM, 0), Layer(p, disc, 3, tc, 1, -2) }
     p.rim, p.dot = p.spirit[2], p.spirit[3]
     p.shade, p.arrow = p.crossing[1], p.crossing[3]
     p:SetAlpha(MK.ALPHA)
@@ -265,9 +291,13 @@ local function Dress(p, e)
     if p.entry == e then return end
     p.entry = e
     local spirit = e.kind == "spirit"
-    local size = e.kind == "crossing" and MK.ARROW or MK.SPIRIT
+    local size = e.kind == "crossing" and MK.ARROW or (e.kind == "town" and MK.TOWN or MK.SPIRIT)
     p:SetSize(size, size)
-    for _, kind in ipairs({ "spirit", "crossing", "flight", "travel" }) do
+    if e.kind == "town" then
+        local c = e.cat == "mail" and GC.mailPin or GC.townPin
+        p.town[3]:SetVertexColor(c[1], c[2], c[3], 1)
+    end
+    for _, kind in ipairs({ "spirit", "crossing", "flight", "travel", "town" }) do
         for _, t in ipairs(p[kind]) do t:SetShown(e.kind == kind) end
     end
     if e.faction then
@@ -491,10 +521,13 @@ function MK.BuildRows(B)
             description = "Sonst nur deine und die neutralen." },
           { type = "toggle", label = "Reisen auch auf der Kontinentkarte", key = "mapMarksContinent",
             description = "Dort nur Schiffe, Zeppeline, Trams und Portale, etwas kleiner. Der Rest erst in der Zone." })
+    B:Advanced()
     B:Row({ type = "toggle", label = "Reisen auch auf der Minikarte", key = "mapTravelMinimap",
             description = "Schiffe, Zeppeline, Trams und Portale in deiner Nähe. Maus darauf: wohin.",
             disabled = function() return not K.Get(KEY, "mapTravel") end },
-          { type = "empty" })
+          { type = "toggle", label = "Städte: Händler, Lehrer, Briefkästen", key = "mapTown",
+            description = "Kleine Punkte für Händler, Reparieren, Lehrer, Bank, Auktionshaus, Gasthaus – Briefkästen in eigener Farbe. Maus darauf: was es ist." })
+    B:EndAdvanced()
 end
 
 local mod = K.Module(KEY)
