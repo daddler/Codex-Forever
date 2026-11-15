@@ -592,6 +592,7 @@ function MK.MinimapActive()
 end
 -- Stadt-Pins auf der Minikarte: naeher als so viele Bildpunkte = ein Pin.
 MK.MM_MERGE = 11
+MK.MM_CLEAR = 12   -- um den Spielerpfeil kein Symbol
 local mmX, mmY = {}, {}
 
 function MK.PlaceMinimap()
@@ -620,6 +621,10 @@ function MK.PlaceMinimap()
         local want = not e.small and ((e.kind == "travel" and travel) or (e.kind == "town" and town))
         local dx, dy
         if want then dx, dy = QH.MinimapOffset(e, mapID, pc, pn, pw, yards, half, facing, square) end
+        -- 1.0.7.5 (Bild: "der Spielerpfeil muss ueber den Symbolen sein"): den
+        -- Pfeil zeichnet die Minikarte selbst, jedes Kind liegt darueber -
+        -- also bleibt die Mitte frei.
+        if dx and dx * dx + dy * dy < MK.MM_CLEAR * MK.MM_CLEAR then dx = nil end
         -- Stadt: schon ein Stadt-Pin in der Naehe? Dann dort mitzaehlen
         -- (Liste ist nach Rang sortiert, der erste nennt die wichtigste Art).
         if dx and e.kind == "town" then

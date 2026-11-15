@@ -9,6 +9,13 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.0.7.5] – 2026-11-15
+
+### Geändert
+- Minikarte: kein eigenes Symbol näher als 12 Bildpunkte an der Mitte
+  (`MK.MM_CLEAR`) – der Spielerpfeil gehört der Minikarte selbst, Kinder
+  liegen immer darüber.
+
 ## [1.0.7.4] – 2026-11-15
 
 ### Neu
