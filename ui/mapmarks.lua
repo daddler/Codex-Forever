@@ -42,6 +42,9 @@ MK.DEFAULTS = {
     -- 6.30.16.0 (Wunsch: "die Schiffsanleger muessten auch auf der
     -- Minimap zu sehen sein"): Reisen auch auf der Minikarte.
     mapTravelMinimap = true,
+    -- 1.0.7.4 (Wunsch: "auf der Minimap erkennen, wo was in der Naehe ist"):
+    -- Stadt-Pins auch auf der Minikarte (nur, wenn Staedte an sind).
+    mapTownMinimap = true,
     -- 1.0.7.0 (Vergleich mit Naowh Forever "Town Pins"): Dienste in Staedten
     -- und Briefkaesten (data/towns.lua, erzeugt, `community`).
     mapTown      = false,
@@ -53,7 +56,11 @@ MK.TOWN = 16
 -- 1.0.7.3 (Bild: "das sieht echt nicht geil aus"): Pins, die naeher als
 -- MK.TOWN_MERGE (Kartenanteil) beieinander liegen, werden ein Pin mit Zahl;
 -- das Symbol nennt die wichtigste Art, der Tooltip alle.
-MK.TOWN_MERGE = 0.05
+-- 1.0.7.4 (Wunsch: "wenn ich in die Map reinscrolle, sollen sich die Symbole
+-- vereinzeln"): der Abstand gilt in Bildpunkten der Karte, nicht als
+-- Kartenanteil - je naeher gezoomt, desto mehr einzelne Pins.
+MK.TOWN_MERGE_PX = 34
+MK.TOWN_MERGE = 0.05   -- nur Rueckfall ohne Kartengroesse
 -- 1.0.7.2 (Bild: "die Symbole sind da, aber nicht zu erkennen, was wer ist"):
 -- je Art ein Symbol aus dem Spiel (Gegenstands-/Zaubersymbole, die jeder
 -- Client hat) und ein Filter direkt an der Karte. Ab Werk ohne Haendler fuer
@@ -133,14 +140,17 @@ local forMap = {}
 -- jeder Pin geht in die erste Gruppe in Reichweite, sonst in eine neue.
 local RANK = {}
 for i, cat in ipairs(MK.TOWN_ORDER) do RANK[cat] = i end
-function MK.ClusterTowns(raw)
-    table.sort(raw, function(a, b)
-        local ra, rb = RANK[a.cat] or 99, RANK[b.cat] or 99
-        if ra ~= rb then return ra < rb end
-        if a.x ~= b.x then return a.x < b.x end
-        return a.y < b.y
-    end)
-    local out, r2 = {}, MK.TOWN_MERGE * MK.TOWN_MERGE
+local function ByRank(a, b)
+    local ra, rb = RANK[a.cat] or 99, RANK[b.cat] or 99
+    if ra ~= rb then return ra < rb end
+    if a.x ~= b.x then return a.x < b.x end
+    return a.y < b.y
+end
+function MK.SortTowns(raw) table.sort(raw, ByRank) return raw end
+function MK.ClusterTowns(raw, radius)
+    MK.SortTowns(raw)
+    local r = radius or MK.TOWN_MERGE
+    local out, r2 = {}, r * r
     for _, p in ipairs(raw) do
         local hit
         for _, c in ipairs(out) do
@@ -209,7 +219,12 @@ local function AddZone(out, d, zone, x0, x1, y0, y1)
                 raw[#raw + 1] = { x = x, y = y, cat = t[3] }
             end
         end
-        for _, c in ipairs(MK.ClusterTowns(raw)) do out[#out + 1] = c end
+        -- Roh (nach Rang sortiert); zusammengefasst wird je Zoom in MK.Visible.
+        MK.SortTowns(raw)
+        for _, c in ipairs(raw) do
+            c.kind, c.small = "town", small
+            out[#out + 1] = c
+        end
     end
     if MK.Wants("travel") then
         local list = d.travel and d.travel[zone]
@@ -252,7 +267,27 @@ function MK.ForMap(mapID)
     return out
 end
 
+-- Was die Weltkarte bei dieser Groesse zeigt: alles ausser den Stadt-Pins
+-- unveraendert, die Stadt-Pins zusammengefasst. Neu gerechnet nur, wenn
+-- sich der Zoom spuerbar aendert (nicht je Takt).
+local visible = {}
+function MK.Visible(mapID, px)
+    local list = MK.ForMap(mapID)
+    local r = (type(px) == "number" and px > 1) and (MK.TOWN_MERGE_PX / px) or MK.TOWN_MERGE
+    local v = visible[mapID]
+    if v and v.src == list and math.abs(v.r - r) <= v.r * 0.08 then return v.list end
+    local out, towns = {}, {}
+    for _, e in ipairs(list) do
+        if e.kind == "town" then towns[#towns + 1] = e else out[#out + 1] = e end
+    end
+    if #towns == 0 then out = list
+    else for _, c in ipairs(MK.ClusterTowns(towns, r)) do out[#out + 1] = c end end
+    visible[mapID] = { src = list, r = r, list = out }
+    return out
+end
+
 function MK.Forget()
+    for k in pairs(visible) do visible[k] = nil end
     for k in pairs(forMap) do forMap[k] = nil end
     for k in pairs(names) do names[k] = nil end
 end
@@ -263,6 +298,9 @@ end
 
 local pins = {}
 MK.pins = pins
+-- Zaehlung auf der Minikarte je Symbol (nicht am Rahmen: Felder dort
+-- koennten Methoden des Rahmens verdecken).
+local mmInfo = setmetatable({}, { __mode = "k" })
 
 local function Tooltip(self)
     local gt = _G.GameTooltip
@@ -278,12 +316,17 @@ local function Tooltip(self)
         if z then gt:AddLine(z, C.textNormal[1], C.textNormal[2], C.textNormal[3]) end
     elseif e.kind == "town" then
         gt:SetText(MK.TOWN_TEXT[e.cat] or e.cat, t[1], t[2], t[3])
-        if e.n and e.n > 1 then
+        local n, cats = e.n, e.cats
+        local inf = mmInfo[self]
+        if inf and inf.n > 0 then n, cats = inf.n, inf.cats end
+        if n and n > 1 and cats then
             local nrm = C.textNormal
-            for _, cat in ipairs(e.order) do
-                local k = e.cats[cat]
+            for _, cat in ipairs(MK.TOWN_ORDER) do
+                local k = cats[cat]
+                if k then
                 gt:AddLine("|T" .. MK.TOWN_ICON[cat] .. ":14:14|t " .. (MK.TOWN_TEXT[cat] or cat) .. (k > 1 and (" ×" .. k) or ""),
                     nrm[1], nrm[2], nrm[3])
+                end
             end
         end
     elseif e.kind == "travel" then
@@ -411,13 +454,13 @@ function MK.Place()
         HideAll()
         return 0
     end
-    local list = MK.ForMap(mapID)
     local w, h = K.Plain(canvas:GetWidth()), K.Plain(canvas:GetHeight())
     if type(w) ~= "number" or type(h) ~= "number" or w <= 1 or h <= 1 then return 0 end
     local s = 1
     local cs = K.Plain(canvas.GetEffectiveScale and canvas:GetEffectiveScale())
     local ms = K.Plain(wm.GetEffectiveScale and wm:GetEffectiveScale())
     if type(cs) == "number" and type(ms) == "number" and cs > 0 and ms > 0 then s = cs / ms end
+    local list = MK.Visible(mapID, w * s)
     -- Ueber den erkundeten Gebieten, unter den Eingaengen (6.22.0.2,
     -- ui/mapentrances.lua ME.BaseLevel).
     local ME = WeintCodex.UIMapEntrances
@@ -433,6 +476,7 @@ function MK.Place()
         -- GetChildren las, brachte das Spiel zum Absturz.
         local holder = MK.Holder(canvas)
         if p:GetParent() ~= holder then p:SetParent(holder) end
+        if mmInfo[p] then mmInfo[p].n = 0 end
         Dress(p, e)
         -- Der Abstand gilt im Massstab des Symbols: kleiner gemacht (Kontinent)
         -- muss er im selben Mass groesser werden - sonst rutschte alles zur
@@ -541,9 +585,14 @@ local mmPins = {}
 MK.mmPins = mmPins
 local function MMHide(from) for i = from or 1, #mmPins do mmPins[i]:Hide() end end
 
+local function MMTravel() return MK.Wants("travel") and K.Get(KEY, "mapTravelMinimap") and true or false end
+local function MMTown() return MK.Wants("town") and K.Get(KEY, "mapTownMinimap") and true or false end
 function MK.MinimapActive()
-    return MK.Wants("travel") and K.Get(KEY, "mapTravelMinimap") and true or false
+    return MMTravel() or MMTown()
 end
+-- Stadt-Pins auf der Minikarte: naeher als so viele Bildpunkte = ein Pin.
+MK.MM_MERGE = 11
+local mmX, mmY = {}, {}
 
 function MK.PlaceMinimap()
     local mm = _G.Minimap
@@ -565,10 +614,29 @@ function MK.PlaceMinimap()
     local square = K.IsActive("minimap") and K.Get("minimap", "square") and true or false
     local half = w / 2
     local n = 0
+    local travel, town = MMTravel(), MMTown()
+    local merge2 = MK.MM_MERGE * MK.MM_MERGE
     for _, e in ipairs(MK.ForMap(mapID)) do
-        if e.kind == "travel" and not e.small then
-            local dx, dy = QH.MinimapOffset(e, mapID, pc, pn, pw, yards, half, facing, square)
-            if dx then
+        local want = not e.small and ((e.kind == "travel" and travel) or (e.kind == "town" and town))
+        local dx, dy
+        if want then dx, dy = QH.MinimapOffset(e, mapID, pc, pn, pw, yards, half, facing, square) end
+        -- Stadt: schon ein Stadt-Pin in der Naehe? Dann dort mitzaehlen
+        -- (Liste ist nach Rang sortiert, der erste nennt die wichtigste Art).
+        if dx and e.kind == "town" then
+            for i = 1, n do
+                local inf = mmInfo[mmPins[i]]
+                if inf and inf.n > 0 then
+                    local ax, ay = mmX[i] - dx, mmY[i] - dy
+                    if ax * ax + ay * ay <= merge2 then
+                        inf.n = inf.n + 1
+                        inf.cats[e.cat] = (inf.cats[e.cat] or 0) + 1
+                        dx = nil
+                        break
+                    end
+                end
+            end
+        end
+        if dx then
                 n = n + 1
                 local p = mmPins[n]
                 if not p then
@@ -579,12 +647,25 @@ function MK.PlaceMinimap()
                     mmPins[n] = p
                 end
                 Dress(p, e)
+                local inf = mmInfo[p]
+                if not inf then inf = { n = 0, cats = {} } mmInfo[p] = inf end
+                for k in pairs(inf.cats) do inf.cats[k] = nil end
+                if e.kind == "town" then
+                    inf.cats[e.cat] = 1
+                    inf.n = 1
+                else
+                    inf.n = 0
+                end
+                mmX[n], mmY[n] = dx, dy
                 p:SetFrameLevel((K.Plain(mm:GetFrameLevel()) or 0) + 6)
                 p:ClearAllPoints()
                 p:SetPoint("CENTER", mm, "CENTER", dx / MK.MM_SCALE, dy / MK.MM_SCALE)
                 p:Show()
-            end
         end
+    end
+    for i = 1, n do
+        local inf = mmInfo[mmPins[i]]
+        if inf and inf.n > 0 then mmPins[i].townCount:SetText(inf.n > 1 and tostring(inf.n) or "") end
     end
     MMHide(n + 1)
     return n
@@ -665,6 +746,9 @@ function MK.BuildRows(B)
             disabled = function() return not K.Get(KEY, "mapTravel") end },
           { type = "toggle", label = "Städte: Händler, Lehrer, Briefkästen", key = "mapTown",
             description = "Kleine Punkte für Händler, Reparieren, Lehrer, Bank, Auktionshaus, Gasthaus – Briefkästen in eigener Farbe. Maus darauf: was es ist." })
+    B:Row({ type = "toggle", label = "Städte auch auf der Minikarte", key = "mapTownMinimap",
+            description = "Dieselben Symbole in deiner Nähe; dicht beieinander mit Zahl. Maus darauf: was es ist.",
+            disabled = function() return not K.Get(KEY, "mapTown") end })
     B:EndAdvanced()
 end
 

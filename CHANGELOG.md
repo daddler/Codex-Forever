@@ -9,6 +9,16 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.0.7.4] – 2026-11-15
+
+### Neu
+- Stadt-Pins auf der Minikarte (`mapTownMinimap`, an, wirkt nur mit `mapTown`),
+  zusammengefasst unter 11 Bildpunkten Abstand, Tooltip mit allen Arten.
+
+### Geändert
+- Zusammenfassen auf der Weltkarte hängt am Zoom (`MK.TOWN_MERGE_PX` = 34
+  Bildpunkte, `MK.Visible`, neu gerechnet nur bei spürbarer Zoomänderung).
+
 ## [1.0.7.3] – 2026-11-15
 
 ### Geändert

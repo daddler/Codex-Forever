@@ -26746,6 +26746,10 @@ do
         assert(#cl == 2, "nicht zusammengefasst: " .. #cl)
         assert(cl[2].cat == "bank" and cl[2].n == 3 and cl[2].cats.repair == 2, "Gruppe falsch")
         assert(not MK.TownWants("profession"), "Berufslehrer ab Werk an")
+        local pts = function() return { { x = 0.5, y = 0.5, cat = "repair" }, { x = 0.52, y = 0.5, cat = "bank" } } end
+        assert(#MK.ClusterTowns(pts(), 34 / 700) == 1, "ungezoomt nicht zusammengefasst")
+        assert(#MK.ClusterTowns(pts(), 34 / 3000) == 2, "gezoomt nicht vereinzelt")
+        assert(MK.Visible and MK.DEFAULTS.mapTownMinimap == true, "Minikarte/Zoom fehlt")
     end)
     Check(ok, "Taschendiebstahl-Meldung, Stadt-Pins mit Filter" .. (ok and "" or (": " .. tostring(err))))
 end

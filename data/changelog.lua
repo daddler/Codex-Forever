@@ -22,6 +22,14 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.0.7.4",
+        date    = "15.11.2026",
+        notes   = {
+            "|cff7C6CFFStadt-Pins vereinzeln sich beim Reinzoomen|r – je näher du auf der Weltkarte heranscrollst, desto mehr Pins stehen einzeln an ihrem Platz.",
+            "|cff7C6CFFStädte auch auf der Minikarte|r – Bank, Briefkasten, Reparieren und Co. in deiner Nähe, dicht beieinander mit Zahl; Maus darauf zeigt, was es ist. Abschaltbar unter Karte (erweitert).",
+        },
+    },
+    {
         version = "1.0.7.3",
         date    = "15.11.2026",
         notes   = {
