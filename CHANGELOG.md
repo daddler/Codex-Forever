@@ -39,6 +39,18 @@ nicht zusammen.
   sich ein Fenster mit dem Namen zum Kopieren (`ER.NoteMenu`,
   `ER.CopyFallback`, zwei Minuten nach dem Öffnen).
 
+### Fehlerberichte
+- Jeder Bericht trägt jetzt „--- Umstände ---“ (`ER.Context`: Kampf und
+  Sperre, Instanz, Unterzone, Gruppe/Leiter, tot/Geist/beritten, Ziel nur als
+  Art, Rahmen unter der Maus samt Eltern, offene Fenster, Gruppenrahmen,
+  Profil, andere geladene Addons) und „--- Spur ---“ (`ER.Trace`, letzte 180 s:
+  Fenster auf/zu über `ShowUIPanel`/`HideUIPanel`, Kampf, Zonen, Händler/
+  Post/Bank/Handel/Beute, Bosskampf, gewirkte Zauber, `/wc`- und
+  `/wcui`-Befehle, Menüs und Klickzauber von WeintCodex). Keine Namen anderer
+  Spieler, kein Chat. Aufrufkette 20 statt 14 Zeilen. Kommt über `stack` ohne
+  Änderung an der Companion mit; der Bot hängt lange Berichte ganz als
+  `bericht.txt` an (WeintCodex-Bot, gleicher Branch).
+
 ## [1.0.6.19] – 2026-11-15
 
 ### Behoben (nicht im Spiel bestätigt)

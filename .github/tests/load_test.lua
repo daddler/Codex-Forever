@@ -1750,6 +1750,31 @@ do
     Check(ok, "Weltkarte: oeffnen ueber den Kartenknopf des Spiels, Taint-Bericht im Fehlerbericht" .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 1.0.6.20: Fehlerberichte mit Umstaenden und Spur.
+do
+    local ok, err = pcall(function()
+        local ER = WeintCodex.UIErrors
+        local oldT = _G.GetTime
+        _G.GetTime = function() return 1000 end
+        for k in pairs(ER.trace) do ER.trace[k] = nil end
+        ER.Trace("Fenster auf: MerchantFrame")
+        _G.GetTime = function() return 1003 end
+        ER.Trace("Befehl /wcui test")
+        ER.Trace("Befehl /wcui test")
+        local sit = ER.Situation()
+        assert(sit:find("--- Umstände ---", 1, true) and sit:find("Kampf ", 1, true) and sit:find("Gruppe ", 1, true),
+            "Umstaende fehlen: " .. sit)
+        assert(sit:find("vor  3.0 s  Fenster auf: MerchantFrame", 1, true), "Spur ohne Zeit: " .. sit)
+        assert(sit:find("Befehl /wcui test (2x)", 1, true), "Wiederholung nicht zusammengefasst")
+        _G.GetTime = function() return 1500 end
+        assert(not ER.Situation():find("MerchantFrame", 1, true), "alte Spur nicht verworfen")
+        local e = ER.Record("blocked", "Verboten: Probe()", "a\nb", ER.Situation())
+        assert(e.stack:find("--- Spur", 1, true), "Bericht ohne Spur")
+        _G.GetTime = oldT
+    end)
+    Check(ok, "Fehlerberichte: Umstaende und Spur im Bericht" .. (ok and "" or (": " .. tostring(err))))
+end
+
 -- 1.0.6.20: eigene Gruppenrahmen - HoT-Felder, Sortierung, Tanks, Vorschau.
 do
     local ok, err = pcall(function()

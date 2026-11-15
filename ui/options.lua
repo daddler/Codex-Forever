@@ -1627,6 +1627,8 @@ end
 
 SLASH_WEINTCODEXUI1 = "/wcui"
 SlashCmdList["WEINTCODEXUI"] = function(msg)
+    local ER = WeintCodex.UIErrors
+    if ER and ER.Trace then ER.Trace("Befehl /wcui " .. tostring(msg or "")) end
     local input = msg or ""
     msg = input:lower()
     if msg == "entsperren" or msg == "unlock" then

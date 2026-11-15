@@ -343,6 +343,8 @@ function CC.HookClick(f)
         if ok and t == "togglemenu" and ModNow() ~= "" and not K.InCombat() then
             CC.OpenUnitMenu(self)
         end
+        local ERt = WeintCodex.UIErrors
+        if ERt and ERt.Trace then ERt.Trace("Klickzauber: " .. ModNow() .. tostring(button) .. " auf " .. tostring(name)) end
         table.insert(CC.lastClicks, 1, string.format("%s  %s%s%s  ->  type=%s", tostring(name), ModNow(),
             tostring(button), down and " (gedrückt)" or "", ok and tostring(t) or "?"))
         CC.lastClicks[9] = nil

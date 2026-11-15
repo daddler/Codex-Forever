@@ -28,7 +28,7 @@ local ER = WeintCodex.UIErrors
 local K  = WeintCodex.UIKit
 
 ER.MAX = 20            -- so viele verschiedene Fehler bleiben gespeichert
-ER.STACK_LINES = 14    -- Zeilen der Aufrufkette je Fehler
+ER.STACK_LINES = 20    -- Zeilen der Aufrufkette je Fehler (1.0.6.20: 20 statt 14)
 ER.MAX_MSG = 600
 
 local shown = {}       -- [Schluessel] = true: in dieser Sitzung schon gezeigt
@@ -279,7 +279,7 @@ local function Handler(msg, ...)
         busy = true
         pcall(function()
             local stack = _G.debugstack and _G.debugstack(3) or ""
-            if ER.Ours(msg, stack) then ER.Announce(ER.Record("lua", msg, stack)) end
+            if ER.Ours(msg, stack) then ER.Announce(ER.Record("lua", msg, stack, ER.Situation and ER.Situation())) end
         end)
         busy = false
     end
@@ -323,6 +323,200 @@ function ER.Extra(func, stack)
     return "--- Taschen, Taint-Bericht ---\n" .. table.concat(lines, "\n")
 end
 
+--------------------------------------------------
+-- UMSTAENDE UND SPUR (1.0.6.20, Wunsch: "detaillierte Fehlerberichte, wir
+-- muessen immer raten, was gemacht wurde"). Jeder Bericht bekommt:
+--   * Lage im Augenblick des Fehlers: Kampf, Instanz, Gruppe, Leiter, tot,
+--     beritten, Ziel (nur die Art), Rahmen unter der Maus, offene Fenster,
+--     Gruppenrahmen, Profil, andere geladene Addons.
+--   * Spur: die letzten Schritte davor mit Sekunden - Fenster auf/zu,
+--     Kampf, Zonenwechsel, Haendler/Post/Bank, gewirkte Zauber, eigene
+--     Befehle (/wc, /wcui), Menues und Klickzauber von WeintCodex.
+-- Keine Namen anderer Spieler, kein Chat, kein Gold, keine Gegenstaende.
+-- Alles haengt am Text der Aufrufkette - so kommt es ohne Aenderung an
+-- Companion oder Bot mit.
+--------------------------------------------------
+ER.TRACE_MAX, ER.TRACE_SECS = 25, 180
+local trace = {}
+ER.trace = trace
+local function TClock()
+    local t = _G.GetTime and _G.GetTime()
+    if K and K.Plain then t = K.Plain(t) end
+    return type(t) == "number" and t or 0
+end
+function ER.Trace(text)
+    if type(text) ~= "string" or text == "" then return end
+    local now = TClock()
+    local last = trace[#trace]
+    if last and last.text == text and now - last.t < 2 then last.n = (last.n or 1) + 1 last.t = now return end
+    trace[#trace + 1] = { t = now, text = text:sub(1, 90) }
+    while #trace > ER.TRACE_MAX do table.remove(trace, 1) end
+end
+
+function ER.TraceLines()
+    local now, out = TClock(), {}
+    for _, e in ipairs(trace) do
+        local ago = now - e.t
+        if ago <= ER.TRACE_SECS then
+            out[#out + 1] = string.format("  vor %4.1f s  %s%s", ago, e.text, (e.n and e.n > 1) and (" (" .. e.n .. "x)") or "")
+        end
+    end
+    return out
+end
+
+local function Q(fn, ...)
+    if type(fn) ~= "function" then return nil end
+    local r = { pcall(fn, ...) }
+    if not r[1] then return nil end
+    for i = 2, #r do if K.IsSecret and K.IsSecret(r[i]) then r[i] = nil else r[i] = K.Plain(r[i]) end end
+    return r[2], r[3], r[4], r[5], r[6], r[7], r[8], r[9]
+end
+
+-- Frames, deren "offen" im Bericht interessiert (des Spiels und eigene).
+ER.WATCH_FRAMES = { "WorldMapFrame", "CharacterFrame", "PlayerSpellsFrame", "SpellBookFrame", "TalentFrame",
+    "ProfessionsFrame", "TradeSkillFrame", "MerchantFrame", "BankFrame", "GuildBankFrame", "MailFrame",
+    "AuctionHouseFrame", "TradeFrame", "LootFrame", "GossipFrame", "QuestFrame", "FriendsFrame",
+    "CommunitiesFrame", "LFGParentFrame", "PVEFrame", "CollectionsJournal", "SettingsPanel", "GameMenuFrame",
+    "MacroFrame", "ClassTrainerFrame", "ContainerFrame1", "ContainerFrameCombinedBags", "StaticPopup1",
+    "WeintCodexMainFrame", "WeintCodexBags", "WeintCodexOptions", "WeintCodexMessenger" }
+
+local function FrameName(f)
+    if type(f) ~= "table" then return nil end
+    local ok, n = pcall(f.GetName, f)
+    n = ok and K.Plain(n) or nil
+    if type(n) == "string" and n ~= "" then return n end
+    local ok2, ot = pcall(f.GetObjectType, f)
+    return "(" .. tostring(ok2 and ot or "?") .. ")"
+end
+
+function ER.MouseChain()
+    local f
+    if _G.GetMouseFoci then
+        local ok, list = pcall(function() return { _G.GetMouseFoci() } end)
+        f = ok and list[1] or nil
+        if type(f) == "table" and type(f[1]) == "table" then f = f[1] end
+    elseif _G.GetMouseFocus then
+        f = Q(_G.GetMouseFocus)
+    end
+    local parts = {}
+    for _ = 1, 4 do
+        if type(f) ~= "table" then break end
+        parts[#parts + 1] = FrameName(f)
+        local ok, p = pcall(f.GetParent, f)
+        f = ok and p or nil
+        if f == _G.UIParent or f == _G.WorldFrame then break end
+    end
+    return #parts > 0 and table.concat(parts, " < ") or "nichts (Spielwelt)"
+end
+
+function ER.Context()
+    local out = {}
+    local combat = Q(_G.UnitAffectingCombat, "player")
+    local lock = Q(_G.InCombatLockdown)
+    local inside, kind = Q(_G.IsInInstance)
+    local iname = inside and Q(_G.GetInstanceInfo) or nil
+    local raid, party = Q(_G.IsInRaid), Q(_G.IsInGroup)
+    local n = Q(_G.GetNumGroupMembers) or 0
+    local lead = Q(_G.UnitIsGroupLeader, "player")
+    local dead, ghost = Q(_G.UnitIsDead, "player"), Q(_G.UnitIsGhost, "player")
+    local mounted = Q(_G.IsMounted)
+    local sub = Q(_G.GetSubZoneText)
+    out[#out + 1] = "Kampf " .. (combat and "ja" or "nein") .. " (Sperre " .. (lock and "ja" or "nein") .. ")"
+        .. " · " .. (inside and ("Instanz " .. tostring(kind) .. ": " .. tostring(iname or "?")) or "keine Instanz")
+        .. ((type(sub) == "string" and sub ~= "") and (" · " .. sub) or "")
+    out[#out + 1] = "Gruppe " .. (raid and ("Schlachtzug " .. n) or (party and ("Gruppe " .. n) or "allein"))
+        .. (lead and " · Leiter" or "") .. (dead and " · tot" or "") .. (ghost and " · Geist" or "")
+        .. (mounted and " · beritten" or "")
+    local tgt = "keins"
+    if Q(_G.UnitExists, "target") then
+        local isPlayer = Q(_G.UnitIsPlayer, "target")
+        local enemy = Q(_G.UnitCanAttack, "player", "target")
+        local cls = Q(_G.UnitClassification, "target")
+        tgt = (isPlayer and "Spieler" or "NPC") .. (enemy and ", feindlich" or ", freundlich")
+            .. ((type(cls) == "string" and cls ~= "normal") and (", " .. cls) or "")
+    end
+    out[#out + 1] = "Ziel " .. tgt .. " · Maus über " .. ER.MouseChain()
+    local open = {}
+    for _, name in ipairs(ER.WATCH_FRAMES) do
+        local f = _G[name]
+        if type(f) == "table" and f.IsShown then
+            local ok, v = pcall(f.IsShown, f)
+            if ok and K.Plain(v) == true then open[#open + 1] = name end
+        end
+    end
+    out[#out + 1] = "Offen: " .. (#open > 0 and table.concat(open, ", ") or "nichts")
+    local gf = K.Get and K.Get("groupframes", "source")
+    local prof = K.Profile and Q(K.Profile)
+    out[#out + 1] = "Gruppenrahmen " .. tostring(gf) .. " · Profil " .. tostring(type(prof) == "string" and prof or "?")
+        .. " · Oberfläche " .. ((K.UIEnabled and K.UIEnabled()) and "an" or "aus")
+    local ca = _G.C_AddOns
+    local num = ca and Q(ca.GetNumAddOns) or (Q(_G.GetNumAddOns) or 0)
+    local names = {}
+    for i = 1, num or 0 do
+        local name = ca and Q(ca.GetAddOnInfo, i) or Q(_G.GetAddOnInfo, i)
+        local loaded = ca and Q(ca.IsAddOnLoaded, i) or Q(_G.IsAddOnLoaded, i)
+        if loaded and type(name) == "string" and name ~= "WeintCodex" and not name:find("^Blizzard_") then
+            names[#names + 1] = name
+        end
+    end
+    local list = table.concat(names, ", ")
+    if #list > 400 then list = list:sub(1, 400) .. " …" end
+    out[#out + 1] = "Andere Addons (" .. #names .. "): " .. (list ~= "" and list or "keine")
+    return out
+end
+
+-- Was an jeden Bericht gehaengt wird.
+function ER.Situation()
+    local ok, ctx = pcall(ER.Context)
+    local lines = { "--- Umstände ---" }
+    if ok and type(ctx) == "table" then
+        for _, l in ipairs(ctx) do lines[#lines + 1] = l end
+    else
+        lines[#lines + 1] = "nicht lesbar: " .. tostring(ctx)
+    end
+    local tl = ER.TraceLines()
+    lines[#lines + 1] = "--- Spur (letzte " .. ER.TRACE_SECS .. " s, neueste unten) ---"
+    if #tl == 0 then lines[#lines + 1] = "  (nichts aufgezeichnet)" end
+    for _, l in ipairs(tl) do lines[#lines + 1] = l end
+    return table.concat(lines, "\n")
+end
+
+-- Spur: Ereignisse des Spiels (nur gelesen) und Fenster.
+do
+    local tf = CreateFrame("Frame")
+    ER.traceEvents = tf
+    local EV = {
+        PLAYER_REGEN_DISABLED = "Kampf begonnen", PLAYER_REGEN_ENABLED = "Kampf vorbei",
+        ZONE_CHANGED_NEW_AREA = "Zonenwechsel", PLAYER_ENTERING_WORLD = "Ladebildschirm vorbei",
+        GROUP_ROSTER_UPDATE = "Gruppe geändert", ENCOUNTER_START = "Bosskampf begonnen", ENCOUNTER_END = "Bosskampf vorbei",
+        LOOT_OPENED = "Beute geöffnet", MERCHANT_SHOW = "Händler geöffnet", BANKFRAME_OPENED = "Bank geöffnet",
+        MAIL_SHOW = "Post geöffnet", AUCTION_HOUSE_SHOW = "Auktionshaus geöffnet", GOSSIP_SHOW = "Gespräch geöffnet",
+        QUEST_DETAIL = "Quest angeboten", QUEST_COMPLETE = "Quest abgeben", TRADE_SHOW = "Handel geöffnet",
+        PLAYER_DEAD = "gestorben", PLAYER_UNGHOST = "wiederbelebt", READY_CHECK = "Bereitschaftscheck",
+        PLAYER_TARGET_CHANGED = "Ziel gewechselt", UNIT_SPELLCAST_SUCCEEDED = true,
+        PLAYER_MOUNT_DISPLAY_CHANGED = "Reittier auf/ab", UPDATE_BINDINGS = "Tastenbelegung geändert",
+    }
+    for e in pairs(EV) do pcall(tf.RegisterEvent, tf, e) end
+    tf:SetScript("OnEvent", function(_, e, unit, _, spellID)
+        if e == "UNIT_SPELLCAST_SUCCEEDED" then
+            if unit ~= "player" then return end
+            local cs = _G.C_Spell
+            local name = cs and cs.GetSpellName and Q(cs.GetSpellName, K.Plain(spellID))
+            if type(name) == "string" then ER.Trace("Zauber gewirkt: " .. name) end
+            return
+        end
+        ER.Trace(EV[e])
+    end)
+    if _G.hooksecurefunc then
+        if type(_G.ShowUIPanel) == "function" then
+            _G.hooksecurefunc("ShowUIPanel", function(f) ER.Trace("Fenster auf: " .. tostring(FrameName(f))) end)
+        end
+        if type(_G.HideUIPanel) == "function" then
+            _G.hooksecurefunc("HideUIPanel", function(f) ER.Trace("Fenster zu: " .. tostring(FrameName(f))) end)
+        end
+    end
+end
+
 -- Ein Teil probiert etwas, das das Spiel sperren darf, und faengt die
 -- Sperre selbst auf: fuer `secs` Sekunden gilt eine Sperre als erwartet.
 ER.expectUntil = 0
@@ -338,6 +532,7 @@ function ER.Expect(secs) ER.expectUntil = Clock() + (secs or 1) end
 ER.MENU_WINDOW = 120
 function ER.NoteMenu(name)
     if type(name) ~= "string" or name == "" then return end
+    ER.Trace("Spielermenü von WeintCodex geöffnet")
     ER.menuName, ER.menuAt = name, Clock()
 end
 function ER.CopyFallback()
@@ -375,6 +570,8 @@ ev:SetScript("OnEvent", WeintCodex.Measured("Fehlerfenster", function(_, event, 
     if tostring(func) == "CopyToClipboard()" and ER.CopyFallback() then return end
     local msg = (event == "ADDON_ACTION_FORBIDDEN" and "Verboten: " or "Blockiert: ") .. tostring(func or "?")
     local stack = _G.debugstack and _G.debugstack(2) or ""
-    ER.Announce(ER.Record("blocked", msg, stack, ER.Extra(func, stack)))
+    local extra = ER.Extra(func, stack)
+    local sit = ER.Situation()
+    ER.Announce(ER.Record("blocked", msg, stack, extra and (extra .. "\n" .. sit) or sit))
 end))
 ER.events = ev

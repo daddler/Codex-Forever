@@ -46,6 +46,8 @@ local function Open(tabId)
 end
 
 SlashCmdList["WEINTCODEX"] = function(msg)
+    local ER = WeintCodex.UIErrors
+    if ER and ER.Trace then ER.Trace("Befehl /wc " .. tostring(msg or "")) end
     local cmd = msg and msg:lower() or ""
 
     -- Erstes Wort plus Rest: die Befehle unten vergleichen exakt, nur
