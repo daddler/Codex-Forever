@@ -9,6 +9,14 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.0.7.3] – 2026-11-15
+
+### Geändert
+- Stadt-Pins (Bild: „sieht echt nicht geil aus“): Pins näher als 5 % der
+  Karte werden zusammengefasst (`MK.ClusterTowns`, Symbol der wichtigsten Art,
+  Zahl, Tooltip mit allen Arten); runde, kleinere Symbole; Berufslehrer ab
+  Werk aus. Sturmwind ab Werk: 61 → 26 Pins.
+
 ## [1.0.7.2] – 2026-11-15
 
 ### Geändert

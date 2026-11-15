@@ -49,7 +49,11 @@ MK.DEFAULTS = {
 MK.TOWN_TEXT = { vendor = "Gemischtwaren", repair = "Reparieren", profession = "Berufslehrer", class = "Klassenlehrer",
     trade = "Handwerkswaren", food = "Essen und Trinken", flight = "Flugmeister", stable = "Stallmeister",
     inn = "Gasthaus", bank = "Bank", auction = "Auktionshaus", reagents = "Reagenzien", ammo = "Munition", mail = "Briefkasten" }
-MK.TOWN = 18
+MK.TOWN = 16
+-- 1.0.7.3 (Bild: "das sieht echt nicht geil aus"): Pins, die naeher als
+-- MK.TOWN_MERGE (Kartenanteil) beieinander liegen, werden ein Pin mit Zahl;
+-- das Symbol nennt die wichtigste Art, der Tooltip alle.
+MK.TOWN_MERGE = 0.05
 -- 1.0.7.2 (Bild: "die Symbole sind da, aber nicht zu erkennen, was wer ist"):
 -- je Art ein Symbol aus dem Spiel (Gegenstands-/Zaubersymbole, die jeder
 -- Client hat) und ein Filter direkt an der Karte. Ab Werk ohne Haendler fuer
@@ -66,7 +70,7 @@ MK.TOWN_ICON = {
 MK.TOWN_ORDER = { "mail", "bank", "auction", "inn", "repair", "class", "profession", "stable",
     "vendor", "trade", "food", "reagents", "ammo" }
 MK.TOWN_DEFAULT = { mail = true, bank = true, auction = true, inn = true, repair = true, class = true,
-    profession = true, stable = true, vendor = false, trade = false, food = false, reagents = false, ammo = false }
+    profession = false, stable = true, vendor = false, trade = false, food = false, reagents = false, ammo = false }
 for cat, on in pairs(MK.TOWN_DEFAULT) do MK.DEFAULTS["mapTown_" .. cat] = on end
 function MK.TownWants(cat) return K.Get(KEY, "mapTown_" .. cat) and true or false end
 MK.SMALL = 0.7       -- auf dem Kontinent kleiner (es sind ueber zweihundert)
@@ -125,6 +129,36 @@ end
 local forMap = {}
 
 -- Die Eintraege einer Zone in `out`; `x0..y1` legt sie auf den Kontinent.
+-- Nahe Pins zusammenfassen: nach Rang der Art (MK.TOWN_ORDER) sortiert,
+-- jeder Pin geht in die erste Gruppe in Reichweite, sonst in eine neue.
+local RANK = {}
+for i, cat in ipairs(MK.TOWN_ORDER) do RANK[cat] = i end
+function MK.ClusterTowns(raw)
+    table.sort(raw, function(a, b)
+        local ra, rb = RANK[a.cat] or 99, RANK[b.cat] or 99
+        if ra ~= rb then return ra < rb end
+        if a.x ~= b.x then return a.x < b.x end
+        return a.y < b.y
+    end)
+    local out, r2 = {}, MK.TOWN_MERGE * MK.TOWN_MERGE
+    for _, p in ipairs(raw) do
+        local hit
+        for _, c in ipairs(out) do
+            local dx, dy = c.x - p.x, c.y - p.y
+            if dx * dx + dy * dy <= r2 then hit = c break end
+        end
+        if hit then
+            hit.n = hit.n + 1
+            if not hit.cats[p.cat] then hit.order[#hit.order + 1] = p.cat end
+            hit.cats[p.cat] = (hit.cats[p.cat] or 0) + 1
+        else
+            out[#out + 1] = { kind = "town", x = p.x, y = p.y, cat = p.cat, n = 1,
+                              cats = { [p.cat] = 1 }, order = { p.cat } }
+        end
+    end
+    return out
+end
+
 local function AddZone(out, d, zone, x0, x1, y0, y1)
     local function P(x, y)
         if not x0 then return x, y end
@@ -164,6 +198,7 @@ local function AddZone(out, d, zone, x0, x1, y0, y1)
         local towns = WeintCodex.TownData and WeintCodex.TownData.maps[zone]
         local me = MyFaction()
         local cls = _G.UnitClass and select(2, _G.UnitClass("player"))
+        local raw = {}
         for _, t in ipairs(towns or {}) do
             local fac = t[4]
             local ok = K.Get(KEY, "mapMarksOther") or fac == nil or fac == "AH" or me == nil
@@ -171,9 +206,10 @@ local function AddZone(out, d, zone, x0, x1, y0, y1)
             -- Klassenlehrer nur der eigenen Klasse; Flugmeister zeichnet die eigene Art.
             if ok and t[3] ~= "flight" and (t[3] ~= "class" or t[5] == cls) and MK.TownWants(t[3]) then
                 local x, y = P(t[1] / 100, t[2] / 100)
-                out[#out + 1] = { kind = "town", x = x, y = y, cat = t[3], small = small }
+                raw[#raw + 1] = { x = x, y = y, cat = t[3] }
             end
         end
+        for _, c in ipairs(MK.ClusterTowns(raw)) do out[#out + 1] = c end
     end
     if MK.Wants("travel") then
         local list = d.travel and d.travel[zone]
@@ -242,6 +278,14 @@ local function Tooltip(self)
         if z then gt:AddLine(z, C.textNormal[1], C.textNormal[2], C.textNormal[3]) end
     elseif e.kind == "town" then
         gt:SetText(MK.TOWN_TEXT[e.cat] or e.cat, t[1], t[2], t[3])
+        if e.n and e.n > 1 then
+            local nrm = C.textNormal
+            for _, cat in ipairs(e.order) do
+                local k = e.cats[cat]
+                gt:AddLine("|T" .. MK.TOWN_ICON[cat] .. ":14:14|t " .. (MK.TOWN_TEXT[cat] or cat) .. (k > 1 and (" ×" .. k) or ""),
+                    nrm[1], nrm[2], nrm[3])
+            end
+        end
     elseif e.kind == "travel" then
         gt:SetText(MK.VEHICLE[e.vehicle] .. " nach " .. (MK.MapName(e.to) or "?"), t[1], t[2], t[3])
         gt:AddLine(MK.FACTION[e.faction], C.textNormal[1], C.textNormal[2], C.textNormal[3])
@@ -291,16 +335,20 @@ local function NewPin(canvas)
     local diamond = K.MEDIA .. "diamond"
     p.flight = { Layer(p, diamond, 1, BLACK, MK.HALO, 2), Layer(p, diamond, 2, w, MK.RIM, 0), Layer(p, diamond, 3, g, 1, -2) }
     p.travel = { Layer(p, disc, 1, BLACK, MK.HALO, 2), Layer(p, disc, 2, g, 1, 0), Layer(p, disc, 3, w, MK.RIM, -4) }
-    -- Stadt: dunkler Hof, heller Ring, darin das Symbol der Art.
-    local ring = p:CreateTexture(nil, "ARTWORK", nil, 2)
-    ring:SetAllPoints(p)
-    ring:SetColorTexture(w[1], w[2], w[3], MK.RIM)
+    -- Stadt (1.0.7.3 rund): dunkler Hof, farbiger Ring, darin rund das
+    -- Symbol der Art; bei mehreren eine Zahl unten rechts.
+    local ring = Layer(p, disc, 2, w, 1, 0)
     local icon = p:CreateTexture(nil, "ARTWORK", nil, 3)
-    icon:SetPoint("TOPLEFT", p, "TOPLEFT", 1, -1)
-    icon:SetPoint("BOTTOMRIGHT", p, "BOTTOMRIGHT", -1, 1)
-    icon:SetTexCoord(0.08, 0.92, 0.08, 0.92)
+    icon:SetPoint("TOPLEFT", p, "TOPLEFT", 2, -2)
+    icon:SetPoint("BOTTOMRIGHT", p, "BOTTOMRIGHT", -2, 2)
+    icon:SetTexCoord(0.1, 0.9, 0.1, 0.9)
+    if icon.SetMask then pcall(icon.SetMask, icon, disc) end
     p.townIcon = icon
-    p.town = { Layer(p, disc, 1, BLACK, MK.HALO, 4), ring, icon }
+    local count = K.NewText(p, 9, "OVERLAY", 7)
+    count:SetPoint("BOTTOMRIGHT", p, "BOTTOMRIGHT", 4, -3)
+    count:SetShadowOffset(1, -1)
+    p.townCount = count
+    p.town = { Layer(p, disc, 1, BLACK, MK.HALO, 3), ring, icon }
     p.rim, p.dot = p.spirit[2], p.spirit[3]
     p.shade, p.arrow = p.crossing[1], p.crossing[3]
     p:SetAlpha(MK.ALPHA)
@@ -323,8 +371,10 @@ local function Dress(p, e)
     if e.kind == "town" then
         p.townIcon:SetTexture(MK.TOWN_ICON[e.cat] or MK.TOWN_ICON.vendor)
         local c = e.cat == "mail" and GC.mailPin or GC.townPin
-        p.town[2]:SetColorTexture(c[1], c[2], c[3], 1)
+        p.town[2]:SetVertexColor(c[1], c[2], c[3], 1)
+        p.townCount:SetText(e.n and e.n > 1 and tostring(e.n) or "")
     end
+    if e.kind ~= "town" then p.townCount:SetText("") end
     for _, kind in ipairs({ "spirit", "crossing", "flight", "travel", "town" }) do
         for _, t in ipairs(p[kind]) do t:SetShown(e.kind == kind) end
     end

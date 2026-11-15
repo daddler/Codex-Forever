@@ -26741,6 +26741,11 @@ do
         for _, cat in ipairs(MK.TOWN_ORDER) do assert(MK.TOWN_ICON[cat] and MK.TOWN_TEXT[cat], cat .. ": Symbol oder Name fehlt") end
         assert(MK.TownWants("mail") and not MK.TownWants("vendor"), "Filter ab Werk falsch")
         assert(MK.FilterMenu and MK.EnsureFilterButton, "Filter an der Karte fehlt")
+        local cl = MK.ClusterTowns({ { x = 0.5, y = 0.5, cat = "repair" }, { x = 0.51, y = 0.5, cat = "bank" },
+            { x = 0.505, y = 0.51, cat = "repair" }, { x = 0.9, y = 0.9, cat = "mail" } })
+        assert(#cl == 2, "nicht zusammengefasst: " .. #cl)
+        assert(cl[2].cat == "bank" and cl[2].n == 3 and cl[2].cats.repair == 2, "Gruppe falsch")
+        assert(not MK.TownWants("profession"), "Berufslehrer ab Werk an")
     end)
     Check(ok, "Taschendiebstahl-Meldung, Stadt-Pins mit Filter" .. (ok and "" or (": " .. tostring(err))))
 end

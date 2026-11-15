@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.0.7.3",
+        date    = "15.11.2026",
+        notes   = {
+            "|cff7C6CFFStädte auf der Karte aufgeräumt|r – Dienste, die dicht beieinander liegen, teilen sich jetzt einen Pin mit einer Zahl; fährst du darüber, steht alles im Tooltip. Die Symbole sind rund und kleiner, Berufslehrer ab Werk aus (lassen sich im Filter oben rechts wieder anhaken).",
+        },
+    },
+    {
         version = "1.0.7.2",
         date    = "15.11.2026",
         notes   = {
