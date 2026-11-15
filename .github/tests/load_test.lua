@@ -26603,6 +26603,34 @@ do
     Check(ok, "Talentplaner: Regeln, Teilen" .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 1.0.7.0: Lehrerpreise vom Lehrer, Daemonenbuecher des gerufenen Daemons.
+do
+    local ok, err = pcall(function()
+        local TR = WeintCodex.Trainer
+        local G = _G
+        local saved = { G.GetNumTrainerServices, G.GetTrainerServiceInfo, G.GetTrainerServiceCost, G.C_Spell, G.UnitClass, G.IsSpellKnown }
+        G.UnitClass = function() return "Krieger", "WARRIOR" end
+        G.C_Spell = { GetSpellName = function(id) return id == 6343 and "Donnerknall" or ("Z" .. id) end,
+                      GetSpellSubtext = function() return "Rang 1" end }
+        G.GetNumTrainerServices = function() return 1 end
+        G.GetTrainerServiceInfo = function() return "Donnerknall", "Rang 1" end
+        G.GetTrainerServiceCost = function() return 77 end
+        assert(TR.ReadTrainer() == 1 and TR.SeenPrice(6343) == 77, "Preis vom Lehrer nicht gemerkt")
+        local cat = TR.Categorize({ class = "WARRIOR", level = 6, race = 1 })
+        local hit
+        for _, list in pairs(cat.sections) do for _, sp in ipairs(list) do if sp.id == 6343 then hit = sp end end end
+        assert(hit and hit.cost == 77 and hit.seenPrice, "Lehrerseite zeigt nicht den Preis des Lehrers")
+        G.IsSpellKnown = function(id, pet) return pet and id == 3110 end
+        local books = TR.GrimoireBooks(10)
+        assert(#books > 0 and books[1].grimoire and books[1].demon == "Wichtel", "Bücher des Wichtels fehlen")
+        G.IsSpellKnown = function() return false end
+        assert(#TR.GrimoireBooks(10) == 0, "Bücher ohne gerufenen Dämon")
+        G.GetNumTrainerServices, G.GetTrainerServiceInfo, G.GetTrainerServiceCost, G.C_Spell, G.UnitClass, G.IsSpellKnown =
+            saved[1], saved[2], saved[3], saved[4], saved[5], saved[6]
+    end)
+    Check(ok, "Lehrer: Preise vom Lehrer, Dämonenbücher" .. (ok and "" or (": " .. tostring(err))))
+end
+
 if failures == 0 then
     print("BESTANDEN")
     os.exit(0)

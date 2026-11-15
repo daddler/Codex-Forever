@@ -127,6 +127,7 @@ TR.SECTIONS = {
     { key = "quest",   label = "Über Quests",        color = "infoBright" },
     { key = "talent",  label = "Braucht ein Talent", color = "textMuted" },
     { key = "pet",     label = "Tierausbildung",     color = "textMuted" },
+    { key = "grimoire", label = "Dämonenbücher",     color = "infoBright" },
     { key = "known",   label = "Gelernt",            color = "textDim" },
 }
 
@@ -158,8 +159,16 @@ function TR.Categorize(state)
             end
             key = ok and "now" or "missing"
         end
+        -- 1.0.7.0: der Preis, den DEIN Lehrer genannt hat (Ruf-Rabatt
+        -- drin), geht vor dem Preis aus dem Bestand.
+        local seen = TR.SeenPrice and TR.SeenPrice(sp.id)
+        if seen then sp.cost, sp.seenPrice = seen, true end
         table.insert(out.sections[key], sp)
         out.total[key] = out.total[key] + sp.cost
+    end
+    -- 1.0.7.0: Daemonenbuecher (Hexenmeister) des gerufenen Daemons.
+    if state.class == "WARLOCK" and TR.GrimoireBooks then
+        for _, sp in ipairs(TR.GrimoireBooks(state.level)) do table.insert(out.sections.grimoire, sp) end
     end
     -- 1.0.7.0 (Abgleich mit Naowh): Zauber, die kein Lehrer lehrt, sondern
     -- eine Quest belohnt (data/trainer_quests.lua, `community`). Kosten 0,
@@ -505,6 +514,7 @@ local SECTION_NOTE = {
     missing = "Erst die Vorstufe lernen – das kann auch ein anderer Zauber sein. Der Lehrer zeigt diesen Rang sonst nicht an.",
     talent  = "Der Lehrer lehrt das erst, wenn du das Talent dazu hast.",
     pet     = "Lehrt der Tierausbilder deinem Begleiter. Ob er es schon kann, weiß nur der Tierausbilder.",
+    grimoire = "Bücher für deinen gerufenen Dämon, die er noch nicht kann (bis zwei Stufen über deiner) – zu kaufen beim Dämonenlehrer. Ruf einen anderen Dämon, um seine zu sehen. Unbestätigt.",
     quest   = "Lehrt kein Lehrer – du bekommst sie als Belohnung einer Quest, meist einer Klassenquest (Reiter „Klassenquests“). Unbestätigt.",
 }
 
@@ -516,7 +526,7 @@ local function SectionHead(body, y, w, sec, count, cost)
     local eb = WeintCodex.Eyebrow(head, sec.label, { color = sec.color, size = 10 })
     eb:SetPoint("BOTTOMLEFT", head, "BOTTOMLEFT", 0, 8)
     local info = count .. (count == 1 and " Zauber" or " Zauber")
-    if sec.key ~= "pet" and sec.key ~= "known" and sec.key ~= "quest" then info = info .. " · " .. TR.Money(cost) end
+    if sec.key ~= "pet" and sec.key ~= "known" and sec.key ~= "quest" and sec.key ~= "grimoire" then info = info .. " · " .. TR.Money(cost) end
     local right = WeintCodex.Label(head, info, { size = 11, color = "textDim", justify = "RIGHT" })
     right:SetPoint("BOTTOMRIGHT", head, "BOTTOMRIGHT", -4, 7)
     local line = head:CreateTexture(nil, "ARTWORK")
@@ -1033,3 +1043,105 @@ ev:SetScript("OnEvent", WeintCodex.Measured("Lehrer", function(_, event, id)
     Redraw()
 end))
 TR.events = ev
+
+--------------------------------------------------
+-- Preise beim Lehrer (1.0.7.0, Abgleich mit Naowh Forever)
+--------------------------------------------------
+-- Am Lehrer nennt der Client den echten Preis jedes Dienstes (mit dem
+-- Rabatt deines Rufs). WeintCodex ordnet ihn ueber Name und Rang dem Zauber
+-- im Bestand zu und merkt ihn je Charakter (K.CharState().trainerPrices).
+-- Danach zeigt die Lehrerseite diesen Preis statt des Bestands.
+
+local function PriceStore()
+    local K = WeintCodex.UIKit
+    local st = K and K.CharState and K.CharState()
+    if not st then return nil end
+    st.trainerPrices = st.trainerPrices or {}
+    return st.trainerPrices
+end
+function TR.SeenPrice(id)
+    local s = PriceStore()
+    return s and s[id] or nil
+end
+
+-- "Name|Rang" -> Zauber, fuer die eigene Klasse.
+local function NameIndex(class)
+    local idx = {}
+    local cs = _G.C_Spell
+    if not (cs and cs.GetSpellName) then return idx end
+    for _, sp in ipairs(T.Spells(class)) do
+        local ok, n = pcall(cs.GetSpellName, sp.id)
+        n = ok and Plain(n)
+        if type(n) == "string" then
+            local sub = cs.GetSpellSubtext and Plain(select(2, pcall(cs.GetSpellSubtext, sp.id)))
+            idx[n .. "|" .. (type(sub) == "string" and sub or "")] = sp.id
+            idx[n .. "|*"] = idx[n .. "|*"] or sp.id
+        end
+    end
+    return idx
+end
+
+-- Liest den offenen Lehrer. Gibt die Zahl gemerkter Preise zurueck.
+function TR.ReadTrainer()
+    local n = _G.GetNumTrainerServices and Plain(_G.GetNumTrainerServices())
+    if type(n) ~= "number" or n <= 0 or not _G.GetTrainerServiceCost then return 0 end
+    local state = PlayerState()
+    if not state.class then return 0 end
+    local store = PriceStore()
+    if not store then return 0 end
+    local idx = NameIndex(state.class)
+    local got = 0
+    for i = 1, n do
+        local ok, name, rank = pcall(_G.GetTrainerServiceInfo, i)
+        local okC, cost = pcall(_G.GetTrainerServiceCost, i)
+        name, rank, cost = ok and Plain(name), ok and Plain(rank), okC and Plain(cost)
+        if type(name) == "string" and type(cost) == "number" then
+            local id = idx[name .. "|" .. (type(rank) == "string" and rank or "")]
+            if id then store[id] = cost got = got + 1 end
+        end
+    end
+    TR.lastRead = got
+    return got
+end
+
+do
+    local ev = CreateFrame("Frame")
+    pcall(ev.RegisterEvent, ev, "TRAINER_SHOW")
+    pcall(ev.RegisterEvent, ev, "TRAINER_UPDATE")
+    ev:SetScript("OnEvent", function() pcall(TR.ReadTrainer) end)
+end
+
+--------------------------------------------------
+-- Daemonenbuecher (1.0.7.0, Abgleich mit Naowh Forever)
+--------------------------------------------------
+-- data/grimoires.lua (erzeugt, `community`). Welcher Daemon gerufen ist,
+-- sagt nur, welche Begleiterzauber der Client kennt (IsSpellKnown(id, true));
+-- ohne Daemon keine Liste. Gezeigt: was er noch nicht kann, bis zwei Stufen
+-- ueber deiner.
+TR.DEMON_NAME = { [188] = "Wichtel", [204] = "Leerwandler", [205] = "Sukkubus", [189] = "Teufelsjäger" }
+local function PetKnows(id)
+    if not _G.IsSpellKnown then return false end
+    local ok, v = pcall(_G.IsSpellKnown, id, true)
+    return ok and Plain(v) == true
+end
+function TR.ActiveDemon()
+    for _, d in ipairs(WeintCodex.GrimoireData or {}) do
+        for _, b in ipairs(d.books) do
+            -- Auch die Grundzauber (Vorstufe der Buecher), die jeder Daemon von Anfang an kann.
+            if PetKnows(b[2]) or (b.needs and PetKnows(b.needs)) then return d end
+        end
+    end
+    return nil
+end
+function TR.GrimoireBooks(level)
+    local out = {}
+    local d = TR.ActiveDemon()
+    if not d or type(level) ~= "number" then return out end
+    for _, b in ipairs(d.books) do
+        if b[1] <= level + SOON and not PetKnows(b[2]) then
+            out[#out + 1] = { id = b[2], level = b[1], cost = b[3], book = b.item, grimoire = true,
+                demon = TR.DEMON_NAME[d.line] or d.name }
+        end
+    end
+    return out
+end
