@@ -979,6 +979,16 @@ im ForeverGuide-Abgleich in Razorfen Downs; der Eingang der Hall of Thanes
 liegt dort bei 43,5; 52,0, im Abgleich bei 31,8; 46,4. Bosslisten: nichts
 Neues seit 1.6.2 (Dalaran schon in 6.28.1.0).
 
+**1.0.7.0 – Abgleich vom 15.11.2026** (Naowh Forever 1.2.33):
+`import_naowh.py` und `import_naowh_prof.py` neu gelaufen. Neu u. a. die
+Beute der Shaper's Terrace und weitere Bosse, 153 Questzeilen mehr, ein
+Kräuterfundort (Demonsage). Bosslisten unverändert. Lehrer: mit Naowhs
+„Training“ verglichen (Client-Build 1.60.1.70888) – keine Stufe weicht ab;
+Unterschiede nur bei Preisen der Priester-Rassenzauber (Naowh rund ein
+Zehntel, nicht übernommen, ungeklärt), bei 45 Zaubern, die Naowh als „über
+eine Quest gelernt“ führt (bei uns nicht im Bestand), und bei Fertigkeiten
+und Tierausbildung, die Naowh anderswo führt.
+
 **1.0.6.1 – Abgleich vom 13.11.2026** (Naowh Forever: Dungeon Journal
 1.2.30, Daten vom 13.11., Client-Build 1.60.1.70938; „Dungeon Journal“
 von Exehn 2.0.4). `import_naowh.py` neu gelaufen: 1747 Beutezeilen, 1089

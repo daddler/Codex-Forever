@@ -2067,6 +2067,7 @@ P.NF_NODES = {
     ["Cold Iron Deposit"] = { "ore", 125, 219401 },
     ["Copper Vein"] = { "ore", 1, 2770 },
     ["Dark Iron Deposit"] = { "ore", 230, 11370 },
+    ["Demonsage"] = { "herb", 300, false },
     ["Doom Weed"] = { "herb", 1, 13702 },
     ["Dreamfoil"] = { "herb", 270, 13463 },
     ["Dreamroot"] = { "herb", 205, 219444 },

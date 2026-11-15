@@ -1,5 +1,5 @@
 --------------------------------------------------
--- WeintCodex :: Dungeon-Journal, Abgleich mit Naowh Forever 1.2.30
+-- WeintCodex :: Dungeon-Journal, Abgleich mit Naowh Forever 1.2.33
 --------------------------------------------------
 -- ERZEUGT von .github/scripts/import_naowh.py - nicht von Hand aendern;
 -- neu erzeugen. Ergaenzt data/dungeon_journal.lua und den Abgleich mit
@@ -36,6 +36,11 @@ J.NF_SOURCE = {
 
 J.NF_LOOT = {
     alcaz_island_prison = {
+        blazeroar = {
+            { 276744, "Zarla's Snack Pouch", "Schmuck", 3 },
+            { 276745, "Beastbond Robe", "Brust, Stoff", 3 },
+            { 276746, "Defias Enforcer's Legguards", "Beine, Leder", 3 },
+        },
         katerina_the_cleaner = {
             { 276740, nil, nil, nil },
             { 276738, nil, nil, nil },
@@ -102,6 +107,8 @@ J.NF_LOOT = {
             { 11121, "Darkwater Talwar", "Waffenhand, Schwert", 2, chance = 38 },
             { 888, "Naga Battle Gloves", "Hände, Leder", 3, chance = 38 },
             { 3078, "Naga Heartpiercer", "Distanz, Bogen", 2, chance = 19 },
+            { 251380, "Plans: Veteran's Silvered Chain Helm", "Schmiedekunst (Pläne)", 3 },
+            { 251381, "Plans: Guard's Silvered Chain Helm", "Schmiedekunst (Pläne)", 3 },
         },
         lorgus_jett = {
             { 273841, "Twilight Maul", "Zweihändig, Streitkolben", 3 },
@@ -148,21 +155,26 @@ J.NF_LOOT = {
         blackmaw_behemoth = {
             { 280065, nil, nil, nil },
             { 280066, nil, nil, nil },
+            { 280067, nil, nil, nil },
         },
         bonesnout_the_unbroken = {
             { 280059, nil, nil, nil },
             { 280060, nil, nil, nil },
+            { 280061, nil, nil, nil },
         },
         elder_shaman_bloodmane = {
             { 280068, nil, nil, nil },
             { 280070, nil, nil, nil },
+            { 280069, nil, nil, nil },
         },
         impaan_the_imprisoner = {
             { 280058, nil, nil, nil },
             { 280057, nil, nil, nil },
+            { 280056, nil, nil, nil },
         },
         moontouched_wanderer = {
             { 280080, nil, nil, nil },
+            { 280079, nil, nil, nil },
         },
         unbound_spirit = {
             { 280071, nil, nil, nil },
@@ -177,6 +189,7 @@ J.NF_LOOT = {
         withermaw = {
             { 280062, nil, nil, nil },
             { 280064, nil, nil, nil },
+            { 280063, nil, nil, nil },
         },
     },
     blackrock_depths = {
@@ -186,6 +199,7 @@ J.NF_LOOT = {
             { 11809, "Flame Wrath", "Zweihändig, Stangenwaffe", 3, chance = 11 },
             { 11832, "Burst of Knowledge", "Schmuck", 3, chance = 10 },
             { 11808, "Circle of Flame", "Kopf, Stoff", 4, chance = 1 },
+            { 273122, nil, nil, nil },
         },
         baelgar = {
             { 11802, "Lavacrest Leggings", "Beine, Platte", 3, chance = 34 },
@@ -276,11 +290,13 @@ J.NF_LOOT = {
             { 11745, "Fists of Phalanx", "Hände, Platte", 3, chance = 30 },
             { 227947, nil, nil, nil, chance = 29 },
             { 11743, "Rockfist", "Einhändig, Faustwaffe", 2, chance = 3 },
+            { 276879, nil, nil, nil },
         },
         plugger_spazzring = {
             { 12793, "Mixologist's Tunic", "Brust, Leder", 3, chance = 30 },
             { 12791, "Barman Shanker", "Waffenhand, Dolch", 3, chance = 10 },
             { 18653, "Schematic: Goblin Jumper Cables XL", "Ingenieurskunst (Bauplan)", nil },
+            { 276877, nil, nil, nil },
         },
         pyromancer_loregrain = {
             { 11748, "Pyric Caduceus", "Distanz, Zauberstab", 3, chance = 29 },
@@ -659,6 +675,7 @@ J.NF_LOOT = {
             { 274995, nil, nil, nil },
             { 274996, nil, nil, nil },
             { 274997, nil, nil, nil },
+            { 273101, nil, nil, nil },
         },
         twilight_commander_zarmok = {
             { 274998, nil, nil, nil },
@@ -712,6 +729,7 @@ J.NF_LOOT = {
             { 13252, "Cloudrunner Girdle", "Taille, Leder", 3, chance = 19 },
             { 13253, "Hands of Power", "Hände, Stoff", 3, chance = 18 },
             { 12835, "Plans: Annihilator", "Schmiedekunst (Pläne)", nil },
+            { 273115, nil, nil, nil },
         },
         shadow_hunter_voshgajin = {
             { 13255, "Trueaim Gauntlets", "Hände, Schwere Rüstung", 3, chance = 34 },
@@ -758,6 +776,7 @@ J.NF_LOOT = {
             { 17754, "Infernal Trickster Leggings", "Beine, Schwere Rüstung", 3, chance = 29 },
             { 17752, "Satyr's Lash", "Einhändig, Dolch", 3, chance = 29 },
             { 17755, "Satyrmane Sash", "Taille, Stoff", 3, chance = 28 },
+            { 275864, nil, nil, nil },
         },
         meshlok = {
             { 17767, "Bloomsprout Headpiece", "Kopf, Schwere Rüstung", 3, chance = 29 },
@@ -817,11 +836,13 @@ J.NF_LOOT = {
             { 272998, "Bone Knuckles", "Waffenhand, Faustwaffe", 3 },
             { 272999, "Barbaric Crossbow", "Distanz, Armbrust", 3 },
             { 252777, "Pattern: Brawler's Leather Gloves", "Lederverarbeitung (Muster)", 3 },
+            { 251362, "Plans: Protector's Gloves", "Schmiedekunst (Pläne)", 3 },
         },
         taragaman = {
             { 14149, "Subterranean Cape", "Rücken, Stoff", 3, chance = 33 },
             { 14148, "Crystalline Cuffs", "Handgelenke, Stoff", 3, chance = 31 },
             { 14145, "Cursed Felblade", "Waffenhand, Schwert", 3, chance = 16 },
+            { 251364, "Plans: Crusader's Gloves", "Schmiedekunst (Pläne)", 3 },
         },
     },
     razorfen_downs = {
@@ -836,6 +857,7 @@ J.NF_LOOT = {
         glutton = {
             { 10772, "Glutton's Cleaver", "Einhändig, Axt", 2, chance = 50 },
             { 10774, "Fleshhide Shoulders", "Schulter, Leder", 3, chance = 48 },
+            { 274385, nil, nil, nil },
         },
         mordresh = {
             { 10770, "Mordresh's Lifeless Skull", "In Schildhand geführt", 3, chance = 33 },
@@ -1178,6 +1200,7 @@ J.NF_LOOT = {
             { 6321, "Silverlaine's Family Seal", "Finger", 3, chance = 19 },
             { 273637, "Blade of Silverlaine", "Waffenhand, Schwert", 3 },
             { 3212, nil, nil, nil },
+            { 251381, "Plans: Guard's Silvered Chain Helm", "Schmiedekunst (Pläne)", 3 },
         },
         commander_springvale = {
             { 3191, "Arced War Axe", "Zweihändig, Axt", 3, chance = 36 },
@@ -1200,6 +1223,7 @@ J.NF_LOOT = {
             { 4064, nil, nil, nil },
             { 9804, nil, nil, nil },
             { 251382, "Plans: Protector's Silvered Chain Helm", "Schmiedekunst (Pläne)", 3 },
+            { 251381, "Plans: Guard's Silvered Chain Helm", "Schmiedekunst (Pläne)", 3 },
         },
         odo = {
             { 6319, "Girdle of the Blindwatcher", "Taille, Leder", 3, chance = 58 },
@@ -1226,6 +1250,25 @@ J.NF_LOOT = {
             { 273647, "Worgpelt Leggings", "Beine, Leder", 3 },
             { 3212, nil, nil, nil },
             { 251382, "Plans: Protector's Silvered Chain Helm", "Schmiedekunst (Pläne)", 3 },
+        },
+    },
+    shapers_terrace = {
+        bolt = {
+            { 280031, "Sparklance Wand", "Distanz, Zauberstab", 3 },
+            { 280032, "Bolt's Charged Eyeball", "Schmuck", 3 },
+        },
+        cinder = {
+            { 280029, "Cinderedge Crescent", "Einhändig, Axt", 3 },
+            { 280028, "Heartflame Gauntlets", "Hände, Platte", 3 },
+        },
+        nanaya = {
+            { 280023, "Nanaya's Control Spire", "Zweihändig, Stab", 3 },
+            { 280025, "Leggings of Curation", "Beine, Stoff", 3 },
+            { 280024, "Legplates of Reinforced Crystal", "Beine, Platte", 3 },
+        },
+        snowtalon = {
+            { 280026, "Albinofur Grips", "Hände, Kette", 3 },
+            { 280027, "Crownroar Chestplate", "Brust, Platte", 3 },
         },
     },
     stratholme = {
@@ -1324,6 +1367,10 @@ J.NF_LOOT = {
             { 13528, "Twilight Void Bracers", "Handgelenke, Schwere Rüstung", 2, chance = 11 },
             { 12833, "Plans: Hammer of the Titans", "Schmiedekunst (Pläne)", nil },
         },
+        malor_the_zealous = {
+            { 276398, nil, nil, nil },
+            { 276399, nil, nil, nil },
+        },
         nerubenkan = {
             { 13529, "Husk of Nerub'enkan", "Schildhand, Schild", 3, chance = 18 },
             { 18740, "Thuzadin Sash", "Taille, Stoff", 3, chance = 18 },
@@ -1411,6 +1458,7 @@ J.NF_LOOT = {
             { 10806, "Vestments of the Atal'ai Prophet", "Brust, Stoff", 3, chance = 27 },
             { 10807, "Kilt of the Atal'ai Prophet", "Beine, Stoff", 3, chance = 27 },
             { 10110, nil, nil, nil },
+            { 273119, nil, nil, nil },
         },
         morphaz = {
             { 12466, "Dawnspire Cord", "Taille, Stoff", 3, chance = 8 },
@@ -1443,6 +1491,7 @@ J.NF_LOOT = {
             { 273102, "Blueprint: Cookie's Feast", "Bauplan", 2 },
             { 252778, "Pattern: Trapper's Leather Gloves", "Lederverarbeitung (Muster)", 3 },
             { 252781, "Pattern: Stormrider's Leather Gloves", "Lederverarbeitung (Muster)", 3 },
+            { 251364, "Plans: Crusader's Gloves", "Schmiedekunst (Pläne)", 3 },
         },
         edwin_vancleef = {
             { 5202, "Corsair's Overshirt", "Brust, Stoff", 3, chance = 24 },
@@ -1466,6 +1515,7 @@ J.NF_LOOT = {
             { 7230, "Smite's Mighty Hammer", "Zweihändig, Streitkolben", 3, chance = 19 },
             { 284715, "First Mate Band", "Finger", 3 },
             { 251363, "Plans: Acolyte's Gloves", "Schmiedekunst (Pläne)", 3 },
+            { 252779, "Pattern: Defender's Leather Gloves", "Lederverarbeitung (Muster)", 3 },
         },
         rhahkzor = {
             { 5187, "Rhahk'Zor's Hammer", "Zweihändig, Streitkolben", 3, chance = 76 },
@@ -1482,6 +1532,7 @@ J.NF_LOOT = {
             { 273293, "Bandsaw Wristbands", "Handgelenke, Schwere Rüstung", 3, from = "Sneed" },
             { 210178, nil, nil, nil, from = "Sneed" },
             { 273092, "Blueprint: Repair Bot", "Ingenieurskunst (Bauplan)", 2, from = "Sneed" },
+            { 252779, "Pattern: Defender's Leather Gloves", "Lederverarbeitung (Muster)", 3, from = "Sneed" },
         },
     },
     the_stockade = {
@@ -1543,17 +1594,20 @@ J.NF_LOOT = {
             { 273804, "Executioner Mantle", "Schulter, Leder", 3 },
             { 273805, "Blackrock Harness", "Brust, Leder", 3 },
             { 273806, "Dark Horde Band", "Finger", 3 },
+            { 251380, "Plans: Veteran's Silvered Chain Helm", "Schmiedekunst (Pläne)", 3 },
         },
     },
     uldaman = {
         ancient_stone_keeper = {
             { 9410, "Cragfists", "Hände, Platte", 3, chance = 48 },
             { 9411, "Rockshard Pauldrons", "Schulter, Schwere Rüstung", 2, chance = 47 },
+            { 274431, nil, nil, nil },
         },
         archaedas = {
             { 11118, "Archaedic Stone", "Finger", 3, chance = 62 },
             { 9413, "The Rockpounder", "Zweihändig, Streitkolben", 3, chance = 14 },
             { 9418, "Stoneslayer", "Zweihändig, Schwert", 3, chance = 14 },
+            { 274432, nil, nil, nil },
         },
         galgann = {
             { 11311, "Emberscale Cape", "Rücken, Stoff", 2, chance = 38 },
@@ -1575,6 +1629,7 @@ J.NF_LOOT = {
             { 7556, nil, nil, nil },
             { 9973, nil, nil, nil },
             { 12030, nil, nil, nil },
+            { 274484, nil, nil, nil },
         },
         revelosh = {
             { 9389, "Revelosh's Spaulders", "Schulter, Leder", 2, chance = 23 },
@@ -1643,6 +1698,7 @@ J.NF_LOOT = {
             { 16672, "Gauntlets of Elements", "Hände, Schwere Rüstung", 3, chance = 18 },
             { 12929, "Emberfury Talisman", "Hals", 3, chance = 13 },
             { 12927, "Truestrike Shoulders", "Schulter, Leder", 3, chance = 12 },
+            { 249520, nil, nil, nil },
         },
         solakar_flamewreath = {
             { 12589, "Dustfeather Sash", "Taille, Stoff", 3, chance = 19 },
@@ -1691,6 +1747,7 @@ J.NF_LOOT = {
             { 273084, "Cloak of Hermitic Bliss", "Rücken, Stoff", 3 },
             { 14371, nil, nil, nil },
             { 251361, "Plans: Guard's Gloves", "Schmiedekunst (Pläne)", 3 },
+            { 252779, "Pattern: Defender's Leather Gloves", "Lederverarbeitung (Muster)", 3 },
         },
         lady_anacondra = {
             { 5404, "Serpent's Shoulders", "Schulter, Leder", 3, chance = 47 },
@@ -1706,6 +1763,8 @@ J.NF_LOOT = {
             { 6460, "Cobrahn's Grasp", "Taille, Schwere Rüstung", 3, chance = 18 },
             { 10410, "Leggings of the Fang", "Beine, Leder", 3, chance = 18 },
             { 252782, "Pattern: Wisdom's Leather Gloves", "Lederverarbeitung (Muster)", 3 },
+            { 251362, "Plans: Protector's Gloves", "Schmiedekunst (Pläne)", 3 },
+            { 251364, "Plans: Crusader's Gloves", "Schmiedekunst (Pläne)", 3 },
         },
         lord_pythas = {
             { 6473, "Armor of the Fang", "Brust, Leder", 3, chance = 55 },
@@ -1721,6 +1780,7 @@ J.NF_LOOT = {
             { 6469, "Venomstrike", "Distanz, Bogen", 3, chance = 17 },
             { 15307, nil, nil, nil },
             { 273087, nil, nil, nil },
+            { 251380, "Plans: Veteran's Silvered Chain Helm", "Schmiedekunst (Pläne)", 3 },
         },
         mutanus = {
             { 6463, "Deep Fathom Ring", "Finger", 3, chance = 30 },
@@ -1761,12 +1821,23 @@ J.NF_LOOT = {
             { 9469, "Gahz'rilla Scale Armor", "Brust, Schwere Rüstung", 3, chance = 45 },
             { 14270, nil, nil, nil },
             { 14787, nil, nil, nil },
+            { 274657, nil, nil, nil },
         },
         nekrum = {
+            { 9480, nil, nil, nil },
+            { 9482, nil, nil, nil },
+            { 9511, nil, nil, nil },
             { 14907, nil, nil, nil },
+            { 274644, nil, nil, nil },
+            { 274645, nil, nil, nil },
+            { 274643, nil, nil, nil },
         },
         sergeant_bly = {
             { 5616, "Gutwrencher", "Einhändig, Dolch", 3 },
+            { 9482, nil, nil, nil },
+            { 274646, nil, nil, nil },
+            { 274647, nil, nil, nil },
+            { 274648, nil, nil, nil },
         },
         sezzziz = {
             { 9470, "Bad Mojo Mask", "Kopf, Stoff", 3, chance = 23 },
@@ -1775,11 +1846,20 @@ J.NF_LOOT = {
             { 9474, "Jinxed Hoodoo Kilt", "Beine, Leder", 3, chance = 22 },
         },
         theka = {
+            { 2040, nil, nil, nil },
             { 5616, "Gutwrencher", "Einhändig, Dolch", 3 },
+            { 9480, nil, nil, nil },
+            { 9482, nil, nil, nil },
+            { 9483, nil, nil, nil },
+            { 9511, nil, nil, nil },
+            { 9512, nil, nil, nil },
             { 14660, nil, nil, nil },
             { 15166, nil, nil, nil },
             { 15373, nil, nil, nil },
             { 15964, nil, nil, nil },
+            { 274641, nil, nil, nil },
+            { 274639, nil, nil, nil },
+            { 274638, nil, nil, nil },
         },
         ukorz = {
             { 9476, "Big Bad Pauldrons", "Schulter, Platte", 3, chance = 32 },
@@ -1792,11 +1872,20 @@ J.NF_LOOT = {
         zumrah = {
             { 18083, "Jumanza Grips", "Hände, Stoff", 3, chance = 35 },
             { 18082, "Zum'rah's Vexing Cane", "Zweihändig, Stab", 3, chance = 15 },
+            { 274642, nil, nil, nil },
         },
     },
 }
 
 J.NF_OTHERS = {
+    alcaz_island_prison = {
+        { name = "Gegner unterwegs", items = {
+            { 287021, nil, nil, nil },
+            { 287019, nil, nil, nil },
+            { 287018, nil, nil, nil },
+            { 287020, nil, nil, nil },
+        } },
+    },
     blackfathom_deeps = {
         { name = "Gegner unterwegs", items = {
             { 2034, "Scholarly Robes", "Brust, Stoff", 3, chance = 2 },
@@ -1814,14 +1903,26 @@ J.NF_OTHERS = {
         } },
     },
     blackmaw_hold = {
+        { name = "Gortek the Apprentice", note = "Seltener Gegner", items = {
+            { 280077, nil, nil, nil },
+            { 280078, nil, nil, nil },
+        } },
+        { name = "Tunnelweb Matriarch", note = "Seltener Gegner", items = {
+            { 280085, nil, nil, nil },
+            { 280086, nil, nil, nil },
+        } },
         { name = "Gegner unterwegs", items = {
             { 287036, nil, nil, nil },
+            { 287032, nil, nil, nil },
+            { 287034, nil, nil, nil },
+            { 287028, nil, nil, nil },
         } },
     },
     blackrock_depths = {
         { name = "Verek", items = {
             { 11755, "Verek's Collar", "Hals", 3, chance = 14 },
             { 22242, "Verek's Leash", "Taille, Schwere Rüstung", 3, chance = 12 },
+            { 276884, nil, nil, nil },
         } },
         { name = "Princess Moira Bronzebeard", items = {
             { 12554, "Hands of the Exalted Herald", "Hände, Stoff", 3, chance = 23 },
@@ -1843,6 +1944,7 @@ J.NF_OTHERS = {
             { 11920, "Wraith Scythe", "Waffenhand, Axt", 3, chance = 28 },
             { 11921, "Impervious Giant", "Zweihändig, Streitkolben", 3, chance = 26 },
             { 11922, "Blood-etched Blade", "Einhändig, Dolch", 3, chance = 22 },
+            { 11923, "The Hammer of Grace", "Waffenhand, Streitkolben", 3 },
             { 11926, "Deathdealer Breastplate", "Brust, Schwere Rüstung", 3 },
             { 11929, "Haunting Specter Leggings", "Beine, Stoff", 3 },
             { 12527, "Ribsplitter", "Axt", 3 },
@@ -1858,6 +1960,13 @@ J.NF_OTHERS = {
             { 12551, "Stoneshield Cloak", "Stoff", 3 },
             { 12552, "Blisterbane Wrap", "Stoff", 3 },
             { 12555, "Battlechaser's Greaves", "Platte", 3 },
+            { 22205, "Black Steel Bindings", "Handgelenke, Platte", 3 },
+            { 22254, "Wand of Eternal Light", "Distanz, Zauberstab", 3 },
+            { 22255, "Magma Forged Band", "Finger", 3 },
+            { 22256, "Mana Shaping Handwraps", "Hände, Stoff", 3 },
+            { 22317, "Lefty's Brass Knuckle", "Waffenhand, Faustwaffe", 3 },
+            { 22318, "Malgen's Long Bow", "Distanz, Bogen", 3 },
+            { 22330, "Shroud of Arcane Mastery", "Rücken", 3 },
         } },
     },
     city_of_dalaran = {
@@ -1869,6 +1978,9 @@ J.NF_OTHERS = {
             { 286992, nil, nil, nil },
             { 286994, nil, nil, nil },
             { 286995, nil, nil, nil },
+            { 286990, nil, nil, nil },
+            { 286993, nil, nil, nil },
+            { 286996, nil, nil, nil },
         } },
     },
     dire_maul = {
@@ -1922,10 +2034,25 @@ J.NF_OTHERS = {
             { 18537, "Counterattack Lodestone", nil, 3, chance = 1 },
         } },
     },
+    drowned_city = {
+        { name = "\"Pyromancer\" Braxton", note = "Seltener Gegner", items = {
+            { 286650, nil, nil, nil },
+            { 286651, nil, nil, nil },
+        } },
+        { name = "Gegner unterwegs", items = {
+            { 287002, nil, nil, nil },
+            { 286997, nil, nil, nil },
+            { 287005, nil, nil, nil },
+        } },
+    },
     excavation_site = {
         { name = "Gegner unterwegs", items = {
             { 286983, nil, nil, nil },
             { 287068, nil, nil, nil },
+            { 286982, nil, nil, nil },
+            { 286984, nil, nil, nil },
+            { 286985, nil, nil, nil },
+            { 286986, nil, nil, nil },
         } },
     },
     gnomeregan = {
@@ -1945,8 +2072,17 @@ J.NF_OTHERS = {
         } },
     },
     kroldok_stronghold = {
+        { name = "Kroog", note = "Seltener Gegner", items = {
+            { 279863, nil, nil, nil },
+            { 279857, nil, nil, nil },
+        } },
         { name = "Gegner unterwegs", items = {
             { 287013, nil, nil, nil },
+            { 287008, nil, nil, nil },
+            { 287014, nil, nil, nil },
+            { 287012, nil, nil, nil },
+            { 287010, nil, nil, nil },
+            { 287007, nil, nil, nil },
         } },
     },
     lower_blackrock_spire = {
@@ -2145,6 +2281,7 @@ J.NF_OTHERS = {
             { 18684, "Dimly Opalescent Ring", "Finger", 3, chance = 2 },
             { 14624, "Deathbone Chestplate", "Brust, Platte", 3, chance = 2 },
             { 14611, "Bloodmail Hauberk", "Brust, Schwere Rüstung", 3, chance = 2 },
+            { 23201, nil, nil, nil, chance = 2 },
             { 23200, "Totem of Sustaining", nil, 3, chance = 1 },
             { 14536, "Bonebrace Hauberk", "Schwere Rüstung", 3 },
             { 18697, "Coldstone Slippers", "Stoff", 3 },
@@ -2181,6 +2318,41 @@ J.NF_OTHERS = {
             { 2292, "Necrology Robes", "Brust, Stoff", 3 },
             { 2807, "Guillotine Axe", "Waffenhand, Axt", 3 },
             { 3194, "Black Malice", "Zweihändig, Streitkolben", 3 },
+        } },
+    },
+    shapers_terrace = {
+        { name = "Titanosaur", items = {
+            { 280009, nil, nil, nil },
+            { 280011, nil, nil, nil },
+            { 280010, nil, nil, nil },
+        } },
+        { name = "Venomridge", items = {
+            { 280015, nil, nil, nil },
+            { 280017, nil, nil, nil },
+            { 280016, nil, nil, nil },
+        } },
+        { name = "Thunderhoof", items = {
+            { 280018, nil, nil, nil },
+            { 280020, nil, nil, nil },
+            { 280019, nil, nil, nil },
+        } },
+        { name = "Direhorn Matriarch", items = {
+            { 280045, nil, nil, nil },
+            { 280022, nil, nil, nil },
+            { 280021, nil, nil, nil },
+        } },
+        { name = "Vitrix", items = {
+            { 280031, "Sparklance Wand", "Distanz, Zauberstab", 3 },
+            { 280028, "Heartflame Gauntlets", "Hände, Platte", 3 },
+            { 280027, "Crownroar Chestplate", "Brust, Platte", 3 },
+        } },
+        { name = "Izha'Rel and Tor'Rel", items = {
+            { 280014, nil, nil, nil },
+            { 280013, nil, nil, nil },
+            { 280012, nil, nil, nil },
+        } },
+        { name = "Gegner unterwegs", items = {
+            { 287037, nil, nil, nil },
         } },
     },
     stratholme = {
@@ -2233,14 +2405,21 @@ J.NF_OTHERS = {
             { 10785, "Atal'ai Leggings", "Beine, Leder", 2, chance = 6 },
             { 10783, "Atal'ai Spaulders", "Schulter, Leder", 3, chance = 4 },
             { 10784, "Atal'ai Breastplate", "Brust, Schwere Rüstung", 3, chance = 3 },
+            { 10623, nil, nil, nil },
             { 10624, "Stinging Bow", "Bogen", 3 },
             { 10625, "Stealthblade", "Dolch", 3 },
             { 10626, "Ragehammer", "Streitkolben", 3 },
+            { 10627, nil, nil, nil },
+            { 10628, nil, nil, nil },
             { 10629, "Mistwalker Boots", "Stoff", 3 },
             { 10630, "Soulcatcher Halo", "Stoff", 3 },
             { 10631, "Murkwater Gauntlets", "Schwere Rüstung", 3 },
             { 10632, "Slimescale Bracers", "Schwere Rüstung", 3 },
             { 10633, "Silvershell Leggings", "Platte", 3 },
+            { 10634, nil, nil, nil },
+            { 10780, nil, nil, nil },
+            { 10781, nil, nil, nil },
+            { 10782, nil, nil, nil },
         } },
     },
     the_deadmines = {
@@ -2334,12 +2513,31 @@ J.NF_OTHERS = {
         { name = "Hydromancer Velratha", items = {
             { 1447, nil, nil, nil },
             { 5616, "Gutwrencher", "Einhändig, Dolch", 3 },
+            { 9481, nil, nil, nil },
+            { 9483, nil, nil, nil },
+            { 9512, nil, nil, nil },
+            { 274653, nil, nil, nil },
+            { 274651, nil, nil, nil },
+            { 274652, nil, nil, nil },
+        } },
+        { name = "Ruuzlu", items = {
+            { 274654, nil, nil, nil },
+            { 274655, nil, nil, nil },
         } },
         { name = "Zerillis", note = "Seltener Gegner", items = {
             { 12470, "Sandstalker Ankleguards", "Füße, Leder", 3, chance = 18 },
+            { 2040, nil, nil, nil },
+            { 6440, nil, nil, nil },
+            { 9512, nil, nil, nil },
+            { 274658, nil, nil, nil },
         } },
         { name = "Dustwraith", note = "Seltener Gegner", items = {
             { 12471, "Desertwalker Cane", "In Schildhand geführt", 3, chance = 21 },
+            { 12469, nil, nil, nil },
+        } },
+        { name = "Sandarr Dunereaver", note = "Seltener Gegner", items = {
+            { 274660, nil, nil, nil },
+            { 274659, nil, nil, nil },
         } },
         { name = "Gegner unterwegs", items = {
             { 9243, "Shriveled Heart", nil, 2, chance = 1 },
@@ -2362,7 +2560,7 @@ J.BOSS_LEVEL = {
     scarlet_monastery = { arcanist_doan = { 37, 37 }, azshir = { 33, 33 }, bloodmage_thalnos = { 34, 34 }, fallen_champion = { 33, 33 }, herod = { 40, 40 }, high_inquisitor_fairbanks = { 40, 40 }, houndmaster_loksey = { 34, 34 }, interrogator_vishas = { 32, 32 }, ironspine = { 33, 33 }, mograine = { 42, 42 }, whitemane = { 42, 42 } },
     scholomance = { darkmaster_gandling = { 61, 61 }, instructor_malicia = { 60, 60 }, jandice_barov = { 61, 61 }, kirtonos = { 60, 60 }, lady_illucia_barov = { 60, 60 }, lord_alexei_barov = { 60, 60 }, lorekeeper_polkelt = { 60, 60 }, marduk_blackpool = { 58, 58 }, ras_frostwhisper = { 62, 62 }, rattlegore = { 61, 61 }, the_ravenian = { 60, 60 }, theolen_krastinov = { 60, 60 }, vectus = { 60, 60 } },
     shadowfang_keep = { archmage_arugal = { 26, 26 }, baron_silverlaine = { 24, 24 }, commander_springvale = { 24, 24 }, deathsworn_captain = { 25, 25 }, fenrus = { 25, 25 }, odo = { 24, 24 }, razorclaw = { 22, 22 }, rethilgore = { 20, 20 }, wolf_master_nandos = { 25, 25 } },
-    stratholme = { archivist_galford = { 60, 60 }, balnazzar = { 62, 62 }, baron_rivendare = { 62, 62 }, baroness_anastari = { 59, 59 }, cannon_master_willey = { 60, 60 }, hearthsinger_forresten = { 57, 57 }, magistrate_barthilas = { 58, 58 }, maleki_the_pallid = { 61, 61 }, nerubenkan = { 60, 60 }, postmaster_malown = { 60, 60 }, ramstein = { 61, 61 }, skul = { 58, 58 }, stonespine = { 60, 60 }, the_unforgiven = { 57, 57 }, timmy_the_cruel = { 58, 58 } },
+    stratholme = { archivist_galford = { 60, 60 }, balnazzar = { 62, 62 }, baron_rivendare = { 62, 62 }, baroness_anastari = { 59, 59 }, cannon_master_willey = { 60, 60 }, hearthsinger_forresten = { 57, 57 }, magistrate_barthilas = { 58, 58 }, maleki_the_pallid = { 61, 61 }, malor_the_zealous = { 60, 60 }, nerubenkan = { 60, 60 }, postmaster_malown = { 60, 60 }, ramstein = { 61, 61 }, skul = { 58, 58 }, stonespine = { 60, 60 }, the_unforgiven = { 57, 57 }, timmy_the_cruel = { 58, 58 } },
     sunken_temple = { atalalarion = { 50, 50 }, dreamscythe = { 53, 53 }, eranikus = { 55, 55 }, hazzas = { 53, 53 }, jammalan = { 54, 54 }, morphaz = { 52, 52 }, ogom = { 53, 53 }, weaver = { 51, 51 } },
     the_deadmines = { captain_greenskin = { 20, 20 }, cookie = { 20, 20 }, edwin_vancleef = { 21, 21 }, gilnid = { 20, 20 }, miner_johnson = { 19, 19 }, mr_smite = { 20, 20 }, rhahkzor = { 19, 19 }, sneeds_shredder = { 20, 20 } },
     the_stockade = { bazil_thredd = { 29, 29 }, bruegal = { 26, 26 }, dextren_ward = { 26, 26 }, hamhock = { 28, 28 }, kam_deepfury = { 27, 27 }, targorr = { 24, 24 } },
@@ -2375,29 +2573,34 @@ J.BOSS_LEVEL = {
 -- Faehigkeiten je Boss als Zaubernummern (Clienttabellen). Name und
 -- Beschreibung nennt der Client; nennt er keine, steht die Faehigkeit nicht da.
 J.BOSS_ABILITIES = {
-    blackfathom_deeps = { akumai = { 3490, 3815 }, baron_aquanis = { 15043, 15531 }, gelihast = { 6533, 7165 }, ghamoora = { 5568 }, lady_sarevess = { 246, 865, 6660, 8435 }, lorgus_jett = { 12167, 12550 }, old_serrakis = { 8433, 1604 }, twilight_lord_kelris = { 8399 } },
-    blackrock_depths = { ambassador_flamelash = { 14744 }, baelgar = { 13895, 23379 }, dagran_thaurissan = { 15636, 17492 }, fineous_darkvire = { 8258, 11978, 13953, 15346, 15493 }, general_angerforge = { 15572 }, golem_lord_argelmach = { 15305, 15507, 15605 }, high_interrogator_gerstahn = { 12040, 13704, 14032, 14033 }, houndmaster_grebmar = { 13730, 15615, 21049 }, hurley_blackbreath = { 9573, 14872 }, lord_incendius = { 13899, 13900, 14099, 26977 }, lord_roccor = { 6524, 13728, 13729 }, magmus = { 15593, 15668 }, panzor = { 403233 }, phalanx = { 14099, 15285, 15588 }, plugger_spazzring = { 8994, 12739, 12742, 13338, 13787 }, pyromancer_loregrain = { 15038, 15041, 15095, 15616 }, ribbly_screwspigot = { 9080, 12540 }, ring_of_law = { 8994, 12493, 13787, 15470, 15471, 15472, 7121, 14331, 15245, 13736, 15708, 21049, 6524, 8269, 15579, 15475, 13323, 13747, 15254, 15453 }, warder_stilgiss = { 6136, 12544, 12674, 12675, 15044 } },
-    city_of_dalaran = { arcane_anomaly = { 15230, 1241501 }, arcanic_enigma = { 1240869, 1224125, 1304455 }, atrexis = { 6713, 1303266, 3391, 12057, 1303264 }, fel_ancient = { 22994, 1240706 }, lyn_the_ignored = { 1303266, 17228, 1304473 }, mana_devourer = { 1240738, 1240750 }, shade_of_the_archmage = { 15230, 1241515, 28450, 1303598, 1303599 }, unstable_sentinel = { 8374, 1241329 } },
-    dire_maul = { alzzin = { 22662, 22689 }, captain_kromcrush = { 8599, 19134, 22857, 22859, 22860 }, guard_fengus = { 22817 }, guard_moldar = { 22818 }, guard_slipkik = { 22820 }, hydrospawn = { 22420 }, illyanna_ravenoak = { 14301, 20735, 22908, 22910, 22914, 22915 }, immolthar = { 5568, 8269, 16128, 22899, 22950 }, isalien = { 12024, 14443, 22907, 25164, 27636, 27637, 27639 }, king_gordok = { 15572 }, lethtendris = { 12742, 13338, 16247, 17228, 22709, 22710 }, lord_helnurath = { 17146, 18670, 20989, 23224 }, magister_kalendris = { 7645, 17146, 17287, 22917, 22919 }, prince_tortheldrin = { 3391, 15589, 20537, 22920, 22995 }, pusillin = { 14145, 15228, 22424, 22735 }, stomper_kreeg = { 8269, 15577, 16740, 22833, 22835 }, tendris_warpwood = { 5568, 22916, 22924, 22994 }, tsuzee = { 12540, 15581, 15582, 21060 }, zevrim_thornhoof = { 22478 } },
-    excavation_site = { highland_horror = { 9616, 1316480 }, relic_guardian = { 8078, 8374, 10101, 11876, 1284450 }, saltspine = { 3604, 16495, 1316382 }, shadetooth = { 13445, 14100, 1284435 } },
-    gnomeregan = { crowd_pummeler = { 5568, 8374, 10887 }, dark_iron_ambassador = { 184, 2601, 9053, 10870, 22425 }, electrocutioner = { 11082, 11084, 11085 }, thermaplugg = { 10101, 11518, 11521, 11524, 11526, 11527, 11798 }, viscous_fallout = { 1604 } },
-    hall_of_thanes = { durgen_dirgehammer = { 11977, 19134, 25710 }, faldrim_anvilmar = { 13860, 1292602 }, magmatus = { 11970, 1293228 }, plunder = { 11130, 21055, 22911 } },
+    alcaz_island_prison = { blazeroar = { 3391, 9573, 12466, 15716, 18399, 1271593, 1271604, 1275847 }, katerina_the_cleaner = { 3583, 1271761 }, overseer_wrex = { 9128, 16856 }, the_questioner = { 12054, 17620 }, tidemistress_cazass = { 8398, 15532, 1271375 } },
+    blackfathom_deeps = { akumai = { 3490, 3815 }, baron_aquanis = { 15043, 15531 }, gelihast = { 6533, 7165 }, ghamoora = { 5568 }, lady_sarevess = { 246, 865, 6660, 8435 }, lorgus_jett = { 12167, 12550 }, old_serrakis = { 8433, 1604 }, twilight_lord_kelris = { 8399, 8092 } },
+    blackmaw_hold = { bonesnout_the_unbroken = { 5568, 1244416, 1277406 }, elder_shaman_bloodmane = { 1245324, 1245338, 1245883 }, impaan_the_imprisoner = { 1243067, 1243076, 1243079, 1243080, 1243088, 1243089, 1243312 }, moontouched_wanderer = { 8599, 15798 }, unbound_spirit = { 1247169, 1248008, 1248131 }, varrox_bleakhoof = { 9081, 1246362, 1246456, 1247087 }, withermaw = { 1242884, 1242907, 1302780 } },
+    blackrock_depths = { ambassador_flamelash = { 14744, 15574 }, baelgar = { 13895, 23379 }, dagran_thaurissan = { 15636, 17492, 15643 }, fineous_darkvire = { 8258, 11978, 13953, 15346, 15493 }, general_angerforge = { 15572, 15061, 17687 }, golem_lord_argelmach = { 15305, 15507, 15605 }, high_interrogator_gerstahn = { 12040, 13704, 14032, 14033 }, houndmaster_grebmar = { 13730, 15615, 21049 }, hurley_blackbreath = { 9573, 14872 }, lord_incendius = { 13899, 13900, 14099, 26977 }, lord_roccor = { 6524, 13728, 13729 }, magmus = { 15593, 15668 }, panzor = { 403233 }, phalanx = { 14099, 15285, 15588 }, plugger_spazzring = { 8994, 12739, 12742, 13338, 13787 }, pyromancer_loregrain = { 15038, 15041, 15095, 15616 }, ribbly_screwspigot = { 9080, 12540, 12907 }, ring_of_law = { 8994, 12493, 13787, 15470, 15471, 15472, 7121, 14331, 15245, 13736, 15708, 21049, 6524, 8269, 15579, 15475, 13323, 13747, 15254, 15453 }, warder_stilgiss = { 6136, 12544, 12674, 12675, 15044 } },
+    city_of_dalaran = { arcane_anomaly = { 15230, 1241501, 1303458 }, arcanic_enigma = { 1240869, 1224125, 1304455 }, atrexis = { 6713, 1303266, 3391, 12057, 1303264 }, fel_ancient = { 22994, 1240706, 1240687 }, lyn_the_ignored = { 1303266, 17228, 1304473 }, mana_devourer = { 1240738, 1240750 }, mana_wraith = { 1303458, 1293451 }, shade_of_the_archmage = { 15230, 1241515, 28450, 1303598, 1303599, 1303350 }, unstable_sentinel = { 8374, 1241329, 1241325 } },
+    dire_maul = { alzzin = { 22662, 22689, 7948, 10101, 19319, 22128, 22660, 22661, 22688, 22691 }, captain_kromcrush = { 8599, 19134, 22857, 22859, 22860 }, guard_fengus = { 22817 }, guard_moldar = { 22818 }, guard_slipkik = { 22820 }, hydrospawn = { 22420, 22419, 22421, 22714 }, illyanna_ravenoak = { 14301, 20735, 22908, 22910, 22914, 22915 }, immolthar = { 5568, 8269, 16128, 22899, 22950 }, isalien = { 12024, 14443, 22907, 25164, 27636, 27637, 27639 }, king_gordok = { 15572, 15708, 16727, 22886 }, lethtendris = { 12742, 13338, 16247, 17228, 22709, 22710 }, lord_helnurath = { 17146, 18670, 20989, 23224 }, magister_kalendris = { 7645, 17146, 17287, 22917, 22919, 13810 }, prince_tortheldrin = { 3391, 15589, 20537, 22920, 22995, 1270782 }, pusillin = { 14145, 15228, 22424, 22735 }, stomper_kreeg = { 8269, 15577, 16740, 22833, 22835 }, tendris_warpwood = { 5568, 22916, 22924, 22994 }, tsuzee = { 12540, 15581, 15582, 21060 }, zevrim_thornhoof = { 22478, 22651 } },
+    drowned_city = { umbra = { 1283423 } },
+    excavation_site = { highland_horror = { 9616, 1316480, 1309071 }, relic_guardian = { 8078, 8374, 10101, 11876, 1284450 }, saltspine = { 3604, 16495, 1316382 }, shadetooth = { 13445, 14100, 1284435 } },
+    gnomeregan = { crowd_pummeler = { 5568, 8374, 10887 }, dark_iron_ambassador = { 184, 2601, 9053, 10870, 22425, 3053 }, electrocutioner = { 11082, 11084, 11085 }, thermaplugg = { 10101, 11518, 11521, 11524, 11526, 11527, 11798 }, viscous_fallout = { 1604 } },
+    hall_of_thanes = { durgen_dirgehammer = { 11977, 19134, 25710, 43958 }, faldrim_anvilmar = { 13860, 1292602 }, magmatus = { 11970, 1293228 }, plunder = { 11130, 21055, 22911 } },
+    kroldok_stronghold = { bossman_toof = { 15548, 16244, 16856 }, nargurk = { 5484, 1280259, 1280356, 770, 2974, 3043, 3355, 5246, 7321, 8380, 8492, 9490, 11572, 13810, 13812, 14324, 14914, 15258, 19281, 19974, 20066, 20186, 20301, 412609, 414644, 1280353, 1293696, 1314281 }, overlord_mugg = { 1282387, 1282393, 1282394, 1282397 }, slavecrusher_grox = { 11428, 21049, 1280085 }, twilight_commander_zarmok = { 8599, 12057, 1280011 }, war_handler_ashka = { 9128, 12057, 1282076 } },
     lower_blackrock_spire = { gizrul = { 8269, 16128, 16495 }, halycon = { 3391, 13738 }, highlord_omokk = { 8269, 10101 }, mother_smolderweb = { 16103, 16104, 16468 }, overlord_wyrmthalak = { 12887, 15663, 16244 }, quartermaster_zigris = { 15504, 15609, 16496, 16497 }, shadow_hunter_voshgajin = { 16098 }, urok_doomhowl = { 15580, 16508, 16509 }, war_master_voone = { 3391, 10966, 15615, 15618, 15708, 15754, 16075 } },
-    maraudon = { celebras = { 12747, 21793, 21807, 21968 }, landslide = { 5568, 18670, 21727, 21808 }, lord_vyletongue = { 7964, 16100, 21390, 21655 }, meshlok = { 13446, 15593 }, noxxion = { 21687 }, princess_theradras = { 3391, 21832, 21869, 21909, 22592 }, razorlash = { 11427, 15976 }, rotgrip = { 15976, 16495 }, tinkerer_gizlock = { 9143, 16100, 21833, 29419 } },
+    maraudon = { celebras = { 12747, 21793, 21807, 21968 }, landslide = { 5568, 18670, 21727, 21808 }, lord_vyletongue = { 7964, 16100, 21390, 21655 }, meshlok = { 13446, 15593 }, noxxion = { 21687, 10966, 21707 }, princess_theradras = { 3391, 21832, 21869, 21909, 22592 }, razorlash = { 11427, 15976 }, rotgrip = { 15976, 16495 }, tinkerer_gizlock = { 9143, 16100, 21833, 29419 } },
     ragefire_chasm = { bazzalan = { 744, 14873 }, jergosh = { 18267, 20800 }, oggleflint = { 5532 }, taragaman = { 11970, 18072 } },
     razorfen_downs = { amnennar = { 6136, 12642, 13009, 15530, 15531 }, glutton = { 12627, 12795 }, mordresh = { 12466, 12470 }, plaguemaw = { 11442, 12946 }, ragglesnout = { 7645, 11639, 12039, 12471 }, tutenkash = { 12255 } },
-    razorfen_kraul = { agathelos = { 8260, 8269, 8285, 8359 }, aggem_thorncurse = { 6192, 8286, 14900 }, charlga_razorflank = { 6077, 8292, 8358, 8361 }, death_speaker_jargba = { 9613, 14515 }, overlord_ramtusk = { 7165, 9128, 15548 }, roogug = { 8270, 9532 } },
-    ruins_of_lordaeron = { bjork = { 14099, 1301635 }, rathmael = { 13376, 18399 }, the_abandoned = { 6136, 14907, 1266011 }, the_butcher = { 5568, 17307 }, viktor_the_vile = { 3358 }, witherfang = { 3358 } },
-    scarlet_monastery = { arcanist_doan = { 8988, 9433, 9435, 9438, 13323 }, azshir = { 5137, 7399, 9373 }, bloodmage_thalnos = { 8053, 8814, 9613, 12470 }, fallen_champion = { 7366, 15496, 403233 }, herod = { 8260, 8269, 8989, 22540 }, high_inquisitor_fairbanks = { 8282, 8399, 11647, 12039, 12096, 15090 }, houndmaster_loksey = { 6192, 6742 }, interrogator_vishas = { 2767, 9034 }, ironspine = { 3815, 21007 }, mograine = { 1020, 5589, 8990, 9257, 14518, 25771 }, whitemane = { 9232, 9256, 9481, 12039, 14515, 22187 } },
-    scholomance = { darkmaster_gandling = { 12040, 17950, 18702 }, instructor_malicia = { 8362, 13747, 15586, 17831, 17843, 18376 }, jandice_barov = { 16098 }, kirtonos = { 6016, 8379, 12882, 12889, 14515, 16467, 17228, 18144 }, lady_illucia_barov = { 12528, 12542, 14515, 17289, 18671 }, lord_alexei_barov = { 15570, 17467, 17820 }, lorekeeper_polkelt = { 8245 }, marduk_blackpool = { 17697 }, ras_frostwhisper = { 8398, 11130, 12096, 18099, 18100, 18101, 18763 }, rattlegore = { 16727 }, the_ravenian = { 15550, 15584, 17963, 18670 }, theolen_krastinov = { 8269, 16509, 18103 }, vectus = { 16046, 18399 } },
-    shadowfang_keep = { archmage_arugal = { 6547, 7588, 7621, 7803, 13797 }, baron_silverlaine = { 7068 }, commander_springvale = { 642, 1026, 5588, 25771 }, deathsworn_captain = { 5532, 7165, 9080 }, fenrus = { 7125 }, odo = { 7481 }, rethilgore = { 7295 }, wolf_master_nandos = { 7487, 7488, 7489 } },
-    stratholme = { archivist_galford = { 17274, 17293, 17366 }, balnazzar = { 12098, 13704, 17281, 17284, 17286, 17287, 17399, 17405, 18647 }, baron_rivendare = { 15708, 15754, 17393, 17467 }, baroness_anastari = { 16867 }, cannon_master_willey = { 10101, 15615, 16496, 17279 }, hearthsinger_forresten = { 14443, 16100, 16244, 16798 }, magistrate_barthilas = { 10887, 14099, 16791, 16793 }, maleki_the_pallid = { 6136, 16869, 17238, 17243, 17503 }, nerubenkan = { 4962, 6016, 16795, 17235 }, postmaster_malown = { 12741 }, ramstein = { 5568, 17307, 17687 }, skul = { 6136, 12544, 15230, 15499, 16799 }, stonespine = { 14331 }, the_unforgiven = { 6136, 14907 }, timmy_the_cruel = { 8599, 17470 } },
-    sunken_temple = { atalalarion = { 6524, 12887 }, dreamscythe = { 12882, 12884 }, eranikus = { 3391, 11876, 12890, 12891 }, hazzas = { 12882, 12884 }, jammalan = { 8376, 12468, 12480, 12492 }, morphaz = { 12882, 12884 }, ogom = { 11639, 12471, 12493 }, weaver = { 12882, 12884 } },
+    razorfen_kraul = { agathelos = { 8260, 8269, 8285, 8359 }, aggem_thorncurse = { 6192, 8286, 14900 }, charlga_razorflank = { 6077, 8292, 8358, 8361 }, death_speaker_jargba = { 9613, 14515, 8053, 1293451 }, overlord_ramtusk = { 7165, 9128, 15548 }, roogug = { 8270, 9532 } },
+    ruins_of_lordaeron = { bjork = { 14099, 1301635 }, lordaeron_captain = { 5532, 7165, 9080, 1266050 }, rathmael = { 13376, 18399 }, the_abandoned = { 6136, 14907, 1266011 }, the_butcher = { 5568, 17307, 1326990 }, viktor_the_vile = { 3358 }, witherfang = { 3358 } },
+    scarlet_monastery = { arcanist_doan = { 8988, 9433, 9435, 9438, 13323 }, azshir = { 5137, 7399, 9373 }, bloodmage_thalnos = { 8053, 8814, 9613, 12470 }, fallen_champion = { 7366, 15496, 403233, 5308 }, herod = { 8260, 8269, 8989, 22540 }, high_inquisitor_fairbanks = { 8282, 8399, 11647, 12039, 12096, 15090 }, houndmaster_loksey = { 6192, 6742 }, interrogator_vishas = { 2767, 9034 }, ironspine = { 3815, 21007 }, mograine = { 1020, 5589, 8990, 9257, 14518, 25771 }, whitemane = { 9232, 9256, 9481, 12039, 14515, 22187, 770, 10458 } },
+    scholomance = { darkmaster_gandling = { 12040, 17950, 18702, 15791 }, instructor_malicia = { 8362, 13747, 15586, 17831, 17843, 18376 }, jandice_barov = { 16098 }, kirtonos = { 6016, 8379, 12882, 12889, 14515, 16467, 17228, 18144, 2974, 14325 }, lady_illucia_barov = { 12528, 12542, 14515, 17289, 18671, 19755 }, lord_alexei_barov = { 15570, 17467, 17820 }, lorekeeper_polkelt = { 8245 }, marduk_blackpool = { 17697, 12040, 15754, 17228 }, ras_frostwhisper = { 8398, 11130, 12096, 18099, 18100, 18101, 18763 }, rattlegore = { 16727, 10101, 18368 }, the_ravenian = { 15550, 15584, 17963, 18670 }, theolen_krastinov = { 8269, 16509, 18103 }, vectus = { 16046, 18399, 13376 } },
+    shadowfang_keep = { archmage_arugal = { 6547, 7588, 7621, 7803, 13797, 99, 770, 1978, 2974, 3355, 5211, 5246, 8050, 8198, 14323, 19675, 20184, 20185, 20188, 20232, 412609, 1280353, 1291663, 1328617, 19974 }, baron_silverlaine = { 7068 }, commander_springvale = { 642, 1026, 5588, 25771 }, deathsworn_captain = { 5532, 7165, 9080 }, fenrus = { 7125 }, odo = { 7481 }, rethilgore = { 7295 }, wolf_master_nandos = { 7487, 7488, 7489 } },
+    shapers_terrace = { bolt = { 15588, 1310513 }, cinder = { 1310251, 1310267, 1310512 }, nanaya = { 1290463, 1290464, 1290508, 1290512, 1291274, 1291301, 1291380 }, snowtalon = { 1310354, 1310514 } },
+    stratholme = { archivist_galford = { 17274, 17293, 17366 }, balnazzar = { 12098, 13704, 17281, 17284, 17286, 17287, 17399, 17405, 18647, 2974, 13553, 13810, 14308 }, baron_rivendare = { 15708, 15754, 17393, 17467 }, baroness_anastari = { 16867, 8053, 10893, 16565, 17244, 18327, 19755, 402791 }, cannon_master_willey = { 10101, 15615, 16496, 17279 }, hearthsinger_forresten = { 14443, 16100, 16244, 16798 }, magistrate_barthilas = { 10887, 14099, 16791, 16793 }, maleki_the_pallid = { 6136, 16869, 17238, 17243, 17503 }, malor_the_zealous = { 12734, 15493, 16172, 17233 }, nerubenkan = { 4962, 6016, 16795, 17235 }, postmaster_malown = { 12741, 6253, 12542, 13338 }, ramstein = { 5568, 17307, 17687 }, skul = { 6136, 12544, 15230, 15499, 16799 }, stonespine = { 14331 }, the_unforgiven = { 6136, 14907 }, timmy_the_cruel = { 8599, 17470 } },
+    sunken_temple = { atalalarion = { 6524, 12887 }, dreamscythe = { 12882, 12884 }, eranikus = { 3391, 11876, 12890, 12891 }, hazzas = { 12882, 12884 }, jammalan = { 8376, 12468, 12480, 12492, 14314, 770 }, morphaz = { 12882, 12884 }, ogom = { 11639, 12471, 12493 }, weaver = { 12882, 12884 } },
     the_deadmines = { captain_greenskin = { 5208, 5532 }, cookie = { 5174, 6306 }, edwin_vancleef = { 3391, 5200 }, gilnid = { 5213 }, mr_smite = { 3391, 6264, 6432, 6435 }, rhahkzor = { 6304 }, sneeds_shredder = { 3603, 5141, 7399, 6713 } },
     the_stockade = { bazil_thredd = { 7964, 9128 }, bruegal = { 1604 }, dextren_ward = { 7165, 11976, 19134 }, hamhock = { 421, 6742 }, kam_deepfury = { 3419, 7164, 8242 }, targorr = { 3391, 8599 } },
     uldaman = { ancient_stone_keeper = { 10094 }, archaedas = { 6524, 8269, 10252, 10258 }, galgann = { 3356, 8053, 9482, 11969 }, grimlok = { 6742, 8143, 8292, 9532, 11892 }, ironaya = { 8374, 10101, 11876 }, revelosh = { 15801, 16006 }, the_lost_dwarves = { 14516, 15620, 6268, 8242 } },
-    upper_blackrock_spire = { general_drakkisath = { 15588 }, goraluk_anvilcrack = { 6253, 15580, 16172, 403233 }, jed_runewatcher = { 11972, 14516, 15749, 403233 }, lord_valthalak = { 27249, 27286, 27338, 27382 }, pyroguard_emberseer = { 16078, 16079, 16536 }, solakar_flamewreath = { 16727 }, the_beast = { 14100, 15570, 16144, 16636, 16785, 16788, 20477 }, warchief_rend_blackhand = { 8269, 13736, 15708, 15754 } },
-    wailing_caverns = { kresh = { 14917, 17256, 26064 }, lady_anacondra = { 700, 5187, 8148, 9532 }, lord_cobrahn = { 744, 5188, 7965, 8040, 9532 }, lord_pythas = { 700, 5187, 8147, 9532 }, lord_serpentis = { 700, 6778, 9532 }, mutanus = { 7399, 7967, 8150 }, skum = { 6254 }, verdan = { 8142 } },
+    upper_blackrock_spire = { general_drakkisath = { 15588 }, goraluk_anvilcrack = { 6253, 15580, 16172, 403233 }, jed_runewatcher = { 11972, 14516, 15749, 403233 }, lord_valthalak = { 27249, 27286, 27338, 27382 }, pyroguard_emberseer = { 16078, 16079, 16536, 13376 }, solakar_flamewreath = { 16727 }, the_beast = { 14100, 15570, 16144, 16636, 16785, 16788, 20477 }, warchief_rend_blackhand = { 8269, 13736, 15708, 15754 } },
+    wailing_caverns = { kresh = { 14917, 17256, 26064 }, lady_anacondra = { 700, 5187, 8148, 9532, 43958 }, lord_cobrahn = { 744, 5188, 7965, 8040, 9532, 43958 }, lord_pythas = { 700, 5187, 8147, 9532, 43958 }, lord_serpentis = { 700, 6778, 9532, 43958 }, mutanus = { 7399, 7967, 8150, 122, 13810, 1280353, 43958 }, skum = { 6254 }, verdan = { 8142 } },
     zulfarrak = { antusul = { 2860, 8376, 10413, 10915, 11893, 11894, 11895, 11899 }, gahzrilla = { 11131, 11836, 11902 }, nekrum = { 8600 }, sergeant_bly = { 3639, 11972, 12170, 403233 }, sezzziz = { 8362, 12039, 13704, 15537 }, theka = { 8600 }, ukorz = { 7366, 8269, 11837, 15623 }, zumrah = { 11086, 12491, 12739, 15245 } },
 }
 
@@ -2409,19 +2612,15 @@ J.NOT_YET = {
     [13175] = true,
     [13950] = true,
     [14543] = true,
-    [18754] = true,
-    [18755] = true,
     [18757] = true,
     [22314] = true,
     [22315] = true,
     [22319] = true,
-    [22322] = true,
     [22325] = true,
     [22326] = true,
     [22331] = true,
     [22332] = true,
     [22333] = true,
-    [22334] = true,
     [22335] = true,
     [22336] = true,
     [22337] = true,
@@ -2454,6 +2653,13 @@ J.NF_QUESTS = {
         { id = 96337, name = "More Valuable Than Gold", level = 53, requires = 48, faction = "both", turninNpc = { name = "Connery's Trunk", map = 1436, x = 0.434, y = 0.679 } },
         { id = 96377, name = "State Secrets", level = 53, requires = 48, faction = "alliance", turninNpc = { name = "Renzik \"Das Messer\"", map = 1453, x = 0.783, y = 0.711 } },
         { id = 96772, name = "The Dragon's Journal", level = 53, requires = 46, faction = "alliance", giverNpc = { name = "Erzmagier Lan'dalock", map = 1416, x = 0.153, y = 0.739 }, turninNpc = { name = "Erzmagier Lan'dalock", map = 1416, x = 0.153, y = 0.739 } },
+        { id = 95309, name = "No Orc Left Behind", level = 53, requires = 48, faction = "horde", giverNpc = { name = "Sergeant Ulka", map = 1445, x = 0.703, y = 0.189 } },
+        { id = 95454, name = "The Honor of the Kor'kron", level = 53, requires = 48, faction = "horde" },
+        { id = 96332, name = "A Little Payback", level = 53, requires = 48, faction = "horde", giverNpc = { name = "Sergeant Ulka", map = 1445, x = 0.703, y = 0.189 }, turninNpc = { name = "Sergeant Ulka", map = 1445, x = 0.703, y = 0.189 } },
+        { id = 96334, name = "Blood Red Bandanas", level = 53, requires = 48, faction = "horde", giverNpc = { name = "Sergeant Ulka", map = 1445, x = 0.703, y = 0.189 }, turninNpc = { name = "Etrigg", map = 1454, x = 0.343, y = 0.394 } },
+        { id = 95262, name = "The Secret Prison", level = 53, requires = 48, faction = "alliance", giverNpc = { name = "Sully McCleary", map = 1445, x = 0.635, y = 0.423 } },
+        { id = 96381, name = "A Bit of Wet Work", level = 53, requires = 48, faction = "alliance", giverNpc = { name = "Sully McCleary", map = 1445, x = 0.635, y = 0.423 }, turninNpc = { name = "Sully McCleary", map = 1445, x = 0.635, y = 0.423 } },
+        { id = 96335, name = "The Man in the Iron Chains", level = 53, requires = 48, faction = "both" },
     },
     blackfathom_deeps = {
         { id = 1442, name = "Seeking the Kor Gem", level = 22, requires = 20, faction = "alliance", classes = { "PALADIN" }, giverNpc = { name = "Thundris Windwirker", map = 1439, x = 0.374, y = 0.401 }, turninNpc = { name = "Thundris Windwirker", map = 1439, x = 0.374, y = 0.401 } },
@@ -2468,6 +2674,8 @@ J.NF_QUESTS = {
         { id = 92066, name = "The Twin Bears", level = 55, requires = 47, faction = "both" },
         { id = 92069, name = "Claws That Rend, Tusks that Gore", level = 58, requires = 45, faction = "both", giverNpc = { name = "Ogtinc", map = 1447, x = 0.424, y = 0.426 }, turninNpc = { name = "Ogtinc", map = 1447, x = 0.424, y = 0.426 } },
         { id = 97327, name = "Blackmaw Pouches", level = 60, requires = 55, faction = "both", giverNpc = { name = "Ekkal", map = 1447, x = 0.42, y = 0.389 }, turninNpc = { name = "Ekkal", map = 1447, x = 0.42, y = 0.389 } },
+        { id = 92065, name = "Blackmaw Reclamation", level = 60, requires = 47, faction = "both" },
+        { id = 92070, name = "A Lost Memento", level = 47, requires = 47, faction = "both" },
     },
     blackrock_depths = {
         { id = 3906, name = "Disharmony of Flame", level = 52, requires = 48, faction = "horde", giverNpc = { name = "Thunderheart", map = 1418, x = 0.033, y = 0.483 }, turninNpc = { name = "Thunderheart", map = 1418, x = 0.033, y = 0.483 } },
@@ -2479,6 +2687,7 @@ J.NF_QUESTS = {
     dire_maul = {
         { id = 5526, name = "Shards of the Felvine", level = 60, requires = 56, faction = "both", giverNpc = { name = "Rabine Saturna", map = 1450, x = 0.517, y = 0.451 }, turninNpc = { name = "Rabine Saturna", map = 1450, x = 0.517, y = 0.451 } },
         { id = 7463, name = "Arcane Refreshment", level = 60, requires = 60, faction = "both", classes = { "MAGE" } },
+        { id = 98830, name = "The Broken Glaive", level = 52, requires = 52, faction = "both" },
     },
     drowned_city = {
         { id = 95770, name = "Locating the Lost City", level = 40, requires = 30, faction = "horde", giverNpc = { name = "Kin'weelay", map = 1434, x = 0.323, y = 0.277 }, turninNpc = { name = "Kin'weelay", map = 1434, x = 0.323, y = 0.277 } },
@@ -2497,17 +2706,28 @@ J.NF_QUESTS = {
         { id = 94984, name = "Tome of Twilight", level = 44, requires = 39, faction = "alliance", giverNpc = { name = "Ashe Amberhall", map = 2548, x = 0.667, y = 0.811 }, turninNpc = { name = "Ashe Amberhall", map = 2548, x = 0.667, y = 0.811 } },
         { id = 94972, name = "Tome of Twilight", level = 44, requires = 39, faction = "horde", giverNpc = { name = "Tran'gul", map = 2548, x = 0.595, y = 0.44 }, turninNpc = { name = "Tran'gul", map = 2548, x = 0.595, y = 0.44 } },
         { id = 96771, name = "Vengeance of the Highborne", level = 45, requires = 37, faction = "alliance", giverNpc = { name = "Ranath Nightstride", map = 1416, x = 0.178, y = 0.659 }, turninNpc = { name = "Ranath Nightstride", map = 1416, x = 0.178, y = 0.659 } },
+        { id = 94968, name = "Eye of Mugg", level = 45, requires = 40, faction = "horde", giverNpc = { name = "Krom'rosh", map = 2548, x = 0.594, y = 0.456 }, turninNpc = { name = "Krom'rosh", map = 2548, x = 0.594, y = 0.456 } },
+        { id = 94975, name = "A Token of Vengeance", level = 42, requires = 38, faction = "horde", giverNpc = { name = "Da'grosh", map = 2548, x = 0.335, y = 0.379 }, turninNpc = { name = "Da'grosh", map = 2548, x = 0.335, y = 0.379 } },
+        { id = 94973, name = "Krol'dok Moulding", level = 41, requires = 38, faction = "horde", turninNpc = { name = "Kreza Darkthorn", map = 2548, x = 0.599, y = 0.46 } },
+        { id = 94983, name = "Twilight Mementos", level = 42, requires = 38, faction = "alliance", giverNpc = { name = "Sergeant Riftan", map = 2548, x = 0.307, y = 0.491 }, turninNpc = { name = "Sergeant Riftan", map = 2548, x = 0.307, y = 0.491 } },
+        { id = 94980, name = "Krol'dok Moulding", level = 41, requires = 38, faction = "alliance", turninNpc = { name = "Alphonse Dumas", map = 2548, x = 0.645, y = 0.82 } },
+        { id = 94969, name = "Krol'dok No More!", level = 42, requires = 40, faction = "alliance" },
     },
     maraudon = {
         { id = 96776, name = "An'she's Radiance", level = 51, requires = 43, faction = "horde", giverNpc = { name = "Olana Brighthoof", map = 1412, x = 0.326, y = 0.242 }, turninNpc = { name = "Olana Brighthoof", map = 1412, x = 0.326, y = 0.242 } },
+        { id = 93404, name = "Rot and Regret", level = 49, requires = 35, faction = "both", giverNpc = { name = "Waldemar", map = 2652, x = 0.697, y = 0.718 }, turninNpc = { name = "Waldemar", map = 2652, x = 0.697, y = 0.718 } },
     },
     razorfen_downs = {
         { id = 97196, name = "The Coldbringer's Eye", level = 41, requires = 34, faction = "horde", giverNpc = { name = "Sutara Plainstalker", map = 1412, x = 0.346, y = 0.23 }, turninNpc = { name = "Sutara Plainstalker", map = 1412, x = 0.346, y = 0.23 } },
+        { id = 96773, name = "The Coldbringer's Eye", level = 41, requires = 34, faction = "alliance", giverNpc = { name = "Erzmagier Lan'dalock", map = 1416, x = 0.153, y = 0.739 }, turninNpc = { name = "Erzmagier Lan'dalock", map = 1416, x = 0.153, y = 0.739 } },
+        { id = 93604, name = "Agamaggan's Blood", level = 45, requires = 35, faction = "both", giverNpc = { name = "Kog'thug der Tapfere", map = 2652, x = 0.727, y = 0.312 }, turninNpc = { name = "Kog'thug der Tapfere", map = 2652, x = 0.727, y = 0.312 } },
     },
     scarlet_monastery = {
         { id = 1951, name = "Rituals of Power", level = 40, requires = 30, faction = "both", classes = { "MAGE" }, giverNpc = { name = "Magus Tirth", map = 1441, x = 0.783, y = 0.757 }, turninNpc = { name = "Tabetha", map = 1445, x = 0.461, y = 0.571 } },
     },
     scholomance = {
+        { id = 5505, name = "The Key to Scholomance", level = 60, requires = 55, faction = "alliance", giverNpc = { name = "Alchimist Arbington", map = 1422, x = 0.427, y = 0.838 }, turninNpc = { name = "Alchimist Arbington", map = 1422, x = 0.427, y = 0.838 } },
+        { id = 5511, name = "The Key to Scholomance", level = 60, requires = 55, faction = "horde", giverNpc = { name = "Hochexekutor Derrington", map = 1420, x = 0.831, y = 0.689 }, turninNpc = { name = "Hochexekutor Derrington", map = 1420, x = 0.831, y = 0.689 } },
         { id = 7668, name = "The Darkreaver Menace", level = 58, requires = 58, faction = "horde", classes = { "SHAMAN" } },
     },
     shadowfang_keep = {
@@ -2519,6 +2739,7 @@ J.NF_QUESTS = {
         { id = 97049, name = "Essence of Seeping Slimes", level = 60, requires = 55, faction = "horde", giverNpc = { name = "Chemiker Fuely", map = 1458, x = 0.475, y = 0.733 }, turninNpc = { name = "Chemiker Fuely", map = 1458, x = 0.475, y = 0.733 } },
         { id = 95924, name = "Panic at the Digsite", level = 60, requires = 55, faction = "alliance", giverNpc = { name = "Kurator Thorius", map = 1455, x = 0.715, y = 0.157 } },
         { id = 95925, name = "Mapping the Way Forward", level = 60, requires = 55, faction = "alliance", giverNpc = { name = "Kurator Thorius", map = 1455, x = 0.715, y = 0.157 } },
+        { id = 95790, name = "Digestible Research", level = 60, requires = 55, faction = "alliance" },
     },
     sunken_temple = {
         { id = 4143, name = "Haze of Evil", level = 52, requires = 47, faction = "alliance", giverNpc = { name = "Gregan Brewspewer", map = 1444, x = 0.451, y = 0.256 }, turninNpc = { name = "Muigin", map = 1449, x = 0.429, y = 0.096 } },
@@ -2531,6 +2752,10 @@ J.NF_QUESTS = {
     },
     upper_blackrock_spire = {
         { id = 6821, name = "Eye of the Emberseer", level = 60, requires = 56, faction = "both", giverNpc = { name = "Fürst Hydraxis", map = 1447, x = 0.793, y = 0.737 }, turninNpc = { name = "Fürst Hydraxis", map = 1447, x = 0.793, y = 0.737 } },
+    },
+    zulfarrak = {
+        { id = 96775, name = "Zum'rah's Head", level = 46, requires = 42, faction = "horde", giverNpc = { name = "Mazu'kon", map = 1412, x = 0.325, y = 0.207 }, turninNpc = { name = "Mazu'kon", map = 1412, x = 0.325, y = 0.207 } },
+        { id = 96770, name = "The Witch Doctor's Head", level = 46, requires = 39, faction = "alliance", giverNpc = { name = "Erzmagier Lan'dalock", map = 1416, x = 0.153, y = 0.739 }, turninNpc = { name = "Erzmagier Lan'dalock", map = 1416, x = 0.153, y = 0.739 } },
     },
 }
 

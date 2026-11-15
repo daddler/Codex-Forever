@@ -36,7 +36,7 @@ import sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 OUT = os.path.join(ROOT, "data", "dungeon_journal_nf.lua")
-NF_VERSION = "1.2.30"
+NF_VERSION = "1.2.33"
 
 # Schluessel des Addons -> Dungeon des Codex (Fluegel zusammengefasst).
 # Schlachtzuege (Barrow Deeps, Hyjal Summit, Onyxias Hort) fehlen mit

@@ -28,6 +28,12 @@ Enthält auch die nie einzeln veröffentlichten 1.0.6.26 und 1.0.6.27.
   Grundzauber je Klasse, nur offene Werte), Co-Tank (`coTank`, Aurenbehälter
   auf dem anderen Tank). Plätze `gcd`, `cotank` in `ui/layout.lua`.
 
+### Daten
+- Abgleich mit Naowh Forever 1.2.33 (`import_naowh.py`, `NF_VERSION`;
+  `import_naowh_prof.py`): Beute u. a. Shaper's Terrace, +153 Questzeilen,
+  Fundort Demonsage. Lehrer verglichen, nichts übernommen (Details
+  `docs/systems/dungeons.md`).
+
 ## [1.0.6.27] – 2026-11-15
 
 ### Neu

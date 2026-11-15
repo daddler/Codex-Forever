@@ -31,6 +31,7 @@ WeintCodex_ChangelogData = {
             "|cff7C6CFFAbklingzeit an der Maus|r – auf Wunsch: drückst du etwas, das noch abklingt, stehen Symbol, Name und Restzeit kurz an der Maus. Ab Werk aus.",
             "|cff7C6CFFFalken in eigener Reihe|r – die Laufzeiten der Falken stehen getrennt von den Aspekten, der zweite Falke setzt die Uhr des ersten nicht mehr neu.",
             "|cff7C6CFFGruppenrahmen|r – der Name bleibt auf allen Klassen weiß mit Schatten.",
+            "|cff7C6CFFDungeons auf aktuellem Stand|r – Beute der Shaper's Terrace und weiterer Bosse, über 150 zusätzliche Questangaben und ein weiterer Kräuterfundort.",
         },
     },
     {
