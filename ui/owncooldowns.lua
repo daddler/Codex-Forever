@@ -63,7 +63,7 @@ OC.SLOTS = { "big", "small", "off" }
 OC.SLOT_TEXT = { big = "Wichtig", small = "Weitere", off = "Aus" }
 OC.MAX_EXTRA = 6     -- eigene Reihen (6.98.0.0)
 OC.COLS_PER_BAND = 3 -- Spalten je Band in den Einstellungen
-OC.DEFAULTS = { big = 40, small = 28, buff = 28, combatOnly = false, numbers = true, glow = true, buffs = true, vertical = false, perLine = 0,
+OC.DEFAULTS = { big = 40, small = 28, buff = 28, combatOnly = false, numbers = true, glow = true, buffs = true, debuffs = true, vertical = false, perLine = 0,
     glowColor = "green", glowStrength = 100, glowPulse = true }
 OC.MAX_LIST = 80
 OC.MIN_BASE_CD = 2000   -- ms; darunter ist es die globale Abklingzeit
@@ -1045,7 +1045,7 @@ function OC.RowOpt(slot, key)
     if key == "size" then
         if slot == "big" then return tonumber(OC.Get("big")) or 40 end
         if slot == "small" then return tonumber(OC.Get("small")) or 28 end
-        if slot == "buffs" then return tonumber(OC.Get("buff")) or 28 end
+        if slot == "buffs" or slot == "debuffs" then return tonumber(OC.Get("buff")) or 28 end
         local d = OC.ExtraDef(slot)
         return d and tonumber(d.size) or 32
     end
@@ -1063,7 +1063,7 @@ function OC.SetRowOpt(slot, key, v)
     m.rowOpt[slot][key] = v
     OC.Refresh()
 end
-OC.ROW_LABEL = { buffs = "Buffs" }
+OC.ROW_LABEL = { buffs = "Buffs", debuffs = "Eigene Debuffs" }
 
 local function Arrange(row, n, s, slot)
     local gap = tonumber(OC.RowOpt(slot, "gap")) or 4
@@ -1313,6 +1313,46 @@ local function DrawBuffs(row, size, show)
     for j = n + 1, #row.icons do row.icons[j]:Hide() end
 end
 
+-- 1.0.6.27 (Wunsch: "was auch bei Naowh moeglich ist, inkl. Tracking der
+-- Debuffs, die man selbst gemacht hat"): eigene Debuffs auf dem Ziel. Im
+-- Kampf gibt der Client Addons keine Auren heraus - der Aurenbehaelter des
+-- Spiels (ui/auras.lua) zeigt sie trotzdem, mit Restzeit. WeintCodex liest
+-- nichts davon. Groesse/Anordnung nur ausserhalb des Kampfes (die Felder
+-- des Behaelters verweigern sich, solange Auren geheim sind); zeigen und
+-- verbergen ueber die Deckkraft, das geht immer.
+local debuffLayout
+function OC.DebuffLayoutKey(size, vertical, perLine, gap)
+    return size .. ":" .. tostring(vertical) .. ":" .. perLine .. ":" .. gap
+end
+local function DrawDebuffs(row, size, show)
+    local A = WeintCodex.UIAuras
+    if not (row and A and A.Create) then return end
+    local vertical = OC.RowOpt("debuffs", "vertical") and true or false
+    local perLine = tonumber(OC.RowOpt("debuffs", "perLine")) or 0
+    local gap = tonumber(OC.RowOpt("debuffs", "gap")) or 4
+    local max = 8
+    local per = perLine > 0 and math.min(perLine, max) or max
+    local o = { filter = "HARMFUL|PLAYER", max = max, size = size, spacing = gap,
+        anchor = "TOPLEFT", growth = "RIGHT", growthV = "DOWN", timer = OC.Get("numbers") and true or false,
+        perRow = vertical and 1 or per }
+    if not row.auras then
+        row.auras = A.Create(row, o)
+        row.auras:SetPoint("TOPLEFT", row, "TOPLEFT", 0, 0)
+        row.auras:SetUnit("target")
+        debuffLayout = OC.DebuffLayoutKey(size, vertical, perLine, gap)
+    else
+        local key = OC.DebuffLayoutKey(size, vertical, perLine, gap) .. tostring(o.timer)
+        if key ~= debuffLayout and not K.InCombat() then
+            debuffLayout = key
+            pcall(row.auras.ApplyLayout, row.auras, o)
+        end
+    end
+    local cols = vertical and 1 or per
+    local lines = math.ceil(max / cols)
+    row:SetSize(cols * size + (cols - 1) * gap, (row._unlock and 1 or lines) * size + (row._unlock and 0 or (lines - 1) * gap))
+    row:SetAlpha((show and OC.Get("debuffs") or row._unlock) and 1 or 0)
+end
+
 -- Reihe zeigen? Allgemein sichtbar und - je Reihe - "nur im Kampf".
 function OC.RowShow(slot, show)
     if not show then return false end
@@ -1326,6 +1366,7 @@ function OC.Update()
     DrawSpells(rows.big, "big", OC.RowOpt("big", "size"), OC.RowShow("big", show))
     DrawSpells(rows.small, "small", OC.RowOpt("small", "size"), OC.RowShow("small", show))
     DrawBuffs(rows.buffs, OC.RowOpt("buffs", "size"), OC.RowShow("buffs", show))
+    if rows.debuffs then pcall(DrawDebuffs, rows.debuffs, OC.RowOpt("debuffs", "size"), OC.RowShow("debuffs", show)) end
     -- Eigene Reihen: Rahmen bei Bedarf, geloeschte bleiben leer
     local seen = OC.seenRows
     for k in _G.next, seen do seen[k] = nil end
@@ -1496,6 +1537,7 @@ function OC.Enable()
     rows.big = NewRow("ocd_big", "Abklingzeiten: Wichtig", "WeintCodexOwnCooldownsBig")
     rows.small = NewRow("ocd_small", "Abklingzeiten: Weitere", "WeintCodexOwnCooldownsSmall")
     rows.buffs = NewRow("ocd_buffs", "Abklingzeiten: Buffs", "WeintCodexOwnCooldownsBuffs")
+    rows.debuffs = NewRow("ocd_debuffs", "Abklingzeiten: Eigene Debuffs", "WeintCodexOwnCooldownsDebuffs")
     local ev = CreateFrame("Frame")
     for _, e in ipairs({ "PLAYER_REGEN_DISABLED", "PLAYER_REGEN_ENABLED", "SPELLS_CHANGED",
         "LEARNED_SPELL_IN_TAB", "PLAYER_ENTERING_WORLD", "SPELL_UPDATE_COOLDOWN", "UNIT_SPELLCAST_SUCCEEDED" }) do
@@ -1972,7 +2014,7 @@ local function px(v) return string.format("%d px", v) end
 function OC.BuildSection(B)
     if not K.InCombat() and #OC.known == 0 then OC.Scan() end
     B:Section("WeintCodex-Abklingzeitmanager",
-        "Eigene Reihen statt des Managers des Spiels: Wichtig (groß), Weitere (kleiner) und deine Buffs mit Restzeit. Ab Werk steht für deine Klasse schon das Wichtigste drin – sortiert in die Spalten Wichtig, Weitere und Aus. Gilt, wenn oben „WeintCodex“ gewählt ist. Verschieben im Gestaltungsmodus.")
+        "Eigene Reihen statt des Managers des Spiels: Wichtig (groß), Weitere (kleiner), deine Buffs mit Restzeit und deine Debuffs auf dem Ziel. Ab Werk steht für deine Klasse schon das Wichtigste drin – sortiert in die Spalten Wichtig, Weitere und Aus. Gilt, wenn oben „WeintCodex“ gewählt ist. Verschieben im Gestaltungsmodus.")
     local off = function() return not OC.Active() end
     B:Row({ type = "slider", label = "Größe: Wichtig", min = 24, max = 64, step = 2, format = px,
             get = function() return tonumber(OC.Get("big")) end, set = function(v) OC.Set("big", v) OC.SetRowOpt("big", "size", nil) end, disabled = off },
@@ -2027,6 +2069,12 @@ function OC.BuildSection(B)
     B:Row({ type = "button", label = "Reihe der Buffs", text = "Buffs-Reihe einstellen …",
             tooltip = "Größe, Anordnung, Symbole je Zeile, Abstand und „Nur im Kampf“ für die Reihe der Buffs. Die anderen Reihen: Klick auf den Kopf ihrer Spalte.",
             onClick = function() OC.RowMenu(UIParent, "buffs") end },
+          { type = "button", label = "Reihe der eigenen Debuffs", text = "Debuffs-Reihe einstellen …",
+            tooltip = "Größe, Anordnung, Symbole je Zeile, Abstand und „Nur im Kampf“ für deine Debuffs auf dem Ziel. Größe und Anordnung ändern sich erst nach dem Kampf.",
+            onClick = function() OC.RowMenu(UIParent, "debuffs") end })
+    B:Row({ type = "toggle", label = "Eigene Debuffs am Ziel", disabled = off,
+            get = function() return OC.Get("debuffs") and true or false end, set = function(v) OC.Set("debuffs", v and true or false) end,
+            description = "Was du selbst auf dein Ziel gewirkt hast (Stiche, Flüche, Rüstung zerreißen …) mit Restzeit – auch im Kampf. Das Spiel zeigt sie, WeintCodex liest sie nicht." },
           { type = "empty" })
     B:EndAdvanced()
     local rowDraft = ""

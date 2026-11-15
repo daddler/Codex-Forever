@@ -83,6 +83,8 @@ K.LAYOUT = {
     ocd_big         = { point = "BOTTOM",      relPoint = "BOTTOM", x = 0, y = 316 },
     ocd_small       = { point = "BOTTOM",      relPoint = "BOTTOM", x = 0, y = 362 },
     ocd_buffs       = { point = "BOTTOM",      relPoint = "BOTTOM", x = 0, y = 396 },
+    -- Eigene Debuffs am Ziel (1.0.6.27): ueber den Beschwoerungen
+    ocd_debuffs     = { point = "BOTTOM",      relPoint = "BOTTOM", x = 0, y = 508 },
     xpbar           = { point = "BOTTOM",      relPoint = "BOTTOM", x = 0, y = 4 },
     damagemeter     = { point = "TOPLEFT",     relPoint = "TOPLEFT", x = 12, y = -36 },
     bags            = { point = "BOTTOMRIGHT", relPoint = "BOTTOMRIGHT", x = -20, y = 110 },

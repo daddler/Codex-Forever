@@ -9,6 +9,16 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.0.6.27] – 2026-11-15
+
+### Neu
+- Eigener Abklingzeitmanager: Reihe „Eigene Debuffs“ (`ocd_debuffs`,
+  Schalter `debuffs`, ab Werk an) – Aurenbehälter des Spiels am Ziel mit
+  `HARMFUL|PLAYER`, Restzeit vom Behälter; Größe/Anordnung über
+  `OC.RowMenu(…, "debuffs")`, angewandt nur außerhalb des Kampfes, Zeigen
+  über Deckkraft. Wunsch nach dem Verhalten von Naowh Forever (Raid Debuffs
+  über AuraContainer), kein Code übernommen (ohne Lizenz).
+
 ## [1.0.6.26] – 2026-11-15
 
 ### Behoben

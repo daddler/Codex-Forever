@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.0.6.27",
+        date    = "15.11.2026",
+        notes   = {
+            "|cff7C6CFFEigene Debuffs im Abklingzeitmanager|r – eine neue Reihe zeigt, was du selbst auf dein Ziel gewirkt hast, mit Restzeit, auch im Kampf. Verschieben im Gestaltungsmodus, einstellen unter Abklingzeitmanager → Erweitert.",
+        },
+    },
+    {
         version = "1.0.6.26",
         date    = "15.11.2026",
         notes   = {

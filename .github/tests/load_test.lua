@@ -26275,6 +26275,21 @@ do
         .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 1.0.6.27: eigene Debuffs am Ziel im Abklingzeitmanager - ueber den
+-- Aurenbehaelter (HARMFUL|PLAYER, Einheit target), nie selbst gelesen.
+do
+    local ok, err = pcall(function()
+        local src = io.open(ROOT .. "/ui/owncooldowns.lua"):read("*a")
+        assert(src:find('filter = "HARMFUL|PLAYER"', 1, true), "Filter der eigenen Debuffs fehlt")
+        assert(src:find('SetUnit("target")', 1, true), "Debuffs nicht am Ziel")
+        assert(src:find('"ocd_debuffs"', 1, true) and WeintCodex.UIKit.Layout("ocd_debuffs"), "Platz der Debuffs-Reihe fehlt")
+        local OC = WeintCodex.UIOwnCooldowns
+        assert(OC.DEFAULTS.debuffs == true and OC.ROW_LABEL.debuffs, "Schalter oder Name der Reihe fehlt")
+        assert(tonumber(OC.RowOpt("debuffs", "size")), "Größe der Debuffs-Reihe fehlt")
+    end)
+    Check(ok, "Abklingzeitmanager: eigene Debuffs am Ziel" .. (ok and "" or (": " .. tostring(err))))
+end
+
 if failures == 0 then
     print("BESTANDEN")
     os.exit(0)
