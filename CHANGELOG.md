@@ -27,7 +27,7 @@ nicht zusammen.
 ### Behoben
 - Ringe: Reittiere als Zauber (`type=spell`) taten nichts – Reittierzauber
   stehen nicht im Zauberbuch. Jetzt `RG.MountSlot`: sicheres Makro
-  `/run C_MountJournal.SummonByID(id)`; auch gezogene/eingetragene
+  `/cast <Name>` (kein `/run`); auch gezogene/eingetragene
   Reittierzauber (`RG.MountOfSpell`), Eintragsart `mount`.
 
 ## [1.0.7.21] – 2026-11-16

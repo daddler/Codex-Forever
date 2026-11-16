@@ -194,11 +194,12 @@ end
 
 -- 1.0.7.22 (Spieler: "Reittier im Ring - loslassen, nichts passiert"):
 -- ein Reittier ist ein Zauber, der nicht im Zauberbuch steht, und der
--- sichere Knopf wirkt Zauber ueber das Zauberbuch. Darum rufen Reittiere
--- es ueber die Sammlung des Spiels (C_MountJournal.SummonByID) - als Makro
--- des sicheren Knopfs, also auf deinen Tastendruck.
+-- sichere Knopf wirkt einen Zauber als Nummer ueber das Zauberbuch. Darum
+-- rufen Reittiere ueber ein Makro "/cast <Name>" - das kennt auch
+-- Reittiere der Sammlung (/run ist in Makros verboten, load_test).
 function RG.MountSlot(mid, name, icon)
-    return { type = "macro", macrotext = "/run C_MountJournal.SummonByID(" .. mid .. ")",
+    if type(name) ~= "string" or name == "" then return nil end
+    return { type = "macro", macrotext = "/cast " .. name,
              icon = icon, label = name, mount = mid }
 end
 function RG.MountOfSpell(id)
