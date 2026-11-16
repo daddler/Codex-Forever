@@ -38,6 +38,10 @@ local SP = WeintCodex.UISparkles
 SP.DEFAULTS = {
     sparkleLoot  = false,   -- Questgegenstaende glitzern immer
     sparkleNodes = false,   -- Kraeuter und Erz glitzern beim Naehern
+    -- 1.0.7.15 (Wunsch: "viel mehr Glitzer, mehr Effekte"): Staerke 1-3.
+    -- 1 = wie bisher, 2 = mehr Funken, Lichtsaeule, Schein am Boden,
+    -- 3 = dazu ein pulsierender Ring und noch mehr Funken.
+    sparkleStrength = 2,
 }
 
 -- Was das Glitzern auf Questgegenstaenden braucht.
@@ -57,6 +61,10 @@ SP.NODE_CVARS = {
     SoftTargetIconInteract = "1",
     SoftTargetIconGameObject = "1",
     SoftTargetLowPriorityIcons = "1",
+    -- 1.0.7.15: nicht hart an der Reichweite abbrechen (Verhalten von Lueur).
+    -- Gemessen von Lueur auf Forever 1.60.1: Kraeuter und Erz verliert das
+    -- Spiel trotzdem bei etwa 15 m - weiter geht es nicht.
+    SoftTargetInteractRangeIsHard = "0",
 }
 SP.GATE = "SoftTargetNameplateInteract"    -- Plakette des Objekts: nur bei Kraut/Erz an
 SP.UNIT = "softinteract"
@@ -203,8 +211,16 @@ end
 --   * SP.TWINKLES kleine Sterne des Spiels, die kurz aufblitzen.
 -- Ein Takt je Bild, solange die Funken zu sehen sind - ohne Tabelle oder
 -- Closure je Bild; die Werte je Punkt stehen an seinem Bild.
-SP.MOTES, SP.TWINKLES = 14, 4
+-- 1.0.7.15: je Staerke wie viele Punkte/Sterne leben und wie weit sie
+-- streuen; angelegt wird einmal das Maximum, der Rest bleibt unsichtbar.
+SP.LEVELS = {
+    { motes = 14, twinkles = 4,  sx = 30, sy = 10, rise = 1.0, beam = false, ring = false, floor = false },
+    { motes = 32, twinkles = 10, sx = 40, sy = 13, rise = 1.4, beam = true,  ring = false, floor = true },
+    { motes = 56, twinkles = 18, sx = 52, sy = 16, rise = 1.9, beam = true,  ring = true,  floor = true },
+}
+SP.MOTES, SP.TWINKLES = 56, 18
 SP.SPREAD_X, SP.SPREAD_Y = 30, 10      -- halbe Achsen der Ellipse am Boden
+SP.RISE = 1
 local glow = CreateFrame("Frame", nil, UIParent)
 glow:SetSize(80, 60)
 glow:Hide()
@@ -222,7 +238,7 @@ local function Reborn(t, wait)
         t.y0 = t.y0 + rnd() * 18
     else
         t.life = 1.3 + rnd() * 1.2
-        t.rise = 14 + rnd() * 22
+        t.rise = (14 + rnd() * 22) * SP.RISE
         t.drift = (rnd() - 0.5) * 12
         t.size = 5 + rnd() * 5
     end
@@ -240,6 +256,43 @@ for i = 1, SP.MOTES + SP.TWINKLES do
     glow.dots[i] = t
 end
 SP.glow = glow
+
+-- Grosse Teile (1.0.7.15): Schein am Boden, Lichtsaeule, Ring. Ihre
+-- Bewegung ist eine Sinuswelle ueber die Zeit - keine Tabelle je Bild.
+local floorTex = glow:CreateTexture(nil, "BORDER")
+floorTex:SetTexture(K.MEDIA .. "glow")
+floorTex:SetPoint("CENTER", glow, "CENTER", 0, 0)
+local beamTex = glow:CreateTexture(nil, "ARTWORK")
+beamTex:SetTexture(K.MEDIA .. "glow_wide")
+if beamTex.SetRotation then beamTex:SetRotation(math.pi / 2) end
+local ringTex = glow:CreateTexture(nil, "ARTWORK")
+ringTex:SetTexture(K.MEDIA .. "gather_ring")
+ringTex:SetPoint("CENTER", glow, "CENTER", 0, 0)
+for _, t in ipairs({ floorTex, beamTex, ringTex }) do
+    if t.SetBlendMode then t:SetBlendMode("ADD") end
+    t:SetAlpha(0)
+end
+glow.big = { floor = floorTex, beam = beamTex, ring = ringTex }
+glow.clock = 0
+
+-- Staerke anwenden: Zahl der Punkte, Streuung, grosse Teile.
+function SP.Level()
+    local n = tonumber(K.Get(KEY, "sparkleStrength")) or 2
+    if n < 1 then n = 1 elseif n > 3 then n = 3 end
+    return SP.LEVELS[n], n
+end
+function SP.ApplyLevel()
+    local L = SP.Level()
+    SP.SPREAD_X, SP.SPREAD_Y, SP.RISE = L.sx, L.sy, L.rise
+    for i, t in ipairs(glow.dots) do
+        local on = (not t.star and i <= L.motes) or (t.star and (i - SP.MOTES) <= L.twinkles)
+        t.off = not on
+        if not on then t:SetAlpha(0) end
+    end
+    glow.level = L
+    glow:SetSize(L.sx * 2 + 20, 60)
+    return L
+end
 -- Ein Schritt fuer einen Punkt (rein gerechnet, fuer den Ladetest): gibt
 -- Lage (x, y), Deckkraft und Groesse zum Alter zurueck.
 function SP.Mote(t)
@@ -258,8 +311,32 @@ glow:SetScript("OnUpdate", WeintCodex.Measured("sparkles", function(self, el)
     el = el or 0
     if el > 0.1 then el = 0.1 end
     local dots = self.dots
+    -- Grosse Teile: atmen langsam.
+    local L = self.level
+    if L then
+        self.clock = self.clock + el
+        local w = 0.5 + 0.5 * math.sin(self.clock * 2.4)
+        local b = self.big
+        if L.floor then
+            b.floor:SetSize(L.sx * 3.2, L.sy * 3.2)
+            b.floor:SetAlpha(0.35 + 0.25 * w)
+        else b.floor:SetAlpha(0) end
+        if L.beam then
+            local h = 90 + 40 * L.rise
+            b.beam:SetSize(h, 26 + 6 * w)
+            b.beam:SetPoint("CENTER", self, "CENTER", 0, h / 2 - 6)
+            b.beam:SetAlpha(0.22 + 0.18 * w)
+        else b.beam:SetAlpha(0) end
+        if L.ring then
+            local u = (self.clock * 0.7) % 1
+            local sz = L.sx * (0.8 + 1.8 * u)
+            b.ring:SetSize(sz * 2, sz * 0.7)
+            b.ring:SetAlpha(0.7 * (1 - u))
+        else b.ring:SetAlpha(0) end
+    end
     for i = 1, #dots do
         local t = dots[i]
+        if t.off then t:SetAlpha(0) else
         t.age = t.age + el
         if t.age >= t.life then Reborn(t, t.star and (0.6 + rnd() * 2.2) or (rnd() * 0.5)) end
         local x, y, alpha, size = SP.Mote(t)
@@ -267,6 +344,7 @@ glow:SetScript("OnUpdate", WeintCodex.Measured("sparkles", function(self, el)
         if alpha > 0 then
             t:SetSize(size, size)
             t:SetPoint("CENTER", self, "CENTER", x, y)
+        end
         end
     end
 end))
@@ -277,6 +355,10 @@ local function Paint(blocked)
     local c, w = blocked and C.textMuted or C.warningBright, C.textBright
     for _, t in ipairs(glow.dots) do
         local k = blocked and 0 or (t.star and 0.7 or 0.35)   -- Anteil Weiss
+        t:SetVertexColor(c[1] + (w[1] - c[1]) * k, c[2] + (w[2] - c[2]) * k, c[3] + (w[3] - c[3]) * k)
+    end
+    for _, t in pairs(glow.big) do
+        local k = blocked and 0 or 0.2
         t:SetVertexColor(c[1] + (w[1] - c[1]) * k, c[2] + (w[2] - c[2]) * k, c[3] + (w[3] - c[3]) * k)
     end
 end
@@ -395,6 +477,7 @@ SP.ticker = ticker
 function SP.Apply()
     if K.InCombat() then K.AfterCombat(SP.Apply) return end
     if SP.LootActive() then SP.ApplyLoot() else ReleaseAll(SP.LOOT_CVARS) end
+    SP.ApplyLevel()
     if SP.NodesActive() then
         SetAll(SP.NODE_CVARS)
         gate = nil
@@ -476,7 +559,13 @@ local function Build(B)
             description = "Schaltet die Umrisse aus und das Glitzern des Spiels an – auch nach einem Wechsel der Grafikstufe. Aus: die Umrisse kommen erst nach einem Neustart des Spiels zurück." },
           { type = "toggle", label = "Kräuter und Erz glitzern", key = "sparkleNodes",
             description = "Golden über dem nächsten Kraut oder der nächsten Erzader (bis etwa 15 m), grau, wenn deine Fertigkeit noch zu niedrig ist. Nur mit Kräuterkunde bzw. Bergbau – ohne den Beruf zeigt das Spiel das Objekt nicht an. Im Kampf nicht." })
-    B:Note("Kräuter und Erz nutzen die weiche Zielerfassung des Spiels. Nicht zusammen mit ForeverLootSparkles oder Lueur benutzen – sie stellen dieselben Werte um.")
+    B:Row({ type = "dropdown", label = "Stärke des Glitzerns", key = "sparkleStrength",
+            disabled = function() return not K.Get(KEY, "sparkleNodes") end, items = {
+                { value = 1, text = "Dezent" },
+                { value = 2, text = "Kräftig – mit Lichtsäule" },
+                { value = 3, text = "Sehr kräftig – mit Ring" } } },
+          { type = "empty" })
+    B:Note("Weiter als etwa 15 m erkennt das Spiel Kräuter und Erz für Addons nicht – entfernte Fundstellen zeigt der Sammel-Atlas auf Karte und Minikarte. Kräuter und Erz nutzen die weiche Zielerfassung des Spiels. Nicht zusammen mit ForeverLootSparkles oder Lueur benutzen – sie stellen dieselben Werte um.")
 end
 
 local mod = K.Module(KEY)

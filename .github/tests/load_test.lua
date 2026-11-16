@@ -26830,6 +26830,27 @@ do
     Check(ok, "Gruppenrahmen: nach dem Tod wieder Klassenfarbe" .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 1.0.7.15: Glitzern in drei Staerken.
+do
+    local ok, err = pcall(function()
+        local SP = WeintCodex.UISparkles
+        local saved = K.Get("comfort", "sparkleStrength")
+        assert(saved == 2, "Staerke ab Werk nicht 2")
+        local function count()
+            local n = 0
+            for _, t in ipairs(SP.glow.dots) do if t.off == false then n = n + 1 end end
+            return n
+        end
+        K.Set("comfort", "sparkleStrength", 1) SP.ApplyLevel()
+        local a1 = count()
+        K.Set("comfort", "sparkleStrength", 3) SP.ApplyLevel()
+        local a3 = count()
+        K.Set("comfort", "sparkleStrength", saved) SP.ApplyLevel()
+        assert(a1 == 18 and a3 == 74, "Funken je Staerke: " .. a1 .. "/" .. a3)
+    end)
+    Check(ok, "Glitzern: drei Stärken" .. (ok and "" or (": " .. tostring(err))))
+end
+
 if failures == 0 then
     print("BESTANDEN")
     os.exit(0)

@@ -9,6 +9,16 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.0.7.15] – 2026-11-16
+
+### Geändert
+- Glitzern auf Kraut/Erz (Wunsch: „viel mehr Glitzer, mehr Effekte, von
+  weiter weg“, Vorbild Lueur – keine Lizenz, nur Verhalten): Stärke 1–3
+  (`sparkleStrength`, ab Werk 2), bis 56 Punkte und 18 Sterne, Lichtsäule,
+  Schein am Boden, Ring (`SP.LEVELS`, `SP.ApplyLevel`); eigene Bilder.
+  `SoftTargetInteractRangeIsHard = 0`. Reichweite: das Spiel verliert Kraut
+  und Erz bei etwa 15 m (Messung in Lueur, Forever 1.60.1) – weiter geht nicht.
+
 ## [1.0.7.14] – 2026-11-16
 
 ### Behoben

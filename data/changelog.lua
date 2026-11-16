@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.0.7.15",
+        date    = "16.11.2026",
+        notes   = {
+            "|cff7C6CFFKräuter und Erz glitzern viel kräftiger|r – mehr als doppelt so viele Funken, eine Lichtsäule und ein Schein am Boden; auf „Sehr kräftig“ dazu ein pulsierender Ring. Einstellbar unter Komfort → Glitzern.",
+        },
+    },
+    {
         version = "1.0.7.14",
         date    = "16.11.2026",
         notes   = {
