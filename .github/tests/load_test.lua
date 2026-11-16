@@ -26852,6 +26852,34 @@ do
             for _, t in ipairs({ 0, 0.4, 3.7 }) do SP.DrawBig(SP.glow, L, t, t > 0 and 1 or 0) end
         end
         assert(SP.GROUND > 0 and SP.GROUND < 1, "Boden nicht flach")
+        -- 1.0.7.23: jeder Effekt, ruhig und nicht, Groesse, Farben, Vorschau.
+        for _, it in ipairs(SP.EFFECT_ITEMS) do
+            assert(SP.EFFECTS[it.value], "Effekt fehlt: " .. it.value)
+            for _, calm in ipairs({ false, true }) do
+                K.Set("comfort", "sparkleEffect", it.value)
+                K.Set("comfort", "sparkleCalm", calm)
+                local L = SP.ApplyLevel()
+                SP.DrawBig(SP.glow, L, 2.5, 1)
+                local t = SP.glow.dots[1]
+                t.age = t.life / 2
+                local x, y = SP.Mote(t)
+                assert(type(x) == "number" and type(y) == "number", "Punkt ohne Lage")
+            end
+        end
+        K.Set("comfort", "sparkleEffect", "beam") K.Set("comfort", "sparkleCalm", false)
+        K.Set("comfort", "sparkleSize", 999) assert(SP.Scale() == 2, "Groesse nicht begrenzt")
+        K.Set("comfort", "sparkleSize", 100)
+        for _, m in ipairs({ "gold", "class", "kind" }) do
+            K.Set("comfort", "sparkleColor", m)
+            for _, k in ipairs({ "herb", "ore" }) do
+                local c = SP.BaseColor(k)
+                assert(type(c) == "table" and type(c[1]) == "number", "Farbe fehlt: " .. m .. "/" .. k)
+            end
+        end
+        K.Set("comfort", "sparkleColor", "gold")
+        assert(SP.Preview() == true, "Vorschau startet nicht")
+        SP.PreviewEnd() SP.glow:Hide()
+        SP.ApplyLevel()
         -- 1.0.7.16: weich ein- und ausblenden.
         assert(SP.Ease(0) == 0 and SP.Ease(1) == 1 and SP.Ease(0.25) < 0.25, "Kurve nicht weich")
         assert(SP.FADE_IN >= 1, "Einblenden zu kurz")

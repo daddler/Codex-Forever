@@ -42,7 +42,20 @@ SP.DEFAULTS = {
     -- 1 = wie bisher, 2 = mehr Funken, Lichtsaeule, Schein am Boden,
     -- 3 = dazu ein pulsierender Ring und noch mehr Funken.
     sparkleStrength = 2,
+    -- 1.0.7.23 (Wunsch: "mehr Moeglichkeiten"): Effekt, Groesse, Farbe,
+    -- ruhige Bewegung. Die Staerke regelt nur noch Menge und Helligkeit.
+    sparkleEffect = "beam",
+    sparkleSize   = 100,
+    sparkleColor  = "gold",
+    sparkleCalm   = false,
 }
+-- Eigene Farbe je Art (Wunsch aus der Gilde: "Erze in rot, Blümchen in
+-- einer anderen Farbe"), ab Werk aus den Farben in core/ui.lua.
+do
+    local GC = WeintCodex.GameColors
+    SP.DEFAULTS.sparkleHerbColor = { r = GC.sparkleHerb[1], g = GC.sparkleHerb[2], b = GC.sparkleHerb[3] }
+    SP.DEFAULTS.sparkleOreColor  = { r = GC.sparkleOre[1],  g = GC.sparkleOre[2],  b = GC.sparkleOre[3] }
+end
 
 -- Was das Glitzern auf Questgegenstaenden braucht.
 SP.LOOT_CVARS = {
@@ -68,6 +81,7 @@ SP.NODE_CVARS = {
 }
 SP.GATE = "SoftTargetNameplateInteract"    -- Plakette des Objekts: nur bei Kraut/Erz an
 SP.UNIT = "softinteract"
+local previewUntil   -- Ende der Vorschau (GetTime) oder nil
 SP.TICK = 0.12
 SP.TEXTURE = "Interface\\Cooldown\\star4"   -- Funke des Spiels
 local stats = { looks = 0, herb = 0, ore = 0, other = 0, applied = 0, noplate = 0, bytip = 0 }
@@ -214,10 +228,26 @@ end
 -- 1.0.7.15: je Staerke wie viele Punkte/Sterne leben und wie weit sie
 -- streuen; angelegt wird einmal das Maximum, der Rest bleibt unsichtbar.
 SP.LEVELS = {
-    -- 1.0.7.22: Staerke 1 hat jetzt auch einen leisen Schein am Boden.
-    { motes = 14, twinkles = 4,  sx = 30, sy = 10, rise = 1.0, beam = false, ring = false, floor = true, glowA = 0.55, beamA = 0, shade = 0.6 },
-    { motes = 32, twinkles = 10, sx = 40, sy = 13, rise = 1.4, beam = true,  ring = false, floor = true, glowA = 0.85, beamA = 1, shade = 1 },
-    { motes = 48, twinkles = 16, sx = 46, sy = 15, rise = 1.7, beam = true,  ring = true,  floor = true, glowA = 1.0,  beamA = 1, shade = 1 },
+    { motes = 14, twinkles = 4,  sx = 30, sy = 10, rise = 1.0, glowA = 0.55, beamA = 0.6, shade = 0.6 },
+    { motes = 32, twinkles = 10, sx = 40, sy = 13, rise = 1.4, glowA = 0.85, beamA = 1,   shade = 1 },
+    { motes = 48, twinkles = 16, sx = 46, sy = 15, rise = 1.7, glowA = 1.0,  beamA = 1,   shade = 1 },
+}
+-- 1.0.7.23: welche Teile ein Effekt zeigt (Verhalten nach Lueur, eigener Code).
+SP.EFFECTS = {
+    sparks = { floor = false, beam = false, ring = false, swirl = false },
+    glow   = { floor = true,  beam = false, ring = false, swirl = false },
+    beam   = { floor = true,  beam = true,  ring = false, swirl = false },
+    ring   = { floor = true,  beam = false, ring = true,  swirl = false },
+    beacon = { floor = true,  beam = true,  ring = true,  swirl = false },
+    swirl  = { floor = true,  beam = false, ring = false, swirl = true },
+}
+SP.EFFECT_ITEMS = {
+    { value = "sparks", text = "Funken" },
+    { value = "glow",   text = "Schein" },
+    { value = "beam",   text = "Lichtsäule" },
+    { value = "ring",   text = "Ring" },
+    { value = "beacon", text = "Leuchtfeuer" },
+    { value = "swirl",  text = "Wirbel" },
 }
 SP.MOTES, SP.TWINKLES = 56, 18
 SP.SPREAD_X, SP.SPREAD_Y = 30, 10      -- halbe Achsen der Ellipse am Boden
@@ -311,10 +341,24 @@ end
 function SP.Ease(u) if u <= 0 then return 0 elseif u >= 1 then return 1 end return u * u * (3 - 2 * u) end
 
 -- Staerke anwenden: Zahl der Punkte, Streuung, grosse Teile.
+-- Staerke + Effekt + ruhig zu einer Beschreibung (eine Tabelle je
+-- Einstellung, beim Umschalten - nie je Bild).
 function SP.Level()
     local n = tonumber(K.Get(KEY, "sparkleStrength")) or 2
     if n < 1 then n = 1 elseif n > 3 then n = 3 end
-    return SP.LEVELS[n], n
+    local base = SP.LEVELS[n]
+    local fx = SP.EFFECTS[K.Get(KEY, "sparkleEffect")] or SP.EFFECTS.beam
+    local L = {}
+    for k, v in pairs(base) do L[k] = v end
+    for k, v in pairs(fx) do L[k] = v end
+    L.calm = K.Get(KEY, "sparkleCalm") and true or false
+    L.speed = L.calm and 0.4 or 1
+    return L, n
+end
+function SP.Scale()
+    local v = tonumber(K.Get(KEY, "sparkleSize")) or 100
+    if v < 50 then v = 50 elseif v > 200 then v = 200 end
+    return v / 100
 end
 function SP.ApplyLevel()
     local L = SP.Level()
@@ -325,7 +369,9 @@ function SP.ApplyLevel()
         if not on then t:SetAlpha(0) end
     end
     glow.level = L
+    SP.SWIRL = L.swirl
     glow:SetSize(L.sx * 2 + 20, 60)
+    glow:SetScale(SP.Scale())
     return L
 end
 -- Ein Schritt fuer einen Punkt (rein gerechnet, fuer den Ladetest): gibt
@@ -340,6 +386,14 @@ function SP.Mote(t)
     -- Steigt erst zuegig, dann langsamer (weiches Auslaufen).
     local e = 1 - (1 - u) * (1 - u)
     local size = t.star and t.size * (0.6 + 0.4 * math.sin(u * math.pi)) or t.size * (1 - 0.35 * u)
+    if SP.SWIRL and not t.star then
+        -- Wirbel: der Punkt laeuft beim Steigen im Kreis um die Mitte.
+        local a = e * 4.2
+        local ca, sa = math.cos(a), math.sin(a)
+        local x = t.x0 * ca - t.y0 * 3 * sa
+        local y = (t.x0 * sa + t.y0 * 3 * ca) / 3
+        return x * (1 - 0.4 * e), y + t.rise * 1.2 * e, alpha, size
+    end
     return t.x0 + t.drift * e, t.y0 + t.rise * e, alpha, size
 end
 -- Die grossen Teile fuer einen Zeitpunkt (rein gerechnet, kein Speicher).
@@ -351,18 +405,21 @@ local function Flat(t, w, a)
 end
 function SP.DrawBig(self, L, clock, arrive)
     local b = self.big
+    local sp = L.speed or 1
+    clock = clock * sp
     local breath = 0.5 + 0.5 * sin(clock * 1.9)
-    local twinkle = 0.5 + 0.5 * sin(clock * 7.3) * sin(clock * 3.1)
+    local twinkle = 0.5 + (L.calm and 0.2 or 0.5) * sin(clock * 7.3) * sin(clock * 3.1)
+    local spin = L.swirl and 3.2 or 1
     -- Beim Ankommen zieht sich alles von weiter aussen zusammen.
     local size = L.sx * 2.6 * (1 + 0.45 * (1 - arrive))
     if L.floor then
         Flat(b.shade, size * 1.15, 0.30 * L.shade)
         Flat(b.floor, size * (0.95 + 0.07 * breath), (0.35 + 0.20 * breath) * L.glowA)
-        Flat(b.wispA, size * 1.02, 0.42 * L.glowA)
+        Flat(b.wispA, size * 1.02, (L.swirl and 0.65 or 0.42) * L.glowA)
         Flat(b.wispB, size * 0.90, 0.32 * L.glowA)
         if b.wispA.SetRotation then
-            b.wispA:SetRotation(clock * 0.55)
-            b.wispB:SetRotation(2.1 - clock * 0.8)
+            b.wispA:SetRotation(clock * 0.55 * spin)
+            b.wispB:SetRotation(2.1 - clock * 0.8 * spin)
         end
         local fs = size * (0.30 + 0.05 * twinkle + 0.35 * (1 - arrive))
         b.flare:SetSize(fs, fs)
@@ -408,6 +465,10 @@ glow:SetScript("OnUpdate", WeintCodex.Measured("sparkles", function(self, el)
         self:SetAlpha(SP.Ease(self.fade))
         if self.fade <= 0 and self.target <= 0 then self:Hide() return end
     end
+    if previewUntil and _G.GetTime and _G.GetTime() > previewUntil then
+        previewUntil = nil
+        SP.FadeOut()
+    end
     local arrive = SP.Ease(self.fade)
     local L = self.level
     if L then
@@ -417,7 +478,7 @@ glow:SetScript("OnUpdate", WeintCodex.Measured("sparkles", function(self, el)
     for i = 1, #dots do
         local t = dots[i]
         if t.off then t:SetAlpha(0) else
-        t.age = t.age + el
+        t.age = t.age + el * ((self.level and self.level.speed == 0.4) and 0.6 or 1)
         if t.age >= t.life then Reborn(t, t.star and (0.6 + rnd() * 2.2) or (rnd() * 0.5)) end
         local x, y, alpha, size = SP.Mote(t)
         t:SetAlpha(alpha)
@@ -431,8 +492,24 @@ end))
 
 -- Warmes Weissgold wie beim Spiel; grau, wenn du es (noch) nicht sammeln
 -- kannst. Sterne heller als die weichen Punkte.
-local function Paint(blocked)
-    local c, w = blocked and C.textMuted or C.warningBright, C.textBright
+function SP.BaseColor(kind)
+    local mode = K.Get(KEY, "sparkleColor")
+    local GC = WeintCodex.GameColors
+    if mode == "class" then return C.accent end
+    if mode == "kind" and (kind == "herb" or kind == "ore") then
+        local v = K.Get(KEY, kind == "herb" and "sparkleHerbColor" or "sparkleOreColor")
+        if type(v) == "table" and type(v.r) == "number" then
+            local out = SP.kindColor or {}
+            SP.kindColor = out
+            out[1], out[2], out[3] = v.r, v.g or 0, v.b or 0
+            return out
+        end
+        return kind == "herb" and GC.sparkleHerb or GC.sparkleOre
+    end
+    return C.warningBright
+end
+local function Paint(blocked, kind)
+    local c, w = blocked and C.textMuted or SP.BaseColor(kind), C.textBright
     for _, t in ipairs(glow.dots) do
         local k = blocked and 0 or (t.star and 0.7 or 0.35)   -- Anteil Weiss
         t:SetVertexColor(c[1] + (w[1] - c[1]) * k, c[2] + (w[2] - c[2]) * k, c[3] + (w[3] - c[3]) * k)
@@ -493,6 +570,7 @@ end
 
 -- Ein Blick: Funken an die Plakette des weichen Ziels, wenn es Kraut/Erz ist.
 function SP.Look()
+    if previewUntil then return nil end
     if not SP.NodesActive() or K.InCombat() then glow:Hide() return nil end
     stats.looks = stats.looks + 1
     local u = SP.UNIT
@@ -526,7 +604,7 @@ function SP.Look()
             glow:SetParent(plate)
             glow:ClearAllPoints()
             glow:SetPoint("CENTER", plate, "CENTER", 0, -46)
-            Paint(blocked)
+            Paint(blocked, kind)
             SP.FadeIn()
         else
             -- Ohne Plakette (das Spiel baut sie erst nach dem Schalter):
@@ -636,18 +714,48 @@ function SP.StatusLines()
         type(_G.SetUnitCursorTexture) == "function" and "da" or "fehlt"), SP.Probe() }
 end
 
+-- (Lua-lokal, nicht am Rahmen: Felder der Attrappe im Test sind Funktionen.)
+-- Vorschau: der Effekt ein paar Sekunden mitten auf dem Bildschirm.
+SP.PREVIEW = 5
+function SP.PreviewEnd() previewUntil = nil end
+function SP.Preview()
+    if K.InCombat() then return false end
+    SP.ApplyLevel()
+    glow:SetParent(UIParent)
+    glow:ClearAllPoints()
+    glow:SetPoint("CENTER", UIParent, "CENTER", 0, -40)
+    glow:SetFrameStrata("DIALOG")
+    Paint(false, "herb")
+    previewUntil = (_G.GetTime and _G.GetTime() or 0) + SP.PREVIEW
+    SP.FadeIn()
+    return true
+end
+
 local function Build(B)
     B:Section("Glitzern", "Was WeintCodex dafür am Spiel umstellt, bekommst du beim Ausschalten zurück.")
     B:Row({ type = "toggle", label = "Questgegenstände glitzern immer", key = "sparkleLoot",
             description = "Schaltet die Umrisse aus und das Glitzern des Spiels an – auch nach einem Wechsel der Grafikstufe. Aus: die Umrisse kommen erst nach einem Neustart des Spiels zurück." },
           { type = "toggle", label = "Kräuter und Erz glitzern", key = "sparkleNodes",
             description = "Golden über dem nächsten Kraut oder der nächsten Erzader (bis etwa 15 m), grau, wenn deine Fertigkeit noch zu niedrig ist. Nur mit Kräuterkunde bzw. Bergbau – ohne den Beruf zeigt das Spiel das Objekt nicht an. Im Kampf nicht." })
-    B:Row({ type = "dropdown", label = "Stärke des Glitzerns", key = "sparkleStrength",
-            disabled = function() return not K.Get(KEY, "sparkleNodes") end, items = {
+    local function off() return not K.Get(KEY, "sparkleNodes") end
+    B:Row({ type = "dropdown", label = "Effekt", key = "sparkleEffect", disabled = off, items = SP.EFFECT_ITEMS },
+          { type = "dropdown", label = "Stärke", key = "sparkleStrength", disabled = off, items = {
                 { value = 1, text = "Dezent" },
-                { value = 2, text = "Kräftig – mit Lichtsäule" },
-                { value = 3, text = "Sehr kräftig – mit Ring" } } },
-          { type = "empty" })
+                { value = 2, text = "Kräftig" },
+                { value = 3, text = "Sehr kräftig" } } })
+    B:Row({ type = "slider", label = "Größe", key = "sparkleSize", min = 50, max = 200, step = 10, disabled = off,
+            format = function(v) return string.format("%d %%", v) end },
+          { type = "dropdown", label = "Farbe", key = "sparkleColor", disabled = off, items = {
+                { value = "gold",  text = "Gold" },
+                { value = "class", text = "Klassenfarbe" },
+                { value = "kind",  text = "Eigene Farbe je Art" } } })
+    local function own() return off() or K.Get(KEY, "sparkleColor") ~= "kind" end
+    B:Row({ type = "color", label = "Farbe für Kräuter", key = "sparkleHerbColor", disabled = own },
+          { type = "color", label = "Farbe für Erz", key = "sparkleOreColor", disabled = own })
+    B:Row({ type = "toggle", label = "Ruhigere Bewegung", key = "sparkleCalm", disabled = off,
+            description = "Dreht und pulsiert langsamer – für alle, denen es zu unruhig ist." },
+          { type = "button", label = " ", text = "Vorschau", disabled = off,
+            onClick = function() SP.Preview() end })
     B:Note("Weiter als etwa 15 m erkennt das Spiel Kräuter und Erz für Addons nicht – entfernte Fundstellen zeigt der Sammel-Atlas auf Karte und Minikarte. Kräuter und Erz nutzen die weiche Zielerfassung des Spiels. Nicht zusammen mit einem anderen Glitzer-Addon benutzen – beide stellen dieselben Werte um.")
 end
 

@@ -213,6 +213,9 @@ WeintCodex.Colors = C
 --------------------------------------------------
 
 WeintCodex.GameColors = {
+    -- 1.0.7.23: Glitzern nach Art (ui/sparkles.lua).
+    sparkleHerb   = {0.450, 0.950, 0.450, 1.0},
+    sparkleOre    = {0.620, 0.780, 0.950, 1.0},
     -- 1.0.6.21: Gruppenrahmen "Dunkel": Lebensbalken, fehlendes Leben
     -- (Anteil der Klassenfarbe), Tote/Offline, Hervorhebung.
     gfDarkFill    = {0.150, 0.155, 0.175, 1.0},

@@ -9,6 +9,16 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.0.7.23] – 2026-11-16
+
+### Neu
+- Glitzern (`ui/sparkles.lua`): Effekt `sparkleEffect` (Funken, Schein,
+  Lichtsäule, Ring, Leuchtfeuer, Wirbel – `SP.EFFECTS`), Stärke nur noch
+  Menge/Helligkeit, Größe `sparkleSize` 50–200 % (`glow:SetScale`), Farbe
+  `sparkleColor` gold/Klasse/je Art mit `sparkleHerbColor`/`sparkleOreColor`
+  (ab Werk `GameColors.sparkleHerb/Ore`), `sparkleCalm`, Knopf „Vorschau“
+  (`SP.Preview`, 5 s Bildschirmmitte).
+
 ## [1.0.7.22] – 2026-11-16
 
 ### Geändert

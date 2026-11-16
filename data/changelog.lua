@@ -22,6 +22,15 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.0.7.23",
+        date    = "16.11.2026",
+        notes   = {
+            "|cff7C6CFFDas Glitzern an Kräutern und Erz hat jetzt sechs Effekte|r – Funken, Schein, Lichtsäule, Ring, Leuchtfeuer und Wirbel, dazu Stärke und Größe frei wählbar.",
+            "|cff7C6CFFEigene Farben|r – Gold, deine Klassenfarbe oder je eine eigene Farbe für Kräuter und für Erz.",
+            "|cff7C6CFFRuhigere Bewegung und Vorschau|r – auf Wunsch dreht und pulsiert es langsamer, und ein Knopf zeigt den Effekt mitten auf dem Bildschirm, ohne dass ein Kraut in der Nähe sein muss.",
+        },
+    },
+    {
         version = "1.0.7.22",
         date    = "16.11.2026",
         notes   = {
