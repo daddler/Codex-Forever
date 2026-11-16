@@ -9,6 +9,14 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.0.7.13] – 2026-11-16
+
+### Neu
+- Tooltip eines Rezept-Gegenstands (`recipeItem` in `data/professions.lua`,
+  `PT.RecipeOfBook`, `PT.BookStatus`): je eigenem Charakter mit dem Beruf
+  „Gelernt“ / „Kann es lernen“ / „Braucht N (hat M)“ / „Noch nicht gelesen“
+  aus `SavedData.professions` (known, scanned, skills). Wunsch eines Spielers.
+
 ## [1.0.7.12] – 2026-11-16
 
 ### Neu

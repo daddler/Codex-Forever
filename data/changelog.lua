@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.0.7.13",
+        date    = "16.11.2026",
+        notes   = {
+            "|cff7C6CFFRezepte zeigen, wer sie lernen kann|r – über Plänen, Mustern und Formeln steht je Charakter mit dem Beruf: gelernt, kann es lernen, oder welche Fertigkeit noch fehlt. War das Berufsfenster eines Charakters noch nie offen, steht dort „noch nicht gelesen“ statt einer Vermutung.",
+        },
+    },
+    {
         version = "1.0.7.12",
         date    = "16.11.2026",
         notes   = {

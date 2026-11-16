@@ -64,13 +64,14 @@ PT.TOOLS = {
 -- Rezepte nach Zauber und nach Gegenstand
 --------------------------------------------------
 
-local bySpellR, byItem
+local bySpellR, byItem, byBook
 local function Index()
     if bySpellR then return end
-    bySpellR, byItem = {}, {}
+    bySpellR, byItem, byBook = {}, {}, {}
     for _, p in ipairs(P and P.PROFS or {}) do
         for _, r in ipairs(PRO.Recipes(p.key)) do
             bySpellR[r.spell] = r
+            if r.recipeItem then byBook[r.recipeItem] = byBook[r.recipeItem] or r end
             if r.item then
                 byItem[r.item] = byItem[r.item] or {}
                 table.insert(byItem[r.item], r)
@@ -80,6 +81,40 @@ local function Index()
 end
 function PT.RecipeBySpell(id) Index() return bySpellR[id] end
 function PT.RecipesForItem(id) Index() return byItem[id] end
+-- Das Rezept, das ein Rezept-Gegenstand (Plaene, Muster, Formel) lehrt.
+function PT.RecipeOfBook(id) Index() return byBook[id] end
+
+-- 1.0.7.13 (Wunsch eines Spielers: "bei Rezepten anzeigen, ob Charakter xy
+-- es noch lernen kann oder schon hat"): je eigenem Charakter mit dem Beruf
+-- eine Zeile. Nie geraten: wer das Berufsfenster nie offen hatte, ist
+-- "noch nicht gelesen" - ausser die Fertigkeit reicht sicher nicht.
+-- Liefert { { name, text, colorKey }, ... } oder nil.
+function PT.BookStatus(id, me)
+    local r = PT.RecipeOfBook(id)
+    local sd = WeintCodex.SavedData
+    if not (r and r.spell and type(sd) == "table" and type(sd.professions) == "table") then return nil end
+    local out = {}
+    for who, m in pairs(sd.professions) do
+        local sk = type(m) == "table" and type(m.skills) == "table" and m.skills[r.key]
+        if sk and type(sk.rank) == "number" then
+            local text, col
+            local known = type(m.known) == "table" and m.known[r.spell]
+            local scanned = type(m.scanned) == "table" and m.scanned[r.key]
+            if known then text, col = "Gelernt", "success"
+            elseif r.learn and sk.rank < r.learn then
+                text, col = "Braucht " .. r.learn .. " (hat " .. sk.rank .. ")", "warning"
+            elseif not scanned then text, col = "Noch nicht gelesen", "textFaint"
+            else text, col = "Kann es lernen", "goldBright" end
+            out[#out + 1] = { name = who:match("^([^-]+)") or who, full = who, text = text, color = col }
+        end
+    end
+    if #out == 0 then return nil end
+    table.sort(out, function(a, b)
+        if (a.full == me) ~= (b.full == me) then return a.full == me end
+        return a.name < b.name
+    end)
+    return out, r
+end
 
 --------------------------------------------------
 -- Gilde: wer kann was
@@ -317,6 +352,14 @@ local function OnItem(tt, data)
     if w then
         local g = C.goldBright or C.accent
         tt:AddLine("Merkliste: dir fehlen noch " .. w, g[1], g[2], g[3])
+    end
+    local bs = PT.BookStatus(id, (Plain(_G.UnitName and _G.UnitName("player")) or "") .. "-" .. (Plain(_G.GetRealmName and _G.GetRealmName()) or ""))
+    if bs then
+        for _, b in ipairs(bs) do
+            local c = C[b.color] or C.textMuted
+            local n = C.textMuted
+            tt:AddDoubleLine(b.name, b.text, n[1], n[2], n[3], c[1], c[2], c[3])
+        end
     end
     local rs = PT.RecipesForItem(id)
     if not rs then return end

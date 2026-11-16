@@ -26775,6 +26775,39 @@ do
     Check(ok, "Chat: Rechtsklick schreibt an die Gilde" .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 1.0.7.13: Rezept-Gegenstand im Tooltip - je eigenem Charakter.
+do
+    local ok, err = pcall(function()
+        local PT = WeintCodex.ProfTools
+        local PRO = WeintCodex.Professions
+        local book, r
+        for _, key in ipairs({ "blacksmithing", "tailoring", "leatherworking", "alchemy", "engineering", "enchanting", "cooking" }) do
+            for _, x in ipairs(PRO.Recipes(key) or {}) do
+                if x.recipeItem and x.learn and x.learn > 50 then book, r = x.recipeItem, PT.RecipeOfBook(x.recipeItem) break end
+            end
+            if book then break end
+        end
+        assert(book and r, "kein Rezept-Gegenstand im Bestand")
+        local sd = WeintCodex.SavedData
+        local saved = sd.professions
+        sd.professions = {
+            ["Aa-R"] = { known = { [r.spell] = true }, scanned = {}, skills = { [r.key] = { rank = 300 } } },
+            ["Bb-R"] = { known = {}, scanned = { [r.key] = 1 }, skills = { [r.key] = { rank = 300 } } },
+            ["Cc-R"] = { known = {}, scanned = {}, skills = { [r.key] = { rank = 1 } } },
+            ["Dd-R"] = { known = {}, scanned = {}, skills = { [r.key] = { rank = 300 } } },
+            ["Ee-R"] = { known = {}, scanned = {}, skills = {} },
+        }
+        local out = PT.BookStatus(book, "Dd-R")
+        sd.professions = saved
+        assert(out and #out == 4, "Zeilen: " .. tostring(out and #out))
+        assert(out[1].name == "Dd" and out[1].text == "Noch nicht gelesen", "eigener zuerst / nie geraten")
+        local by = {}
+        for _, l in ipairs(out) do by[l.name] = l.text end
+        assert(by.Aa == "Gelernt" and by.Bb == "Kann es lernen" and by.Cc:find("^Braucht"), "Stand falsch")
+    end)
+    Check(ok, "Rezepte: gelernt/lernbar je Charakter" .. (ok and "" or (": " .. tostring(err))))
+end
+
 if failures == 0 then
     print("BESTANDEN")
     os.exit(0)
