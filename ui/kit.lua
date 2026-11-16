@@ -1685,11 +1685,24 @@ K.movers = movers
 -- (SetClampedToScreen); geschuetzte erst nach dem Kampf. Nichts wird
 -- gespeichert - nur angewendet.
 K.refits = 0
+-- 1.0.7.21 (Fehlerberichte "Blockiert: WeintCodexTrinketBar:SetPoint()",
+-- "ClearAllPoints()", "UNKNOWN()" aus RefitAll im Kampf): nicht nur wer
+-- `secure` angemeldet ist, ist geschuetzt - auch ein Rahmen mit sicheren
+-- Knoepfen darin (Schmuckleiste) sagt IsProtected. Beides zaehlt.
+function K.MoverSecure(m)
+    if m.secure then return true end
+    local f = m.frame
+    if type(f) == "table" and f.IsProtected then
+        local ok, p = pcall(f.IsProtected, f)
+        if ok and K.Bool(p, false) then return true end
+    end
+    return false
+end
 function K.RefitAll()
     for key, m in pairs(movers) do
         local f = m.frame
         if type(f) == "table" and f.SetClampedToScreen and not (f.IsForbidden and f:IsForbidden()) then
-            if m.secure then
+            if K.MoverSecure(m) then
                 K.AfterCombat(function() pcall(f.SetClampedToScreen, f, true) end)
             else
                 pcall(f.SetClampedToScreen, f, true)
@@ -1760,7 +1773,7 @@ function K.ApplyPosition(key)
         local rel = pos.rel and type(_G[pos.rel]) == "table" and _G[pos.rel] or UIParent
         frame:SetPoint(pos.point, rel, pos.relPoint or pos.point, pos.x or 0, pos.y or 0)
     end
-    if m.secure then K.AfterCombat(apply) else apply() end
+    if K.MoverSecure(m) and K.InCombat() then K.AfterCombat(apply) else apply() end
 end
 
 function K.RegisterMover(frame, key, label, default, opts)

@@ -283,7 +283,7 @@ function GS.Enable()
     trinketBar:SetSize(2 * (GS.SIZE + 6) + GS.GAP, GS.SIZE + 6)
     for i, slot in ipairs(GS.TRINKETS) do trinketButtons[i] = TrinketButton(slot, i) end
     trinketBar.WCShowForUnlock = function(self, on) self._unlock = on and true or nil GS.UpdateTrinkets() end
-    K.RegisterMover(trinketBar, "trinketbar", "Schmuckleiste", K.Layout("trinketbar"))
+    K.RegisterMover(trinketBar, "trinketbar", "Schmuckleiste", K.Layout("trinketbar"), { secure = true })
     local ev = CreateFrame("Frame")
     for _, e in ipairs({ "EQUIPMENT_SETS_CHANGED", "PLAYER_EQUIPMENT_CHANGED", "PLAYER_REGEN_ENABLED",
         "BAG_UPDATE_COOLDOWN", "PLAYER_ENTERING_WORLD", "EQUIPMENT_SWAP_FINISHED" }) do

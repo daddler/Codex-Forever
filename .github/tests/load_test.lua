@@ -26923,6 +26923,28 @@ do
     Check(ok, "Minikarte: bis an den Bildschirmrand ziehbar" .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 1.0.7.21: geschuetzte Rahmen (IsProtected) nie im Kampf verschieben.
+do
+    local ok, err = pcall(function()
+        local G = _G
+        local moved = 0
+        local f = CreateFrame("Frame", nil, UIParent)
+        f.IsProtected = function() return true end
+        f.ClearAllPoints = function() moved = moved + 1 end
+        f.SetPoint = function() moved = moved + 1 end
+        f.SetClampedToScreen = function() moved = moved + 1 end
+        K.RegisterMover(f, "testgeschuetzt", "Test", { point = "CENTER", x = 0, y = 0 })
+        moved = 0
+        local icl = G.InCombatLockdown
+        G.InCombatLockdown = function() return true end
+        K.RefitAll()
+        G.InCombatLockdown = icl
+        assert(moved == 0, "im Kampf verschoben: " .. moved)
+        assert(K.MoverSecure({ frame = f }), "IsProtected nicht erkannt")
+    end)
+    Check(ok, "Gestaltung: geschützte Rahmen nie im Kampf" .. (ok and "" or (": " .. tostring(err))))
+end
+
 if failures == 0 then
     print("BESTANDEN")
     os.exit(0)

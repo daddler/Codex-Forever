@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.0.7.21",
+        date    = "16.11.2026",
+        notes   = {
+            "|cff7C6CFFKeine Fehlermeldung mehr nach dem Ladebildschirm im Kampf|r – die Schmuckleiste und andere geschützte Leisten werden erst nach dem Kampf an ihren Platz gerückt.",
+        },
+    },
+    {
         version = "1.0.7.20",
         date    = "16.11.2026",
         notes   = {

@@ -9,6 +9,14 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.0.7.21] – 2026-11-16
+
+### Behoben
+- „Blockiert: WeintCodexTrinketBar:SetPoint()/ClearAllPoints()“ und
+  „UNKNOWN()“ aus `K.RefitAll` (Ladebildschirm, im Kampf): Schmuckleiste
+  als `secure` angemeldet; `K.MoverSecure` zählt zusätzlich jeden Rahmen,
+  der `IsProtected` sagt. Verschoben/geklemmt wird er erst nach dem Kampf.
+
 ## [1.0.7.20] – 2026-11-16
 
 ### Behoben
