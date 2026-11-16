@@ -120,3 +120,25 @@ jobs:
             --notes-file release-notes.md \
             "WeintCodex-${TAG}.zip" \
             "WeintCodex-${TAG}.zip.sha256"
+
+      # 1.0.7.12 (Wunsch: "nicht mehr als 20 Releases in der Repo - kommt ein
+      # neues, kann das aelteste weg"): nach dem Anlegen bleiben die 20
+      # neuesten Fassungen (Tag "v...", kein Entwurf), das 21. und aeltere
+      # werden geloescht. Nur das Release, der Tag bleibt. Entwuerfe und
+      # andere Releases (z. B. "daten-questie") bleiben immer.
+      - name: Nur die 20 neuesten Releases behalten
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+          KEEP: "20"
+        run: |
+          set -euo pipefail
+          gh api --paginate "repos/$REPO/releases?per_page=100" \
+            --jq '.[] | select(.draft == false and (.tag_name | startswith("v"))) | [.created_at, .tag_name] | @tsv' | sort -r > all.tsv
+          tail -n +$((KEEP + 1)) all.tsv | cut -f2 > drop.txt
+          echo "Releases: $(wc -l < all.tsv), zu löschen: $(wc -l < drop.txt)"
+          while read -r tag; do
+            [ -z "$tag" ] && continue
+            echo "lösche Release $tag"
+            gh release delete "$tag" --repo "$REPO" --yes || echo "  übersprungen: $tag"
+          done < drop.txt
