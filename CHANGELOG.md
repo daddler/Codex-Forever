@@ -19,6 +19,11 @@ nicht zusammen.
   (ab Werk `GameColors.sparkleHerb/Ore`), `sparkleCalm`, Knopf „Vorschau“
   (`SP.Preview`, 5 s Bildschirmmitte).
 
+### Behoben
+- Ring „Reittiere“ leer nach Aufsitzen/drinnen: `RG.Mounts` filterte nach
+  `isUsable` (Augenblickswert), `SPELLS_CHANGED` füllte neu. Jetzt nur
+  gesammelt und nicht `shouldHideOnChar`.
+
 ## [1.0.7.22] – 2026-11-16
 
 ### Geändert

@@ -253,7 +253,12 @@ function RG.Mounts()
         local ok, ids = pcall(mj.GetMountIDs)
         for _, mid in ipairs(ok and type(ids) == "table" and ids or {}) do
             local ok2, name, spellID, icon, _, usable, _, _, _, _, hidden, collected = pcall(mj.GetMountInfoByID, mid)
-            if ok2 and K.Bool(collected, false) and K.Bool(usable, false) and not K.Bool(hidden, false) then
+            -- 1.0.7.23 (Spieler: "auf einmal keine Auswahl mehr, Reload half"):
+            -- "usable" ist nur der Augenblick - beritten, drinnen, im Wasser
+            -- sagt das Spiel nein, und SPELLS_CHANGED beim Aufsitzen fuellte
+            -- den Ring dann leer. Gezeigt wird, was gesammelt ist und zum
+            -- Charakter passt; ob es gerade geht, sagt das Spiel beim Rufen.
+            if ok2 and K.Bool(collected, false) and not K.Bool(hidden, false) then
                 out[#out + 1] = RG.MountSlot(mid, K.Plain(name), K.Plain(icon))
                 if #out >= RG.MAX then break end
             end
