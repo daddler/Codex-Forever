@@ -28,7 +28,7 @@ local Q = WeintCodex.ClassQuestData
 Q.SOURCE = {
     kind  = "community",
     date  = "17.10.2026",
-    label = "Klassenquests: Wissensstand aus der Beta",
+    label = "Klassenquests: von Spielern gesammelt",
 }
 Q.REWARD_SOURCE = {
     kind  = "classic",

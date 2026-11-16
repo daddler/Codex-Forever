@@ -701,7 +701,7 @@ local function Tooltip(self)
         gt:AddLine(string.format("%s %.1f, %.1f", LB.ZoneName(b[5]) or "", b[6], b[7]), m[1], m[2], m[3])
         gt:AddLine(" ")
         gt:AddLine("Klick: Questpfeil dorthin", m[1], m[2], m[3])
-        gt:AddLine("Unbestätigt – Wissensstand aus der Beta.", m[1], m[2], m[3], true)
+        gt:AddLine("Von Spielern gesammelt.", m[1], m[2], m[3], true)
         gt:Show()
         return
     end
@@ -758,7 +758,7 @@ local function Tooltip(self)
     if e.game then
         gt:AddLine("Angabe des Spiels.", m[1], m[2], m[3], true)
     else
-        gt:AddLine("Unbestätigt – Wissensstand der Community.", m[1], m[2], m[3], true)
+        gt:AddLine("Von Spielern gesammelt.", m[1], m[2], m[3], true)
     end
     gt:Show()
 end
@@ -1457,7 +1457,7 @@ end
 local function Build(B)
     B:Section("Questhilfe", "Auf der Weltkarte: wo neue Quests warten, wo du abgibst und wo die Ziele deiner Quests sind. Unter dem Kartenfenster schaltest du, was du sehen willst.")
     B:Row({ type = "toggle", label = "Questhilfe auf der Karte", key = "qhOn",
-            description = "Wissensstand der Community für Forever – unbestätigt. Auf der Karte einer Zone und auf der Minikarte." },
+            description = "Von Spielern gesammelt. Auf der Karte einer Zone und auf der Minikarte." },
           { type = "toggle", label = "Filterleiste auf der Karte", key = "qhBar",
             disabled = function() return not K.Get(KEY, "qhOn") end })
     B:Row({ type = "toggle", label = "Auch auf der Minikarte", key = "qhMinimap",

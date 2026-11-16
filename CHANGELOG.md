@@ -9,6 +9,21 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.0.7.22] – 2026-11-16
+
+### Geändert
+- Glitzern an Kräutern/Erz (`ui/sparkles.lua`) neu nach dem Verhalten von
+  Lueur, eigene Bilder (`media/ui/spark_*.tga` aus
+  `.github/scripts/make_sparkle_media.py`, Rand exakt leer): Schleier,
+  flacher Schein, zwei gegenläufige Schwaden, Kern, Lichtsäule; Stufe 3
+  Ring, Kometen, Wellen (`SP.DrawBig`, `SP.GROUND`). Der harte Querbalken
+  (altes `glow.tga` als Boden) ist weg. Keine fremden Addonnamen mehr auf
+  der Seite.
+- Herkunft im Spiel (Forever ist live): „Unbestätigt“/„Wissensstand aus
+  der Beta“ → „Von Spielern gesammelt“; Vorsatz `beta` „Aus der Beta“;
+  Naowh-Beute „im Spiel gezählt“; Classic ohne Warnsatz. Arten bleiben.
+- `repairGuild` ab Werk aus.
+
 ## [1.0.7.21] – 2026-11-16
 
 ### Behoben

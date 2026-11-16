@@ -41,7 +41,7 @@
 
 WeintCodex = WeintCodex or {}
 WeintCodex.DungeonMapData = {
-    SOURCE = { kind = "community", label = "Karten aus dem Client, Zuordnung unbestätigt" },
+    SOURCE = { kind = "community", label = "Karten aus dem Client, Zuordnung von Spielern gesammelt" },
     MAPS = {
         [33] = { name = "Shadowfang Keep", floors = {
             { tiles = { 448226, 448230, 448231, 448232, 448233, 448234, 448235, 448236, 448237, 448227, 448228, 448229 }, name = "The Courtyard" },

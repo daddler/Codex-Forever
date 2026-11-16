@@ -372,8 +372,8 @@ local function Inspector(e, p)
             { type = "header", text = "Woher das stammt" },
             { type = "card", lines = {
                 "Was abgegeben ist, sagt das Spiel.",
-                "Fundorte und Belohnungen: unbestätigt,",
-                "Wissensstand aus der Beta. Stufen der",
+                "Fundorte und Belohnungen: von Spielern",
+                "gesammelt. Stufen der",
                 "Gebiete aus Classic.",
             }},
         }
@@ -413,7 +413,7 @@ local function Inspector(e, p)
         if who then blocks[#blocks + 1] = { type = "text", text = "Abgeben bei " .. who .. ", " .. place .. "." } end
     end
     blocks[#blocks + 1] = { type = "divider" }
-    blocks[#blocks + 1] = { type = "text", text = "Unbestätigt – Wissensstand aus der Beta." }
+    blocks[#blocks + 1] = { type = "text", text = "Von Spielern gesammelt." }
     return blocks
 end
 
@@ -515,8 +515,8 @@ local function BagInspector(step, i, state)
             { type = "header", text = "Woher das stammt" },
             { type = "card", lines = {
                 "Was erledigt ist, sagt das Spiel.",
-                "Orte und Wege: unbestätigt,",
-                "Wissensstand aus der Beta.",
+                "Orte und Wege: von Spielern",
+                "gesammelt.",
             }},
         }
     end
@@ -547,7 +547,7 @@ local function BagInspector(step, i, state)
         end }
     end
     blocks[#blocks + 1] = { type = "divider" }
-    blocks[#blocks + 1] = { type = "text", text = "Unbestätigt – Wissensstand aus der Beta." }
+    blocks[#blocks + 1] = { type = "text", text = "Von Spielern gesammelt." }
     return blocks
 end
 

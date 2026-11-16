@@ -93,7 +93,7 @@ local T = WeintCodex.TrainerData
 T.SOURCE = {
     kind  = "community",
     date  = "09.11.2026",
-    label = "Wissensstand aus der Beta, Beobachtung im Beta-Client",
+    label = "von Spielern gesammelt",
 }
 
 -- Je Klasse eine Funktion, gebaut erst beim ersten Zugriff (6.14.0.2):

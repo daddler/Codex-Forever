@@ -496,7 +496,7 @@ local usedRows, usedFam = 0, 0
 local function SourceText(b)
     local S = WeintCodex.Sources
     local src = b.new and (S and S.COMMUNITY) or (S and S.CLASSIC)
-    return src and S.Prefix(src) or (b.new and "Unbestätigt" or "Aus Classic")
+    return src and S.Prefix(src) or (b.new and "Von Spielern gesammelt" or "Aus Classic")
 end
 
 local function Tags(b)
@@ -749,7 +749,7 @@ function BL.InspectorBlocks(id)
             { type = "card", lines = {
                 "Aus Classic: Tiere, Stufen, Gebiete und was sie",
                 "lehren – ob Forever sie gleich setzt, steht nicht",
-                "fest. Neue Tiere von Forever: unbestätigt.",
+                "fest. Neue Tiere von Forever: von Spielern gesammelt.",
                 "Gesehen ist, was du anvisiert hast; Wildtierkunde",
                 "ergänzt, was der Tooltip nennt.",
             }},

@@ -514,8 +514,8 @@ local SECTION_NOTE = {
     missing = "Erst die Vorstufe lernen – das kann auch ein anderer Zauber sein. Der Lehrer zeigt diesen Rang sonst nicht an.",
     talent  = "Der Lehrer lehrt das erst, wenn du das Talent dazu hast.",
     pet     = "Lehrt der Tierausbilder deinem Begleiter. Ob er es schon kann, weiß nur der Tierausbilder.",
-    grimoire = "Bücher für deinen gerufenen Dämon, die er noch nicht kann (bis zwei Stufen über deiner) – zu kaufen beim Dämonenlehrer. Ruf einen anderen Dämon, um seine zu sehen. Unbestätigt.",
-    quest   = "Lehrt kein Lehrer – du bekommst sie als Belohnung einer Quest, meist einer Klassenquest (Reiter „Klassenquests“). Unbestätigt.",
+    grimoire = "Bücher für deinen gerufenen Dämon, die er noch nicht kann (bis zwei Stufen über deiner) – zu kaufen beim Dämonenlehrer. Ruf einen anderen Dämon, um seine zu sehen.",
+    quest   = "Lehrt kein Lehrer – du bekommst sie als Belohnung einer Quest, meist einer Klassenquest (Reiter „Klassenquests“).",
 }
 
 local function SectionHead(body, y, w, sec, count, cost)
@@ -709,7 +709,7 @@ function TR.SpellBlocks(id, state)
             return g
         end }
     end
-    blocks[#blocks + 1] = { type = "text", text = "Lage des Lehrers: Wissensstand aus der Beta – unbestätigt." }
+    blocks[#blocks + 1] = { type = "text", text = "Lage des Lehrers: von Spielern gesammelt." }
     blocks[#blocks + 1] = { type = "divider" }
     return blocks
 end
@@ -747,8 +747,8 @@ local function InspectorBlocks(state, cat, weapons)
         { type = "divider" },
         { type = "header", text = "Woher das stammt" },
         { type = "card", lines = {
-            "Unbestätigt: Stufen, Kosten und Voraussetzungen sind",
-            "der Wissensstand aus der Beta – nicht von Blizzard.",
+            "Stufen, Kosten und Voraussetzungen:",
+            "von Spielern gesammelt.",
             "Ob du etwas schon kannst, sagt dein Client.",
             "Rufrabatte beim Lehrer sind nicht eingerechnet.",
         }},
@@ -953,8 +953,8 @@ function TR.DrawPortals()
         { type = "divider" },
         { type = "header", text = "Woher das stammt" },
         { type = "card", lines = {
-            "Unbestätigt: Stufen und Kosten aus dem Lehrerbestand,",
-            "Lehrer und Lage aus der Beta-Datenbank. Dass jeder",
+            "Stufen und Kosten aus dem Lehrerbestand,",
+            "Lehrer und Lage von Spielern gesammelt. Dass jeder",
             "Portallehrer alles lehrt, ist die Regel aus Classic.",
             "Ob du etwas schon kannst, sagt dein Client.",
         }},

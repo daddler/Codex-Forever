@@ -13,7 +13,7 @@
 
 WeintCodex = WeintCodex or {}
 WeintCodex.RecipeSources = {
-    source = { kind = "community", label = "Herkunft der Rezepte: Wissensstand der Community" },
+    source = { kind = "community", label = "Herkunft der Rezepte: von Spielern gesammelt" },
     r = {
         [728] = "340			38	",
         [2406] = "		2039,2847,2849,2850		",

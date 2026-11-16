@@ -10,7 +10,7 @@
 
 WeintCodex = WeintCodex or {}
 WeintCodex.FieldJournalData = {
-    SOURCE = { kind = "community", label = "Wissensstand der Community, für Forever unbestätigt" },
+    SOURCE = { kind = "community", label = "von Spielern gesammelt" },
     fish = {
         { item = 6289, skill = 1, zones = { 1456, 58.1, 1436, 50, 1453, 50 } },
         { item = 6291, skill = 1, zones = { 1426, 58.8, 1429, 58.8, 1438, 58.8 } },

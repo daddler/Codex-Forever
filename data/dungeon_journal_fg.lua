@@ -28,7 +28,7 @@ local J = WeintCodex.DungeonJournal
 J.FG_SOURCE = {
     kind  = "community",
     date  = "17.10.2026",
-    label = "Quests: Wissensstand aus der Beta",
+    label = "Quests: von Spielern gesammelt",
 }
 J.CLASSIC_LOOT_SOURCE = {
     kind  = "classic",

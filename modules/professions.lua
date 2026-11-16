@@ -1243,7 +1243,7 @@ local function TrainerRow(body, y, w, t, profName)
             gt:AddLine((self.prof or "") .. ": " .. (PRO.RANK_TEXT[tt.rank]
                 or (tt.known and PRO.RANK_CAP[tt.known] and ("mindestens bis " .. PRO.RANK_CAP[tt.known] .. ", darüber unbekannt"))
                 or "Rang unbekannt"), tm[1], tm[2], tm[3], true)
-            if tt.classic then gt:AddLine("Höchster Rang wie in Classic – für Forever unbestätigt.", tm[1], tm[2], tm[3], true) end
+            if tt.classic then gt:AddLine("Höchster Rang wie in Classic.", tm[1], tm[2], tm[3], true) end
             if tt.next then
                 local g = C.successBright
                 gt:AddLine("Lehrt deinen nächsten Rang", g[1], g[2], g[3], true)
@@ -1631,8 +1631,8 @@ local function RecipeInspector(r)
     if PT and PT.RecipeBlocks then PT.RecipeBlocks(r, blocks) end
     blocks[#blocks + 1] = { type = "divider" }
     local vs = PRO.Vendors(r)
-    blocks[#blocks + 1] = { type = "text", text = (kind == "vendor" and vs.classic) and "Händler und Lage aus Classic – in Forever unbestätigt."
-        or "Unbestätigt – Wissensstand der Community." }
+    blocks[#blocks + 1] = { type = "text", text = (kind == "vendor" and vs.classic) and "Händler und Lage aus Classic."
+        or "Von Spielern gesammelt." }
     return blocks
 end
 PRO.RecipeInspector = RecipeInspector
@@ -1686,10 +1686,10 @@ local function InspectorBlocks(key, skill, cat)
         { type = "divider" },
         { type = "header", text = "Woher das stammt" },
         { type = "card", lines = {
-            "Unbestätigt: Rezepte aus dem Forever-",
-            "Client, Herkunft, Lehrer und Händler",
-            "Wissensstand der Community – nicht",
-            "von Blizzard. Ohne „Season of Discovery“.",
+            "Rezepte aus dem Forever-Client,",
+            "Herkunft, Lehrer und Händler von",
+            "Spielern gesammelt.",
+            "Ohne „Season of Discovery“.",
         }},
     }
 end

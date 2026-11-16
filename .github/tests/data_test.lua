@@ -165,7 +165,7 @@ for _, raid in ipairs(WeintCodex_Raids) do
             Check(WeintCodex.RaidData.BossesConfirmed(raid) == true,
                 raid.id .. ": bestaetigt heisst bestaetigt")
         else
-            Check(type(label) == "string" and label:find("Vorl") ~= nil,
+            Check(type(label) == "string" and label:find("Beta") ~= nil,
                 raid.id .. ": eine vorlaeufige Liste wird als vorlaeufig ausgewiesen")
             Check(WeintCodex.RaidData.BossesConfirmed(raid) == false,
                 raid.id .. ": im Zweifel NICHT bestaetigt")

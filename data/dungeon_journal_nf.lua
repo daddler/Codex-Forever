@@ -31,7 +31,7 @@ local J = WeintCodex.DungeonJournal
 J.NF_SOURCE = {
     kind  = "community",
     date  = "13.11.2026",
-    label = "Beute: Wissensstand aus der Beta, Dropchancen gezählt (alte Bosse zusammen mit Classic)",
+    label = "Beute im Spiel gezählt, mit Dropchancen (alte Bosse zusammen mit Classic)",
 }
 
 J.NF_LOOT = {

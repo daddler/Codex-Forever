@@ -214,9 +214,10 @@ end
 -- 1.0.7.15: je Staerke wie viele Punkte/Sterne leben und wie weit sie
 -- streuen; angelegt wird einmal das Maximum, der Rest bleibt unsichtbar.
 SP.LEVELS = {
-    { motes = 14, twinkles = 4,  sx = 30, sy = 10, rise = 1.0, beam = false, ring = false, floor = false },
-    { motes = 32, twinkles = 10, sx = 40, sy = 13, rise = 1.4, beam = true,  ring = false, floor = true },
-    { motes = 56, twinkles = 18, sx = 52, sy = 16, rise = 1.9, beam = true,  ring = true,  floor = true },
+    -- 1.0.7.22: Staerke 1 hat jetzt auch einen leisen Schein am Boden.
+    { motes = 14, twinkles = 4,  sx = 30, sy = 10, rise = 1.0, beam = false, ring = false, floor = true, glowA = 0.55, beamA = 0, shade = 0.6 },
+    { motes = 32, twinkles = 10, sx = 40, sy = 13, rise = 1.4, beam = true,  ring = false, floor = true, glowA = 0.85, beamA = 1, shade = 1 },
+    { motes = 48, twinkles = 16, sx = 46, sy = 15, rise = 1.7, beam = true,  ring = true,  floor = true, glowA = 1.0,  beamA = 1, shade = 1 },
 }
 SP.MOTES, SP.TWINKLES = 56, 18
 SP.SPREAD_X, SP.SPREAD_Y = 30, 10      -- halbe Achsen der Ellipse am Boden
@@ -257,22 +258,39 @@ for i = 1, SP.MOTES + SP.TWINKLES do
 end
 SP.glow = glow
 
--- Grosse Teile (1.0.7.15): Schein am Boden, Lichtsaeule, Ring. Ihre
--- Bewegung ist eine Sinuswelle ueber die Zeit - keine Tabelle je Bild.
-local floorTex = glow:CreateTexture(nil, "BORDER")
-floorTex:SetTexture(K.MEDIA .. "glow")
-floorTex:SetPoint("CENTER", glow, "CENTER", 0, 0)
-local beamTex = glow:CreateTexture(nil, "ARTWORK")
-beamTex:SetTexture(K.MEDIA .. "glow_wide")
-if beamTex.SetRotation then beamTex:SetRotation(math.pi / 2) end
-local ringTex = glow:CreateTexture(nil, "ARTWORK")
-ringTex:SetTexture(K.MEDIA .. "gather_ring")
-ringTex:SetPoint("CENTER", glow, "CENTER", 0, 0)
-for _, t in ipairs({ floorTex, beamTex, ringTex }) do
-    if t.SetBlendMode then t:SetBlendMode("ADD") end
+-- Grosse Teile (1.0.7.15, neu 1.0.7.22 nach dem Verhalten von Lueur, eigene
+-- Bilder aus .github/scripts/make_sparkle_media.py - die Bilder von Lueur
+-- tragen keine Lizenz): alles am Boden ist ein flach gelegter Kreis
+-- (SP.GROUND), darunter ein dunkler Schleier, damit das Licht auf Schnee
+-- und Sand nicht verschwindet. Darauf ein atmender Schein, zwei Schwaden,
+-- die gegeneinander drehen, ein funkelnder Kern und eine Lichtsaeule mit
+-- weichen Enden; "sehr kraeftig" dazu ein Ring mit drei Kometen und Wellen,
+-- die nach aussen laufen. Jede Bewegung ist eine Sinuswelle ueber die Zeit -
+-- keine Tabelle je Bild. Jedes Bild ist am Rand leer: gedreht oder flach
+-- gezogen zeichnet es nie eine Kante (der Querbalken bis 1.0.7.21).
+SP.GROUND = 0.36
+SP.WAVES = 2
+local function Big(file, layer, sub, blend)
+    local t = glow:CreateTexture(nil, layer, nil, sub)
+    t:SetTexture(K.MEDIA .. file)
+    t:SetPoint("CENTER", glow, "CENTER", 0, 0)
+    if t.SetBlendMode then t:SetBlendMode(blend or "ADD") end
     t:SetAlpha(0)
+    return t
 end
-glow.big = { floor = floorTex, beam = beamTex, ring = ringTex }
+glow.big = {
+    shade = Big("spark_glow", "BACKGROUND", -1, "BLEND"),
+    floor = Big("spark_glow", "BACKGROUND", 0),
+    wispA = Big("spark_wisp", "BACKGROUND", 1),
+    wispB = Big("spark_wisp", "BACKGROUND", 1),
+    ring  = Big("spark_ring", "BORDER", 0),
+    arcs  = Big("spark_arcs", "BORDER", 1),
+    beam  = Big("spark_beam", "ARTWORK", 0),
+    flare = Big("spark_flare", "OVERLAY", 1),
+}
+glow.waves = {}
+for i = 1, SP.WAVES do glow.waves[i] = Big("spark_ring", "BORDER", -1) end
+glow.big.shade:SetVertexColor(0, 0, 0)
 glow.clock = 0
 
 -- 1.0.7.16 (Wunsch: "das Einblenden etwas smoother, da erschrickt man
@@ -324,6 +342,58 @@ function SP.Mote(t)
     local size = t.star and t.size * (0.6 + 0.4 * math.sin(u * math.pi)) or t.size * (1 - 0.35 * u)
     return t.x0 + t.drift * e, t.y0 + t.rise * e, alpha, size
 end
+-- Die grossen Teile fuer einen Zeitpunkt (rein gerechnet, kein Speicher).
+local sin = math.sin
+local function Flat(t, w, a)
+    if a <= 0.003 then t:SetAlpha(0) return end
+    t:SetSize(w, w * SP.GROUND)
+    t:SetAlpha(a > 1 and 1 or a)
+end
+function SP.DrawBig(self, L, clock, arrive)
+    local b = self.big
+    local breath = 0.5 + 0.5 * sin(clock * 1.9)
+    local twinkle = 0.5 + 0.5 * sin(clock * 7.3) * sin(clock * 3.1)
+    -- Beim Ankommen zieht sich alles von weiter aussen zusammen.
+    local size = L.sx * 2.6 * (1 + 0.45 * (1 - arrive))
+    if L.floor then
+        Flat(b.shade, size * 1.15, 0.30 * L.shade)
+        Flat(b.floor, size * (0.95 + 0.07 * breath), (0.35 + 0.20 * breath) * L.glowA)
+        Flat(b.wispA, size * 1.02, 0.42 * L.glowA)
+        Flat(b.wispB, size * 0.90, 0.32 * L.glowA)
+        if b.wispA.SetRotation then
+            b.wispA:SetRotation(clock * 0.55)
+            b.wispB:SetRotation(2.1 - clock * 0.8)
+        end
+        local fs = size * (0.30 + 0.05 * twinkle + 0.35 * (1 - arrive))
+        b.flare:SetSize(fs, fs)
+        b.flare:SetPoint("CENTER", self, "CENTER", 0, 10)
+        if b.flare.SetRotation then b.flare:SetRotation(0.12 * sin(clock * 0.6)) end
+        b.flare:SetAlpha((0.45 + 0.35 * twinkle) * L.glowA)
+    else
+        for _, k in ipairs({ "shade", "floor", "wispA", "wispB", "flare" }) do b[k]:SetAlpha(0) end
+    end
+    if L.beam then
+        -- Saeule steht auf dem Boden, waechst beim Ankommen nach oben.
+        local h = (110 + 50 * L.rise) * (0.3 + 0.7 * arrive)
+        local w = 22 + 6 * breath
+        b.beam:SetSize(w, h)
+        b.beam:SetPoint("CENTER", self, "CENTER", 0, h / 2 - 4)
+        b.beam:SetAlpha((0.28 + 0.14 * breath + 0.08 * twinkle) * L.beamA)
+    else b.beam:SetAlpha(0) end
+    if L.ring then
+        Flat(b.ring, size * 1.05, (0.30 + 0.15 * breath) * L.glowA)
+        Flat(b.arcs, size * 1.05, 0.75 * L.glowA)
+        if b.arcs.SetRotation then b.arcs:SetRotation(-clock * 1.4) end
+        for i = 1, SP.WAVES do
+            local u = (clock * 0.45 + (i - 1) / SP.WAVES) % 1
+            Flat(self.waves[i], size * (0.9 + 1.1 * u), 0.45 * (1 - u) * (1 - u) * L.glowA)
+        end
+    else
+        b.ring:SetAlpha(0) b.arcs:SetAlpha(0)
+        for i = 1, SP.WAVES do self.waves[i]:SetAlpha(0) end
+    end
+end
+
 glow:SetScript("OnUpdate", WeintCodex.Measured("sparkles", function(self, el)
     el = el or 0
     if el > 0.1 then el = 0.1 end
@@ -338,29 +408,11 @@ glow:SetScript("OnUpdate", WeintCodex.Measured("sparkles", function(self, el)
         self:SetAlpha(SP.Ease(self.fade))
         if self.fade <= 0 and self.target <= 0 then self:Hide() return end
     end
-    local grow = 0.4 + 0.6 * SP.Ease(self.fade)
-    -- Grosse Teile: atmen langsam.
+    local arrive = SP.Ease(self.fade)
     local L = self.level
     if L then
         self.clock = self.clock + el
-        local w = 0.5 + 0.5 * math.sin(self.clock * 2.4)
-        local b = self.big
-        if L.floor then
-            b.floor:SetSize(L.sx * 3.2 * grow, L.sy * 3.2 * grow)
-            b.floor:SetAlpha(0.35 + 0.25 * w)
-        else b.floor:SetAlpha(0) end
-        if L.beam then
-            local h = (90 + 40 * L.rise) * grow
-            b.beam:SetSize(h, 26 + 6 * w)
-            b.beam:SetPoint("CENTER", self, "CENTER", 0, h / 2 - 6)
-            b.beam:SetAlpha(0.22 + 0.18 * w)
-        else b.beam:SetAlpha(0) end
-        if L.ring then
-            local u = (self.clock * 0.7) % 1
-            local sz = L.sx * (0.8 + 1.8 * u)
-            b.ring:SetSize(sz * 2, sz * 0.7)
-            b.ring:SetAlpha(0.7 * (1 - u))
-        else b.ring:SetAlpha(0) end
+        SP.DrawBig(self, L, self.clock, arrive)
     end
     for i = 1, #dots do
         local t = dots[i]
@@ -385,10 +437,13 @@ local function Paint(blocked)
         local k = blocked and 0 or (t.star and 0.7 or 0.35)   -- Anteil Weiss
         t:SetVertexColor(c[1] + (w[1] - c[1]) * k, c[2] + (w[2] - c[2]) * k, c[3] + (w[3] - c[3]) * k)
     end
-    for _, t in pairs(glow.big) do
-        local k = blocked and 0 or 0.2
-        t:SetVertexColor(c[1] + (w[1] - c[1]) * k, c[2] + (w[2] - c[2]) * k, c[3] + (w[3] - c[3]) * k)
+    for name, t in pairs(glow.big) do
+        if name ~= "shade" then
+            local k = blocked and 0 or (name == "flare" and 0.6 or 0.2)
+            t:SetVertexColor(c[1] + (w[1] - c[1]) * k, c[2] + (w[2] - c[2]) * k, c[3] + (w[3] - c[3]) * k)
+        end
     end
+    for _, t in ipairs(glow.waves) do t:SetVertexColor(c[1], c[2], c[3]) end
 end
 
 local gate     -- was SP.GATE gerade sagt (unserer)
@@ -582,7 +637,7 @@ function SP.StatusLines()
 end
 
 local function Build(B)
-    B:Section("Glitzern", "Nach dem Vorbild von ForeverLootSparkles, eigener Code. Was WeintCodex dafür am Spiel umstellt, bekommst du beim Ausschalten zurück.")
+    B:Section("Glitzern", "Was WeintCodex dafür am Spiel umstellt, bekommst du beim Ausschalten zurück.")
     B:Row({ type = "toggle", label = "Questgegenstände glitzern immer", key = "sparkleLoot",
             description = "Schaltet die Umrisse aus und das Glitzern des Spiels an – auch nach einem Wechsel der Grafikstufe. Aus: die Umrisse kommen erst nach einem Neustart des Spiels zurück." },
           { type = "toggle", label = "Kräuter und Erz glitzern", key = "sparkleNodes",
@@ -593,7 +648,7 @@ local function Build(B)
                 { value = 2, text = "Kräftig – mit Lichtsäule" },
                 { value = 3, text = "Sehr kräftig – mit Ring" } } },
           { type = "empty" })
-    B:Note("Weiter als etwa 15 m erkennt das Spiel Kräuter und Erz für Addons nicht – entfernte Fundstellen zeigt der Sammel-Atlas auf Karte und Minikarte. Kräuter und Erz nutzen die weiche Zielerfassung des Spiels. Nicht zusammen mit ForeverLootSparkles oder Lueur benutzen – sie stellen dieselben Werte um.")
+    B:Note("Weiter als etwa 15 m erkennt das Spiel Kräuter und Erz für Addons nicht – entfernte Fundstellen zeigt der Sammel-Atlas auf Karte und Minikarte. Kräuter und Erz nutzen die weiche Zielerfassung des Spiels. Nicht zusammen mit einem anderen Glitzer-Addon benutzen – beide stellen dieselben Werte um.")
 end
 
 local mod = K.Module(KEY)

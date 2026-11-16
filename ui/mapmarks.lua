@@ -336,7 +336,7 @@ local function Tooltip(self)
         gt:SetText("Nach " .. (MK.MapName(e.to) or "?"), t[1], t[2], t[3])
     end
     local m = C.textMuted
-    gt:AddLine("Wissensstand aus der Beta – unbestätigt.", m[1], m[2], m[3], true)
+    gt:AddLine("Von Spielern gesammelt.", m[1], m[2], m[3], true)
     gt:Show()
 end
 

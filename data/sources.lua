@@ -107,7 +107,7 @@ S.BLIZZCON = {
 S.COMMUNITY = {
     kind  = "community",
     date  = "20.09.2026",
-    label = "Beta-Berichte der Community",
+    label = "von Spielern gesammelt",
 }
 
 -- World of Warcraft Classic (Classic Era). Für die zwanzig
@@ -154,8 +154,8 @@ end
 -- "release": eine bestätigte Liste braucht keinen Zusatz.
 local PREFIX = {
     announced = "Angekündigt",
-    beta      = "Vorläufig",
-    community = "Unbestätigt",
+    beta      = "Aus der Beta",
+    community = "Von Spielern gesammelt",
     classic   = "Aus Classic",
 }
 
@@ -188,13 +188,11 @@ local WHY = {
     beta      = "Aus dem Beta-Client gelesen. Blizzard hat weder Namen noch "
              .. "Reihenfolge bestätigt, und beides ändert sich zwischen den "
              .. "Builds.",
-    community = "Aus Beta-Berichten zusammengetragen, nicht aus dem Client "
-             .. "gelesen und nicht von Blizzard bestätigt. Namen, Anzahl und "
-             .. "Reihenfolge können falsch sein.",
-    classic   = "Aus WoW Classic. Dass es den Boss dort gibt, steht fest - "
-             .. "dass Forever ihn unverändert übernimmt, nicht. Blizzard hat "
-             .. "die Beute jedes Bosses überarbeitet und zu den Kämpfen "
-             .. "selbst nichts gesagt.",
+    community = "Von Spielern gesammelt und mit mehreren Sammlungen "
+             .. "abgeglichen, nicht von Blizzard veröffentlicht. Einzelnes "
+             .. "kann abweichen.",
+    classic   = "Aus WoW Classic, noch nicht mit Forever abgeglichen. "
+             .. "Blizzard hat die Beute jedes Bosses überarbeitet.",
 }
 
 function S.Why(source)

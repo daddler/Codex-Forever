@@ -1468,7 +1468,7 @@ local function DrawBosses(f, y, dungeon, bossOpen)
         y = SectionHead(f, y, "Bosse", nil, nil, nil)
         f._relayout = nil
         return Note(f, y, "Welche Bosse in " .. dungeon.name .. " stehen, hat Blizzard "
-            .. "nicht veröffentlicht, und aus der Beta wird dazu nichts berichtet. "
+            .. "nicht veröffentlicht, und von Spielern ist dazu nichts gesammelt. "
             .. "WeintCodex trägt die Liste nach, wenn es eine gibt, und erfindet "
             .. "sie bis dahin nicht.", "textMuted", 12)
     end
@@ -1856,7 +1856,7 @@ local function DrawAbilities(inner, y, w, dungeon, boss)
         end
     end
     if not any then return y end
-    y = BodyText(inner, y - 2, "Fähigkeiten und Texte aus dem Spiel; welcher Boss sie hat: Wissensstand aus der Beta.", w,
+    y = BodyText(inner, y - 2, "Fähigkeiten und Texte aus dem Spiel; welcher Boss sie hat: von Spielern gesammelt.", w,
         { size = 10, color = "warningBright" })
     return y - 14
 end
@@ -1961,7 +1961,7 @@ local function MapLink(parent, y, place, q, text, title)
         gt:SetText(self.place.who, C.textBright[1], C.textBright[2], C.textBright[3])
         local zone = QM.MapName(self.place.map)
         if zone then gt:AddLine(zone, C.textNormal[1], C.textNormal[2], C.textNormal[3]) end
-        gt:AddLine("Klick: Weltkarte mit Marke öffnen. Lage aus Beta-Berichten – unbestätigt.",
+        gt:AddLine("Klick: Weltkarte mit Marke öffnen. Lage von Spielern gesammelt.",
             C.textMuted[1], C.textMuted[2], C.textMuted[3], true)
         gt:Show()
     end)

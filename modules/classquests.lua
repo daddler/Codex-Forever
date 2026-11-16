@@ -570,8 +570,8 @@ local function InspectorBlocks(className, list, cat)
         { type = "divider" },
         { type = "header", text = "Woher das stammt" },
         { type = "card", lines = {
-            "Unbestätigt: Quests, Stufen und Geber sind der",
-            "Wissensstand aus der Beta – nicht von Blizzard.",
+            "Quests, Stufen und Geber:",
+            "von Spielern gesammelt.",
             "Belohnungen aus Classic. Bei vielen Quests ist",
             "der Geber nicht hinterlegt. Ob du eine Quest",
             "erledigt hast, sagt dein Client.",

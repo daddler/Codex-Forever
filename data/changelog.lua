@@ -22,6 +22,15 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.0.7.22",
+        date    = "16.11.2026",
+        notes   = {
+            "|cff7C6CFFDas Glitzern an Kräutern und Erz ist neu gezeichnet|r – ein weicher Schein am Boden mit drehenden Schwaden, ein funkelnder Kern, eine Lichtsäule mit sanften Enden, bei „sehr kräftig“ dazu ein Ring mit Kometen und Wellen. Keine harten Kanten mehr.",
+            "|cff7C6CFFRuhigere Herkunftshinweise|r – statt „unbestätigt“ und „Wissensstand aus der Beta“ steht jetzt „von Spielern gesammelt“; was im Spiel gezählt wurde, wie die Dropchancen, braucht keinen Hinweis mehr.",
+            "|cff7C6CFFReparieren aus der Gildenbank ist ab Werk aus|r – wer es will, schaltet es unter Komfort → Alltag ein.",
+        },
+    },
+    {
         version = "1.0.7.21",
         date    = "16.11.2026",
         notes   = {

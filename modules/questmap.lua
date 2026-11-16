@@ -197,7 +197,7 @@ local function BuildPin(canvas)
         if what then
             gt:AddLine(what, C.textNormal[1], C.textNormal[2], C.textNormal[3], true)
         end
-        gt:AddLine("Lage aus Beta-Berichten – unbestätigt.", C.textMuted[1], C.textMuted[2], C.textMuted[3], true)
+        gt:AddLine("Lage von Spielern gesammelt.", C.textMuted[1], C.textMuted[2], C.textMuted[3], true)
         gt:AddLine("Klick: Questpfeil hierhin · Rechtsklick: Marke entfernen", C.textMuted[1], C.textMuted[2], C.textMuted[3], true)
         gt:Show()
     end)

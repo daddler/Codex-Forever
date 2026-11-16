@@ -201,7 +201,7 @@ local function Tooltip(self)
         end
         if range then gt:AddLine("Stufe " .. range, C.textNormal[1], C.textNormal[2], C.textNormal[3]) end
     end
-    gt:AddLine("Eingang: Wissensstand aus der Beta – unbestätigt.", C.textMuted[1], C.textMuted[2], C.textMuted[3], true)
+    gt:AddLine("Eingang: von Spielern gesammelt.", C.textMuted[1], C.textMuted[2], C.textMuted[3], true)
     gt:AddLine("Klick: im Codex öffnen", C.textMuted[1], C.textMuted[2], C.textMuted[3])
     gt:AddLine("Rechtsklick: Questpfeil und Zielmarke hierhin", C.textMuted[1], C.textMuted[2], C.textMuted[3])
     gt:Show()
@@ -445,7 +445,7 @@ local function BuildPage(B)
             description = "Ein Symbol an jedem Eingang, den der Codex kennt. Maus darauf: welcher Dungeon, welche Stufe. Klick: im Codex öffnen." },
           { type = "toggle", label = "Auch auf der Kontinentkarte", key = "mapContinent", disabled = off,
             description = "Kalimdor und die Östlichen Königreiche im Ganzen." })
-    B:Note("Die Lagen sind der Wissensstand aus der Beta und unbestätigt. Wo der Codex keinen Eingang kennt, steht kein Symbol.")
+    B:Note("Die Lagen sind von Spielern gesammelt. Wo der Codex keinen Eingang kennt, steht kein Symbol.")
     local MC = WeintCodex.UIMinimapClick
     if MC and MC.BuildRows then MC.BuildRows(B) end
     local MK = WeintCodex.UIMapMarks

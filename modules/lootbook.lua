@@ -880,7 +880,7 @@ function LB.InspectorBlocks()
     blocks[#blocks + 1] = { type = "card", lines = {
         "Aus Classic: Bosse, Beute und Dropchancen – Forever",
         "hat die Beute überarbeitet. Neue Inhalte von Forever:",
-        "unbestätigt. Namen, Bilder und Werte liefert dein Client.",
+        "von Spielern gesammelt. Namen, Bilder und Werte liefert dein Client.",
     }}
     return blocks
 end

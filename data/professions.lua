@@ -27,7 +27,7 @@ local P = WeintCodex.ProfessionData
 P.SOURCE = {
     kind  = "community",
     date  = "17.10.2026",
-    label = "Rezepte aus dem Forever-Client (Build 1.60.1), Lehrer: Wissensstand aus der Beta",
+    label = "Rezepte aus dem Forever-Client (Build 1.60.1), Lehrer: von Spielern gesammelt",
 }
 P.VENDOR_SOURCE = {
     kind  = "classic",

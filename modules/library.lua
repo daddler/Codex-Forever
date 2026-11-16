@@ -278,7 +278,7 @@ function LB.TooltipLines(item)
     if line then lines[#lines + 1] = line end
     local name, place = LB.Librarian()
     if name and v == false then lines[#lines + 1] = "Abgabe: " .. name .. ", " .. place end
-    lines[#lines + 1] = "Unbestätigt – Wissensstand aus der Beta."
+    lines[#lines + 1] = "Von Spielern gesammelt."
     return lines
 end
 

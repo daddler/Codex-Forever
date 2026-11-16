@@ -13,7 +13,7 @@
 
 WeintCodex = WeintCodex or {}
 WeintCodex.AttunementData = {
-    SOURCE = { kind = "community", label = "Zugänge wie in Classic, für Forever unbestätigt" },
+    SOURCE = { kind = "community", label = "Zugänge wie in Classic" },
     list = {
         { id = "maraudon",        name = "Maraudon",               key = 17191, quest = 7046 },
         { id = "brd",             name = "Schwarzfelstiefen",      key = 11000, quest = 3802 },

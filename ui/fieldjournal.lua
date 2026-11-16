@@ -182,7 +182,7 @@ local function OnItem(tt, data)
 end
 
 function FJ.Report()
-    local out = { "Feldbuch (Wissensstand der Community, für Forever unbestätigt)", "" }
+    local out = { "Feldbuch (von Spielern gesammelt)", "" }
     local function name(id)
         local n = _G.C_Item and _G.C_Item.GetItemNameByID and _G.C_Item.GetItemNameByID(id)
         return type(n) == "string" and n or ("Gegenstand " .. id)
@@ -199,7 +199,7 @@ function FJ.Report()
 end
 
 function FJ.RepReport()
-    local out = { "Ruf-Belohnungen (Wissensstand der Community, für Forever unbestätigt)", "" }
+    local out = { "Ruf-Belohnungen (von Spielern gesammelt)", "" }
     local ids = {}
     for fid in pairs(R().factions) do ids[#ids + 1] = fid end
     table.sort(ids)

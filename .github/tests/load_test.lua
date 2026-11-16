@@ -8265,7 +8265,7 @@ do
         assert(all:find("Beginnt: Marshal Windsor, im Dungeon", 1, true), "Geber im Dungeon fehlt")
         assert(all:find("Vorher: „Marshal Windsor“", 1, true) and all:find("Danach: „", 1, true), "Kette fehlt")
         assert(all:find("Dazu:", 1, true), "feste Belohnung fehlt")
-        assert(all:find("Quests: Wissensstand aus der Beta", 1, true), "Herkunft der Quests aus dem Abgleich nicht genannt")
+        assert(all:find("Quests: von Spielern gesammelt", 1, true), "Herkunft der Quests aus dem Abgleich nicht genannt")
         assert(not all:find("ForeverGuide", 1, true) and not all:find("Questie", 1, true), "fremdes Addon als Quelle genannt")
         assert(all:find("Beute aus Classic", 1, true), "Classic-Beute nicht ausgewiesen")
         assert(DP.entranceLinks == 1, "Eingang von Blackrock Depths: " .. tostring(DP.entranceLinks))
@@ -8289,7 +8289,7 @@ do
         WeintCodex.Navigation.SwitchTo("dungeons")
         WeintCodex.Label = label
         local sch = table.concat(texts, "\n")
-        assert(sch:find("Wissensstand aus der Beta, Dropchancen", 1, true), "Herkunft der Abgleichsbeute fehlt")
+        assert(sch:find("Beute im Spiel gezählt, mit Dropchancen", 1, true), "Herkunft der Abgleichsbeute fehlt")
         assert(not sch:find("Beute aus Classic", 1, true), "ersetzte Beute noch als Classic ausgewiesen")
         assert(sch:find("%d+ %%"), "Dropchance fehlt")
         -- Faehigkeiten: Name und Text vom Client, ohne Antwort keine Zeile.
@@ -10078,7 +10078,7 @@ do
         ME.pins[1]:GetScript("OnEnter")(ME.pins[1])
         local tip = table.concat(lines, "\n")
         for _, e in ipairs(br.entries) do assert(tip:find(e.dungeon.name, 1, true), "Tooltip ohne " .. e.dungeon.name) end
-        assert(tip:find("Stufe ", 1, true) and tip:find("unbestätigt", 1, true), "Tooltip: " .. tip)
+        assert(tip:find("Stufe ", 1, true) and tip:find("von Spielern gesammelt", 1, true), "Tooltip: " .. tip)
 
         -- Klick: Codex auf, beim Dungeon.
         local went
@@ -10240,7 +10240,7 @@ do
         MK.pins[1]:GetScript("OnEnter")(MK.pins[1])
         local tip = table.concat(lines, "\n")
         assert(tip:find("Nach Zone 1442", 1, true) and tip:find("Geistheiler", 1, true)
-            and tip:find("unbestätigt", 1, true), "Tooltip: " .. tip)
+            and tip:find("on Spielern gesammelt", 1, true), "Tooltip: " .. tip)
 
         -- Nur die Pfeile: die Punkte verschwinden.
         K.Set("comfort", "mapSpirit", false)
@@ -19371,7 +19371,7 @@ do
             and text:find("Dungeonkompendium: kein Dungeonkompendium", 1, true), "Kopf falsch:\n" .. text)
         assert(text:find("Der Client ist nicht englisch", 1, true), "deutscher Client nicht erwaehnt")
         -- Gleicher Name: Boss fuer Boss, Reihenfolge.
-        assert(text:find("[Name] Hall of Thanes (Stufe 13–18, 4 Bosse im Codex, Unbestätigt)", 1, true), "Name nicht zugeordnet:\n" .. text)
+        assert(text:find("[Name] Hall of Thanes (Stufe 13–18, 4 Bosse im Codex, Von Spielern gesammelt)", 1, true), "Name nicht zugeordnet:\n" .. text)
         assert(text:find("      gleich 3: ", 1, true) and text:find("      nur im Codex: Durgen Dirgehammer", 1, true)
             and text:find("      nur im Client: Neuer Boss", 1, true), "Bossvergleich falsch:\n" .. text)
         assert(text:find("      Reihenfolge weicht ab – Client: Magmatus › Faldrim Anvilmar", 1, true), "Reihenfolge nicht verglichen")
@@ -20633,7 +20633,7 @@ do
         assert(table.concat({ L[2][1] }):find("Angeln ab 130, sicher ab 205", 1, true), "Angeln mit Klammer: " .. L[2][1])
         -- Neues Gebiet: nur Stufe, unbestaetigt, kein Angeln.
         L = ZI.Lines(2521, "Zephras")
-        assert(#L == 2 and L[2][1]:find("unbestätigt", 1, true), "neues Gebiet")
+        assert(#L == 2 and L[2][1]:find("on Spielern gesammelt", 1, true), "neues Gebiet")
         assert(#ZI.Lines(999999, "x") == 0, "unbekanntes Gebiet zeigt etwas")
         _G.UnitLevel = oldLvl
         assert(WeintCodex.UIKit.Module("comfort").defaults.mapZoneInfo == true, "Schalter fehlt")
@@ -26846,7 +26846,12 @@ do
         K.Set("comfort", "sparkleStrength", 3) SP.ApplyLevel()
         local a3 = count()
         K.Set("comfort", "sparkleStrength", saved) SP.ApplyLevel()
-        assert(a1 == 18 and a3 == 74, "Funken je Staerke: " .. a1 .. "/" .. a3)
+        assert(a1 == 18 and a3 == 64, "Funken je Staerke: " .. a1 .. "/" .. a3)
+        -- 1.0.7.22: grosse Teile fuer jede Staerke zeichnen, ohne Fehler.
+        for _, L in ipairs(SP.LEVELS) do
+            for _, t in ipairs({ 0, 0.4, 3.7 }) do SP.DrawBig(SP.glow, L, t, t > 0 and 1 or 0) end
+        end
+        assert(SP.GROUND > 0 and SP.GROUND < 1, "Boden nicht flach")
         -- 1.0.7.16: weich ein- und ausblenden.
         assert(SP.Ease(0) == 0 and SP.Ease(1) == 1 and SP.Ease(0.25) < 0.25, "Kurve nicht weich")
         assert(SP.FADE_IN >= 1, "Einblenden zu kurz")

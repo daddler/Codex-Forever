@@ -24,7 +24,7 @@ local R = WeintCodex.RareData
 R.SOURCE = {
     kind  = "community",
     date  = "17.10.2026",
-    label = "Seltene Gegner: Wissensstand aus der Beta",
+    label = "Seltene Gegner: von Spielern gesammelt",
 }
 R.RESPAWN_SOURCE = {
     kind  = "classic",

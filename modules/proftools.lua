@@ -721,7 +721,7 @@ function PT.RankLine(st)
         if r.req > 0 then need = "ab Fertigkeit " .. r.req end
         if (r.level or 0) > 0 then need = need .. (need ~= "" and ", " or "ab ") .. "Stufe " .. r.level end
     end
-    local from = "\nWissensstand aus Classic."
+    local from = "\nAus Classic."
     local hint = "Deine Obergrenze ist " .. st.cap .. "."
     if r and r.how == "book" and r.book then
         return { left = "→ Händler: Buch für Rang " .. name .. " kaufen", right = "bei " .. st.at, tone = "goldBright", item = r.book,
@@ -752,7 +752,7 @@ function PT.PlanLines(plan)
         elseif st.kind == "buy" then
             local v = PRO.Vendors(st.recipe)[1]
             out[#out + 1] = { left = "→ Händler: Rezept " .. PRO.RecipeName(st.recipe) .. " kaufen", right = "bei " .. st.at,
-                tone = "goldBright", recipe = st.recipe, hint = v and ("Bei " .. v[1] .. " – Händler aus Classic, in Forever unbestätigt.") or "Händler unbekannt." }
+                tone = "goldBright", recipe = st.recipe, hint = v and ("Bei " .. v[1] .. " – Händler aus Classic.") or "Händler unbekannt." }
         else
             local pct = math.floor(st.minChance * 100 + 0.5)
             local sure = st.mean == st.crafts
@@ -1841,7 +1841,7 @@ function PT.ItemBlocks(id)
             any = true
             local inst = LB.Instance(n)
             local b = LB.Bosses(n)[bi]
-            blocks[#blocks + 1] = { type = "text", text = "Beute: " .. LB.InstanceName(inst) .. (b and (" – " .. LB.BossName(b)) or "") .. " (aus Classic, in Forever unbestätigt)." }
+            blocks[#blocks + 1] = { type = "text", text = "Beute: " .. LB.InstanceName(inst) .. (b and (" – " .. LB.BossName(b)) or "") .. " (aus Classic)." }
         end
     end
     if not any then

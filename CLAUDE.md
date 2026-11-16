@@ -140,8 +140,11 @@ internet; any further outward message needs the same explicit request.
   collections agree on, none complete). **Since 6.21.0.0 the source is named
   only for maintainers:** no text a player sees names a third-party
   addon (ForeverGuide, Questie, Leatrix Maps, …) as its source – it says
-  „Wissensstand aus der Beta“ / „aus Classic“, the *kind* stays
-  (`community` is still „Unbestätigt“, never `beta`); scripts, generated
+  „von Spielern gesammelt“ / „aus Classic“, the *kind* stays
+  (`community`, never `beta`); since 1.0.7.22 (Forever live since early
+  November 2026, owner's decision) the prefixes read „Von Spielern
+  gesammelt“ / „Aus der Beta“ / „Aus Classic“ without warning words
+  („unbestätigt“ is gone from player text); scripts, generated
   files and docs keep the real origin. `load_test.lua` scans every string
   literal (`docs/systems/ui.md`, *Herkunft im Spiel ohne fremde Namen*).
   Same reasoning as

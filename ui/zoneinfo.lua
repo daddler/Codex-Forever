@@ -33,7 +33,7 @@ ZI.CONTINENT = 2         -- Enum.UIMapType.Continent
 
 function ZI.Active() return K.IsActive(KEY) and K.Get(KEY, "mapZoneInfo") and true or false end
 local function Data() return WeintCodex.ZoneInfoData or {} end
-ZI.KIND = { classic = "Stand aus Classic", community = "Wissensstand aus der Beta – unbestätigt" }
+ZI.KIND = { classic = "Stand aus Classic", community = "Von Spielern gesammelt" }
 
 function ZI.Info(mapID) return type(mapID) == "number" and Data()[mapID] or nil end
 
