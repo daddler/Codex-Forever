@@ -192,12 +192,39 @@ local function ItemCount(id)
     return type(n) == "number" and n or nil
 end
 
+-- 1.0.7.22 (Spieler: "Reittier im Ring - loslassen, nichts passiert"):
+-- ein Reittier ist ein Zauber, der nicht im Zauberbuch steht, und der
+-- sichere Knopf wirkt Zauber ueber das Zauberbuch. Darum rufen Reittiere
+-- es ueber die Sammlung des Spiels (C_MountJournal.SummonByID) - als Makro
+-- des sicheren Knopfs, also auf deinen Tastendruck.
+function RG.MountSlot(mid, name, icon)
+    return { type = "macro", macrotext = "/run C_MountJournal.SummonByID(" .. mid .. ")",
+             icon = icon, label = name, mount = mid }
+end
+function RG.MountOfSpell(id)
+    local mj = _G.C_MountJournal
+    if type(id) ~= "number" or not (mj and mj.GetMountFromSpell) then return nil end
+    local ok, mid = pcall(mj.GetMountFromSpell, id)
+    mid = ok and K.Plain(mid) or nil
+    return type(mid) == "number" and mid > 0 and mid or nil
+end
+
 -- Ein Eintrag -> { type, spell|item|macrotext, icon, label, count } oder nil.
 function RG.Resolve(e)
     if type(e) ~= "table" then return nil end
+    if e.kind == "mount" then
+        local mj = _G.C_MountJournal
+        local mid = tonumber(e.value)
+        if not (mid and mj and mj.GetMountInfoByID) then return nil end
+        local ok, name, _, icon = pcall(mj.GetMountInfoByID, mid)
+        if not ok or not name then return nil end
+        return RG.MountSlot(mid, K.Plain(name), K.Plain(icon))
+    end
     if e.kind == "spell" then
         local name, icon, id = SpellInfo(e.value)
         if not name then return nil end
+        local mid = RG.MountOfSpell(id)
+        if mid then return RG.MountSlot(mid, name, icon) end
         return { type = "spell", spell = id or name, icon = icon, label = name }
     elseif e.kind == "item" then
         local id = tonumber(e.value)
@@ -226,7 +253,7 @@ function RG.Mounts()
         for _, mid in ipairs(ok and type(ids) == "table" and ids or {}) do
             local ok2, name, spellID, icon, _, usable, _, _, _, _, hidden, collected = pcall(mj.GetMountInfoByID, mid)
             if ok2 and K.Bool(collected, false) and K.Bool(usable, false) and not K.Bool(hidden, false) then
-                out[#out + 1] = { type = "spell", spell = K.Plain(spellID), icon = K.Plain(icon), label = K.Plain(name) }
+                out[#out + 1] = RG.MountSlot(mid, K.Plain(name), K.Plain(icon))
                 if #out >= RG.MAX then break end
             end
         end
@@ -319,6 +346,7 @@ function RG.Convert(ring)
     for _, s in ipairs(RG.Slots(ring)) do
         if s.type == "spell" then entries[#entries + 1] = { kind = "spell", value = s.spell, cond = s.cond }
         elseif s.type == "item" then entries[#entries + 1] = { kind = "item", value = tonumber(s.item:match("%d+")), cond = s.cond }
+        elseif s.mount then entries[#entries + 1] = { kind = "mount", value = s.mount, cond = s.cond }
         elseif s.type == "macro" then
             local n = s.macrotext:match("^/tm (%d+)$")
             if n then entries[#entries + 1] = { kind = "mark", value = tonumber(n) }
@@ -366,8 +394,8 @@ function RG.FromCursor()
     if kind == "mount" then
         local mj = _G.C_MountJournal
         if mj and mj.GetMountInfoByID then
-            local ok, _, spellID = pcall(mj.GetMountInfoByID, a)
-            if ok and spellID then return { kind = "spell", value = K.Plain(spellID) } end
+            local ok, name = pcall(mj.GetMountInfoByID, a)
+            if ok and name then return { kind = "mount", value = K.Plain(a) } end
         end
     end
     if kind == "macro" and _G.GetMacroInfo then

@@ -24,6 +24,12 @@ nicht zusammen.
   Naowh-Beute „im Spiel gezählt“; Classic ohne Warnsatz. Arten bleiben.
 - `repairGuild` ab Werk aus.
 
+### Behoben
+- Ringe: Reittiere als Zauber (`type=spell`) taten nichts – Reittierzauber
+  stehen nicht im Zauberbuch. Jetzt `RG.MountSlot`: sicheres Makro
+  `/run C_MountJournal.SummonByID(id)`; auch gezogene/eingetragene
+  Reittierzauber (`RG.MountOfSpell`), Eintragsart `mount`.
+
 ## [1.0.7.21] – 2026-11-16
 
 ### Behoben

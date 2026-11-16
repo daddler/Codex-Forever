@@ -27,6 +27,7 @@ WeintCodex_ChangelogData = {
         notes   = {
             "|cff7C6CFFDas Glitzern an Kräutern und Erz ist neu gezeichnet|r – ein weicher Schein am Boden mit drehenden Schwaden, ein funkelnder Kern, eine Lichtsäule mit sanften Enden, bei „sehr kräftig“ dazu ein Ring mit Kometen und Wellen. Keine harten Kanten mehr.",
             "|cff7C6CFFRuhigere Herkunftshinweise|r – statt „unbestätigt“ und „Wissensstand aus der Beta“ steht jetzt „von Spielern gesammelt“; was im Spiel gezählt wurde, wie die Dropchancen, braucht keinen Hinweis mehr.",
+            "|cff7C6CFFReittiere im Ring rufen jetzt wirklich|r – loslassen über dem Reittier ruft es; bisher passierte nichts.",
             "|cff7C6CFFReparieren aus der Gildenbank ist ab Werk aus|r – wer es will, schaltet es unter Komfort → Alltag ein.",
         },
     },
