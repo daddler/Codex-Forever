@@ -9,6 +9,13 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.0.7.11] – 2026-11-16
+
+### Behoben
+- Gespräche im Codex-Stil: höchstens 12 Zeilen (`DL.MAX_ROWS`) – die
+  Stadtwache von Sturmwind hat 14 Antworten, Klassen- und Berufslehrer
+  fehlten. Jetzt 20.
+
 ## [1.0.7.10] – 2026-11-15
 
 ### Behoben

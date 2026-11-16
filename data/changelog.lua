@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.0.7.11",
+        date    = "16.11.2026",
+        notes   = {
+            "|cff7C6CFFStadtwachen nennen wieder alle Ziele|r – im Gespräch fehlten ab der zwölften Antwort Klassen- und Berufslehrer.",
+        },
+    },
+    {
         version = "1.0.7.10",
         date    = "15.11.2026",
         notes   = {

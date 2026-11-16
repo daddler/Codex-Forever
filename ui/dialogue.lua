@@ -54,7 +54,7 @@ DL.PORTRAIT = 60         -- Bild des NPCs
 DL.FADE_IN = 0.35        -- Fenster blendet ein (s)
 DL.CAM_MAX = 3           -- (bis 6.23.3.0) so lange wartete der Text hoechstens
 DL.TEXT_DELAY = 0.4      -- so lange nach dem Beginn der Kamerafahrt beginnt der Text (s)
-DL.MAX_ROWS = 12
+DL.MAX_ROWS = 20       -- 1.0.7.11: Wachen haben 14 Antworten (Klassen-/Berufslehrer fehlten)
 DL.MAX_ITEMS = 10
 
 -- Ereignisse, die den Fenstern des Spiels genommen werden.
