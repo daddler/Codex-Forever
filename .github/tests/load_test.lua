@@ -26872,6 +26872,24 @@ do
     Check(ok, "Aktionsleisten: Knopf 1 wählbar" .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 1.0.7.18: nach dem Senden aus dem Messenger oeffnet Enter ihn wieder.
+do
+    local ok, err = pcall(function()
+        local MS = WeintCodex.UIMessenger
+        local saved = { MS.enterKey, MS.enterAt }
+        MS.enterKey, MS.enterAt = "nichtda", 0
+        assert(MS.EnterTarget(1) == nil, "Gespraech ohne Eintrag geoeffnet")
+        MS.enterKey, MS.enterAt = saved[1], saved[2]
+        assert(MS.ENTER_FOR >= 60 and MS.OnEnterKey and MS.KeyIsOpenChat, "Enter-Weg fehlt")
+        local G = _G
+        local gb = G.GetBindingAction
+        G.GetBindingAction = function(k) return k == "ENTER" and "OPENCHAT" or nil end
+        assert(MS.KeyIsOpenChat("ENTER") and not MS.KeyIsOpenChat("R"), "Taste falsch erkannt")
+        G.GetBindingAction = gb
+    end)
+    Check(ok, "Messenger: Enter öffnet nach eigenem Flüstern" .. (ok and "" or (": " .. tostring(err))))
+end
+
 if failures == 0 then
     print("BESTANDEN")
     os.exit(0)

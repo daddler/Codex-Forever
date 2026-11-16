@@ -9,6 +9,15 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.0.7.18] – 2026-11-16
+
+### Neu
+- Messenger: nach dem Senden aus dem Fenster öffnet die Taste mit der
+  Belegung OPENCHAT (Enter) das Fenster bei diesem Gespräch (`MS.OnEnterKey`,
+  `MS.enterKey`, höchstens `MS.ENTER_FOR` = 10 min; eine Nachricht über die
+  Chatzeile des Spiels beendet es). Taste nie verschluckt; mit „direkt
+  senden“ nimmt das Fenster den Fokus, sonst „/w Name“ in der Chatzeile.
+
 ## [1.0.7.17] – 2026-11-16
 
 ### Neu

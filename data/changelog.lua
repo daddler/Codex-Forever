@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.0.7.18",
+        date    = "16.11.2026",
+        notes   = {
+            "|cff7C6CFFEnter öffnet den Messenger wieder|r – hast du gerade aus dem Messenger geflüstert, bringt dich das nächste Enter zurück ins Gespräch, auch wenn noch keine Antwort kam. Schreibst du zwischendurch in den normalen Chat, gehört Enter wieder dem Chat.",
+        },
+    },
+    {
         version = "1.0.7.17",
         date    = "16.11.2026",
         notes   = {

@@ -1133,7 +1133,51 @@ function MS.Send(key, text)
         return false
     end
     MS.lastDirect = "gesendet"
+    -- 1.0.7.18: das naechste Enter oeffnet wieder hier (MS.OnEnterKey).
+    MS.enterKey, MS.enterAt = key, Clock()
     return true
+end
+
+-- 1.0.7.18 (Wunsch: "jemanden angefluestert, er hat noch nicht geschrieben -
+-- dann muss man erst wieder den Messenger oeffnen. Besser: Enter oeffnet
+-- ihn"): nach dem Senden aus dem Messenger oeffnet das naechste Enter den
+-- Messenger bei diesem Gespraech, solange du seitdem nicht in den Chat
+-- geschrieben hast und hoechstens MS.ENTER_FOR Sekunden vergangen sind.
+-- Die Taste geht trotzdem ans Spiel (nie verschluckt); seine Chatzeile
+-- schliesst sich, wenn das Fenster den Fokus nimmt (MS.TakeFocus).
+MS.ENTER_FOR = 600
+function MS.EnterTarget(now)
+    local key = MS.enterKey
+    if not (key and conv[key]) then return nil end
+    if (now or Clock()) - (MS.enterAt or -1e9) > MS.ENTER_FOR then MS.enterKey = nil return nil end
+    return key
+end
+function MS.OnEnterKey()
+    if not MS.Active() then return false end
+    local key = MS.EnterTarget()
+    if not key then return false end
+    if input and input.HasFocus and input:HasFocus() then return false end
+    MS.historyMode = false
+    MS.Show(key)
+    local function Hand()
+        if not (MS.Active() and conv[key]) then return end
+        if Get("direct") then
+            local util = _G.ChatFrameUtil
+            local f = (type(util) == "table" and util.GetActiveWindow) or _G.ChatEdit_GetActiveWindow
+            local eb = f and f()
+            if not MS.TakeFocus(eb) and input then MS.SafeFocus(input) end
+        elseif not MS.EditAimsAt(key) then
+            OpenGameReply(conv[key])
+        end
+    end
+    local t = _G.C_Timer
+    if type(t) == "table" and type(t.After) == "function" then t.After(0, Hand) else Hand() end
+    return true
+end
+function MS.KeyIsOpenChat(key)
+    if key ~= "ENTER" or type(_G.GetBindingAction) ~= "function" then return false end
+    local ok, action = pcall(_G.GetBindingAction, key)
+    return ok and K.Plain(action) == "OPENCHAT"
 end
 
 -- ADDON_ACTION_BLOCKED/FORBIDDEN kurz nach einem eigenen Sendeversuch:
@@ -1575,6 +1619,11 @@ local function HookChatEdit()
             pcall(eb.HookScript, eb, "OnShow", MS.OnChatEdit)
             pcall(eb.HookScript, eb, "OnTextChanged", MS.OnChatEdit)
             pcall(eb.HookScript, eb, "OnHide", Forget)
+            -- In den Chat geschrieben: Enter gehoert wieder dem Chat.
+            pcall(eb.HookScript, eb, "OnEnterPressed", function(self)
+                local text = self.GetText and K.Plain(self:GetText())
+                if type(text) == "string" and text:find("%S") then MS.enterKey = nil end
+            end)
         end
     end
     if not headerHooked and type(_G.hooksecurefunc) == "function" and type(_G.ChatEdit_UpdateHeader) == "function" then
@@ -1616,7 +1665,8 @@ if keyWatch.EnableKeyboard then
     pcall(keyWatch.EnableKeyboard, keyWatch, true)
     if keyWatch.SetPropagateKeyboardInput then pcall(keyWatch.SetPropagateKeyboardInput, keyWatch, true) end
     keyWatch:SetScript("OnKeyDown", function(_, key)
-        if MS.KeyIsReply(key) then MS.OnReply(nil, "key") end
+        if MS.KeyIsReply(key) then MS.OnReply(nil, "key")
+        elseif MS.KeyIsOpenChat(key) then MS.OnEnterKey() end
     end)
 end
 
