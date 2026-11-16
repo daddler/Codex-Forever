@@ -511,12 +511,17 @@ end
 local function Paint(blocked, kind)
     local c, w = blocked and C.textMuted or SP.BaseColor(kind), C.textBright
     for _, t in ipairs(glow.dots) do
-        local k = blocked and 0 or (t.star and 0.7 or 0.35)   -- Anteil Weiss
+        -- 1.0.7.24 (Spieler: "bleibt immer weiss, egal welche Farbe"): jede
+        -- Schicht wird ADDIERT. Mit Weiss gemischt zaehlten sich Gruen und
+        -- Blau ueber ein Dutzend Schichten zu Weiss hoch - jede Farbe sah
+        -- gleich aus. Jetzt nur noch reine Farbe, ein Hauch Weiss nur an den
+        -- Sternen und am Kern.
+        local k = blocked and 0 or (t.star and 0.25 or 0)   -- Anteil Weiss
         t:SetVertexColor(c[1] + (w[1] - c[1]) * k, c[2] + (w[2] - c[2]) * k, c[3] + (w[3] - c[3]) * k)
     end
     for name, t in pairs(glow.big) do
         if name ~= "shade" then
-            local k = blocked and 0 or (name == "flare" and 0.6 or 0.2)
+            local k = blocked and 0 or (name == "flare" and 0.3 or 0)
             t:SetVertexColor(c[1] + (w[1] - c[1]) * k, c[2] + (w[2] - c[2]) * k, c[3] + (w[3] - c[3]) * k)
         end
     end
@@ -707,8 +712,14 @@ function SP.Probe()
         ours and "ja" or "nein")
 end
 
+function SP.ColorLine()
+    local c = SP.BaseColor("herb")
+    local o = SP.BaseColor("ore")
+    return string.format("Glitzerfarbe: %s · Kraut %.2f/%.2f/%.2f · Erz %.2f/%.2f/%.2f",
+        tostring(K.Get(KEY, "sparkleColor")), c[1], c[2], c[3], o[1], o[2], o[3])
+end
 function SP.StatusLines()
-    return { string.format("Glitzern: Quest %s · Kraut/Erz %s · Blicke %d · Kraut %d · Erz %d · anderes %d · über Tooltip %d · ohne Plakette %d · Werte gesetzt %d · Mauszeiger-Abfrage %s",
+    return { SP.ColorLine(), string.format("Glitzern: Quest %s · Kraut/Erz %s · Blicke %d · Kraut %d · Erz %d · anderes %d · über Tooltip %d · ohne Plakette %d · Werte gesetzt %d · Mauszeiger-Abfrage %s",
         SP.LootActive() and "an" or "aus", SP.NodesActive() and "an" or "aus",
         stats.looks, stats.herb, stats.ore, stats.other, stats.bytip, stats.noplate, stats.applied,
         type(_G.SetUnitCursorTexture) == "function" and "da" or "fehlt"), SP.Probe() }

@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.0.7.24",
+        date    = "16.11.2026",
+        notes   = {
+            "|cff7C6CFFDie Farben des Glitzerns kommen jetzt durch|r – bisher sah jede Farbe fast weiß aus.",
+        },
+    },
+    {
         version = "1.0.7.23",
         date    = "16.11.2026",
         notes   = {

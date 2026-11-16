@@ -9,6 +9,14 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.0.7.24] – 2026-11-16
+
+### Behoben
+- Glitzerfarben sahen weiß aus: jede Schicht war mit 20–70 % Weiß gemischt
+  und wird ADDIERT – Grün/Blau summierten sich über die Schichten zu Weiß.
+  Jetzt reine Farbe, wenig Weiß nur an Sternen/Kern. `/wcui prüfen` nennt
+  die Farbe (`SP.ColorLine`).
+
 ## [1.0.7.23] – 2026-11-16
 
 ### Neu
