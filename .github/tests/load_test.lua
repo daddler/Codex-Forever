@@ -26756,6 +26756,25 @@ do
     Check(ok, "Taschendiebstahl-Meldung, Stadt-Pins mit Filter" .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 1.0.7.12: Rechtsklick in den Chat schreibt an die Gilde.
+do
+    local ok, err = pcall(function()
+        local CH, G = WeintCodex.UIChat, _G
+        local saved = { G.IsInGuild, G.ChatFrame_OpenChat, G.ChatFrameUtil }
+        local got
+        G.ChatFrameUtil = nil
+        G.ChatFrame_OpenChat = function(t) got = t end
+        G.IsInGuild = function() return true end
+        assert(CH.RightGuild({}, "RightButton") and got == "/g ", "Rechtsklick öffnet nicht /g")
+        got = nil
+        assert(not CH.RightGuild({}, "LeftButton") and got == nil, "Linksklick schreibt an die Gilde")
+        G.IsInGuild = function() return false end
+        assert(not CH.RightGuild({}, "RightButton"), "ohne Gilde geöffnet")
+        G.IsInGuild, G.ChatFrame_OpenChat, G.ChatFrameUtil = saved[1], saved[2], saved[3]
+    end)
+    Check(ok, "Chat: Rechtsklick schreibt an die Gilde" .. (ok and "" or (": " .. tostring(err))))
+end
+
 if failures == 0 then
     print("BESTANDEN")
     os.exit(0)

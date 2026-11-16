@@ -9,6 +9,13 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.0.7.12] – 2026-11-16
+
+### Neu
+- Chat: Rechtsklick in ein Chatfenster öffnet die Eingabe mit `/g`
+  (`rightGuild`, an; nur mit Gilde; `CH.RightGuild` über `OnMouseUp`, Links
+  behalten ihr Menü). Wunsch einer Spielerin – im Code gab es das vorher nicht.
+
 ## [1.0.7.11] – 2026-11-16
 
 ### Behoben

@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.0.7.12",
+        date    = "16.11.2026",
+        notes   = {
+            "|cff7C6CFFRechtsklick in den Chat schreibt an die Gilde|r – die Eingabe öffnet sich gleich im Gildenchat. Rechtsklick auf Namen und Links bleibt wie gewohnt; abschaltbar unter Chat → Allgemein.",
+        },
+    },
+    {
         version = "1.0.7.11",
         date    = "16.11.2026",
         notes   = {

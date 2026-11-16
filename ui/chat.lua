@@ -57,6 +57,10 @@ local defaults = {
     -- Die Eingabezeile erst mit Enter (Beta-Test 6.3.2.0), siehe
     -- CH.UpdateEditState.
     editOnEnter = true,
+    -- 1.0.7.12 (Wunsch einer Spielerin: "Rechtsklick auf den Chat, direkt in
+    -- die Gilde schreiben"): Rechtsklick in ein Chatfenster oeffnet die
+    -- Eingabe mit /g. Ohne Gilde passiert nichts.
+    rightGuild  = true,
 }
 local INFO_H = 22
 
@@ -1011,12 +1015,30 @@ function CH.HookAlerts()
     end
 end
 
+-- Rechtsklick in den Text eines Chatfensters: Eingabe an die Gilde.
+-- Links (Namen, Gegenstaende) behalten ihr eigenes Rechtsklickmenue - die
+-- laufen ueber OnHyperlinkClick, nicht ueber OnMouseUp.
+local rightHooked = {}
+function CH.RightGuild(cf, button)
+    if button ~= "RightButton" or not Opt("rightGuild") then return false end
+    if not (_G.IsInGuild and _G.IsInGuild()) then return false end
+    local open = (_G.ChatFrameUtil and _G.ChatFrameUtil.OpenChat) or _G.ChatFrame_OpenChat
+    if not open then return false end
+    return pcall(open, "/g ", cf) and true or false
+end
+function CH.HookRightGuild(cf)
+    if type(cf) ~= "table" or rightHooked[cf] or not cf.HookScript then return end
+    rightHooked[cf] = true
+    pcall(cf.HookScript, cf, "OnMouseUp", function(self, button) CH.RightGuild(self, button) end)
+end
+
 local function ApplyAll()
     CH.HookAlerts()
     for i = 1, (_G.NUM_CHAT_WINDOWS or 10) do
         local cf = _G["ChatFrame" .. i]
         local d = SkinFrame(cf)
         if d then ApplyFrame(cf, d) end
+        CH.HookRightGuild(cf)
     end
     local mode = Opt("buttons")
     if mode == "hide" then
@@ -1169,7 +1191,8 @@ K.Register({
                         { value = "column", text = "In einer Spalte links" },
                         { value = "hide",   text = "Ausblenden" },
                         { value = "game",   text = "Wie im Spiel" } } },
-                  { type = "empty" })
+                  { type = "toggle", label = "Rechtsklick schreibt an die Gilde", key = "rightGuild",
+                    description = "Rechtsklick in ein Chatfenster öffnet die Eingabe gleich für den Gildenchat. Rechtsklick auf Namen und Links bleibt wie im Spiel." })
             B:Section("Infozeile und Eingabe")
             B:Row({ type = "toggle", label = "Infozeile", key = "infoBar",
                     description = "Uhrzeit, Gold, freie Taschenplätze, Haltbarkeit, Bildrate, Latenz und mehr – was genau, steht auf der Seite „Infozeile“." },
