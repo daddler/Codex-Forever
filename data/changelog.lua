@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.0.7.19",
+        date    = "16.11.2026",
+        notes   = {
+            "|cff7C6CFFDie Minikarte lässt sich bis ganz an den Bildschirmrand ziehen|r – im Gestaltungsmodus hielt vorher der leere Rand unter der Karte sie ein Stück zu hoch.",
+        },
+    },
+    {
         version = "1.0.7.18",
         date    = "16.11.2026",
         notes   = {

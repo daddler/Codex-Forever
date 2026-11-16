@@ -828,6 +828,12 @@ end
 local function Apply()
     local mm = _G.Minimap
     if type(mm) ~= "table" then return end
+    -- 1.0.7.19: der leere Rand des Bereichs darf aus dem Bild ragen, damit
+    -- die Karte bis an den Bildschirmrand kommt (ui/barmover.lua).
+    if MM.Later then MM.Later(function()
+        local BMv = WeintCodex.UIBarMover
+        if BMv and BMv.MinimapInsets then BMv.MinimapInsets(nil) end
+    end) end
     local size = Opt("size")
     local square = Opt("square")
 

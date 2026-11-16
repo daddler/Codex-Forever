@@ -26890,6 +26890,29 @@ do
     Check(ok, "Messenger: Enter öffnet nach eigenem Flüstern" .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 1.0.7.19: der leere Rand des Minikartenbereichs darf aus dem Bild.
+do
+    local ok, err = pcall(function()
+        local BMv = WeintCodex.UIBarMover
+        local G = _G
+        local sc, sm = G.MinimapCluster, G.Minimap
+        local got
+        local function fr(t, b, l, r, extra)
+            local f = { GetEffectiveScale = function() return 1 end, GetTop = function() return t end,
+                GetBottom = function() return b end, GetLeft = function() return l end, GetRight = function() return r end }
+            for k, v in pairs(extra or {}) do f[k] = v end
+            return f
+        end
+        G.MinimapCluster = fr(800, 560, 1000, 1220, { SetClampRectInsets = function(_, ...) got = { ... } end })
+        G.Minimap = fr(790, 600, 1010, 1210)
+        local l, r, t, b = BMv.MinimapGaps()
+        assert(l == 10 and r == 10 and t == 10 and b == 40, "Raender falsch")
+        assert(BMv.MinimapInsets(nil) and got and got[4] == 40 and got[3] == -10, "Klemm-Abstand nicht gesetzt")
+        G.MinimapCluster, G.Minimap = sc, sm
+    end)
+    Check(ok, "Minikarte: bis an den Bildschirmrand ziehbar" .. (ok and "" or (": " .. tostring(err))))
+end
+
 if failures == 0 then
     print("BESTANDEN")
     os.exit(0)

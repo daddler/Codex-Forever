@@ -9,6 +9,16 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.0.7.19] – 2026-11-16
+
+Enthält auch die nicht einzeln veröffentlichte 1.0.7.18.
+
+### Behoben
+- Minikarte im Gestaltungsmodus nicht bis an den unteren Rand: Platzhalter
+  und `MinimapCluster` sind größer als die Karte. Klemm-Abstände in Größe
+  des leeren Rands (`BM.MinimapGaps`, `BM.MinimapInsets`), auch beim
+  Anwenden der Minikarte, nie im Kampf.
+
 ## [1.0.7.18] – 2026-11-16
 
 ### Neu

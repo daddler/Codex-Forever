@@ -82,6 +82,40 @@ function BM.OnPlaced(key)
     return ok
 end
 
+-- 1.0.7.19 (Bild: "Minimap laesst sich nicht ganz nach unten ziehen"): der
+-- Bereich des Spiels (MinimapCluster) ist groesser als die Karte - unten
+-- bleibt leerer Platz, und am Bildschirmrand haelt der Bereich, nicht die
+-- Karte. Der leere Rand darf deshalb aus dem Bild ragen: Platzhalter und
+-- Bereich bekommen Klemm-Abstaende in genau seiner Groesse (nach innen:
+-- links/unten positiv, rechts/oben negativ). Nie im Kampf.
+function BM.MinimapGaps()
+    local cl, mm = _G.MinimapCluster, _G.Minimap
+    if type(cl) ~= "table" or type(mm) ~= "table" or not cl.GetTop or not mm.GetTop then return nil end
+    local function v(x) x = K.Plain(x) return type(x) == "number" and x or nil end
+    -- Lagen in Bildschirmeinheiten, dann in die des Bereichs.
+    local cs, ms = v(cl:GetEffectiveScale()), v(mm:GetEffectiveScale())
+    local ct, cb, cL, cR = v(cl:GetTop()), v(cl:GetBottom()), v(cl:GetLeft()), v(cl:GetRight())
+    local mt, mb, mL, mR = v(mm:GetTop()), v(mm:GetBottom()), v(mm:GetLeft()), v(mm:GetRight())
+    if not (cs and ms and ct and cb and cL and cR and mt and mb and mL and mR) or cs <= 0 then return nil end
+    local f = ms / cs
+    local function gap(a) return math.max(0, a) end
+    return gap(mL * f - cL), gap(cR - mR * f), gap(ct - mt * f), gap(mb * f - cb), cs
+end
+function BM.MinimapInsets(g)
+    if K.InCombat() then return false end
+    local l, r, t, b, cs = BM.MinimapGaps()
+    if not l then return false end
+    local cl = _G.MinimapCluster
+    if cl.SetClampRectInsets then pcall(cl.SetClampRectInsets, cl, l, -r, -t, b) end
+    if g and g.SetClampRectInsets then
+        local u = K.Plain(UIParent:GetEffectiveScale())
+        local k = (type(u) == "number" and u > 0) and cs / u or 1
+        pcall(g.SetClampRectInsets, g, l * k, -r * k, -t * k, b * k)
+    end
+    BM.mmInsets = { l, r, t, b }
+    return true
+end
+
 -- Platzhalter bauen bzw. auf die Leiste legen (beim Entsperren).
 function BM.Prepare()
     if K.InCombat() then return 0 end
@@ -113,6 +147,7 @@ function BM.Prepare()
             local ui = K.Profile()
             if ui then ui.positions[BM.PREFIX .. e.key] = nil end
             K.RegisterMover(g, BM.PREFIX .. e.key, e.label, g.default, { onPlaced = BM.OnPlaced })
+            if e.sys == "Minimap" then BM.MinimapInsets(g) end
             K.SetMoverEnabled(BM.PREFIX .. e.key, true)
             n = n + 1
         elseif g then
