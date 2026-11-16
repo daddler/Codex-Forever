@@ -26854,6 +26854,24 @@ do
     Check(ok, "Glitzern: drei Stärken" .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 1.0.7.17: Anordnung der Knoepfe - unterste Reihe zuerst.
+do
+    local ok, err = pcall(function()
+        local AB = WeintCodex.UIActionBars
+        local c, r = AB.Cell(1, 4, 3, "bottomleft")
+        assert(c == 0 and r == 2, "Knopf 1 nicht unten links")
+        c, r = AB.Cell(5, 4, 3, "bottomleft")
+        assert(c == 0 and r == 1, "Knopf 5 nicht in der Mitte")
+        c, r = AB.Cell(12, 4, 3, "bottomleft")
+        assert(c == 3 and r == 0, "Knopf 12 nicht oben rechts")
+        c, r = AB.Cell(1, 4, 3, "topleft")
+        assert(c == 0 and r == 0, "ab Werk verändert")
+        c, r = AB.Cell(1, 4, 3, "bottomright")
+        assert(c == 3 and r == 2, "unten rechts falsch")
+    end)
+    Check(ok, "Aktionsleisten: Knopf 1 wählbar" .. (ok and "" or (": " .. tostring(err))))
+end
+
 if failures == 0 then
     print("BESTANDEN")
     os.exit(0)

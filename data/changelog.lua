@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.0.7.17",
+        date    = "16.11.2026",
+        notes   = {
+            "|cff7C6CFFAktionsleisten: du bestimmst, wo Knopf 1 steht|r – oben oder unten, links oder rechts. Mit „Unten links“ liegen bei drei Reihen 1–4 unten, 5–8 in der Mitte und 9–12 oben. Je Leiste unter Aktionsleisten → Leisten.",
+        },
+    },
+    {
         version = "1.0.7.16",
         date    = "16.11.2026",
         notes   = {

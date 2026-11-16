@@ -9,6 +9,13 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.0.7.17] – 2026-11-16
+
+### Neu
+- Aktionsleisten: je Leiste „Knopf 1 steht“ (`b<n>_start`: topleft ab Werk,
+  bottomleft, topright, bottomright; `AB.Cell`). Wunsch: unterste Reihe 1–4,
+  darüber 5–8, oben 9–12. Nur mit dem Leisten-Layout von WeintCodex.
+
 ## [1.0.7.16] – 2026-11-16
 
 ### Geändert

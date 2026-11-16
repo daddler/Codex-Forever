@@ -111,6 +111,17 @@ for i, e in ipairs(BAR_BUTTONS) do
     defaults["b" .. i .. "_count"] = e.n
     defaults["b" .. i .. "_backdrop"] = true
     defaults["b" .. i .. "_show"] = "always"   -- always | mouseover
+    -- 1.0.7.17 (Wunsch: "unterste Zeile 1-4, darueber 5-8, oberste 9-12"):
+    -- wo Knopf 1 steht - von dort laufen die Reihen weg.
+    defaults["b" .. i .. "_start"] = "topleft" -- topleft | bottomleft | topright | bottomright
+end
+
+-- Spalte und Reihe (ab 0, von oben links gezaehlt) des k-ten Knopfs.
+function AB.Cell(k, perRow, rows, start)
+    local col, row = (k - 1) % perRow, math.floor((k - 1) / perRow)
+    if start == "bottomleft" or start == "bottomright" then row = rows - 1 - row end
+    if start == "topright" or start == "bottomright" then col = perRow - 1 - col end
+    return col, row
 end
 
 local function Opt(k) return K.Get(KEY, k) end
@@ -611,6 +622,8 @@ local function LayoutBar(i, entry)
         if type(forms) == "number" and forms > 0 then count = math.min(count, forms) end
     end
     local perRow = Clamp(BO(i, "perRow"), 1, count)
+    local rows = math.ceil(count / perRow)
+    local start = BO(i, "start")
     for k = 1, entry.n do
         local b = _G[entry.family .. k]
         if type(b) == "table" and not (b.IsForbidden and b:IsForbidden()) then
@@ -619,7 +632,7 @@ local function LayoutBar(i, entry)
                     cut[b] = nil
                     pcall(b.EnableMouse, b, true)
                 end
-                local col, row = (k - 1) % perRow, math.floor((k - 1) / perRow)
+                local col, row = AB.Cell(k, perRow, rows, start)
                 pcall(function()
                     b:SetSize(size, size)
                     b:ClearAllPoints()
@@ -632,7 +645,6 @@ local function LayoutBar(i, entry)
             end
         end
     end
-    local rows = math.ceil(count / perRow)
     pcall(bar.SetSize, bar, perRow * (size + gap) - gap, rows * (size + gap) - gap)
 end
 
@@ -1468,7 +1480,11 @@ K.Register({
                         format = function(v) return tostring(math.min(v, Bar().n)) end, disabled = game }))
             B:Row(Per("backdrop", { type = "toggle", label = "Fläche hinter der Leiste",
                         disabled = function() return not K.Get(KEY, "barBackdrop") end }),
-                  { type = "empty" })
+                  Per("start", { type = "dropdown", label = "Knopf 1 steht", disabled = game, items = {
+                        { value = "topleft",     text = "Oben links" },
+                        { value = "bottomleft",  text = "Unten links (unterste Reihe zuerst)" },
+                        { value = "topright",    text = "Oben rechts" },
+                        { value = "bottomright", text = "Unten rechts" } } }))
             B:Note("Tipp: Knöpfe je Reihe 1 macht eine Leiste senkrecht, 6 bei 12 Knöpfen zwei Reihen. Die Tasten jenseits der Anzahl wirken weiter, ihre Knöpfe sind nur ausgeblendet. Umordnen geht nur außerhalb des Kampfes.")
         end },
     },
