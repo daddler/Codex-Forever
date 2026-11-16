@@ -9,6 +9,13 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.0.7.16] – 2026-11-16
+
+### Geändert
+- Glitzern: weich ein (`SP.FADE_IN` 1,2 s, Kurve `SP.Ease`) und aus
+  (`SP.FADE_OUT` 0,5 s), große Teile wachsen mit (Wunsch: „da erschrickt
+  man sich“). Im Kampf und beim Ausschalten weiter sofort weg.
+
 ## [1.0.7.15] – 2026-11-16
 
 ### Geändert

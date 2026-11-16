@@ -26847,6 +26847,9 @@ do
         local a3 = count()
         K.Set("comfort", "sparkleStrength", saved) SP.ApplyLevel()
         assert(a1 == 18 and a3 == 74, "Funken je Staerke: " .. a1 .. "/" .. a3)
+        -- 1.0.7.16: weich ein- und ausblenden.
+        assert(SP.Ease(0) == 0 and SP.Ease(1) == 1 and SP.Ease(0.25) < 0.25, "Kurve nicht weich")
+        assert(SP.FADE_IN >= 1, "Einblenden zu kurz")
     end)
     Check(ok, "Glitzern: drei Stärken" .. (ok and "" or (": " .. tostring(err))))
 end

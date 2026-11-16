@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.0.7.16",
+        date    = "16.11.2026",
+        notes   = {
+            "|cff7C6CFFDas Glitzern blendet sanft ein|r – über gut eine Sekunde, Lichtsäule und Schein wachsen dabei aus der Mitte; beim Weggehen verglimmt es, statt einfach zu verschwinden.",
+        },
+    },
+    {
         version = "1.0.7.15",
         date    = "16.11.2026",
         notes   = {

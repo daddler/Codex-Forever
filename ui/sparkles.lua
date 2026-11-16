@@ -275,6 +275,23 @@ end
 glow.big = { floor = floorTex, beam = beamTex, ring = ringTex }
 glow.clock = 0
 
+-- 1.0.7.16 (Wunsch: "das Einblenden etwas smoother, da erschrickt man
+-- sich"): sanft ein in SP.FADE_IN Sekunden (weiche Kurve), aus in
+-- SP.FADE_OUT. Die grossen Teile wachsen dabei aus der Mitte.
+SP.FADE_IN, SP.FADE_OUT = 1.2, 0.5
+glow.fade, glow.target = 0, 0
+function SP.FadeIn()
+    if not glow:IsShown() then glow.fade = 0 glow:SetAlpha(0) end
+    glow.target = 1
+    glow:Show()
+end
+function SP.FadeOut()
+    if not glow:IsShown() then return end
+    glow.target = 0
+end
+-- Weiche Kurve 0..1 (langsam an, langsam aus).
+function SP.Ease(u) if u <= 0 then return 0 elseif u >= 1 then return 1 end return u * u * (3 - 2 * u) end
+
 -- Staerke anwenden: Zahl der Punkte, Streuung, grosse Teile.
 function SP.Level()
     local n = tonumber(K.Get(KEY, "sparkleStrength")) or 2
@@ -311,6 +328,17 @@ glow:SetScript("OnUpdate", WeintCodex.Measured("sparkles", function(self, el)
     el = el or 0
     if el > 0.1 then el = 0.1 end
     local dots = self.dots
+    -- Ein- und Ausblenden.
+    if self.fade ~= self.target then
+        if self.target > self.fade then
+            self.fade = math.min(1, self.fade + el / SP.FADE_IN)
+        else
+            self.fade = math.max(0, self.fade - el / SP.FADE_OUT)
+        end
+        self:SetAlpha(SP.Ease(self.fade))
+        if self.fade <= 0 and self.target <= 0 then self:Hide() return end
+    end
+    local grow = 0.4 + 0.6 * SP.Ease(self.fade)
     -- Grosse Teile: atmen langsam.
     local L = self.level
     if L then
@@ -318,11 +346,11 @@ glow:SetScript("OnUpdate", WeintCodex.Measured("sparkles", function(self, el)
         local w = 0.5 + 0.5 * math.sin(self.clock * 2.4)
         local b = self.big
         if L.floor then
-            b.floor:SetSize(L.sx * 3.2, L.sy * 3.2)
+            b.floor:SetSize(L.sx * 3.2 * grow, L.sy * 3.2 * grow)
             b.floor:SetAlpha(0.35 + 0.25 * w)
         else b.floor:SetAlpha(0) end
         if L.beam then
-            local h = 90 + 40 * L.rise
+            local h = (90 + 40 * L.rise) * grow
             b.beam:SetSize(h, 26 + 6 * w)
             b.beam:SetPoint("CENTER", self, "CENTER", 0, h / 2 - 6)
             b.beam:SetAlpha(0.22 + 0.18 * w)
@@ -414,7 +442,7 @@ function SP.Look()
     stats.looks = stats.looks + 1
     local u = SP.UNIT
     if not SP.HasSoft(u) then
-        glow:Hide()
+        SP.FadeOut()
         SetGate(false)
         SP.lastGuid = nil
         return nil
@@ -444,7 +472,7 @@ function SP.Look()
             glow:ClearAllPoints()
             glow:SetPoint("CENTER", plate, "CENTER", 0, -46)
             Paint(blocked)
-            glow:Show()
+            SP.FadeIn()
         else
             -- Ohne Plakette (das Spiel baut sie erst nach dem Schalter):
             -- mitten auf dem Bildschirm waere falsch - im naechsten Blick.
@@ -455,7 +483,7 @@ function SP.Look()
     end
     stats.other = stats.other + 1
     SetGate(false)
-    glow:Hide()
+    SP.FadeOut()
     return kind
 end
 
