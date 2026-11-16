@@ -9,6 +9,13 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.0.7.20] – 2026-11-16
+
+### Behoben
+- Messenger (Rückmeldung zu 1.0.7.18: „man kann gar nicht mehr in die Gilde
+  schreiben“): Enter auf leerem Feld öffnet die Chatzeile des Spiels und
+  beendet den Enter-Weg (`MS.ToGameChat`); Esc beendet ihn ebenfalls.
+
 ## [1.0.7.19] – 2026-11-16
 
 Enthält auch die nicht einzeln veröffentlichte 1.0.7.18.

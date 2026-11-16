@@ -26885,6 +26885,16 @@ do
         local gb = G.GetBindingAction
         G.GetBindingAction = function(k) return k == "ENTER" and "OPENCHAT" or nil end
         assert(MS.KeyIsOpenChat("ENTER") and not MS.KeyIsOpenChat("R"), "Taste falsch erkannt")
+        -- 1.0.7.20: leeres Enter im Fenster gibt an die Chatzeile zurueck.
+        local oc, cu = G.ChatFrame_OpenChat, G.ChatFrameUtil
+        local opened
+        G.ChatFrameUtil = nil
+        G.ChatFrame_OpenChat = function(t) opened = t end
+        MS.enterKey = "x"
+        MS.ToGameChat()
+        assert(opened == "" and MS.enterKey == nil, "Chatzeile nicht freigegeben")
+        G.ChatFrame_OpenChat, G.ChatFrameUtil = oc, cu
+        MS.enterKey = saved[1]
         G.GetBindingAction = gb
     end)
     Check(ok, "Messenger: Enter öffnet nach eigenem Flüstern" .. (ok and "" or (": " .. tostring(err))))

@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.0.7.20",
+        date    = "16.11.2026",
+        notes   = {
+            "|cff7C6CFFNach dem Flüstern wieder normal in die Gilde schreiben|r – öffnet Enter den Messenger, bringt dich ein zweites Enter (ohne Text) in die normale Chatzeile. Auch Esc im Messenger gibt Enter wieder an den Chat zurück.",
+        },
+    },
+    {
         version = "1.0.7.19",
         date    = "16.11.2026",
         notes   = {

@@ -563,6 +563,16 @@ local function Build()
     end)
     input:SetScript("OnEnterPressed", function(self)
         local text = self:GetText() or ""
+        -- 1.0.7.20 (Rueckmeldung: "nun kann man gar nicht mehr in die Gilde
+        -- schreiben, immer geht der Messenger auf"): Enter im leeren Feld
+        -- gibt an die Chatzeile des Spiels weiter und beendet den Enter-Weg
+        -- bis zur naechsten eigenen Fluesternachricht.
+        if not text:find("%S") then
+            self:SetText("")
+            self:ClearFocus()
+            MS.ToGameChat()
+            return
+        end
         self:SetText("")
         if text ~= "" then MS.Send(MS.current, text) end
         -- 6.30.55.6 (Spieler: "nach dem Senden will ich mich schnell wieder
@@ -579,7 +589,7 @@ local function Build()
     input.hint:SetTextColor(hm[1], hm[2], hm[3])
     input:HookScript("OnTextChanged", function(self) MS.UpdateHint() end)
     input:HookScript("OnEditFocusLost", function() MS.UpdateHint() end)
-    input:SetScript("OnEscapePressed", function(self) self:ClearFocus() end)
+    input:SetScript("OnEscapePressed", function(self) MS.enterKey = nil self:ClearFocus() end)
     -- 6.87.1.0 (Wunsch: "Shift-Linksklick auf einen Gegenstand verlinkt ihn
     -- wie im Spiel"): das Spiel reicht Links an die Chatzeile weiter; steht
     -- der Cursor im Messenger, landet der Link dort. Nur angehaengt, nichts
@@ -1146,6 +1156,12 @@ end
 -- Die Taste geht trotzdem ans Spiel (nie verschluckt); seine Chatzeile
 -- schliesst sich, wenn das Fenster den Fokus nimmt (MS.TakeFocus).
 MS.ENTER_FOR = 600
+-- Zur Chatzeile des Spiels, wie ein normales Enter (1.0.7.20).
+function MS.ToGameChat()
+    MS.enterKey = nil
+    local open = (_G.ChatFrameUtil and _G.ChatFrameUtil.OpenChat) or _G.ChatFrame_OpenChat
+    if open then pcall(open, "") end
+end
 function MS.EnterTarget(now)
     local key = MS.enterKey
     if not (key and conv[key]) then return nil end
