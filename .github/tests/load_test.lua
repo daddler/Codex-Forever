@@ -26808,6 +26808,28 @@ do
     Check(ok, "Rezepte: gelernt/lernbar je Charakter" .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 1.0.7.14: "Plastisch" malt nach dem Wiederbeleben wieder in Klassenfarbe.
+do
+    local ok, err = pcall(function()
+        local GF = WeintCodex.UIGroupFrames
+        local saved = K.Get("groupframes", "look")
+        K.Set("groupframes", "look", "relief")
+        local grads = 0
+        local tex = { SetVertexColor = function() end, SetGradient = function() grads = grads + 1 end }
+        local function txt() return { SetShadowColor = function() end, SetTextColor = function() end } end
+        local c = { name = txt(), status = txt(),
+            health = { GetStatusBarTexture = function() return tex end, SetStatusBarColor = function() end },
+            bg = { SetColorTexture = function() end, SetGradient = function() end } }
+        GF.Paint(c, 0.4, 0.8, 1)
+        GF.Paint(c, 0.4, 0.8, 1, true)
+        local before = grads
+        GF.Paint(c, 0.4, 0.8, 1)
+        K.Set("groupframes", "look", saved)
+        assert(grads > before, "nach dem Tod nicht neu gemalt")
+    end)
+    Check(ok, "Gruppenrahmen: nach dem Tod wieder Klassenfarbe" .. (ok and "" or (": " .. tostring(err))))
+end
+
 if failures == 0 then
     print("BESTANDEN")
     os.exit(0)

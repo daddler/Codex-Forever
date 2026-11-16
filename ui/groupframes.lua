@@ -260,6 +260,11 @@ function GF.Paint(c, r, g, b, gone)
     if c.name.SetShadowColor then c.name:SetShadowColor(0, 0, 0, 0.9) c.status:SetShadowColor(0, 0, 0, 0.9) end
     if c.relief then c.relief:SetShown(look ~= "dark" or gone) end
     if gone then
+        -- 1.0.7.14 (Bild: Magier nach dem Tod mit schwarzem Balken, obwohl
+        -- wieder am Leben): "Plastisch" merkt sich die zuletzt gemalte Farbe
+        -- (_wcRel) und malte nach dem Wiederbeleben nicht neu, weil die
+        -- Klassenfarbe dieselbe war. Tot vergisst sie.
+        c._wcRel = nil
         K.PaintBar(c.health, G.gfGone[1], G.gfGone[2], G.gfGone[3])
         c.bg:SetColorTexture(G.gfGone[1], G.gfGone[2], G.gfGone[3], 1)
         c.name:SetTextColor(G.gfGoneText[1], G.gfGoneText[2], G.gfGoneText[3])

@@ -9,6 +9,13 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.0.7.14] – 2026-11-16
+
+### Behoben
+- Gruppenrahmen „Plastisch“: nach Tod und Wiederbeleben blieb der Balken in
+  `gfGone` – `GF.Paint` merkte die Klassenfarbe in `c._wcRel` und malte den
+  Verlauf nicht neu. Tot setzt `_wcRel` zurück.
+
 ## [1.0.7.13] – 2026-11-16
 
 ### Neu

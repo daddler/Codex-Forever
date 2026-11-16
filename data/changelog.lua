@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.0.7.14",
+        date    = "16.11.2026",
+        notes   = {
+            "|cff7C6CFFNach dem Wiederbeleben wieder in Farbe|r – im Gruppenrahmen „Plastisch“ blieb der Lebensbalken nach einem Tod schwarz, obwohl der Spieler wieder lebte.",
+        },
+    },
+    {
         version = "1.0.7.13",
         date    = "16.11.2026",
         notes   = {
