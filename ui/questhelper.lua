@@ -197,6 +197,12 @@ function QH.Offer(id, q, me)
     if not (me.level and (me.race or me.faction) and me.class) then return nil end
     if log[id] then return nil end
     if (q[3] or 0) > me.level then return nil end
+    -- 1.0.7.25 (Spieler, Stufe 44: "Your Reward has Arrived!" als neue
+    -- Quest beim Gastwirt, nicht annehmbar): Stufe 0 heisst im Bestand
+    -- "unbekannt" - Belohnungs-, Wochen- und Sonderquests, die das Spiel
+    -- nur unter Bedingungen anbietet, die der Bestand nicht kennt.
+    -- Unbekannt ist kein "!" - steht sie im Log, zeigt das Log sie.
+    if (q[2] or 0) <= 0 then return nil end
     -- 1.0.0.8 (Bericht: "in Ironforge viele Quests auf Stufe 60, ich bin 6"):
     -- eine Quest weit ueber der eigenen Stufe, deren "ab Stufe" fehlt oder 1
     -- ist, ist ein Loch in den Daten, kein Angebot. Wie Questie ab Werk

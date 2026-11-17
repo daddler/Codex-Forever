@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.0.7.25",
+        date    = "17.11.2026",
+        notes   = {
+            "|cff7C6CFFKeine Sonderquests mehr als „Neue Quest“|r – Belohnungs-, Wochen- und Ereignisquests ohne bekannte Stufe erscheinen nicht mehr auf Karte und Minikarte.",
+        },
+    },
+    {
         version = "1.0.7.24",
         date    = "16.11.2026",
         notes   = {

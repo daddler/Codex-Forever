@@ -9,6 +9,13 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.0.7.25] – 2026-11-17
+
+### Behoben
+- Questhilfe: Quests mit Stufe 0 im Bestand (14, z. B. „Your Reward has
+  Arrived!“, „Field of Honor: Week 1“) galten als annehmbar. `QH.Offer`
+  bietet sie nicht mehr an – Stufe unbekannt ist kein „!“.
+
 ## [1.0.7.24] – 2026-11-16
 
 ### Behoben

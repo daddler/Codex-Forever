@@ -1418,6 +1418,11 @@ do
         assert(QH.Offer(2, d.q[2], me) == "avail", "Folgequest nach Vorquest fehlt")
         assert(QH.Offer(1, d.q[1], me) == nil, "erledigte Quest angeboten")
         assert(QH.Offer(3, d.q[3], me) == nil, "Hordequest fuer Menschen")
+        -- 1.0.7.25: Stufe 0 = unbekannt, nie als neue Quest.
+        local zero = {}
+        for k, v in pairs(d.q[1]) do zero[k] = v end
+        zero[2] = 0
+        assert(QH.Offer(999001, zero, me) == nil, "Quest ohne Stufe angeboten")
         assert(QH.Offer(4, d.q[4], me) == "low", "Stufe 1 bei 6 nicht grau")
         assert(QH.Offer(5, d.q[5], me) == nil, "Quest im Log angeboten")
         -- 6.61.4.0: Vorquest nur im Log genuegt nicht (Waldweberei).
