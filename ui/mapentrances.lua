@@ -41,6 +41,7 @@ ME.DEFAULTS = {
     mapContinent  = true,    -- auch auf der Kontinentkarte
 }
 
+ME.ATLAS = "Dungeon"
 ME.PIN = 24          -- Groesse des Symbols in Bildpunkten, bei jedem Zoom
 ME.TICK = 0.05       -- so oft stellt der Taktgeber die Symbole (s)
 ME.CONTINENT = 2     -- Enum.UIMapType.Continent
@@ -232,30 +233,46 @@ function ME.Guide(spot)
     return true
 end
 
+-- Stufen unter dem Portal: kleinste bis groesste der Dungeons dort, nur
+-- wenn beide bekannt sind (unbekannt ist keine Zahl).
+function ME.LevelText(fs, spot)
+    local lo, hi
+    for _, en in ipairs(spot and spot.entries or {}) do
+        local d = en.dungeon or {}
+        if type(d.minLevel) == "number" and type(d.maxLevel) == "number" then
+            lo = lo and math.min(lo, d.minLevel) or d.minLevel
+            hi = hi and math.max(hi, d.maxLevel) or d.maxLevel
+        end
+    end
+    local g = C.green or C.textBright
+    fs:SetTextColor(g[1], g[2], g[3], 1)
+    fs:SetText(lo and (lo .. "–" .. hi) or "")
+end
+
 local function NewPin(canvas)
     local p = CreateFrame("Button", nil, canvas)
     p:SetSize(ME.PIN, ME.PIN)
     p:EnableMouse(true)
     if p.RegisterForClicks then p:RegisterForClicks("LeftButtonUp", "RightButtonUp") end
-    local rim = p:CreateTexture(nil, "ARTWORK", nil, 1)
-    rim:SetTexture(K.MEDIA .. "disc")
-    rim:SetAllPoints(p)
-    local b = C.borderStrong or C.textMuted
-    rim:SetVertexColor(b[1], b[2], b[3], 1)
-    local bg = p:CreateTexture(nil, "ARTWORK", nil, 2)
-    bg:SetTexture(K.MEDIA .. "disc")
-    bg:SetPoint("TOPLEFT", p, "TOPLEFT", 2, -2)
-    bg:SetPoint("BOTTOMRIGHT", p, "BOTTOMRIGHT", -2, 2)
-    p.bg = bg
+    -- 1.0.7.27 (Wunsch: "Symbole professionell"): gemaltes Portal aus
+    -- media/mapicons (make_map_icons.py), darunter die Stufen.
     local icon = p:CreateTexture(nil, "ARTWORK", nil, 3)
-    icon:SetTexture(K.MEDIA .. "icon_gate")
-    icon:SetSize(ME.PIN - 10, ME.PIN - 10)
-    icon:SetPoint("CENTER", p, "CENTER", 0, 0)
-    icon:SetVertexColor(C.textBright[1], C.textBright[2], C.textBright[3], 1)
-    local function Paint(hover)
-        local c = hover and (C.surface3 or C.bgPanel) or C.bgPanel
-        bg:SetVertexColor(c[1], c[2], c[3], 0.95)
+    -- Das Dungeon-Symbol des Spiels, wenn der Client es kennt (gefragt,
+    -- nicht geraten); sonst das eigene Portal.
+    local T = _G.C_Texture
+    local okA, atlas = false, nil
+    if T and T.GetAtlasInfo and icon.SetAtlas then
+        okA, atlas = pcall(T.GetAtlasInfo, ME.ATLAS)
     end
+    if okA and type(atlas) == "table" then icon:SetAtlas(ME.ATLAS)
+    else icon:SetTexture("Interface\\AddOns\\WeintCodex\\media\\mapicons\\portal") end
+    icon:SetAllPoints(p)
+    p.icon = icon
+    local lv = K.NewText(p, 10, "OVERLAY")
+    lv:SetPoint("TOP", p, "BOTTOM", 0, 1)
+    lv:SetShadowOffset(1, -1)
+    p.levels = lv
+    local function Paint(hover) p:SetAlpha(hover and 1 or 0.92) end
     Paint(false)
     p:SetScript("OnEnter", function(self) Paint(true) Tooltip(self) end)
     p:SetScript("OnLeave", function()
@@ -353,6 +370,7 @@ function ME.Place()
         end
         if p:GetParent() ~= canvas then p:SetParent(canvas) end
         p.spot = e.spot
+        ME.LevelText(p.levels, e.spot)
         p:SetScale(1 / s)
         p:SetFrameLevel(lvl)
         p:ClearAllPoints()

@@ -9,6 +9,16 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.0.7.27] – 2026-11-17
+
+### Geändert
+- Kartensymbole: Stadtdienste über `MK.Icon` – zuerst das Symbol des
+  Aufspürmenüs vom Client (`C_Minimap.GetTrackingInfo`, Zuordnung nach
+  Namen, `MK.TRACK_WORDS`), sonst eigene gemalte Symbole `media/mapicons/`
+  (`.github/scripts/make_map_icons.py`). Geistheiler, Flugmeister (mit
+  Fraktionspunkt), Reisen gemalt; Eingänge Atlas `Dungeon` falls vorhanden,
+  sonst Portal, Stufenbereich darunter (`ME.LevelText`).
+
 ## [1.0.7.26] – 2026-11-17
 
 ### Behoben

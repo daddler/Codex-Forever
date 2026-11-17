@@ -52,7 +52,7 @@ MK.DEFAULTS = {
 MK.TOWN_TEXT = { vendor = "Gemischtwaren", repair = "Reparieren", profession = "Berufslehrer", class = "Klassenlehrer",
     trade = "Handwerkswaren", food = "Essen und Trinken", flight = "Flugmeister", stable = "Stallmeister",
     inn = "Gasthaus", bank = "Bank", auction = "Auktionshaus", reagents = "Reagenzien", ammo = "Munition", mail = "Briefkasten" }
-MK.TOWN = 16
+MK.TOWN = 20
 -- 1.0.7.3 (Bild: "das sieht echt nicht geil aus"): Pins, die naeher als
 -- MK.TOWN_MERGE (Kartenanteil) beieinander liegen, werden ein Pin mit Zahl;
 -- das Symbol nennt die wichtigste Art, der Tooltip alle.
@@ -65,15 +65,56 @@ MK.TOWN_MERGE = 0.05   -- nur Rueckfall ohne Kartengroesse
 -- je Art ein Symbol aus dem Spiel (Gegenstands-/Zaubersymbole, die jeder
 -- Client hat) und ein Filter direkt an der Karte. Ab Werk ohne Haendler fuer
 -- Gemischtwaren, Handwerkswaren, Essen, Reagenzien und Munition.
-MK.TOWN_ICON = {
-    vendor = "Interface\\Icons\\INV_Misc_Bag_10", repair = "Interface\\Icons\\Trade_BlackSmithing",
-    profession = "Interface\\Icons\\INV_Misc_Book_09", class = "Interface\\Icons\\INV_Misc_Book_11",
-    trade = "Interface\\Icons\\INV_Fabric_Linen_01", food = "Interface\\Icons\\INV_Misc_Food_15",
-    stable = "Interface\\Icons\\Ability_Hunter_BeastTaming", inn = "Interface\\Icons\\INV_Misc_Rune_01",
-    bank = "Interface\\Icons\\INV_Misc_Coin_02", auction = "Interface\\Icons\\INV_Hammer_16",
-    reagents = "Interface\\Icons\\INV_Misc_Dust_01", ammo = "Interface\\Icons\\INV_Ammo_Arrow_01",
-    mail = "Interface\\Icons\\INV_Letter_15",
+-- 1.0.7.27 (Wunsch: "Symbole professionell"): eigene gemalte Symbole aus
+-- .github/scripts/make_map_icons.py statt Spielsymbolen im Kreis.
+MK.ICONS = "Interface\\AddOns\\WeintCodex\\media\\mapicons\\"
+MK.TOWN_ICON = {}
+for _, k in ipairs({ "vendor", "repair", "profession", "class", "trade", "food", "stable", "inn",
+                     "bank", "auction", "reagents", "ammo", "mail" }) do
+    MK.TOWN_ICON[k] = MK.ICONS .. k
+end
+
+-- Noch besser: die Symbole, die das Spiel selbst im Aufspuermenue der
+-- Minikarte zeigt (Bankier, Gastwirt, Briefkasten ...). WeintCodex ERRAET
+-- keinen Pfad - es fragt den Client (C_Minimap.GetTrackingInfo) und ordnet
+-- nach dem Namen zu. Was der Client nicht nennt, bleibt beim eigenen Bild.
+MK.TRACK_WORDS = {
+    bank = { "bankier", "banker" }, auction = { "auktion" }, inn = { "gastwirt", "innkeeper" },
+    mail = { "briefkast", "mailbox" }, repair = { "reparat", "repair" },
+    flight = { "flugmeister", "flight master" }, stable = { "stallmeister", "stable" },
+    class = { "klassenlehrer", "class trainer" }, profession = { "berufslehrer", "profession" },
+    food = { "essen", "food" }, reagents = { "reagenz", "reagent" }, ammo = { "munition", "ammunition" },
 }
+local clientIcon
+function MK.ClientIcons()
+    if clientIcon then return clientIcon end
+    local cm = _G.C_Minimap
+    local num = (cm and cm.GetNumTrackingTypes) or _G.GetNumTrackingTypes
+    local info = (cm and cm.GetTrackingInfo) or _G.GetTrackingInfo
+    if not (num and info) then return {} end
+    local ok, n = pcall(num)
+    n = ok and K.Plain(n)
+    if type(n) ~= "number" or n == 0 then return {} end
+    clientIcon = {}
+    for i = 1, n do
+        local ok2, a, b = pcall(info, i)
+        local name, tex
+        if ok2 and type(a) == "table" then name, tex = K.Plain(a.name), K.Plain(a.texture)
+        elseif ok2 then name, tex = K.Plain(a), K.Plain(b) end
+        if type(name) == "string" and (type(tex) == "number" or type(tex) == "string") then
+            local low = name:lower()
+            for cat, words in pairs(MK.TRACK_WORDS) do
+                for _, w in ipairs(words) do
+                    if not clientIcon[cat] and low:find(w, 1, true) then clientIcon[cat] = tex end
+                end
+            end
+        end
+    end
+    return clientIcon
+end
+function MK.Icon(cat)
+    return MK.ClientIcons()[cat] or MK.TOWN_ICON[cat] or (MK.ICONS .. (cat or "vendor"))
+end
 MK.TOWN_ORDER = { "mail", "bank", "auction", "inn", "repair", "class", "profession", "stable",
     "vendor", "trade", "food", "reagents", "ammo" }
 MK.TOWN_DEFAULT = { mail = true, bank = true, auction = true, inn = true, repair = true, class = true,
@@ -90,7 +131,7 @@ MK.FACTION = { "Allianz", "Horde", "neutral" }
 -- 6.26.5.0 (Beta-Test: "sehr praegnant, ein bisschen dezenter"): kleiner,
 -- Hof und Rand leiser, das ganze Symbol etwas durchsichtig - unter der Maus
 -- wieder voll.
-MK.SPIRIT = 14       -- Groesse des Punkts (Bildpunkte, bei jedem Zoom)
+MK.SPIRIT = 20       -- Groesse des Punkts (Bildpunkte, bei jedem Zoom)
 MK.ARROW = 22        -- Groesse des Pfeils
 MK.ALPHA = 0.8       -- Deckkraft ohne Maus
 MK.HALO = 0.35       -- dunkler Hof
@@ -324,7 +365,7 @@ local function Tooltip(self)
             for _, cat in ipairs(MK.TOWN_ORDER) do
                 local k = cats[cat]
                 if k then
-                gt:AddLine("|T" .. MK.TOWN_ICON[cat] .. ":14:14|t " .. (MK.TOWN_TEXT[cat] or cat) .. (k > 1 and (" ×" .. k) or ""),
+                gt:AddLine("|T" .. MK.Icon(cat) .. ":14:14|t " .. (MK.TOWN_TEXT[cat] or cat) .. (k > 1 and (" ×" .. k) or ""),
                     nrm[1], nrm[2], nrm[3])
                 end
             end
@@ -375,24 +416,33 @@ local function NewPin(canvas)
     p.crossing = { Layer(p, arrow, 1, BLACK, MK.HALO, 3), Layer(p, arrow, 2, w, MK.RIM, 1), Layer(p, arrow, 3, g, 1, 0) }
     -- Flugmeister: Raute; Reise: Kreis mit hellem Kern - je in der Farbe
     -- der Fraktion (der Kern wird beim Einrichten gefaerbt).
-    local diamond = K.MEDIA .. "diamond"
-    p.flight = { Layer(p, diamond, 1, BLACK, MK.HALO, 2), Layer(p, diamond, 2, w, MK.RIM, 0), Layer(p, diamond, 3, g, 1, -2) }
-    p.travel = { Layer(p, disc, 1, BLACK, MK.HALO, 2), Layer(p, disc, 2, g, 1, 0), Layer(p, disc, 3, w, MK.RIM, -4) }
+    -- 1.0.7.27: Geistheiler, Flugmeister, Reisen als gemalte Symbole; die
+    -- Fraktion zeigt ein kleiner Punkt unten rechts.
+    local white = { 1, 1, 1 }
+    p.spirit = { Layer(p, MK.ICONS .. "spirit", 3, white, 1, 2) }
+    local dot = Layer(p, disc, 5, g, 1, 0)
+    dot:ClearAllPoints()
+    dot:SetSize(7, 7)
+    dot:SetPoint("BOTTOMRIGHT", p, "BOTTOMRIGHT", 1, -1)
+    local dotRim = Layer(p, disc, 4, BLACK, 1, 0)
+    dotRim:ClearAllPoints()
+    dotRim:SetSize(9, 9)
+    dotRim:SetPoint("CENTER", dot, "CENTER", 0, 0)
+    p.flight = { Layer(p, MK.ICONS .. "flight", 3, white, 1, 2), dot, dotRim }
+    p.flightArt = p.flight[1]
+    p.travel = { Layer(p, MK.ICONS .. "travel", 3, white, 1, 2), dot, dotRim }
     -- Stadt (1.0.7.3 rund): dunkler Hof, farbiger Ring, darin rund das
     -- Symbol der Art; bei mehreren eine Zahl unten rechts.
-    local ring = Layer(p, disc, 2, w, 1, 0)
     local icon = p:CreateTexture(nil, "ARTWORK", nil, 3)
-    icon:SetPoint("TOPLEFT", p, "TOPLEFT", 2, -2)
-    icon:SetPoint("BOTTOMRIGHT", p, "BOTTOMRIGHT", -2, 2)
-    icon:SetTexCoord(0.1, 0.9, 0.1, 0.9)
-    if icon.SetMask then pcall(icon.SetMask, icon, disc) end
+    icon:SetPoint("TOPLEFT", p, "TOPLEFT", -2, 2)
+    icon:SetPoint("BOTTOMRIGHT", p, "BOTTOMRIGHT", 2, -2)
     p.townIcon = icon
     local count = K.NewText(p, 9, "OVERLAY", 7)
     count:SetPoint("BOTTOMRIGHT", p, "BOTTOMRIGHT", 4, -3)
     count:SetShadowOffset(1, -1)
     p.townCount = count
-    p.town = { Layer(p, disc, 1, BLACK, MK.HALO, 3), ring, icon }
-    p.rim, p.dot = p.spirit[2], p.spirit[3]
+    p.town = { icon }
+    p.rim, p.dot = p.spirit[1], p.spirit[1]
     p.shade, p.arrow = p.crossing[1], p.crossing[3]
     p:SetAlpha(MK.ALPHA)
     p:SetScript("OnEnter", function(self) self:SetAlpha(1) Tooltip(self) end)
@@ -412,19 +462,18 @@ local function Dress(p, e)
     local size = e.kind == "crossing" and MK.ARROW or (e.kind == "town" and MK.TOWN or MK.SPIRIT)
     p:SetSize(size, size)
     if e.kind == "town" then
-        p.townIcon:SetTexture(MK.TOWN_ICON[e.cat] or MK.TOWN_ICON.vendor)
-        local c = e.cat == "mail" and GC.mailPin or GC.townPin
-        p.town[2]:SetVertexColor(c[1], c[2], c[3], 1)
+        p.townIcon:SetTexture(MK.Icon(e.cat))
         p.townCount:SetText(e.n and e.n > 1 and tostring(e.n) or "")
     end
     if e.kind ~= "town" then p.townCount:SetText("") end
     for _, kind in ipairs({ "spirit", "crossing", "flight", "travel", "town" }) do
-        for _, t in ipairs(p[kind]) do t:SetShown(e.kind == kind) end
+        for _, t in ipairs(p[kind]) do t:SetShown(false) end
     end
-    if e.faction then
+    for _, t in ipairs(p[e.kind] or {}) do t:Show() end
+    if e.kind == "flight" then p.flightArt:SetTexture(MK.Icon("flight")) end
+    if e.kind == "flight" or e.kind == "travel" then
         local c = e.faction == 1 and GC.alliance or e.faction == 2 and GC.horde or GC.neutral
-        local core = e.kind == "flight" and p.flight[3] or p.travel[2]
-        core:SetVertexColor(c[1], c[2], c[3], 1)
+        p.flight[2]:SetVertexColor(c[1], c[2], c[3], 1)
     end
     if e.kind == "crossing" then
         local r = tonumber(e.rot) or 0
@@ -515,7 +564,7 @@ function MK.FilterMenu(owner)
         if root.CreateTitle then root:CreateTitle("In Städten") end
         for _, cat in ipairs(MK.TOWN_ORDER) do
             local k = "mapTown_" .. cat
-            local label = "|T" .. MK.TOWN_ICON[cat] .. ":14:14|t " .. MK.TOWN_TEXT[cat]
+            local label = "|T" .. MK.Icon(cat) .. ":14:14|t " .. MK.TOWN_TEXT[cat]
             root:CreateCheckbox(label, function() return K.Get(KEY, k) and true or false end, function()
                 toggle(k)
                 if not K.Get(KEY, "mapTown") and K.Get(KEY, k) then K.Set(KEY, "mapTown", true) end

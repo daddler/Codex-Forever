@@ -10177,20 +10177,14 @@ do
         MK.Place()
         assert(pt[2] == canvas and math.abs(pt[4] - 178) < 0.01 and math.abs(pt[5] + 66) < 0.01, "Geistheiler an falscher Stelle")
         assert(p:GetWidth() == MK.SPIRIT and p.dot:IsShown() and not p.arrow:IsShown(), "Geistheiler nicht als Punkt")
-        -- 6.21.0.1 (Beta-Test: "nicht gut zu sehen"): gross genug, helles
-        -- Gruen mit hellem Rand und dunklem Hof.
-        local gc = WeintCodex.GameColors.mapMark
-        local cr, cg, cb = p.dot:GetVertexColor()
-        -- 6.26.5.0 ("ein bisschen dezenter"): kleiner, leiser, aber nicht weg.
-        assert(MK.SPIRIT >= 12 and MK.SPIRIT < 20 and MK.ARROW >= 18 and MK.ARROW < 30
-            and MK.ALPHA >= 0.6 and MK.ALPHA < 1 and p:GetAlpha() == MK.ALPHA, "Geistheiler nicht dezenter")
+        -- 1.0.7.27: gemaltes Symbol statt Punkt, leiser ohne Maus.
+        assert(MK.SPIRIT >= 16 and MK.SPIRIT <= 24 and MK.ARROW >= 18 and MK.ARROW < 30
+            and MK.ALPHA >= 0.6 and MK.ALPHA < 1 and p:GetAlpha() == MK.ALPHA, "Geistheiler nicht dezent")
         p:GetScript("OnEnter")(p)
         assert(p:GetAlpha() == 1, "unter der Maus nicht voll")
         p:GetScript("OnLeave")(p)
-        assert(cr == gc[1] and cg == gc[2] and cb == gc[3]
-            and gc[2] > WeintCodex.GameColors.friendly[2], "Geistheiler zu klein oder zu dunkel")
-        assert(#p.spirit == 3 and #p.crossing == 3 and p.spirit[1]:IsShown() and p.rim:IsShown()
-            and not p.crossing[2]:IsShown(), "Hof oder Rand fehlt")
+        assert(#p.spirit == 1 and p.spirit[1]:IsShown() and not p.crossing[2]:IsShown(), "Symbol fehlt")
+        assert(type(MK.Icon("bank")) == "string" or type(MK.Icon("bank")) == "number", "Stadtsymbol fehlt")
         -- Unter den Eingaengen.
         assert(p:GetFrameLevel() < (canvas:GetFrameLevel() or 0) + 1500, "Geistheiler ueber den Eingaengen")
         -- 6.22.0.2: die erkundeten Gebiete liegen hoeher als Flaeche + 1500 -

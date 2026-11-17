@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.0.7.27",
+        date    = "17.11.2026",
+        notes   = {
+            "|cff7C6CFFNeue Symbole auf Weltkarte und Minikarte|r – Bank, Gasthaus, Briefkasten, Lehrer und Co. zeigen die Symbole, die das Spiel selbst im Aufspürmenü benutzt; Dungeoneingänge das Dungeon-Symbol des Spiels mit den Stufen darunter; Geistheiler, Schiffe und alles Übrige eigene gemalte Symbole statt Punkten.",
+        },
+    },
+    {
         version = "1.0.7.26",
         date    = "17.11.2026",
         notes   = {
