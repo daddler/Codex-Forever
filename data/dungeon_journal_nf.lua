@@ -238,6 +238,7 @@ J.NF_LOOT = {
             { 11822, "Omnicast Boots", "Füße, Stoff", 3, chance = 36 },
             { 11669, "Naglering", "Finger", 3, chance = 11 },
             { 11819, "Second Wind", "Schmuck", 3, chance = 9 },
+            { 273113, nil, nil, nil },
         },
         high_interrogator_gerstahn = {
             { 11624, "Kentic Amice", "Schulter, Stoff", 3, chance = 22 },
@@ -714,6 +715,7 @@ J.NF_LOOT = {
             { 16715, "Wildheart Boots", "Füße, Leder", 3, chance = 16 },
             { 13213, "Smolderweb's Eye", "Schmuck", 3, chance = 14 },
             { 13183, "Venomspitter", "Einhändig, Streitkolben", 3, chance = 4 },
+            { 249521, nil, nil, nil },
         },
         overlord_wyrmthalak = {
             { 16679, "Beaststalker's Mantle", "Schulter, Schwere Rüstung", 3, chance = 16 },
@@ -1088,6 +1090,7 @@ J.NF_LOOT = {
             { 13937, "Headmaster's Charge", "Zweihändig, Stab", 4, chance = 2 },
             { 13950, "Detention Strap", "Taille, Schwere Rüstung", 3, chance = 1 },
             { 14514, "Pattern: Robe of the Void", "Schneiderei (Muster)", nil },
+            { 13501, "Recipe: Major Mana Potion", "Alchemie (Rezept)", nil },
         },
         instructor_malicia = {
             { 16710, "Shadowcraft Bracers", "Handgelenke, Leder", 3, chance = 4 },
@@ -1155,6 +1158,8 @@ J.NF_LOOT = {
             { 14340, "Freezing Lich Robes", "Brust, Stoff", 3, chance = 14 },
             { 14503, "Death's Clutch", "Schulter, Leder", 3, chance = 14 },
             { 13314, "Alanna's Embrace", "Brust, Stoff", 4, chance = 1 },
+            { 13521, "Recipe: Flask of Supreme Power", "Alchemie (Rezept)", nil },
+            { 273112, nil, nil, nil },
         },
         rattlegore = {
             { 16711, "Shadowcraft Boots", "Füße, Leder", 3, chance = 18 },
@@ -1291,6 +1296,8 @@ J.NF_LOOT = {
             { 18717, "Hammer of the Grand Crusader", "Zweihändig, Streitkolben", 3 },
             { 18718, "Grand Crusader's Helm", "Kopf, Platte", 3 },
             { 18720, "Shroud of the Nathrezim", "Schulter, Stoff", 3 },
+            { 14512, "Pattern: Truefaith Vestments", "Schneiderei (Muster)", nil },
+            { 13520, "Recipe: Flask of Distilled Wisdom", "Alchemie (Rezept)", nil },
             { 22334, "Band of Mending", "Finger", 3, chance = 2 },
         },
         baron_rivendare = {
@@ -1370,6 +1377,7 @@ J.NF_LOOT = {
         malor_the_zealous = {
             { 276398, nil, nil, nil },
             { 276399, nil, nil, nil },
+            { 276397, nil, nil, nil },
         },
         nerubenkan = {
             { 13529, "Husk of Nerub'enkan", "Schildhand, Schild", 3, chance = 18 },
@@ -1667,6 +1675,7 @@ J.NF_LOOT = {
             { 16666, "Vest of Elements", "Brust, Schwere Rüstung", 3, chance = 6 },
             { 12592, "Blackblade of Shahram", "Zweihändig, Schwert", 4, chance = 2 },
             { 15730, "Pattern: Red Dragonscale Breastplate", "Lederverarbeitung (Muster)", nil },
+            { 13519, "Recipe: Flask of the Titans", "Alchemie (Rezept)", nil },
         },
         goraluk_anvilcrack = {
             { 13498, "Handcrafted Mastersmith Leggings", "Beine, Platte", 3, chance = 28 },
@@ -1676,6 +1685,7 @@ J.NF_LOOT = {
             { 12834, "Plans: Arcanite Champion", "Schmiedekunst (Pläne)", nil },
             { 12837, "Plans: Masterwork Stormhammer", "Schmiedekunst (Pläne)", nil },
             { 228312, nil, nil, nil },
+            { 12728, nil, nil, nil },
         },
         jed_runewatcher = {
             { 12605, "Serpentine Skuller", "Distanz, Zauberstab", 3, chance = 33 },
@@ -1916,6 +1926,11 @@ J.NF_OTHERS = {
             { 287032, nil, nil, nil },
             { 287034, nil, nil, nil },
             { 287028, nil, nil, nil },
+            { 287029, nil, nil, nil },
+            { 287030, nil, nil, nil },
+            { 287033, nil, nil, nil },
+            { 251453, nil, nil, nil },
+            { 252893, nil, nil, nil },
         } },
     },
     blackrock_depths = {
@@ -1967,6 +1982,12 @@ J.NF_OTHERS = {
             { 22317, "Lefty's Brass Knuckle", "Waffenhand, Faustwaffe", 3 },
             { 22318, "Malgen's Long Bow", "Distanz, Bogen", 3 },
             { 22330, "Shroud of Arcane Mastery", "Rücken", 3 },
+            { 11611, nil, nil, nil },
+            { 16049, nil, nil, nil },
+            { 16048, nil, nil, nil },
+            { 18654, nil, nil, nil },
+            { 16053, nil, nil, nil },
+            { 18661, nil, nil, nil },
         } },
     },
     city_of_dalaran = {
@@ -2137,6 +2158,11 @@ J.NF_OTHERS = {
             { 13260, "Wind Dancer Boots", "Schwere Rüstung", 3 },
             { 16717, "Wildheart Gloves", "Hände, Leder", 3 },
             { 13371, nil, nil, nil },
+            { 251451, nil, nil, nil },
+            { 14513, nil, nil, nil },
+            { 15775, nil, nil, nil },
+            { 16250, nil, nil, nil },
+            { 16244, nil, nil, nil },
         } },
     },
     razorfen_downs = {
@@ -2290,6 +2316,15 @@ J.NF_OTHERS = {
             { 18700, "Malefic Bracers", "Leder", 3 },
             { 18701, "Innervating Band", nil, 3 },
             { 18702, "Belt of the Ordained", "Platte", 3 },
+            { 16685, nil, nil, nil },
+            { 16702, nil, nil, nil },
+            { 16714, nil, nil, nil },
+            { 16671, nil, nil, nil },
+            { 16254, nil, nil, nil },
+            { 16255, nil, nil, nil },
+            { 15776, nil, nil, nil },
+            { 15773, nil, nil, nil },
+            { 252940, nil, nil, nil },
         } },
     },
     shadowfang_keep = {
@@ -2353,6 +2388,8 @@ J.NF_OTHERS = {
         } },
         { name = "Gegner unterwegs", items = {
             { 287037, nil, nil, nil },
+            { 287044, nil, nil, nil },
+            { 287045, nil, nil, nil },
         } },
     },
     stratholme = {
@@ -2377,6 +2414,14 @@ J.NF_OTHERS = {
             { 18743, "Gracious Cape", "Stoff", 3 },
             { 18744, "Plaguebat Fur Gloves", "Leder", 3 },
             { 18745, "Sacred Cloth Leggings", "Stoff", 3 },
+            { 16710, "Shadowcraft Bracers", "Handgelenke, Leder", 3 },
+            { 16249, nil, nil, nil },
+            { 15777, nil, nil, nil },
+            { 18658, nil, nil, nil },
+            { 16052, nil, nil, nil },
+            { 16248, nil, nil, nil },
+            { 14495, nil, nil, nil },
+            { 15768, nil, nil, nil },
         } },
     },
     sunken_temple = {
@@ -2488,6 +2533,7 @@ J.NF_OTHERS = {
             { 12953, "Dragoneye Coif", "Kopf, Schwere Rüstung", 3, chance = 19 },
             { 12952, "Gyth's Skull", "Kopf, Platte", 3, chance = 18 },
             { 22225, "Dragonskin Cowl", "Kopf, Stoff", 3, chance = 16 },
+            { 13522, "Recipe: Flask of Chromatic Resistance", "Alchemie (Rezept)", nil },
         } },
         { name = "Gegner unterwegs", items = {
             { 16683, nil, nil, nil, chance = 3 },
@@ -2500,6 +2546,7 @@ J.NF_OTHERS = {
             { 13260, "Wind Dancer Boots", "Schwere Rüstung", 3 },
             { 16717, "Wildheart Gloves", "Hände, Leder", 3 },
             { 13371, nil, nil, nil },
+            { 16247, nil, nil, nil },
         } },
     },
     wailing_caverns = {
@@ -2650,7 +2697,7 @@ J.NOT_YET = {
 
 J.NF_QUESTS = {
     alcaz_island_prison = {
-        { id = 96337, name = "More Valuable Than Gold", level = 53, requires = 48, faction = "both", turninNpc = { name = "Connery's Trunk", map = 1436, x = 0.434, y = 0.679 } },
+        { id = 96337, name = "More Valuable Than Gold", level = 53, requires = 48, faction = "both", turninNpc = { name = "Connerys Truhe", map = 1436, x = 0.434, y = 0.679 } },
         { id = 96377, name = "State Secrets", level = 53, requires = 48, faction = "alliance", turninNpc = { name = "Renzik \"Das Messer\"", map = 1453, x = 0.783, y = 0.711 } },
         { id = 96772, name = "The Dragon's Journal", level = 53, requires = 46, faction = "alliance", giverNpc = { name = "Erzmagier Lan'dalock", map = 1416, x = 0.153, y = 0.739 }, turninNpc = { name = "Erzmagier Lan'dalock", map = 1416, x = 0.153, y = 0.739 } },
         { id = 95309, name = "No Orc Left Behind", level = 53, requires = 48, faction = "horde", giverNpc = { name = "Sergeant Ulka", map = 1445, x = 0.703, y = 0.189 } },
@@ -2668,14 +2715,14 @@ J.NF_QUESTS = {
     },
     blackmaw_hold = {
         { id = 92343, name = "Get to the Roots of It", level = 55, requires = 45, faction = "horde", giverNpc = { name = "Nara Wildmane", map = 1456, x = 0.757, y = 0.316 } },
-        { id = 97198, name = "Blackmaw Magic", level = 59, requires = 52, faction = "horde", giverNpc = { name = "Muln Earthfury", map = 1412, x = 0.334, y = 0.226 } },
+        { id = 97198, name = "Blackmaw Magic", level = 59, requires = 52, faction = "horde", giverNpc = { name = "Muln Earthfury", map = 1412, x = 0.334, y = 0.226 }, turninNpc = { name = "Muln Earthfury", map = 1412, x = 0.334, y = 0.226 } },
         { id = 92344, name = "Get to the Roots of It", level = 55, requires = 45, faction = "alliance", giverNpc = { name = "Mathrengyl Bearwalker", map = 1457, x = 0.354, y = 0.084 }, turninNpc = { name = "Mathrengyl Bearwalker", map = 1457, x = 0.354, y = 0.084 } },
-        { id = 97173, name = "Blackmaw Magic", level = 59, requires = 52, faction = "alliance", giverNpc = { name = "Erzmagier Timear", map = 1416, x = 0.154, y = 0.741 }, turninNpc = { name = "Erzmagier Timear", map = 1416, x = 0.154, y = 0.741 } },
+        { id = 97173, name = "Blackmaw Magic", level = 59, requires = 52, faction = "alliance", giverNpc = { name = "Erzmagier Timear", map = 1416, x = 0.154, y = 0.741 } },
         { id = 92066, name = "The Twin Bears", level = 55, requires = 47, faction = "both" },
         { id = 92069, name = "Claws That Rend, Tusks that Gore", level = 58, requires = 45, faction = "both", giverNpc = { name = "Ogtinc", map = 1447, x = 0.424, y = 0.426 }, turninNpc = { name = "Ogtinc", map = 1447, x = 0.424, y = 0.426 } },
         { id = 97327, name = "Blackmaw Pouches", level = 60, requires = 55, faction = "both", giverNpc = { name = "Ekkal", map = 1447, x = 0.42, y = 0.389 }, turninNpc = { name = "Ekkal", map = 1447, x = 0.42, y = 0.389 } },
         { id = 92065, name = "Blackmaw Reclamation", level = 60, requires = 47, faction = "both" },
-        { id = 92070, name = "A Lost Memento", level = 47, requires = 47, faction = "both" },
+        { id = 92070, name = "A Lost Memento", level = 55, requires = 47, faction = "both" },
     },
     blackrock_depths = {
         { id = 3906, name = "Disharmony of Flame", level = 52, requires = 48, faction = "horde", giverNpc = { name = "Thunderheart", map = 1418, x = 0.033, y = 0.483 }, turninNpc = { name = "Thunderheart", map = 1418, x = 0.033, y = 0.483 } },

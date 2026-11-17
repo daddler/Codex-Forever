@@ -94,7 +94,7 @@ def main():
         "",
         "WeintCodex = WeintCodex or {}",
         "WeintCodex.RecipeSources = {",
-        '    source = { kind = "community", label = "Herkunft der Rezepte: Wissensstand der Community" },',
+        '    source = { kind = "community", label = "Herkunft der Rezepte: von Spielern gesammelt" },',
         "    r = {",
     ]
     for i, (v, d, o, q, world) in sorted(rows.items()):

@@ -188,7 +188,7 @@ def main():
         "WeintCodex.ProfessionData = WeintCodex.ProfessionData or {}",
         "local P = WeintCodex.ProfessionData",
         "",
-        'P.NF_SOURCE = { kind = "community", label = "Herkunft, Kosten und Ränge: Wissensstand der Community" }',
+        'P.NF_SOURCE = { kind = "community", label = "Herkunft, Kosten und Ränge: im Spiel gesammelt" }',
         "",
         "P.NF_ADD = {",
     ]

@@ -44,7 +44,7 @@ local out = {
     "",
     "WeintCodex = WeintCodex or {}",
     "WeintCodex.FieldJournalData = {",
-    '    SOURCE = { kind = "community", label = "Wissensstand der Community, für Forever unbestätigt" },',
+    '    SOURCE = { kind = "community", label = "von Spielern gesammelt" },',
 }
 for _, part in ipairs({ "fish", "herbs", "dishes" }) do
     out[#out + 1] = "    " .. part .. " = {"
@@ -67,7 +67,7 @@ out = {
     "",
     "WeintCodex = WeintCodex or {}",
     "WeintCodex.RepRewardsData = {",
-    '    SOURCE = { kind = "community", label = "Wissensstand der Community, für Forever unbestätigt" },',
+    '    SOURCE = { kind = "community", label = "von Spielern gesammelt" },',
     "    factions = {",
 }
 local n = 0

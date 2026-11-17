@@ -2057,6 +2057,9 @@ J.HAND_ENTRANCES = {
     alcaz_island_prison = { { map = 1445, x = 0.753, y = 0.141 } },
     blackmaw_hold       = { { map = 1447, x = 0.386, y = 0.332 } },
     shapers_terrace     = { { map = 1449, x = 0.481, y = 0.061 } },
+    -- 1.0.7.28 (Dungeon Journal 2.0.9, 17.11.2026): unter Wasser westlich
+    -- des Üblen Riffs, Schlingendorntal.
+    drowned_city        = { { map = 1434, x = 0.214, y = 0.279 } },
 }
 
 -- Eingaenge, die Spieler in Forever selbst abgelesen haben. Sie ersetzen

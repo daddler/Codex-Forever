@@ -392,7 +392,7 @@ def write(nf, dd):
     w("J.NF_SOURCE = {")
     w('    kind  = "community",')
     w('    date  = "13.11.2026",')
-    w('    label = "Beute: Wissensstand aus der Beta, Dropchancen gezählt (alte Bosse zusammen mit Classic)",')
+    w('    label = "Beute im Spiel gezählt, mit Dropchancen (alte Bosse zusammen mit Classic)",')
     w("}")
     w("")
     w("J.NF_LOOT = {")

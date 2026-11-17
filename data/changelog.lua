@@ -25,6 +25,7 @@ WeintCodex_ChangelogData = {
         version = "1.0.7.28",
         date    = "17.11.2026",
         notes   = {
+            "|cff7C6CFFDatenstand vom 17.11.|r – Quests (29 neu, 45 nicht mehr im Spiel, 214 berichtigt), Herkunft der Rezepte, Dungeonbeute, Fertigkeitsstufen der Berufe und der Eingang der Versunkenen Stadt.",
             "|cff7C6CFFDer Eingang des Scharlachroten Klosters liegt jetzt an der richtigen Seite|r – nach der Rückmeldung eines Spielers auf 81, 32 in Tirisfal.",
         },
     },

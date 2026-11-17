@@ -16,6 +16,18 @@ nicht zusammen.
   in Forever abgelesen, ersetzt den erzeugten Classic-Wert 82,6/33,8):
   1420 · 0,810/0,322.
 
+### Daten (Abgleich 17.11.2026)
+- Neu erzeugt: `data/questdb.lua` (QuestieDB 1.1.2, Questie 12.10.0:
+  +29, −45, 214 geändert), `data/recipe_sources.lua`,
+  `data/dungeon_journal_nf.lua` (Naowh 1.3.2), `data/professions_su.lua`
+  (SkillUpForever 1.13.0, Schwellen Build 70938). Naowh QoL/Combat/
+  Training/Extra/Berufslehrer ohne Änderung.
+- Eingang Drowned City (Dungeon Journal 2.0.9) in `J.HAND_ENTRANCES`.
+  Hall of Thanes: Journal 0,435/0,520 gegen Codex 0,318/0,464 – nicht
+  übernommen, ungeklärt.
+- Importer schreiben die neuen Herkunftstexte (keine „Wissensstand“/
+  „unbestätigt“ mehr).
+
 ## [1.0.7.27] – 2026-11-17
 
 ### Geändert
