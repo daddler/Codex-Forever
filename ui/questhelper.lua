@@ -501,6 +501,20 @@ end
 -- QH.CLUSTER (Anteil der Kartenbreite) beieinander liegen, werden EIN
 -- Punkt in ihrer Mitte; e.count sagt, wie viele Stellen er vertritt.
 QH.CLUSTER = 0.06
+-- Questgebiete einer Quest auf dieser Karte (Text "Karte,x,y;...").
+function QH.Camps(out, seen, id, mapID)
+    local raw = WeintCodex.QuestSpotsNF and WeintCodex.QuestSpotsNF[id]
+    if type(raw) ~= "string" then return 0 end
+    local n = 0
+    for m, x, y in raw:gmatch("(%d+),([%d%.]+),([%d%.]+)") do
+        if tonumber(m) == mapID then
+            Add(out, seen, "target", 0, false, id, tonumber(x) / 100, tonumber(y) / 100, nil, "camp")
+            n = n + 1
+        end
+    end
+    return n
+end
+
 function QH.Cluster(list)
     local out, groups = {}, {}
     local r2 = QH.CLUSTER * QH.CLUSTER
@@ -572,6 +586,7 @@ function QH.ForMap(mapID)
                 end
             end
             if wantZ and not done and (allZ or id == focus) then
+                local before = #out
                 for _, npc in ipairs(q[10]) do
                     QH.Places(d.n[npc], mapID, function(x, y) Add(out, seen, "target", npc, false, id, x, y, nil, "slay") end)
                 end
@@ -589,6 +604,10 @@ function QH.ForMap(mapID)
                         end
                     end
                 end
+                -- 1.0.7.29: kennt der Questbestand keine Ziellage, die
+                -- Questgebiete aus data/questspots_nf.lua (von Spielern
+                -- gesammelt) - z. B. Gegenstaende, deren Objekt keine Lage hat.
+                if #out == before then QH.Camps(out, seen, id, mapID) end
             end
         end
     end
@@ -713,10 +732,10 @@ local function Tooltip(self)
     end
     local rec = e.obj and d.o[e.who] or d.n[e.who]
     local t, n, m = C.textBright, C.textNormal, C.textMuted
-    gt:SetText(QH.Name(rec) or (e.game and "Questgeber") or "?", t[1], t[2], t[3])
+    gt:SetText(QH.Name(rec) or (e.game and "Questgeber") or (e.sub == "camp" and "Questgebiet") or "?", t[1], t[2], t[3])
     local head = QH.KIND_TEXT[e.kind] or "Quest"
     if e.kind == "target" then
-        head = ({ slay = "Gegner", loot = "Beute", object = "Gegenstand in der Welt" })[e.sub or "slay"] or head
+        head = ({ slay = "Gegner", loot = "Beute", object = "Gegenstand in der Welt", camp = "Ziel in diesem Gebiet" })[e.sub or "slay"] or head
     end
     local hc = e.kind == "avail" and C.gold or (e.kind == "turnin" and C.green) or C.infoBright
     gt:AddLine(head, hc[1], hc[2], hc[3])
@@ -861,6 +880,7 @@ QH.ICONS = {
     slay   = { file = "Interface\\AddOns\\WeintCodex\\media\\questhelper\\slay_mono" },
     loot   = { file = "Interface\\AddOns\\WeintCodex\\media\\questhelper\\loot_mono" },
     object = { file = "Interface\\AddOns\\WeintCodex\\media\\questhelper\\object_mono" },
+    camp   = { file = "Interface\\AddOns\\WeintCodex\\media\\questhelper\\object_mono" },
     book   = { file = "Interface\\AddOns\\WeintCodex\\media\\ui\\icon_book" },
 }
 

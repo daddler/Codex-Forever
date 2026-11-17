@@ -9,6 +9,20 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.0.7.29] – 2026-11-17
+
+### Behoben
+- Kartensymbole: `NewPin` legte die alten Scheiben (Geistheiler, Pfeil) noch
+  an und blendete sie nie aus – grün unter jedem Symbol. Übergang jetzt
+  `media/mapicons/arrow` (eine Lage, gedreht).
+
+### Neu
+- Importer `import_naowh_journeys.lua` → `data/questspots_nf.lua` (1326
+  Quests, Zielgebiete aus Naowh JourneysData 1.3.2, nur Lagen).
+  `QH.Camps` zeigt sie, wenn der Questbestand keine Ziellage kennt.
+- Vergleich `wt_dump.lua` (What's Training 11.4.8, MIT): einzige
+  Abweichung – Druide 1328616/414644/1235826/1235827 `requiredTalentId`.
+
 ## [1.0.7.28] – 2026-11-17
 
 ### Behoben

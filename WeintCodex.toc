@@ -2,7 +2,7 @@
 ## Title: |cff7C6CFFWeintCodex|r
 ## Notes: Raid Guide & Intelligence System — Forever Edition
 ## Author: Fabian
-## Version: 1.0.7.28
+## Version: 1.0.7.29
 ## SavedVariables: WeintCodex_SavedData, WeintCompanionDB, WeintCompanionInboxDB, WeintCodex_WhispersAccount
 ## SavedVariablesPerCharacter: WeintCodex_Whispers, WeintCodex_Backup
 
@@ -163,6 +163,7 @@ data/nav/nav2991_1.lua
 data/nav_blocked.lua
 # Questhilfe: Quests, Geber, Ziele (6.30.0.0, erzeugt); gelesen von ui/questhelper.lua.
 data/questdb.lua
+data/questspots_nf.lua
 data/attunements.lua
 data/fieldjournal.lua
 data/reprewards.lua

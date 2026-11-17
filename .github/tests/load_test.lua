@@ -1418,6 +1418,17 @@ do
         assert(QH.Offer(2, d.q[2], me) == "avail", "Folgequest nach Vorquest fehlt")
         assert(QH.Offer(1, d.q[1], me) == nil, "erledigte Quest angeboten")
         assert(QH.Offer(3, d.q[3], me) == nil, "Hordequest fuer Menschen")
+        -- 1.0.7.29: Questgebiete, wenn der Bestand keine Ziellage kennt.
+        do
+            local keep = WeintCodex.QuestSpotsNF
+            WeintCodex.QuestSpotsNF = { [77] = "1429,50.0,40.0;1430,10.0,10.0" }
+            local out, seen = {}, {}
+            assert(QH.Camps(out, seen, 77, 1429) == 1 and out[1].sub == "camp"
+                and math.abs(out[1].x - 0.5) < 1e-9, "Questgebiet fehlt")
+            assert(QH.Camps({}, {}, 78, 1429) == 0, "Questgebiet erfunden")
+            WeintCodex.QuestSpotsNF = keep
+        end
+        assert(type(WeintCodex.QuestSpotsNF) == "table", "Questgebiete nicht geladen")
         -- 1.0.7.25: Stufe 0 = unbekannt, nie als neue Quest.
         local zero = {}
         for k, v in pairs(d.q[1]) do zero[k] = v end

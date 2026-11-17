@@ -22,6 +22,15 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.0.7.29",
+        date    = "17.11.2026",
+        notes   = {
+            "|cff7C6CFFÜbergänge und Geistheiler sehen auf der Karte jetzt sauber aus|r – ein gemalter Pfeil in Laufrichtung, keine grünen Scheiben mehr darunter.",
+            "|cff7C6CFFQuestziele auch dort, wo bisher keins stand|r – für über 1300 Quests zeigt die Questhilfe jetzt das Gebiet ihrer Ziele.",
+            "|cff7C6CFFLehrer|r – vier Druidenzauber nennen jetzt das Talent, das sie voraussetzen.",
+        },
+    },
+    {
         version = "1.0.7.28",
         date    = "17.11.2026",
         notes   = {
