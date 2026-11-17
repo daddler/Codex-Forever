@@ -2059,6 +2059,16 @@ J.HAND_ENTRANCES = {
     shapers_terrace     = { { map = 1449, x = 0.481, y = 0.061 } },
 }
 
+-- Eingaenge, die Spieler in Forever selbst abgelesen haben. Sie ersetzen
+-- den erzeugten Wert (der Abgleich traegt die Lage aus Classic).
+--   scarlet_monastery  1.0.7.28, Rueckmeldung eines Spielers (Schurken-
+--                      Klassenquest "Das Auge von Bhossca"): der Kreis lag
+--                      auf der falschen Seite des Gebaeudes; der Eingang
+--                      liegt bei 81, 32 (Koordinaten der Minikarte).
+J.MEASURED_ENTRANCES = {
+    scarlet_monastery = { { map = 1420, x = 0.810, y = 0.322 } },
+}
+
 --------------------------------------------------
 -- Abgleich mit ForeverGuide (6.14.0.0, data/dungeon_journal_fg.lua)
 --------------------------------------------------
@@ -2132,6 +2142,7 @@ function J.MergeForeverGuide()
     for did, list in pairs(J.HAND_ENTRANCES or {}) do
         if not J.ENTRANCES[did] then J.ENTRANCES[did] = list end
     end
+    for did, list in pairs(J.MEASURED_ENTRANCES or {}) do J.ENTRANCES[did] = list end
     -- Beute: was schon als Tabelle dasteht, gleich; je Dungeon gebaute
     -- (Funktionen) erst beim ersten Blick auf diesen Dungeon.
     for did, v in pairs(J.CLASSIC_LOOT or {}) do

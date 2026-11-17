@@ -9,6 +9,13 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.0.7.28] – 2026-11-17
+
+### Behoben
+- Eingang Scharlachrotes Kloster: neu `J.MEASURED_ENTRANCES` (von Spielern
+  in Forever abgelesen, ersetzt den erzeugten Classic-Wert 82,6/33,8):
+  1420 · 0,810/0,322.
+
 ## [1.0.7.27] – 2026-11-17
 
 ### Geändert
