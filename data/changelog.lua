@@ -22,6 +22,14 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.0.7.26",
+        date    = "17.11.2026",
+        notes   = {
+            "|cff7C6CFFFertige Quests zeigen ihr Fragezeichen auf der Minikarte auch, wenn du direkt davorstehst|r – bisher verschwand es unter deinem Pfeil.",
+            "|cff7C6CFFDie Glitzerfarbe bleibt, auch wenn deine Fertigkeit noch zu niedrig ist|r – dann nur gedämpft statt grau-weiß.",
+        },
+    },
+    {
         version = "1.0.7.25",
         date    = "17.11.2026",
         notes   = {

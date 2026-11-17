@@ -1283,7 +1283,11 @@ function QH.PlaceMinimap()
         if not (e.kind == "turnin" and e.faint) then
             dx, dy = QH.MinimapOffset(e, mapID, pc, pn, pw, yards, half, facing, square)
         end
-        if QH.UnderArrow(dx, dy) then dx = nil end
+        -- 1.0.7.26 (Spieler: "vor dem Questgeber, Quest fertig - auf der
+        -- Minikarte nur ein Ausrufezeichen"): die freie Mitte um den Pfeil
+        -- (1.0.7.5) schluckte das "?" genau dann, wenn man davorsteht. Eine
+        -- fertige Abgabe bleibt; der Pfeil liegt ohnehin darueber.
+        if e.kind ~= "turnin" and QH.UnderArrow(dx, dy) then dx = nil end
         if dx then
             n = n + 1
             local p = mmPins[n]

@@ -509,7 +509,17 @@ function SP.BaseColor(kind)
     return C.warningBright
 end
 local function Paint(blocked, kind)
-    local c, w = blocked and C.textMuted or SP.BaseColor(kind), C.textBright
+    -- 1.0.7.26 (Spieler: "beim Jaeger klappen die Farben, beim Krieger
+    -- nicht"): zu niedrige Fertigkeit malte grau - und grau sieht im
+    -- addierten Licht weiss aus, egal welche Farbe gewaehlt war. Jetzt die
+    -- gewaehlte Farbe, nur zur Haelfte ins Grau gezogen und dunkler.
+    local c, w = SP.BaseColor(kind), C.textBright
+    if blocked then
+        local g, out = C.textMuted, SP.dimColor or {}
+        SP.dimColor = out
+        for i = 1, 3 do out[i] = (c[i] * 0.5 + g[i] * 0.5) * 0.6 end
+        c = out
+    end
     for _, t in ipairs(glow.dots) do
         -- 1.0.7.24 (Spieler: "bleibt immer weiss, egal welche Farbe"): jede
         -- Schicht wird ADDIERT. Mit Weiss gemischt zaehlten sich Gruen und
@@ -747,7 +757,7 @@ local function Build(B)
     B:Row({ type = "toggle", label = "Questgegenstände glitzern immer", key = "sparkleLoot",
             description = "Schaltet die Umrisse aus und das Glitzern des Spiels an – auch nach einem Wechsel der Grafikstufe. Aus: die Umrisse kommen erst nach einem Neustart des Spiels zurück." },
           { type = "toggle", label = "Kräuter und Erz glitzern", key = "sparkleNodes",
-            description = "Golden über dem nächsten Kraut oder der nächsten Erzader (bis etwa 15 m), grau, wenn deine Fertigkeit noch zu niedrig ist. Nur mit Kräuterkunde bzw. Bergbau – ohne den Beruf zeigt das Spiel das Objekt nicht an. Im Kampf nicht." })
+            description = "In der gewählten Farbe über dem nächsten Kraut oder der nächsten Erzader (bis etwa 15 m), gedämpft, wenn deine Fertigkeit noch zu niedrig ist. Nur mit Kräuterkunde bzw. Bergbau – ohne den Beruf zeigt das Spiel das Objekt nicht an. Im Kampf nicht." })
     local function off() return not K.Get(KEY, "sparkleNodes") end
     B:Row({ type = "dropdown", label = "Effekt", key = "sparkleEffect", disabled = off, items = SP.EFFECT_ITEMS },
           { type = "dropdown", label = "Stärke", key = "sparkleStrength", disabled = off, items = {

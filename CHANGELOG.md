@@ -9,6 +9,14 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.0.7.26] – 2026-11-17
+
+### Behoben
+- Minikarte: „?“ einer fertigen Quest fiel in die freie Mitte um den Pfeil
+  (`QH.UnderArrow`, 1.0.7.5) – Abgaben sind davon jetzt ausgenommen.
+- Glitzern: zu niedrige Fertigkeit malte `textMuted` (addiert ≈ weiß) statt
+  der gewählten Farbe; jetzt die Farbe halb ins Grau, dunkler.
+
 ## [1.0.7.25] – 2026-11-17
 
 ### Behoben
