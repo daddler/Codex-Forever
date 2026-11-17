@@ -298,12 +298,20 @@ def signpost():
     return i
 
 
+def arrow():
+    i = Icon()
+    i.part(poly([(128, 18), (222, 128), (168, 128), (168, 236), (88, 236), (88, 128), (34, 128)]),
+           (190, 255, 170), (40, 150, 60))
+    i.detail(lines([(128, 60), (128, 210)], 10), (230, 255, 220))
+    return i
+
+
 ICONS = {
     "vendor": bag, "repair": anvil, "bank": coins, "auction": gavel, "inn": mug,
     "mail": letter, "class": lambda: book(RED), "profession": lambda: book(BLUE),
     "stable": paw, "food": drumstick, "reagents": pouch, "ammo": arrows,
     "trade": cloth, "portal": portal, "spirit": wings, "flight": gryphon_wing,
-    "travel": ship, "crossing": signpost,
+    "travel": ship, "crossing": signpost, "arrow": arrow,
 }
 
 if __name__ == "__main__":

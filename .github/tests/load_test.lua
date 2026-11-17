@@ -10183,7 +10183,7 @@ do
         p:GetScript("OnEnter")(p)
         assert(p:GetAlpha() == 1, "unter der Maus nicht voll")
         p:GetScript("OnLeave")(p)
-        assert(#p.spirit == 1 and p.spirit[1]:IsShown() and not p.crossing[2]:IsShown(), "Symbol fehlt")
+        assert(#p.spirit == 1 and p.spirit[1]:IsShown() and not p.crossing[1]:IsShown(), "Symbol fehlt")
         assert(type(MK.Icon("bank")) == "string" or type(MK.Icon("bank")) == "number", "Stadtsymbol fehlt")
         -- Unter den Eingaengen.
         assert(p:GetFrameLevel() < (canvas:GetFrameLevel() or 0) + 1500, "Geistheiler ueber den Eingaengen")
@@ -10224,7 +10224,8 @@ do
             if t ~= MK.pins[8].arrow then t.SetRotation = function(_, r) layers[li] = r end end
         end
         MK.Place()
-        assert(layers[1] == 2.7 and layers[2] == 2.7, "Schatten oder Rand nicht gedreht")
+        -- 1.0.7.29: eine Lage (gemalter Pfeil) - nichts Weiteres zu drehen.
+        assert(#MK.pins[8].crossing == 1, "Pfeil hat wieder mehrere Lagen")
         assert(set[8] == 2.7 and set[9] == 0 and set[10] == 4.4 and set[11] == 3.2, "Richtungen: "
             .. tostring(set[8]) .. " " .. tostring(set[9]) .. " " .. tostring(set[10]) .. " " .. tostring(set[11]))
 

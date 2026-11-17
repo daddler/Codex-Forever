@@ -410,10 +410,11 @@ local function NewPin(canvas)
     p:EnableMouse(true)
     local g, w = GC.mapMark, C.textBright
     local disc, arrow = K.MEDIA .. "disc", K.ARROW_TEXTURE
-    -- Punkt: dunkler Hof, heller Ring, gruener Kern (eigene Bilder).
-    p.spirit = { Layer(p, disc, 1, BLACK, MK.HALO, 2), Layer(p, disc, 2, w, MK.RIM, 0), Layer(p, disc, 3, g, 1, -2) }
-    -- Pfeil: dunkler Schatten, heller Rand, gruener Pfeil.
-    p.crossing = { Layer(p, arrow, 1, BLACK, MK.HALO, 3), Layer(p, arrow, 2, w, MK.RIM, 1), Layer(p, arrow, 3, g, 1, 0) }
+    -- 1.0.7.29 (Spieler: "Uebergang sieht befremdlich aus, Geistheiler
+    -- gruen unterlegt"): bis hierher legte NewPin noch die alten Scheiben
+    -- an und blendete sie nie aus - sie lagen gruen unter jedem Symbol.
+    -- Uebergang jetzt ein gemalter Pfeil, gedreht in die Richtung.
+    p.crossing = { Layer(p, MK.ICONS .. "arrow", 3, { 1, 1, 1 }, 1, 2) }
     -- Flugmeister: Raute; Reise: Kreis mit hellem Kern - je in der Farbe
     -- der Fraktion (der Kern wird beim Einrichten gefaerbt).
     -- 1.0.7.27: Geistheiler, Flugmeister, Reisen als gemalte Symbole; die
@@ -443,7 +444,7 @@ local function NewPin(canvas)
     p.townCount = count
     p.town = { icon }
     p.rim, p.dot = p.spirit[1], p.spirit[1]
-    p.shade, p.arrow = p.crossing[1], p.crossing[3]
+    p.shade, p.arrow = p.crossing[1], p.crossing[1]
     p:SetAlpha(MK.ALPHA)
     p:SetScript("OnEnter", function(self) self:SetAlpha(1) Tooltip(self) end)
     p:SetScript("OnLeave", function(self)
