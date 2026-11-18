@@ -27094,6 +27094,17 @@ do
         local lines = MM.DiagLines()
         local txt = table.concat(lines, "\n")
         assert(txt:find("Ankerbaum", 1, true) and txt:find("Zugriffe auf die Karte", 1, true), txt)
+        -- Rettung: SpartanUI-Verschieber ohne Anker bekommt einen.
+        local pts = {}
+        local mv = CreateFrame("Frame", "SUI_Mover_Minimap", UIParent)
+        mv.GetNumPoints = function() return #pts end
+        mv.SetPoint = function(_, p, rel, rp, x, y) pts[#pts + 1] = { p, rel, rp, x, y } end
+        local ba = CreateFrame("Frame", "SUI_BottomAnchor", UIParent)
+        _G.SUI = { GetModule = function() return { Settings = { position = "BOTTOM,SUI_Art_Classic_Center,BOTTOM,-29,6" } } end }
+        assert(MM.RescueSpartan(), "Rettung nicht gesetzt")
+        assert(pts[1][2] == ba and pts[1][4] == -29 and pts[1][5] == 6, "Rettung falsch verankert")
+        assert(not MM.RescueSpartan(), "Rettung trotz Anker")
+        _G.SUI, _G.SUI_Mover_Minimap, _G.SUI_BottomAnchor = nil, nil, nil
     end)
     Check(ok, "Minikarte: Diagnose" .. (ok and "" or (": " .. tostring(err))))
 end

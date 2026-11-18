@@ -273,13 +273,21 @@ end
 -- Einhaengen
 --------------------------------------------------
 
+ER.foreign = {}
 local prev
 local function Handler(msg, ...)
     if not busy then
         busy = true
         pcall(function()
             local stack = _G.debugstack and _G.debugstack(3) or ""
-            if ER.Ours(msg, stack) then ER.Announce(ER.Record("lua", msg, stack, ER.Situation and ER.Situation())) end
+            if ER.Ours(msg, stack) then ER.Announce(ER.Record("lua", msg, stack, ER.Situation and ER.Situation()))
+            else
+                -- 1.0.7.41: fremde Fehler nur merken (fuer /wcui pruefen, z. B.
+                -- SpartanUI baut seine Minikarte nicht), nie melden, nie aendern.
+                local f = ER.foreign
+                if #f >= 8 then table.remove(f, 1) end
+                f[#f + 1] = tostring(msg):sub(1, 220) .. " | " .. (tostring(stack):match("AddOns[/\\]([^\n]-:%d+)") or "?")
+            end
         end)
         busy = false
     end

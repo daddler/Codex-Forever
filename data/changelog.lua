@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.0.7.41",
+        date    = "18.11.2026",
+        notes   = {
+            "|cff7C6CFFMinikarte mit SpartanUI wieder da|r – findet SpartanUI keinen Platz für seine Minikarte, setzt WeintCodex sie dorthin, wo SpartanUI sie haben will.",
+        },
+    },
+    {
         version = "1.0.7.40",
         date    = "18.11.2026",
         notes   = {

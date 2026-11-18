@@ -883,11 +883,11 @@ local hookedTouch = setmetatable({}, { __mode = "k" })
 local TOUCH_METHODS = { "SetPoint", "ClearAllPoints", "SetAllPoints", "SetParent", "Hide", "SetAlpha", "SetScale", "SetSize" }
 local function Caller()
     if type(_G.debugstack) ~= "function" then return "?" end
-    local ok, s = pcall(_G.debugstack, 3, 4, 0)
+    local ok, s = pcall(_G.debugstack, 2, 8, 0)
     if not ok or type(s) ~= "string" then return "?" end
     -- erste Zeile, die nicht aus dem Blizzard-Hakenwerk stammt
     for line in s:gmatch("[^\n]+") do
-        if not line:find("hooksecurefunc") and not line:find("%[C%]") then
+        if not line:find("hooksecurefunc") and not line:find("%[C%]") and not line:find("WeintCodex[/\\]ui[/\\]minimap") then
             local file, ln = line:match("Interface[/\\]AddOns[/\\](.-)%.lua\"?%]?:(%d+)")
             if not file then file, ln = line:match("([%w_/\\%.]+)%.lua\"?%]?:(%d+)") end
             if file then return file .. ":" .. ln end
@@ -940,6 +940,56 @@ do
         if e == "PLAYER_LOGIN" then self:UnregisterAllEvents() end
         tries = 0
         Look()
+    end)
+end
+
+-- 1.0.7.41: Rettung fuer SpartanUI. Gemessen bei einer Spielerin (1.0.7.40,
+-- /wcui pruefen): SUI_Mover_Minimap hat KEINEN Anker - SpartanUI setzt ihn
+-- an "SUI_Art_<Stil>_Center", und dieser SetPoint scheitert; damit haben
+-- SUI_Minimap und die Karte keine Lage und werden nicht gezeichnet.
+-- WeintCodex setzt den Rahmen dann einmal dorthin, wo SpartanUI ihn haben
+-- will (eigene Einstellung von SpartanUI), notfalls unten an SUI_BottomAnchor.
+-- Nur ausserhalb des Kampfes, nur wenn er wirklich ohne Anker ist - einen
+-- Platz, den SpartanUI gesetzt hat, ruehrt WeintCodex nie an.
+function MM.RescueSpartan()
+    local mover = _G.SUI_Mover_Minimap
+    if type(mover) ~= "table" or not mover.GetNumPoints or K.InCombat() then return false end
+    if (K.Plain(mover:GetNumPoints()) or 0) > 0 then return false end
+    local point, anchorName, rp, x, y = "BOTTOM", nil, "BOTTOM", 0, 0
+    local SUI = _G.SUI
+    local ok, pos = pcall(function()
+        return SUI:GetModule("Minimap", true).Settings.position
+    end)
+    if ok and type(pos) == "string" then
+        local a, b, c, d, e = pos:match("^([^,]*),([^,]*),([^,]*),([^,]*),([^,]*)")
+        point, anchorName, rp, x, y = a or point, b, c or a or rp, tonumber(d) or 0, tonumber(e) or 0
+    end
+    local anchor = anchorName and _G[anchorName]
+    local how = anchorName
+    if type(anchor) ~= "table" then
+        anchor = _G.SUI_BottomAnchor
+        how = "SUI_BottomAnchor (" .. tostring(anchorName) .. " fehlt)"
+        if type(anchor) ~= "table" then anchor, how, point, rp, x, y = UIParent, "UIParent", "BOTTOM", "BOTTOM", 0, 140 end
+    end
+    local okS = pcall(mover.SetPoint, mover, point, anchor, rp, x, y)
+    if not okS or (K.Plain(mover:GetNumPoints()) or 0) == 0 then
+        okS = pcall(mover.SetPoint, mover, "BOTTOM", UIParent, "BOTTOM", 0, 140)
+        how = "UIParent (Notlösung)"
+    end
+    MM.rescued = string.format("%s · %s %s %s/%s", okS and "gesetzt" or "gescheitert", point, how, tostring(x), tostring(y))
+    local sm = _G.SUI_Minimap
+    if okS and type(sm) == "table" and (K.Plain(sm:GetNumPoints()) or 0) == 0 then
+        pcall(sm.SetPoint, sm, "TOPLEFT", mover, "TOPLEFT", 0, 0)
+    end
+    return okS
+end
+do
+    local ev = CreateFrame("Frame")
+    ev:RegisterEvent("PLAYER_ENTERING_WORLD")
+    ev:RegisterEvent("PLAYER_REGEN_ENABLED")
+    ev:SetScript("OnEvent", function()
+        if not (_G.C_Timer and _G.C_Timer.After) then return MM.RescueSpartan() end
+        for _, d in ipairs({ 0.5, 2, 5, 10 }) do _G.C_Timer.After(d, MM.RescueSpartan) end
     end)
 end
 
@@ -1053,12 +1103,18 @@ function MM.SpartanLines()
         out[#out + 1] = MM.FrameLine(_G[n])
     end
     -- Sockel des Stils
-    local style = G(function() return SUI.DB.Artwork.Style end)
+    local style = G(function() return SUI:GetActiveStyle() end)
+    out[#out + 1] = "SUI-Stil (aktiv): " .. tostring(style)
     if type(style) == "string" then
-        for _, n in ipairs({ "SUI_Art_" .. style, "SUI_Art_" .. style .. "_Minimap" }) do
-            out[#out + 1] = MM.FrameLine(_G[n])
+        for _, n in ipairs({ "SUI_Art_" .. style, "SUI_Art_" .. style .. "_Center", "SUI_Art_" .. style .. "_Minimap", style .. "_ActionBarPlate" }) do
+            out[#out + 1] = n .. " → " .. (type(_G[n]) == "table" and MM.FrameLine(_G[n]) or "FEHLT")
         end
     end
+    local ER = WeintCodex.UIErrors
+    local fe = ER and ER.foreign or {}
+    out[#out + 1] = "Fehler anderer Addons seit dem Laden (" .. #fe .. "):"
+    for _, l in ipairs(fe) do out[#out + 1] = "  " .. l end
+    out[#out + 1] = "Rettung der Minikarte: " .. tostring(MM.rescued or "nicht nötig")
     return out
 end
 
