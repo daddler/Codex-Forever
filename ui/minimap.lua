@@ -423,6 +423,38 @@ end
 
 MM.AXIS = 22   -- Breite der Knopfspalte, Knoepfe mittig darin
 
+MM.ARC_START, MM.ARC_STEP, MM.ARC_GAP = 205, -23, 22  -- Grad, Grad, Abstand zur Karte
+local knobs = setmetatable({}, { __mode = "k" })
+function MM.Knob(b)
+    local k = knobs[b]
+    if not k and b.CreateTexture then
+        k = b:CreateTexture(nil, "BACKGROUND", nil, -8)
+        k:SetTexture(K.MEDIA .. "console_knob")
+        knobs[b] = k
+    end
+    if k then
+        k:ClearAllPoints()
+        k:SetPoint("CENTER", b, "CENTER", 0, 0)
+        k:SetSize(30, 30)
+        k:Show()
+    end
+    return k
+end
+function MM.ArcButtons(mm)
+    local w = K.Plain(mm:GetWidth()) or 160
+    local r = w / 2 + MM.ARC_GAP
+    local list = ColumnButtons()
+    if bag then list[#list + 1] = bag end
+    for i, b in ipairs(list) do
+        Watch(b)
+        local ang = math.rad(MM.ARC_START + (i - 1) * MM.ARC_STEP)
+        b:ClearAllPoints()
+        b:SetPoint("CENTER", mm, "CENTER", r * math.cos(ang), r * math.sin(ang))
+        MM.Knob(b)
+    end
+    return #list
+end
+
 function MM.LayoutButtons()
     local mm = _G.Minimap
     if laying or type(mm) ~= "table" or not frame or MM.GameEditing() then return end
@@ -454,6 +486,14 @@ function MM.LayoutButtons()
     -- Links/rechts von oben nach unten; reicht die Hoehe der Karte nicht,
     -- beginnt nach aussen eine zweite Spalte. Oben/unten von links nach
     -- rechts; reicht die Breite nicht, eine zweite Reihe nach aussen.
+    -- 1.0.7.49 (Wunsch: "die Knoepfe an der Map muessen besser aussehen"):
+    -- Design "Konsole" - im Bogen links um die runde Fassung, jeder auf
+    -- einem runden Steinknopf (media/ui/console_knob.tga).
+    if K.LookKey and K.LookKey() == "konsole" then
+        MM.ArcButtons(mm)
+        laying = false
+        return
+    end
     local side = MM.ButtonSide()
     local limit = Opt("size") or 200
     local along, across, depth = 0, 0, 0
@@ -1265,6 +1305,20 @@ local function Apply()
         zone:SetPoint("BOTTOM", mm, "TOP", 0, 4)
     end
     strip:SetShown(inside and Opt("zoneText"))
+    -- 1.0.7.49: Konsole - runde Karte, Ecken gibt es nicht. Uhr oben mittig
+    -- (unter dem Layer), Koordinaten unten mittig ueber dem Gebiet, ohne
+    -- eckigen Streifen.
+    if K.LookKey and K.LookKey() == "konsole" then
+        clock:ClearAllPoints()
+        clock:SetPoint("TOP", mm, "TOP", 0, -20)
+        coords:ClearAllPoints()
+        coords:SetPoint("BOTTOM", mm, "BOTTOM", 0, inside and 22 or 8)
+        if inside then
+            zone:ClearAllPoints()
+            zone:SetPoint("BOTTOM", mm, "BOTTOM", 0, 8)
+        end
+        strip:Hide()
+    end
     MM.LayoutButtons()
 
     -- Die Kopfleiste des Spiels ueber der Karte (Gebiet, Uhrzeit) stand in

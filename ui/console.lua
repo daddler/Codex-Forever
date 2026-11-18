@@ -79,6 +79,34 @@ local function Slot(i, bar)
     return s
 end
 
+-- Zierplatten hinter Spieler und Ziel (1.0.7.49, Wunsch: "Spieler- und
+-- Zielfenster muessen besser ins Ornament integriert sein"): eine Platte je
+-- Rahmen, die zum Buckel hin in die Konsole auslaeuft. An den Rahmen
+-- verankert - wer sie verschiebt, nimmt die Platte mit.
+CO.UNIT_W, CO.UNIT_H = 420, 96
+CO.UNIT_X, CO.UNIT_Y = 62, 16   -- Luft links (Bild) und oben
+local unitPlates = {}
+local function UnitPlate(key, uf, mirror)
+    local f = unitPlates[key]
+    if not f then
+        f = CreateFrame("Frame", nil, frame)
+        f:SetFrameStrata("BACKGROUND")
+        f:SetFrameLevel(3)
+        f:SetSize(CO.UNIT_W, CO.UNIT_H)
+        local t = Tex(f, "console_unit", "ARTWORK", 0)
+        t:SetAllPoints(f)
+        if mirror then t:SetTexCoord(1, 0, 0, 1) end
+        unitPlates[key] = f
+    end
+    f:ClearAllPoints()
+    if mirror then
+        f:SetPoint("TOPRIGHT", uf, "TOPRIGHT", CO.UNIT_X, CO.UNIT_Y)
+    else
+        f:SetPoint("TOPLEFT", uf, "TOPLEFT", -CO.UNIT_X, CO.UNIT_Y)
+    end
+    return f
+end
+
 function CO.Update()
     if not CO.Active() then
         if frame then frame:Hide() end
@@ -86,6 +114,14 @@ function CO.Update()
     end
     Build()
     frame:Show()
+    for key, mirror in pairs({ player = false, target = true }) do
+        local uf = _G["WeintCodexUF_" .. key]
+        if type(uf) == "table" and uf.GetTop then
+            UnitPlate(key, uf, mirror):Show()
+        elseif unitPlates[key] then
+            unitPlates[key]:Hide()
+        end
+    end
     for i, names in ipairs(CO.SLOT_BARS) do
         local bar
         for _, n in ipairs(names) do

@@ -9,6 +9,14 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.0.7.49] – 2026-11-18
+
+### Geändert
+- Konsole: Zierplatten hinter `WeintCodexUF_player`/`_target` (`console_unit.tga`,
+  gespiegelt fürs Ziel, an den Rahmen verankert), Kartenknöpfe im Bogen
+  (`MM.ArcButtons`, `console_knob.tga`, 205° in 23°-Schritten), Uhr oben/
+  Koordinaten unten mittig in der runden Karte, kein eckiger Gebietsstreifen.
+
 ## [1.0.7.48] – 2026-11-18
 
 ### Behoben

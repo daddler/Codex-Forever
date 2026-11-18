@@ -26985,6 +26985,9 @@ do
         assert(found, "Konsole fehlt im Assistenten")
         assert(5 * (WL.LOOK_CARD_H + WL.LOOK_CARD_GAP) <= 4 * (WL.CARD_H + WL.CARD_GAP), "fuenf Karten zu hoch")
         assert(WeintCodex.UISetup.LayoutName() == "WeintCodex-Konsole", "kein eigenes Layout fuer die Konsole")
+        -- 1.0.7.49: Knoepfe im Bogen, Platten an Spieler/Ziel.
+        local MM = WeintCodex.UIMinimap
+        assert(type(MM.ArcButtons(_G.Minimap)) == "number", "Bogen nicht gesetzt")
         K.Set("general", "look", keep)
         assert(WeintCodex.UISetup.LayoutName() == "WeintCodex", "Layout der anderen Designs geaendert")
         assert(K.Layout("uf_player").y == base and K.ConsoleBar(4) == nil, "Grundplatz verloren")

@@ -22,6 +22,14 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.0.7.49",
+        date    = "18.11.2026",
+        notes   = {
+            "|cff7C6CFFKonsole: Spieler und Ziel im Ornament|r – beide Rahmen liegen auf Zierplatten aus Stein, die zum Buckel hin in die Konsole auslaufen.",
+            "|cff7C6CFFKonsole: Knöpfe an der Karte|r – im Bogen links um die Fassung, jeder auf einem runden Steinknopf. Uhr oben und Koordinaten unten stehen jetzt im Kreis.",
+        },
+    },
+    {
         version = "1.0.7.48",
         date    = "18.11.2026",
         notes   = {
