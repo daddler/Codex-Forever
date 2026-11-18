@@ -338,9 +338,10 @@ K.GAME_LAYOUT = {
 --   RECHTS: Leiste 3 16-52, Leiste 6 58-92, Begleiter 98.
 --   Cockpit 45 hoeher (ueber dem Ring), Chat ueber die linke Platte,
 --   Mikromenue und Taschenleiste nach oben rechts (die Karte ist unten).
-K.CONSOLE_RING = 213   -- Spieler/Ziel stehen so weit neben der Mitte
+K.CONSOLE_RING = 290   -- Spieler/Ziel stehen so weit neben der Mitte
 K.CONSOLE_MAP = 160    -- Karte in der Fassung (Bild: Halbmesser 83)
 K.CONSOLE_XP = { w = 430, h = 8 }
+K.CONSOLE_UF_W = 170   -- Spieler/Ziel in der Konsole (ab Werk 200)
 local CX, CY = 359, 0   -- Mitte der Leisten links/rechts
 local PY = 115          -- Unterkante Spieler/Ziel
 -- Groesse/Reihen je Leiste (Index wie ui/actionbars.lua).
@@ -361,9 +362,9 @@ K.LOOK_LAYOUT = {
         hud_bags     = { point = "TOPRIGHT", relPoint = "TOPRIGHT", x = -4, y = -40 },
         uf_player    = { point = "BOTTOMRIGHT", relPoint = "BOTTOM", x = -K.CONSOLE_RING, y = PY },
         uf_target    = { point = "BOTTOMLEFT",  relPoint = "BOTTOM", x = K.CONSOLE_RING,  y = PY },
-        uf_targettarget = { point = "TOPLEFT",  relPoint = "BOTTOM", x = K.CONSOLE_RING + UF_W + 6, y = PY + UF_H },
-        uf_focus     = { point = "BOTTOMRIGHT", relPoint = "BOTTOM", x = -(K.CONSOLE_RING + UF_W + 6), y = PY + UF_H + 6 },
-        uf_pet       = { point = "TOPRIGHT",    relPoint = "BOTTOM", x = -(K.CONSOLE_RING + UF_W + 6), y = PY + UF_H },
+        uf_targettarget = { point = "TOPLEFT",  relPoint = "BOTTOM", x = K.CONSOLE_RING + K.CONSOLE_UF_W + 6, y = PY + UF_H },
+        uf_focus     = { point = "BOTTOMRIGHT", relPoint = "BOTTOM", x = -(K.CONSOLE_RING + K.CONSOLE_UF_W + 6), y = PY + UF_H + 6 },
+        uf_pet       = { point = "TOPRIGHT",    relPoint = "BOTTOM", x = -(K.CONSOLE_RING + K.CONSOLE_UF_W + 6), y = PY + UF_H },
         -- Spiel: zwei Reihen je Seite, die Seitenleisten als Kaesten aussen
         bar1    = { point = "BOTTOM", relPoint = "BOTTOM", x = -CX, y = 62 },
         bar2    = { point = "BOTTOM", relPoint = "BOTTOM", x = -CX, y = 20 },

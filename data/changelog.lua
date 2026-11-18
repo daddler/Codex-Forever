@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.0.7.53",
+        date    = "18.11.2026",
+        notes   = {
+            "|cff7C6CFFKonsole: dezenter|r – Spieler und Ziel sind schmaler und stehen weiter von der Karte weg, die Schultern darunter sind niedriger und schmaler. Eine selbst eingestellte Breite bleibt.",
+        },
+    },
+    {
         version = "1.0.7.52",
         date    = "18.11.2026",
         notes   = {

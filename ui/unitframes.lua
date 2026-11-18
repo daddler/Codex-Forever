@@ -860,6 +860,12 @@ end
 function Frame:Layout()
     local u = self.unit
     local w, h = Opt(u .. "_width"), Opt(u .. "_height")
+    -- 1.0.7.53 (Wunsch: "dezenter, die Namensbalken etwas schmaler"):
+    -- in der Konsole Spieler/Ziel schmaler - nur solange die Breite die ab
+    -- Werk ist; eine eigene Einstellung gilt.
+    if (u == "player" or u == "target") and w == SHAPE[u].w and K.LookKey and K.LookKey() == "konsole" then
+        w = K.CONSOLE_UF_W or w
+    end
     local showPower = Opt(u .. "_power")
     local ph = showPower and Opt(u .. "_powerHeight") or 0
     local total = h + (showPower and (ph + 1) or 0)

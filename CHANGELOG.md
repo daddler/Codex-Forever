@@ -9,6 +9,13 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.0.7.53] – 2026-11-18
+
+### Geändert
+- Konsole: `K.CONSOLE_RING` 213 → 290, Spieler/Ziel 170 breit
+  (`K.CONSOLE_UF_W`, nur bei Breite ab Werk), Schulter `CO.UNIT_X`/`_IN`
+  175 → 100, `CO.UNIT_Y` 71 → 40.
+
 ## [1.0.7.52] – 2026-11-18
 
 ### Geändert
