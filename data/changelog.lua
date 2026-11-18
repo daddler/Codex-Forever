@@ -26,7 +26,7 @@ WeintCodex_ChangelogData = {
         date    = "18.11.2026",
         notes   = {
             "|cff7C6CFFKonsole: Platten schließen mit der Leiste ab|r – die Steinplatte unter Spieler und Ziel läuft außen in einem weichen Bogen in die Leiste aus und liegt hinter dem Ornament, statt darüber zu ragen. Beide Rahmen stehen näher an der Karte.",
-            "|cff7C6CFFKonsole: Gebiet frei lesbar|r – Gebiet, Uhr und Layer stehen etwas höher und werden nicht mehr von Knöpfen der Karte verdeckt. Der Addon-Knopf des Spiels steht mit im Bogen der Kartenknöpfe, statt halb unter der Fassung.",
+            "|cff7C6CFFKonsole: Gebiet frei lesbar|r – Gebiet, Uhr und Layer stehen etwas höher und werden nicht mehr von Knöpfen der Karte verdeckt. Der Addon-Knopf des Spiels steht mit im Bogen der Kartenknöpfe, statt halb unter der Fassung. Hinter der runden Karte liegt kein eckiger Schatten mehr.",
         },
     },
     {

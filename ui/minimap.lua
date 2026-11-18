@@ -1291,6 +1291,10 @@ local function Apply()
     end
 
     border:SetShown(square)
+    -- 1.0.7.51 (Bild: eckiger, leicht durchsichtiger Hintergrund hinter der
+    -- runden Karte): der Schatten ist eckig - in der Konsole traegt die
+    -- Fassung, kein Schatten.
+    if MM.under then MM.under:SetShown(not (K.LookKey and K.LookKey() == "konsole")) end
     local c = K.GetColor(KEY, "borderColor")
     border:SetColor(c.r, c.g, c.b, 1)
 
@@ -1388,6 +1392,7 @@ local function Enable()
     under:SetFrameStrata(mm:GetFrameStrata() or "LOW")
     under:SetFrameLevel(math.max(0, (mm:GetFrameLevel() or 1) - 1))
     K.Glow(mm, { host = under, spread = 8, shadow = true })
+    MM.under = under
 
     strip = frame:CreateTexture(nil, "BACKGROUND")
     strip:SetPoint("BOTTOMLEFT", mm, "BOTTOMLEFT", 0, 0)
