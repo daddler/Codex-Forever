@@ -860,14 +860,14 @@ end
 function Frame:Layout()
     local u = self.unit
     local w, h = Opt(u .. "_width"), Opt(u .. "_height")
-    -- 1.0.7.53 (Wunsch: "dezenter, die Namensbalken etwas schmaler"):
-    -- in der Konsole Spieler/Ziel schmaler - nur solange die Breite die ab
-    -- Werk ist; eine eigene Einstellung gilt.
-    if (u == "player" or u == "target") and w == SHAPE[u].w and K.LookKey and K.LookKey() == "konsole" then
-        w = K.CONSOLE_UF_W or w
-    end
+    -- 1.0.7.57 (Wunsch: "mit schmal meinte ich die Hoehe"): in der Konsole
+    -- Spieler/Ziel niedriger, damit sie ins Ornament passen - nur solange
+    -- die Werte die ab Werk sind; eigene Einstellungen gelten.
+    local konsole = (u == "player" or u == "target") and K.LookKey and K.LookKey() == "konsole"
+    if konsole and h == SHAPE[u].h then h = K.CONSOLE_UF_H or h end
     local showPower = Opt(u .. "_power")
     local ph = showPower and Opt(u .. "_powerHeight") or 0
+    if konsole and showPower and ph == SHAPE[u].p then ph = K.CONSOLE_UF_P or ph end
     local total = h + (showPower and (ph + 1) or 0)
 
     K.AfterCombat(function() self:SetSize(w, total) end)

@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.0.7.57",
+        date    = "18.11.2026",
+        notes   = {
+            "|cff7C6CFFKonsole: flachere Rahmen|r – Spieler und Ziel haben wieder ihre normale Breite, sind aber niedriger und passen so ins Ornament. Eigene Einstellungen bleiben.",
+        },
+    },
+    {
         version = "1.0.7.56",
         date    = "18.11.2026",
         notes   = {
