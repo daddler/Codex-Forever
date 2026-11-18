@@ -9,6 +9,15 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.0.7.45] – 2026-11-18
+
+### Geändert
+- Berufslink (Meldung: im Standard-UI geht er): `PT.flow` protokolliert nach
+  einem Klick 10 s lang `TRADE_SKILL_*` (mit `IsTradeSkillLinked`), Laden von
+  Blizzard_Professions, Zeigen/Schließen des Berufsfensters mit Aufrufer
+  (Datei:Zeile), `ADDON_ACTION_BLOCKED/FORBIDDEN` jedes Addons, Fehlermeldungen
+  des Spiels; in `/wcui prüfen` → Berufe. Hinweis im Chat ohne „Seite geöffnet“.
+
 ## [1.0.7.44] – 2026-11-18
 
 ### Neu

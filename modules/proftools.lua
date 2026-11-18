@@ -2799,6 +2799,10 @@ function PT.OnTradeLink(link, text)
     local key = profName and PRO.KeyByName and PRO.KeyByName(profName) or nil
     local name, realm = PT.TradeOwner(link)
     local rec = { link = tostring(link):sub(1, 60), prof = profName, owner = name }
+    PT.lastLinkAt = _G.GetTime and Plain(_G.GetTime()) or 0
+    PT.flow = {}
+    if PT.Flow then PT.Flow("Klick " .. tostring(profName)) end
+    if PT.HookPF then PT.HookPF() end
     table.insert(PT.linkLog, 1, rec)
     if #PT.linkLog > 5 then table.remove(PT.linkLog) end
     local function Check()
@@ -2813,16 +2817,13 @@ function PT.OnTradeLink(link, text)
         if p then
             local n = 0
             for _ in pairs(p.known or {}) do n = n + 1 end
-            msg = string.format("%s von %s: Fertigkeit %s%s, %d Rezepte bekannt – Seite „Berufe“ geöffnet.",
+            msg = string.format("%s von %s: Fertigkeit %s%s, %d Rezepte bekannt (aus der Gilde geteilt).",
                 profName or "Beruf", who, tostring(p.rank or "?"), p.max and ("/" .. p.max) or "", n)
         else
             msg = string.format("Das Spiel öffnet diesen Berufslink hier nicht. Von %s kennt WeintCodex %s nicht – nur Gildenmitglieder mit WeintCodex teilen ihre Rezepte.",
                 who, profName or "diesen Beruf")
         end
         print(WeintCodex.AC .. "[WeintCodex]|r " .. msg)
-        if p and PT.Show then
-            pcall(PT.Show, nil)
-        end
     end
     if _G.C_Timer and _G.C_Timer.After then _G.C_Timer.After(PT.LINK_WAIT, Check) else Check() end
     return rec
@@ -2834,11 +2835,85 @@ if _G.hooksecurefunc and type(_G.SetItemRef) == "function" then
         end
     end)
 end
+-- 1.0.7.45 (Meldung: "Im Standard UI geht das ganz normal"): Protokoll des
+-- ganzen Ablaufs nach einem Klick - Ereignisse des Spiels, Oeffnen und
+-- Schliessen des Berufsfensters mit Aufrufer (Datei:Zeile), blockierte
+-- Aktionen jedes Addons. Nur gelesen, nichts geaendert.
+PT.flow = {}
+local function Flow(s)
+    local f = PT.flow
+    if #f >= 30 then table.remove(f, 1) end
+    local t = _G.GetTime and math.floor((Plain(_G.GetTime()) or 0) * 10) / 10 or 0
+    f[#f + 1] = tostring(s) .. " @" .. t
+end
+PT.Flow = Flow
+local function Caller()
+    if type(_G.debugstack) ~= "function" then return "?" end
+    local ok, st = pcall(_G.debugstack, 2, 10, 0)
+    if not ok or type(st) ~= "string" then return "?" end
+    for line in st:gmatch("[^\n]+") do
+        if not line:find("proftools") and not line:find("%[C%]") and not line:find("hooksecurefunc") then
+            local file, ln = line:match("AddOns[/\\](.-)%.lua\"?%]?:(%d+)")
+            if file then return file .. ":" .. ln end
+        end
+    end
+    return "Spiel"
+end
+local hookedPF = false
+local function HookPF()
+    if hookedPF then return end
+    for _, n in ipairs({ "ProfessionsFrame", "TradeSkillFrame" }) do
+        local f = _G[n]
+        if type(f) == "table" and f.HookScript and _G.hooksecurefunc then
+            hookedPF = true
+            pcall(f.HookScript, f, "OnShow", function() Flow(n .. " gezeigt") end)
+            pcall(f.HookScript, f, "OnHide", function() Flow(n .. " geschlossen") end)
+            pcall(_G.hooksecurefunc, f, "Hide", function() Flow(n .. ":Hide ← " .. Caller()) end)
+            pcall(_G.hooksecurefunc, f, "SetShown", function(_, v) if not v then Flow(n .. ":SetShown(false) ← " .. Caller()) end end)
+        end
+    end
+end
+PT.HookPF = HookPF
+do
+    local fe = CreateFrame("Frame")
+    for _, e in ipairs({ "TRADE_SKILL_SHOW", "TRADE_SKILL_CLOSE", "TRADE_SKILL_DATA_SOURCE_CHANGED",
+        "TRADE_SKILL_LIST_UPDATE", "ADDON_LOADED", "ADDON_ACTION_BLOCKED", "ADDON_ACTION_FORBIDDEN", "UI_ERROR_MESSAGE" }) do
+        pcall(fe.RegisterEvent, fe, e)
+    end
+    local lastList = 0
+    fe:SetScript("OnEvent", function(_, e, a1, a2)
+        if e == "ADDON_LOADED" then
+            if a1 == "Blizzard_Professions" or a1 == "Blizzard_TradeSkillUI" then Flow("geladen " .. tostring(a1)) HookPF() end
+            return
+        end
+        -- nur rund um einen Klick (10 s) mitschreiben
+        local t = _G.GetTime and Plain(_G.GetTime()) or 0
+        if not PT.lastLinkAt or t - PT.lastLinkAt > 10 then return end
+        if e == "TRADE_SKILL_LIST_UPDATE" then
+            if t - lastList < 1 then return end
+            lastList = t
+        end
+        local extra = ""
+        if e == "TRADE_SKILL_SHOW" then
+            local ts = _G.C_TradeSkillUI
+            local linked = ts and ts.IsTradeSkillLinked and select(2, pcall(ts.IsTradeSkillLinked))
+            extra = " verlinkt " .. tostring(Plain(linked))
+        elseif e == "ADDON_ACTION_BLOCKED" or e == "ADDON_ACTION_FORBIDDEN" then
+            extra = " " .. tostring(a1) .. " " .. tostring(a2)
+        elseif e == "UI_ERROR_MESSAGE" then
+            extra = " " .. tostring(a2)
+        end
+        Flow(e .. extra)
+    end)
+end
+
 function PT.LinkLines()
     local out = {}
     for _, r in ipairs(PT.linkLog) do
         out[#out + 1] = string.format("Berufslink %s · %s · Besitzer %s · Spiel: %s",
             tostring(r.prof), r.link, tostring(r.owner), tostring(r.game or "…"))
     end
+    if #PT.flow > 0 then out[#out + 1] = "Ablauf nach dem letzten Klick:" end
+    for _, l in ipairs(PT.flow) do out[#out + 1] = "  " .. l end
     return out
 end

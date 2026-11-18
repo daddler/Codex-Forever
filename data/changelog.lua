@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.0.7.45",
+        date    = "18.11.2026",
+        notes   = {
+            "|cff7C6CFF/wcui prüfen verfolgt Berufslinks|r – nach einem Klick steht unter „Berufe“, was das Spiel geantwortet hat und wer das Berufsfenster geschlossen hat. Der Hinweis im Chat behauptet nicht mehr, eine Seite geöffnet zu haben.",
+        },
+    },
+    {
         version = "1.0.7.44",
         date    = "18.11.2026",
         notes   = {
