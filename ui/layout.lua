@@ -341,8 +341,8 @@ K.GAME_LAYOUT = {
 K.CONSOLE_RING = 150   -- Spieler/Ziel stehen so weit neben der Mitte
 K.CONSOLE_MAP = 160    -- Karte in der Fassung (Bild: Halbmesser 83)
 K.CONSOLE_XP = { w = 430, h = 8 }
-K.CONSOLE_UF_W = UF_W   -- Breite Spieler/Ziel (fuer Begleiter usw. daneben)
-K.CONSOLE_UF_H, K.CONSOLE_UF_P = 16, 4  -- Leben/Kraft in der Konsole (ab Werk 24/6)
+K.CONSOLE_UF_W = 170    -- Breite Spieler/Ziel in der Konsole (ab Werk 200)
+K.CONSOLE_UF_H, K.CONSOLE_UF_P = 13, 3  -- Leben/Kraft in der Konsole (ab Werk 24/6)
 local CX, CY = 359, 0   -- Mitte der Leisten links/rechts
 local PY = 132          -- Unterkante Spieler/Ziel
 -- Groesse/Reihen je Leiste (Index wie ui/actionbars.lua).

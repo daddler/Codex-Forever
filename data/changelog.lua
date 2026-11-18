@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.0.7.58",
+        date    = "18.11.2026",
+        notes   = {
+            "|cff7C6CFFKonsole: Rahmen noch flacher|r – Spieler und Ziel sind niedriger und etwas schmaler. Eigene Einstellungen bleiben.",
+        },
+    },
+    {
         version = "1.0.7.57",
         date    = "18.11.2026",
         notes   = {

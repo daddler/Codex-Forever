@@ -865,6 +865,7 @@ function Frame:Layout()
     -- die Werte die ab Werk sind; eigene Einstellungen gelten.
     local konsole = (u == "player" or u == "target") and K.LookKey and K.LookKey() == "konsole"
     if konsole and h == SHAPE[u].h then h = K.CONSOLE_UF_H or h end
+    if konsole and w == SHAPE[u].w then w = K.CONSOLE_UF_W or w end
     local showPower = Opt(u .. "_power")
     local ph = showPower and Opt(u .. "_powerHeight") or 0
     if konsole and showPower and ph == SHAPE[u].p then ph = K.CONSOLE_UF_P or ph end
