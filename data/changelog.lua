@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.0.7.35",
+        date    = "18.11.2026",
+        notes   = {
+            "|cff7C6CFFBuffs und HoTs an den Gruppenrahmen werden gezeichnet|r – die Symbolreihen wurden nie eingeschaltet. Ab Werk zeigen sie deine eigenen Buffs und HoTs, auch im Kampf.",
+        },
+    },
+    {
         version = "1.0.7.34",
         date    = "18.11.2026",
         notes   = {

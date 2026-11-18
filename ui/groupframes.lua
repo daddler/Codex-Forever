@@ -73,7 +73,7 @@ local defaults = {
     -- 1.0.7.33 (Spieler: "Kraeutersuche etc. von allen - unnoetig"):
     -- "raid" = Buffs, die du selbst wirken kannst (Filter des Spiels,
     -- wie seine Schlachtzugsrahmen), "mine" = nur deine, "all" = alle.
-    buffFilter  = "raid",
+    buffFilter  = "mine",   -- 1.0.7.35: wie VoidBox "HELPFUL|PLAYER" (auf Forever erprobt)
     onlyDispellable = true,
     -- Seit 6.3.2.4 (Beta-Test: "muss etwas detaillierter werden"):
     healPrediction = true,   -- eingehende Heilung als heller Balken hinter dem Leben
@@ -126,16 +126,19 @@ for _, id in ipairs({ 2383, 2580, 2481, 1494, 19878, 19879, 19880, 19882, 19883,
     GF.NOISE[id] = true
 end
 GF.BUFF_FILTERS = { raid = "HELPFUL|RAID", mine = "HELPFUL|PLAYER", all = "HELPFUL" }
-function GF.BuffFilter() return GF.BUFF_FILTERS[K.Get(KEY, "buffFilter")] or GF.BUFF_FILTERS.raid end
+function GF.BuffFilter() return GF.BUFF_FILTERS[K.Get(KEY, "buffFilter")] or GF.BUFF_FILTERS.mine end
 
 -- Fuer /wcui auren (1.0.7.34): woraus die Rahmen bestehen und welche
 -- HoT-Felder belegt sind.
 function GF.DiagLine()
     local ids = {}
     for i = 1, 4 do ids[i] = tostring(GF.HotSpell(i) or "-") end
-    return string.format("Gruppenrahmen: Quelle %s, an %s, HoT-Felder %s (%s), Buffs %s (%s)",
+    local raw = {}
+    for i = 1, 4 do raw[i] = tostring(K.Get(KEY, "hot" .. i)) end
+    return string.format("Gruppenrahmen: Quelle %s, an %s, HoT-Felder %s (%s, eingestellt %s, Klasse %s), Buffs %s (%s)",
         tostring(K.Get(KEY, "source")), tostring(K.IsActive(KEY)), tostring(K.Get(KEY, "hots")),
-        table.concat(ids, "/"), tostring(K.Get(KEY, "buffs")), tostring(GF.BuffFilter()))
+        table.concat(ids, "/"), table.concat(raw, "/"), tostring(_G.UnitClass and K.Plain(select(2, _G.UnitClass("player")))),
+        tostring(K.Get(KEY, "buffs")), tostring(GF.BuffFilter()))
 end
 
 GF.HOT_POSITIONS = { "TOPLEFT", "TOP", "TOPRIGHT", "LEFT", "CENTER", "RIGHT", "BOTTOMLEFT", "BOTTOM", "BOTTOMRIGHT" }

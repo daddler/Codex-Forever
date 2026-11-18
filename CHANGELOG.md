@@ -9,6 +9,15 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.0.7.35] – 2026-11-18
+
+### Behoben
+- Aurencontainer zeichneten an den Gruppenrahmen nichts (`/wcui auren`:
+  „Spiel nennt 2, gezeigt 0, Rahmen sichtbar“). Wie VoidBox (MIT):
+  `SetEnabled(true)` (auch in `Obj:SetShown`), Wachstum als Vorzeichen
+  `(1, -1)`, Achse waagerecht. Buffreihe ab Werk `HELPFUL|PLAYER`
+  (`buffFilter = "mine"`). `GF.DiagLine` nennt die eingestellten HoT-Werte.
+
 ## [1.0.7.34] – 2026-11-18
 
 ### Geändert

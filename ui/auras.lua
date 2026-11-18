@@ -250,8 +250,20 @@ local function BuildEngine(self, minimal)
     c:SetSize(self:Extent())
     if c.SetClipsChildren then pcall(c.SetClipsChildren, c, false) end
     Call(c, { "SetFlowLayoutAnchorPoint", "SetAuraLayoutAnchorPoint" }, o.anchor)
-    Call(c, { "SetFlowLayoutGrowthDirection", "SetAuraLayoutGrowthDirection" },
-        FlowDir(o.growth), FlowDir(o.growthV))
+    -- 1.0.7.35 (/wcui auren im Spiel: "Spiel nennt 2, gezeigt 0, Rahmen
+    -- sichtbar"): wie VoidBox (MIT), das auf Forever zeichnet - Richtung als
+    -- Vorzeichen (x, y), Achse waagerecht, und der Container EINGESCHALTET.
+    -- Bis hierher bekam er Werte aus AnchorUtil.FlowDirection und wurde nie
+    -- mit SetEnabled(true) angeschaltet.
+    local okD = pcall(c.SetFlowLayoutGrowthDirection, c, o.growth == "LEFT" and -1 or 1, o.growthV == "UP" and 1 or -1)
+    if not okD then
+        Call(c, { "SetFlowLayoutGrowthDirection", "SetAuraLayoutGrowthDirection" },
+            FlowDir(o.growth), FlowDir(o.growthV))
+    end
+    if _G.AnchorUtil and _G.AnchorUtil.FlowLayoutAxis and c.SetFlowLayoutAxis then
+        pcall(c.SetFlowLayoutAxis, c, _G.AnchorUtil.FlowLayoutAxis.Horizontal)
+    end
+    if c.SetEnabled then pcall(c.SetEnabled, c, true) end
     Call(c, { "SetFlowLayoutMaximumLineSize", "SetAuraLayoutRowWidth" },
         o.perRow * (o.size + o.spacing))
 
@@ -520,6 +532,7 @@ end
 function Obj:SetShown(on)
     self.shown = on and true or false
     if on then self.frame:Show() else self.frame:Hide() end
+    if self.engine and self.frame.SetEnabled then pcall(self.frame.SetEnabled, self.frame, self.shown) end
 end
 
 function Obj:SetUnit(unit)
