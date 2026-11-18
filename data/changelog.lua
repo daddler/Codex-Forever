@@ -22,6 +22,14 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.0.7.43",
+        date    = "18.11.2026",
+        notes   = {
+            "|cff7C6CFFSchlüsselbund für sich|r – die Schlüssel stehen nicht mehr in den Taschen. Die Taste des Schlüsselbunds oder der Knopf „Schlüssel“ im Taschenfenster zeigt sie allein.",
+            "|cff7C6CFFDialoge bleiben lesbar|r – mit dem transparenten Aussehen waren etwa beim Stapel teilen „Okay“ und „Abbrechen“ kaum zu sehen. Fenster, die eine Entscheidung verlangen, sind jetzt immer deckend; alles andere bleibt so durchsichtig wie eingestellt.",
+        },
+    },
+    {
         version = "1.0.7.42",
         date    = "18.11.2026",
         notes   = {

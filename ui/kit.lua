@@ -1426,7 +1426,9 @@ function K.PaintKachel(o, keepEdge)
     local f = GC.kachelFill
     local a = o.alpha or (o.base and o.base[4]) or f[4]
     -- Transparent gilt auch fuer Fenster mit eigener Deckkraft.
-    if GC.lookTransparent then a = math.min(a, f[4]) end
+    -- 1.0.7.43 (Wunsch: "beim Stueckeln sieht sie Okay und Abbrechen nicht"):
+    -- Dialoge, die eine Entscheidung verlangen (o.solid), bleiben lesbar.
+    if GC.lookTransparent and not o.solid then a = math.min(a, f[4]) end
     o.wood = GC.kachelWood and true or false
     if not o.bg then
         -- nur ein Rand (K.LookEdge)
@@ -1449,7 +1451,7 @@ function K.PaintKachel(o, keepEdge)
         o.border:SetSize(1)
     elseif not keepEdge and o.border then
         local e = GC.kachelEdge
-        o.border:SetColor(e[1], e[2], e[3], e[4])
+        o.border:SetColor(e[1], e[2], e[3], o.solid and 1 or e[4])
         o.border:SetSize(GC.kachelEdgeSize or 1)
     end
 end
@@ -1504,6 +1506,7 @@ function K.Kachel(frame, opts)
     o.bg = frame:CreateTexture(nil, "BACKGROUND", nil, -7)
     o.bg:SetAllPoints(frame)
     o.alpha = opts.alpha
+    o.solid = opts.solid
     if opts.lift then
         o.liftTex = frame:CreateTexture(nil, "BACKGROUND", nil, -6)
         o.liftTex:SetAllPoints(frame)

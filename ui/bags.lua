@@ -114,7 +114,16 @@ function BG.KeyringID()
     return type(id) == "number" and id or nil
 end
 
-local function BagIDs()
+-- 1.0.7.43 (Wunsch: "der Schluesselbund soll separat geoeffnet werden"):
+-- die Taschen zeigen ihn nicht mehr mit. Die Taste/Funktion des Spiels
+-- (ToggleKeyRing) und der Knopf "Schlüssel" zeigen ihn allein im selben
+-- Fenster (BG.keyMode); jedes normale Oeffnen schaltet zurueck.
+BG.keyMode = false
+local BagIDs
+function BG.BagIDs(bagsOnly) return BagIDs(bagsOnly) end
+function BagIDs(bagsOnly)
+    local kr0 = BG.KeyringID()
+    if BG.keyMode and not bagsOnly and kr0 then return { kr0 } end
     local ids = {}
     local first = _G.BACKPACK_CONTAINER or 0
     local last = _G.NUM_BAG_SLOTS or 4
@@ -124,8 +133,6 @@ local function BagIDs()
     if _G.Enum and _G.Enum.BagIndex and _G.Enum.BagIndex.ReagentBag then
         ids[#ids + 1] = _G.Enum.BagIndex.ReagentBag
     end
-    local kr = BG.KeyringID()
-    if kr and K.Get(KEY, "keyring") ~= false then ids[#ids + 1] = kr end
     return ids
 end
 
@@ -810,7 +817,7 @@ end
 -- Ein freier Platz auf der Zielseite (Bank oder Taschen), oder nil.
 function BG.FreeSlot(toBank)
     local BK = WeintCodex.UIBankCats
-    local ids = toBank and (BK and BK.BagIDs() or {}) or BagIDs()
+    local ids = toBank and (BK and BK.BagIDs() or {}) or BagIDs(true)
     local kr = BG.KeyringID()
     for _, bag in ipairs(ids) do
         for slot = 1, (bag == kr and 0 or NumSlots(bag)) do
@@ -1240,6 +1247,16 @@ local function Build()
     })
     sort:SetPoint("RIGHT", close, "LEFT", -6, 0)
 
+    if BG.KeyringID() then
+        local keys = WeintCodex.CreateButton(win, {
+            text = "Schlüssel", kind = "ghost", height = 22, size = 11, backdrop = "bgDark",
+            tooltip = "Zeigt den Schlüsselbund allein – noch einmal klicken für die Taschen.",
+            onClick = function() BG.SetKeyMode(not BG.keyMode) end,
+        })
+        keys:SetPoint("RIGHT", sort, "LEFT", -6, 0)
+        BG.keyBtn = keys
+    end
+
     search = CreateFrame("EditBox", nil, win)
     search:SetSize(160, 22)
     search:SetPoint("TOPLEFT", title, "BOTTOMLEFT", 0, -8)
@@ -1314,6 +1331,14 @@ function BG.Toggle()
     if win:IsShown() then win:Hide() else win:Show() end
 end
 function BG.Open() if win then win:Show() end end
+function BG.SetKeyMode(on)
+    on = on and BG.KeyringID() ~= nil or false
+    if BG.keyMode == on then return end
+    BG.keyMode = on
+    if win and type(win.titleText) == "table" then win.titleText:SetText(on and "Schlüsselbund" or "Taschen") end
+    if type(BG.keyBtn) == "table" and BG.keyBtn.SetText then pcall(BG.keyBtn.SetText, BG.keyBtn, on and "Taschen" or "Schlüssel") end
+    if win and win:IsShown() and BG.Refresh then BG.Refresh() end
+end
 function BG.Close() if win then win:Hide() end end
 function BG.UsedSlots() return used end
 
@@ -1380,12 +1405,20 @@ local function Enable()
     -- verbirgt es, wenn das Spiel keine Tasche mehr offen hat. Dass die
     -- (unsichtbaren) Taschen des Spiels nach Kreuz/Esc noch "offen" sind,
     -- schadet nicht: der naechste Tastendruck schaltet dieses Fenster.
-    local want = { toggle = false, open = false, close = false }
+    local want = { toggle = false, open = false, close = false, keys = false }
     local queued = false
     local function Run()
         queued = false
-        local t, o, c = want.toggle, want.open, want.close
-        want.toggle, want.open, want.close = false, false, false
+        local t, o, c, k = want.toggle, want.open, want.close, want.keys
+        want.toggle, want.open, want.close, want.keys = false, false, false, false
+        if k then
+            if win:IsShown() and BG.keyMode then BG.Close() else BG.SetKeyMode(true) BG.Open() end
+            return
+        end
+        if (t or o) and BG.keyMode then
+            BG.SetKeyMode(false)
+            if t and win:IsShown() then return end
+        end
         if t then
             if win:IsShown() then BG.Close() else BG.Open() end
         elseif o then
@@ -1403,7 +1436,7 @@ local function Enable()
     BG.NoteBags, BG.RunBags = Note, Run
     BG.Mirror = Mirror
     if _G.hooksecurefunc then
-        local kinds = { ToggleAllBags = "toggle", ToggleBackpack = "toggle", ToggleBag = "toggle", ToggleKeyRing = "toggle",
+        local kinds = { ToggleAllBags = "toggle", ToggleBackpack = "toggle", ToggleBag = "toggle", ToggleKeyRing = "keys",
                         OpenAllBags = "open", OpenBackpack = "open", OpenBag = "open",
                         CloseAllBags = "close", CloseBackpack = "close", CloseBag = "close" }
         for fn, kind in pairs(kinds) do

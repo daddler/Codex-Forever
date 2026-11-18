@@ -9,6 +9,16 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.0.7.43] – 2026-11-18
+
+### Geändert
+- Schlüsselbund separat (`BG.keyMode`): nicht mehr in `BagIDs`; `ToggleKeyRing`
+  und Knopf „Schlüssel“ zeigen ihn allein, normales Öffnen schaltet zurück.
+
+### Behoben
+- Transparent: Dialoge (`W.SkinPopup`, Stapel teilen, kleine Dialoge) und ihre
+  Knöpfe als `solid`-Kachel – nicht auf die eingestellte Deckkraft gekappt.
+
 ## [1.0.7.42] – 2026-11-18
 
 ### Behoben

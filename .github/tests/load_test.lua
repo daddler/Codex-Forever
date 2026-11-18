@@ -26947,9 +26947,35 @@ do
         _G.KEYRING_CONTAINER = -2
         assert(BG.KeyringID() == -2, "Schluesselbund nicht erkannt")
         assert(BG.SpecialBag(-2) == true and BG.BagLabel(-2) == "Schlüsselbund", "Schluesselbund kein eigener Block")
+        -- 1.0.7.43: separat - nicht in den Taschen, allein im Schluesselmodus.
+        for _, b in ipairs(BG.BagIDs()) do assert(b ~= -2, "Schluesselbund in den Taschen") end
+        BG.SetKeyMode(true)
+        local ids = BG.BagIDs()
+        assert(#ids == 1 and ids[1] == -2, "Schluesselmodus zeigt nicht nur Schluessel")
+        BG.SetKeyMode(false)
         _G.KEYRING_CONTAINER = keep
     end)
     Check(ok, "Taschen: Schlüsselbund" .. (ok and "" or (": " .. tostring(err))))
+end
+
+-- 1.0.7.43: Dialoge bleiben bei "Transparent" lesbar.
+do
+    local ok, err = pcall(function()
+        local GC = WeintCodex.GameColors
+        local keepT, keepA = GC.lookTransparent, GC.kachelFill[4]
+        GC.lookTransparent, GC.kachelFill[4] = true, 0.1
+        local f = CreateFrame("Frame", nil, UIParent)
+        local a, b
+        local k1 = K.Kachel(f, { alpha = 0.96, shadow = 0, solid = true })
+        k1.bg.SetColorTexture = function(_, _, _, _, x) a = x end
+        K.PaintKachel(k1)
+        local k2 = K.Kachel(f, { alpha = 0.96, shadow = 0 })
+        k2.bg.SetColorTexture = function(_, _, _, _, x) b = x end
+        K.PaintKachel(k2)
+        GC.lookTransparent, GC.kachelFill[4] = keepT, keepA
+        assert(a == 0.96 and b == 0.1, "Deckkraft " .. tostring(a) .. "/" .. tostring(b))
+    end)
+    Check(ok, "Dialoge: lesbar trotz Transparent" .. (ok and "" or (": " .. tostring(err))))
 end
 
 -- 1.0.7.36: Klassenquest fuer einen Zauber, den man schon kann, ist erledigt.

@@ -1642,7 +1642,7 @@ local btnSkin = setmetatable({}, { __mode = "k" })
 -- gesperrt) ausblenden - Knoepfe, deren Bild eine Datei ist statt drei
 -- Teilen (Dialoge, 6.6.3.4).
 local STATE_GETTERS = { "GetNormalTexture", "GetPushedTexture", "GetDisabledTexture" }
-local function SkinPanelButton(b, states)
+local function SkinPanelButton(b, states, solid)
     if btnSkin[b] then return end
     btnSkin[b] = true
     for _, k in ipairs({ "Left", "Middle", "Right" }) do Hide(b[k]) end
@@ -1656,7 +1656,7 @@ local function SkinPanelButton(b, states)
     end
     -- 6.122.2.0 (Beta-Test: "Buttons im Spielmenue zu dunkel"): Grundfarbe
     -- ueber SetBase (bei Holz Holz statt Schwarz) und heller als die Flaeche.
-    local d = K.Kachel(b, { shadow = 0, lift = true })
+    local d = K.Kachel(b, { shadow = 0, lift = true, solid = solid })
     own[d.bg], own[d.light] = true, true
     if d.liftTex then own[d.liftTex] = true end
     local s1 = C.surface1
@@ -1700,7 +1700,7 @@ function W.SkinPopup(f)
     popupDone[f] = d
     HideDecor(f.BG)
     HideByAtlas(f, 0)
-    d.kachel = K.Kachel(f, { alpha = 0.96, shadow = 0 })
+    d.kachel = K.Kachel(f, { alpha = 0.96, shadow = 0, solid = true })
     own[d.kachel.bg], own[d.kachel.light] = true, true
     S.Scope(f, S.CALM)
     local l = WeintCodex.GameColors.atmosLight
@@ -1711,7 +1711,7 @@ function W.SkinPopup(f)
     for i = 1, 4 do
         local b = (type(name) == "string" and _G[name .. "Button" .. i]) or f["button" .. i]
         if type(b) == "table" and b.CreateTexture and not (b.IsForbidden and b:IsForbidden()) then
-            pcall(SkinPanelButton, b, true)
+            pcall(SkinPanelButton, b, true, true)
         end
     end
     return d
@@ -1753,7 +1753,7 @@ function W.SkinStackSplit(f)
     end
     for _, k in ipairs({ "OkayButton", "CancelButton" }) do
         local b = f[k]
-        if type(b) == "table" and b.CreateTexture then pcall(SkinPanelButton, b, true) end
+        if type(b) == "table" and b.CreateTexture then pcall(SkinPanelButton, b, true, true) end
     end
     return d
 end
@@ -1789,7 +1789,7 @@ function W.SkinDialog(f)
                 W.EdgeBorder(ch)
                 d.fields = d.fields + 1
             elseif ok and kind == "Button" and type(ch.Middle) == "table" then
-                pcall(SkinPanelButton, ch, true)
+                pcall(SkinPanelButton, ch, true, true)
             end
         end
     end
