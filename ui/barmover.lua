@@ -36,7 +36,7 @@ BM.SYSTEMS = { ActionBar = true, ChatFrame = true, Minimap = true }
 function BM.Entries()
     local out = {}
     for _, e in ipairs(K.GAME_LAYOUT or {}) do
-        if BM.SYSTEMS[e.sys] then out[#out + 1] = e end
+        if BM.SYSTEMS[e.sys] and not (e.sys == "Minimap" and BM.ForeignMinimap and BM.ForeignMinimap()) then out[#out + 1] = e end
     end
     return out
 end

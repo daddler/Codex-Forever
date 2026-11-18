@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.0.7.39",
+        date    = "18.11.2026",
+        notes   = {
+            "|cff7C6CFFMinikarte mit SpartanUI und Co.|r – WeintCodex verschiebt die Minikarte auch im Layout des Bearbeitungsmodus nicht mehr, wenn eine andere Oberfläche sie verwaltet.",
+        },
+    },
+    {
         version = "1.0.7.38",
         date    = "18.11.2026",
         notes   = {

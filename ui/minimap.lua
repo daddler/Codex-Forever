@@ -833,7 +833,18 @@ function MM.WhereLine()
     local p = mm.GetParent and mm:GetParent()
     local pn = p and p.GetName and K.Plain(p:GetName()) or tostring(p)
     local BMv = WeintCodex.UIBarMover
-    return string.format("Minikarte: Eltern %s · sichtbar %s · Alpha %s · Größe %sx%s · links %s unten %s · Bildschirm %sx%s · fremde Oberfläche %s · Modul %s",
+    -- 1.0.7.39: auch, woran sie haengt (erster Anker) und wo die Eltern stehen.
+    local anchor = "keiner"
+    if mm.GetNumPoints and (K.Plain(mm:GetNumPoints()) or 0) > 0 then
+        local okP, pt, rel, rp, x, y = pcall(mm.GetPoint, mm, 1)
+        if okP then
+            local rn = rel and rel.GetName and K.Plain(rel:GetName()) or tostring(rel)
+            anchor = tostring(pt) .. " an " .. tostring(rn) .. " " .. tostring(rp) .. " " .. v(x) .. "/" .. v(y)
+        end
+    end
+    local pl = p and p.GetLeft and v(p:GetLeft()) or "?"
+    local pv = p and p.IsVisible and tostring(K.Bool(p:IsVisible(), false)) or "?"
+    return string.format("Minikarte: Anker %s · Eltern links %s sichtbar %s · ", anchor, pl, pv) .. string.format("Eltern %s · sichtbar %s · Alpha %s · Größe %sx%s · links %s unten %s · Bildschirm %sx%s · fremde Oberfläche %s · Modul %s",
         tostring(pn), tostring(K.Bool(mm:IsVisible(), false)), tostring(K.Plain(mm:GetAlpha())),
         v(mm:GetWidth()), v(mm:GetHeight()), v(mm:GetLeft()), v(mm:GetBottom()),
         v(UIParent:GetWidth()), v(UIParent:GetHeight()),

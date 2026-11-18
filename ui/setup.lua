@@ -219,8 +219,12 @@ end
 -- gesetzt wurde ({ [key] = true }) und was im Layout fehlt (Namen).
 function ES.Adjust(systems)
     local done, missing = {}, {}
+    -- 1.0.7.39 (SpartanUI: Minikarte ohne Lage): verwaltet eine andere
+    -- Oberflaeche die Minikarte, bleibt ihr System im Layout unberuehrt.
+    local BMv = WeintCodex.UIBarMover
+    local foreignMap = BMv and BMv.ForeignMinimap and BMv.ForeignMinimap()
     for _, e in ipairs(K.GAME_LAYOUT) do
-        local sys = Find(systems, e)
+        local sys = not (foreignMap and e.sys == "Minimap") and Find(systems, e) or nil
         if sys then
             local t = Target(e)
             sys.anchorInfo = { point = t.point, relativeTo = "UIParent", relativePoint = t.relPoint,

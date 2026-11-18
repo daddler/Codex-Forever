@@ -9,6 +9,14 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.0.7.39] – 2026-11-18
+
+### Behoben
+- Minikarte mit fremder Oberfläche (`/wcui prüfen`: sichtbar, 155×155,
+  aber ohne Lage): `ES.Adjust` lässt das System Minimap im Layout
+  „WeintCodex“ unberührt, `BM.Entries` ohne Platzhalter, wenn
+  `BM.ForeignMinimap()`. `MM.WhereLine` nennt Anker und Eltern.
+
 ## [1.0.7.38] – 2026-11-18
 
 ### Geändert
