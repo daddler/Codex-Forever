@@ -167,7 +167,7 @@ def side(W=1024, H=256):
     v, a = rim(v, a, top)
     m = np.zeros((H, W))
     # Ziernaht: von der Mitte (rechts) nach aussen auslaufend, mit Haken
-    stroke(m, bezier((1024, 108), (820, 106), (520, 124), (200, 128)), 5, 0.4)
+    stroke(m, bezier((1024, 101), (820, 104), (520, 124), (200, 128)), 2.2, 0.4)
     stroke(m, bezier((910, 107), (880, 88), (840, 90), (834, 106)), 4.5, 0.6)
     stroke(m, bezier((660, 115), (580, 102), (480, 106), (420, 118)), 3.5, 0.3)
     stroke(m, bezier((300, 126), (250, 112), (200, 112), (160, 120)), 2.5, 0.3)
@@ -191,28 +191,26 @@ def slot(W=256, H=64):
 
 
 def unit_plate(W=512, H=128):
-    # Zierplatte hinter Spieler/Ziel (1.0.7.51, Skizze des Spielers): aussen
-    # (links; das Ziel spiegelt) laeuft die Oberkante in einem weichen
-    # S-Bogen hinab zur Konsole, innen flach mit kleiner Rundung. Der untere
-    # Teil liegt HINTER den Seitenteilen und dem Buckel (ui/console.lua
-    # zeichnet sie darunter) - so schmiegt sie sich an die Leiste.
+    # Schulter unter Spieler/Ziel (1.0.7.52, Skizze des Spielers): aussen
+    # (links; das Ziel spiegelt) steigt die Oberkante flach aus der Leiste
+    # an, unter dem Rahmen ist sie flach, innen faellt sie in einem Bogen
+    # zum Ring der Karte. Der untere Teil liegt HINTER Seitenteilen und
+    # Buckel (ui/console.lua) - Konsole und Schulter sind eine Flaeche.
     yy, xx = np.mgrid[0:H, 0:W]
-    T, X0 = 16.0, 170.0
-    t = smooth(0, X0, xx + 0.5)
-    top = T + (H + 4 - T) * (1 - t)
+    T, XO, XI = 16.0, 250.0, 420.0
+    up = smooth(0, XO, xx + 0.5) ** 1.6          # aussen: lang und flach
+    down = smooth(XI, W + 30, xx + 0.5) ** 1.2        # innen: kurz zum Ring
+    top = T + (H + 6 - T) * np.maximum(1 - up, down)
     v = stone(H, W)
     a = smooth(-0.5, 1.2, yy - top)
-    R = 18.0
-    dx = W - xx - 0.5
-    corner = np.where(dx < R, R - np.hypot(R - dx, np.maximum(0, R - (yy - T))), 99)
-    a *= smooth(0, 1.5, np.minimum(corner, dx))
     d = yy - top
     v = v + 0.22 * np.exp(-((d - 1.5) / 1.3) ** 2) - 0.08 * np.exp(-((d - 5) / 1.5) ** 2)
     m = np.zeros((H, W))
-    # Dorn der Kante entlang, aus dem Bogen heraus
-    stroke(m, bezier((60, 98), (120, 40), (170, 24), (250, 25)), 3.5, 0.6)
-    stroke(m, bezier((250, 25), (340, 26), (420, 24), (490, 27)), 3.0, 0.4)
-    stroke(m, bezier((210, 25), (226, 12), (206, 6), (196, 14)), 3, 0.4)
+    # Zierlinie der Kante entlang, aussen aus der Leiste, innen zum Ring
+    stroke(m, bezier((6, 124), (120, 112), (200, 40), (280, 25)), 1.0, 3.2)
+    stroke(m, bezier((280, 25), (340, 23), (380, 23), (420, 26)), 3.2, 3.2)
+    stroke(m, bezier((420, 26), (470, 36), (500, 70), (511, 110)), 3.2, 1.0)
+    stroke(m, bezier((262, 28), (276, 12), (256, 6), (246, 14)), 3, 0.4)
     v = carve(v, m)
     write_tga("console_unit", np.clip(v, 0, 1), np.clip(a, 0, 1))
 

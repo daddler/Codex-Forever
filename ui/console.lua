@@ -84,8 +84,8 @@ end
 -- Rahmen, die zum Buckel hin in die Konsole auslaeuft. An den Rahmen
 -- verankert - wer sie verschiebt, nimmt die Platte mit.
 CO.UNIT_W, CO.UNIT_H = 420, 96
-CO.UNIT_X, CO.UNIT_Y = 110, 16  -- Luft aussen und oben
-CO.UNIT_IN = 14                 -- Luft innen (zur Karte)
+CO.UNIT_X, CO.UNIT_Y = 260, 16  -- Luft aussen und oben
+CO.UNIT_IN = 90                 -- Luft innen (zur Karte)
 CO.TOP = 130         -- Oberkante der Seitenteile (Bild 96 von 256 px)
 CO.UNIT_SINK = 24    -- so weit taucht die Platte in die Konsole ein
 local unitPlates = {}
@@ -114,11 +114,6 @@ local function UnitPlate(key, uf, mirror)
         local h = top * us / fs + CO.UNIT_Y - (base + CO.TOP - CO.UNIT_SINK)
         f:SetHeight(math.max(40, math.min(260, h)))
     end
-    if not f.hooked and uf.HookScript then
-        f.hooked = true
-        uf:HookScript("OnShow", function() if CO.Active() then f:Show() end end)
-        uf:HookScript("OnHide", function() f:Hide() end)
-    end
     f:ClearAllPoints()
     -- Breite aus dem Rahmen: aussen Luft, innen (zur Karte) nur wenig.
     if mirror then
@@ -142,7 +137,9 @@ function CO.Update()
     for key, mirror in pairs({ player = false, target = true }) do
         local uf = _G["WeintCodexUF_" .. key]
         if type(uf) == "table" and uf.GetTop then
-            UnitPlate(key, uf, mirror):SetShown(K.Bool(uf:IsShown(), false))
+            -- 1.0.7.52: immer da, auch ohne Ziel - die Schulter gehoert
+            -- zur Konsole, nicht zum Rahmen (Wunsch des Spielers).
+            UnitPlate(key, uf, mirror):Show()
         elseif unitPlates[key] then
             unitPlates[key]:Hide()
         end
