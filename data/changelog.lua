@@ -26,7 +26,9 @@ WeintCodex_ChangelogData = {
         date    = "18.11.2026",
         notes   = {
             "|cff7C6CFFKonsole im Willkommens-Assistenten|r – das vierte Design steht jetzt mit eigenem Vorschaubild zur Auswahl.",
-            "|cff7C6CFFDesignwechsel stellt die Leisten mit|r – wer zur Konsole oder zurück wechselt, bekommt nach dem Neuladen einmal „Einrichten“ angeboten; Leisten, Karte und Chat kommen damit an ihren Platz.",
+            "|cff7C6CFFEigenes Layout „WeintCodex-Konsole“|r – die Konsole bekommt im Bearbeitungsmodus ein eigenes Layout. Wer zwischen den Designs wechselt, behält beide; nach dem Neuladen wird das passende aktiv oder einmal angelegt.",
+            "|cff7C6CFFFlugpunkt in der Nähe groß in der Mitte|r – wie die Erinnerung des Questpfeils, mit leisem Ton; im Chat steht er weiterhin.",
+            "|cff7C6CFFNamensplaketten ohne Fehler|r – „SetPoint would result in anchor family connection“ beim Erscheinen einer Plakette ist behoben.",
         },
     },
     {

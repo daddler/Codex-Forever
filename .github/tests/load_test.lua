@@ -12481,7 +12481,9 @@ do
         K.Set("nameplates", "auraAlign", "center")
         stub.FireEvent("NAME_PLATE_UNIT_ADDED", "nameplate1")
         local plate = NP.plates["nameplate1"]
-        assert(pt and pt[1] == "BOTTOM" and pt[2] == plate and pt[3] == "TOP" and pt[5] > 0,
+        -- 1.0.7.47: an die Plakette des Spiels (eigene Ankerfamilie), nie an
+        -- unsere - die wird wiederverwendet ("anchor family connection").
+        assert(pt and pt[1] == "BOTTOM" and pt[2] == plate.nameplate and pt[2] ~= plate and pt[3] == "CENTER" and pt[5] > 0,
             "Symbole des Spiels nicht mittig ueber der Plakette")
         K.Set("nameplates", "auraAlign", nil)
         stub.FireEvent("NAME_PLATE_UNIT_REMOVED", "nameplate1")
@@ -26982,15 +26984,9 @@ do
         for _, lc in ipairs(WL.LOOK_CARDS) do if lc.key == "konsole" then found = true end end
         assert(found, "Konsole fehlt im Assistenten")
         assert(5 * (WL.LOOK_CARD_H + WL.LOOK_CARD_GAP) <= 4 * (WL.CARD_H + WL.CARD_GAP), "fuenf Karten zu hoch")
-        local root = K.Root()
-        if root then
-            root.layoutLook = "schwarz"
-            assert(WeintCodex.UISetup.LookMismatch(), "Wechsel zur Konsole nicht erkannt")
-            root.layoutLook = "konsole"
-            assert(not WeintCodex.UISetup.LookMismatch(), "Konsole eingerichtet, trotzdem Wechsel")
-            root.layoutLook = nil
-        end
+        assert(WeintCodex.UISetup.LayoutName() == "WeintCodex-Konsole", "kein eigenes Layout fuer die Konsole")
         K.Set("general", "look", keep)
+        assert(WeintCodex.UISetup.LayoutName() == "WeintCodex", "Layout der anderen Designs geaendert")
         assert(K.Layout("uf_player").y == base and K.ConsoleBar(4) == nil, "Grundplatz verloren")
     end)
     Check(ok, "Design Konsole" .. (ok and "" or (": " .. tostring(err))))

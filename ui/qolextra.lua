@@ -439,7 +439,9 @@ function QX.CheckFlightNear()
     local name, d = QX.NearFlight(c, n, w, FlightStore())
     if name then
         reminded[name] = true
-        Say(string.format("Flugpunkt in der Nähe noch nicht entdeckt: %s (etwa %d m) – sprich mit dem Flugmeister.", name, math.floor(d / 10 + 0.5) * 10))
+        local m = math.floor(d / 10 + 0.5) * 10
+        QX.BigFlight(string.format("Flugpunkt in der Nähe: %s (%d m)", name, m),
+            string.format("Flugpunkt in der Nähe noch nicht entdeckt: %s (etwa %d m) – sprich mit dem Flugmeister.", name, m))
     end
 end
 local flightAcc = 0
@@ -457,7 +459,7 @@ function QX.CheckFlight()
     local name = QX.MissingFlight(type(zone) == "string" and zone or nil, type(sub) == "string" and sub or nil)
     if name and not reminded[name] then
         reminded[name] = true
-        Say("Flugpunkt hier noch nicht entdeckt: " .. name .. " – sprich mit dem Flugmeister.")
+        QX.BigFlight("Flugpunkt hier: " .. name, "Flugpunkt hier noch nicht entdeckt: " .. name .. " – sprich mit dem Flugmeister.")
     end
 end
 
@@ -538,7 +540,7 @@ local function Build(B)
           { type = "toggle", label = "Schließkassetten im Tooltip", key = "lockboxTip",
             description = "Welche Fertigkeit im Schlossknacken eine Kassette braucht." })
     B:Row({ type = "toggle", label = "Flugpunkte erinnern", key = "flightRemind",
-            description = "Hinweis im Chat, wenn ein noch nicht entdeckter Flugpunkt näher als etwa 600 m ist oder du sein Gebiet betrittst. Erst, nachdem du einmal eine Flugkarte geöffnet hast." },
+            description = "Großer Hinweis in der Bildschirmmitte (und im Chat), wenn ein noch nicht entdeckter Flugpunkt näher als etwa 600 m ist oder du sein Gebiet betrittst. Erst, nachdem du einmal eine Flugkarte geöffnet hast." },
           { type = "toggle", label = "Instanzen zählen", key = "instTracker",
             description = "Beim Betreten: wie viele neue Instanzen du in der letzten Stunde betreten hast (Grenze 10 je Konto). Beim Verlassen: wie lange. Liste: /wcui instanzen." })
     B:Row({ type = "toggle", label = "Taschendiebstahl melden", key = "pickpocketMsg",

@@ -58,6 +58,17 @@ local F  = WeintCodex.Fonts
 -- Der Name lebt in ui/profile.lua: dort wird das Layout gemerkt und
 -- zurueckgegeben.
 ES.LAYOUT_NAME = WeintCodex.UIProfile.LAYOUT_NAME
+-- 1.0.7.47 (Wunsch: "WeintCodex-Konsole als eigenes Layout - dann gibt es
+-- fuer beides Backups"): das Design "Konsole" hat ein eigenes Layout im
+-- Bearbeitungsmodus. Wer zwischen den Designs wechselt, behaelt beide.
+function ES.LayoutName()
+    local PFm = WeintCodex.UIProfile
+    return PFm and PFm.LayoutName and PFm.LayoutName() or ES.LAYOUT_NAME
+end
+function ES.IsOwnName(n)
+    local PFm = WeintCodex.UIProfile
+    return PFm and PFm.IsOwnName and PFm.IsOwnName(n) or n == ES.LAYOUT_NAME
+end
 
 local function Say(text)
     print(WeintCodex.ColorText("accent", "[WeintCodex]") .. " " .. text)
@@ -90,7 +101,7 @@ function ES.HasLayout()
     local info = Layouts()
     if not info then return nil end
     for _, l in ipairs(info.layouts) do
-        if l.layoutName == ES.LAYOUT_NAME then return true end
+        if l.layoutName == ES.LayoutName() then return true end
     end
     return false
 end
@@ -118,7 +129,7 @@ function ES.LayoutActive()
     local presets = Presets()
     local n = presets and #presets or 2
     for i, l in ipairs(info.layouts) do
-        if l.layoutName == ES.LAYOUT_NAME then return K.Plain(info.activeLayout) == n + i end
+        if l.layoutName == ES.LayoutName() then return K.Plain(info.activeLayout) == n + i end
     end
     return false
 end
@@ -271,7 +282,7 @@ function ES.SetGroupHorizontal(kind, on)
     if not info then return false, why end
     local layout, slot
     for i, l in ipairs(info.layouts) do
-        if l.layoutName == ES.LAYOUT_NAME then layout, slot = l, i end
+        if l.layoutName == ES.LayoutName() then layout, slot = l, i end
     end
     if not (layout and type(layout.systems) == "table") then return false, "kein Layout „WeintCodex“" end
     local entry
@@ -300,7 +311,7 @@ local function OwnLayout()
     local info, why = Layouts()
     if not info then return nil, nil, why end
     for i, l in ipairs(info.layouts) do
-        if l.layoutName == ES.LAYOUT_NAME and type(l.systems) == "table" then return info, l, i end
+        if l.layoutName == ES.LayoutName() and type(l.systems) == "table" then return info, l, i end
     end
     return nil, nil, "kein Layout „WeintCodex“"
 end
@@ -360,9 +371,9 @@ function ES.Base(info, presets)
     local nPre = presets and #presets or 2
     local active = tonumber(info.activeLayout) or 0
     local l = info.layouts[active - nPre]
-    if l and l.layoutName ~= ES.LAYOUT_NAME and type(l.systems) == "table" then return l, l.layoutName end
+    if l and not ES.IsOwnName(l.layoutName) and type(l.systems) == "table" then return l, l.layoutName end
     for _, o in ipairs(info.layouts) do
-        if o.layoutName ~= ES.LAYOUT_NAME and type(o.systems) == "table" then return o, o.layoutName end
+        if not ES.IsOwnName(o.layoutName) and type(o.systems) == "table" then return o, o.layoutName end
     end
     return nil
 end
@@ -398,9 +409,9 @@ function ES.PersonalSource(info, presets)
     local nPre = presets and #presets or 2
     local active = info.layouts[(tonumber(info.activeLayout) or 0) - nPre]
     if not (active and type(active.systems) == "table") then return nil end
-    if active.layoutName ~= ES.LAYOUT_NAME or not Untouched(active) then return active end
+    if not ES.IsOwnName(active.layoutName) or not Untouched(active) then return active end
     for _, o in ipairs(info.layouts) do
-        if o.layoutName ~= ES.LAYOUT_NAME and type(o.systems) == "table" then return o end
+        if not ES.IsOwnName(o.layoutName) and type(o.systems) == "table" then return o end
     end
     return nil
 end
@@ -445,7 +456,7 @@ local function ApplyLayout(report)
     if not (base and type(base.systems) == "table") then return false, "keine Grundlage (kein Layout lesbar)" end
 
     local layout = Copy(base)
-    layout.layoutName = ES.LAYOUT_NAME
+    layout.layoutName = ES.LayoutName()
     local LT = EnumTable("EditModeLayoutType")
     layout.layoutType = LT and LT.Account or layout.layoutType
     local done, missing = ES.Adjust(layout.systems)
@@ -458,7 +469,7 @@ local function ApplyLayout(report)
     -- Ein altes "WeintCodex" (von einem frueheren Einrichten) ersetzen.
     local slot
     for i, l in ipairs(info.layouts) do
-        if l.layoutName == ES.LAYOUT_NAME then slot = i end
+        if l.layoutName == ES.LayoutName() then slot = i end
     end
     slot = slot or (#info.layouts + 1)
     info.layouts[slot] = layout
@@ -657,7 +668,7 @@ function ES.Check()
         local l = active > nPre and info.layouts[active - nPre]
         local name = l and l.layoutName or (presets and presets[active] and presets[active].layoutName)
         out[#out + 1] = "Aktives Layout: " .. tostring(name or "?")
-            .. (name == ES.LAYOUT_NAME and "" or " – nicht „WeintCodex“, /wcui einrichten")
+            .. (ES.IsOwnName(name) and "" or " – nicht „WeintCodex“, /wcui einrichten")
     else
         out[#out + 1] = "Layouts nicht lesbar."
     end
@@ -939,7 +950,7 @@ function ES.ActivateExisting()
     local presets = Presets()
     local n = presets and #presets or 2
     for i, l in ipairs(info.layouts) do
-        if l.layoutName == ES.LAYOUT_NAME then
+        if l.layoutName == ES.LayoutName() then
             local em = _G.C_EditMode
             if not (em and em.SetActiveLayout) then return false end
             return (pcall(em.SetActiveLayout, n + i))
@@ -986,7 +997,7 @@ function ES.MaybeAsk()
         asked = true
         MarkCharAsked()
         if not K.InCombat() and ES.ActivateExisting() then
-            Say("Layout „" .. ES.LAYOUT_NAME .. "“ für diesen Charakter aktiviert.")
+            Say("Layout „" .. ES.LayoutName() .. "“ für diesen Charakter aktiviert.")
         end
         return
     end
@@ -1040,20 +1051,27 @@ end
 -- ein Design mit anderen Plaetzen (Konsole hin oder zurueck), oeffnet nach
 -- dem Neuladen einmal das Einrichten; "Alles einrichten" stellt sie dann.
 local lookTold = false
+-- Steht ein Layout von WeintCodex, aber nicht das des gewaehlten Designs?
 function ES.LookMismatch()
-    local root = K.Root()
-    if not root then return false end
-    local now = K.LookKey and K.LookKey() or nil
-    local was = root.layoutLook
-    local function Own(l) return l and K.LOOK_LAYOUT and K.LOOK_LAYOUT[l] ~= nil end
-    if was == nil then return Own(now) end      -- vor 1.0.7.47 eingerichtet
-    return was ~= now and (Own(was) or Own(now))
+    if ES.LayoutActive() ~= false then return false end
+    local info = Layouts()
+    if not info then return false end
+    local presets = Presets()
+    local n = presets and #presets or 2
+    for i, l in ipairs(info.layouts or {}) do
+        if ES.IsOwnName(l.layoutName) and K.Plain(info.activeLayout) == n + i then return true end
+    end
+    return false
 end
 function ES.CheckLook()
-    if lookTold or not K.UIEnabled() or ES.LayoutActive() ~= true or not ES.LookMismatch() then return false end
+    if lookTold or not K.UIEnabled() or K.InCombat() or not ES.LookMismatch() then return false end
     lookTold = true
-    Say("Das Design der Oberfläche hat sich geändert – „Alles einrichten“ stellt Leisten, Karte und Chat dafür an ihren Platz.")
-    K.AfterCombat(ES.Show)
+    if ES.HasLayout() == true and ES.ActivateExisting() then
+        Say("Design gewechselt – Layout „" .. ES.LayoutName() .. "“ aktiviert.")
+    else
+        Say("Design gewechselt – „Alles einrichten“ legt das Layout „" .. ES.LayoutName() .. "“ an; das bisherige bleibt.")
+        ES.Show()
+    end
     return true
 end
 

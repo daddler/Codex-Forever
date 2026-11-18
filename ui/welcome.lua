@@ -425,13 +425,9 @@ function WL.Apply()
     local ES = WeintCodex.UISetup
     -- 6.26.17.0: auch, wenn es das Layout schon gibt, es hier aber nicht
     -- aktiv ist (zweiter Charakter) oder der Client es nicht sagt.
-    -- 1.0.7.47: ein Design mit eigenen Plaetzen (Konsole) braucht das Layout
-    -- neu, auch wenn es schon da und aktiv ist.
-    local lookChanged = ui and ES and ES.LookMismatch and ES.LookMismatch()
-    if lookChanged then
-        local ok, why = ES.Apply()
-        report.layout = ok and true or tostring(why)
-    elseif ui and ES and ES.LayoutActive() ~= true then
+    -- 1.0.7.47: je Design ein eigenes Layout ("WeintCodex-Konsole") - das
+    -- des gewaehlten Designs wird aktiv oder neu angelegt.
+    if ui and ES and ES.LayoutActive() ~= true then
         -- Gibt es das Layout schon (anderer Charakter, frueher eingerichtet),
         -- wird es nur aktiv geschaltet - nie neu gebaut (6.26.18.0).
         if ES.HasLayout() == true and ES.ActivateExisting() then

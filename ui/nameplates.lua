@@ -363,9 +363,19 @@ local function AlignGameAuras(auras, p)
     local scale = (S.gameAuraScale or 100) / 100
     -- Zeilenhoehe einer Schrift ist gut 1,25 x ihre Groesse.
     local y = ((S.textTop ~= "none" and math.ceil(S.nameSize * 1.25) or 0) + 6) / scale
+    -- 1.0.7.47 (Fehlerbericht: "SetPoint would result in anchor family
+    -- connection"): nie an unsere Plakette - die wird wiederverwendet und
+    -- haengt danach an einer anderen Plakette des Spiels, die Liste aber
+    -- bliebe an ihr. Jede Plakette des Spiels ist eine eigene Ankerfamilie;
+    -- also an die Plakette des Spiels selbst, auf der unsere mittig sitzt.
+    local np = p.nameplate
+    if type(np) ~= "table" then return end
+    local w = K.Plain(p:GetWidth()) or 0
+    local h = K.Plain(p:GetHeight()) or 0
+    local ax = (align == "right" and w / 2) or (align == "center" and 0) or -w / 2
     local ok, err = pcall(function()
         list:ClearAllPoints()
-        list:SetPoint(pt, p, rel, 0, y)
+        list:SetPoint(pt, np, "CENTER", ax / scale, (h / 2) / scale + y)
     end)
     movedList[list] = true
     NP.gameAlign = ok and ("gesetzt: " .. pt) or ("vom Spiel abgelehnt: " .. tostring(err))
@@ -2251,7 +2261,15 @@ local function Attach(unit)
     p._friendly = friendly
     p:SetParent(nameplate)
     p:ClearAllPoints()
-    p:SetPoint("CENTER", nameplate, "CENTER", 0, 0)
+    -- 1.0.7.47: sollte doch noch etwas einer anderen Plakette an dieser
+    -- haengen, lieber eine frische bauen als einen Fehler werfen.
+    if not pcall(p.SetPoint, p, "CENTER", nameplate, "CENTER", 0, 0) then
+        p = NP.MeasuredBuild(nameplate)
+        p._friendly = friendly
+        p:SetParent(nameplate)
+        p:ClearAllPoints()
+        p:SetPoint("CENTER", nameplate, "CENTER", 0, 0)
+    end
     p.unit, p.nameplate = unit, nameplate
     p._bossUnit = nil   -- 1.0.5.40: Bossnummer neu nachsehen (Plakette aus dem Vorrat)
     -- Welcher NPC (Kennung, Name, zaubert?) - einmal beim Erscheinen.

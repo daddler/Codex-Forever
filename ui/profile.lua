@@ -49,6 +49,13 @@ local PF = WeintCodex.UIProfile
 local K  = WeintCodex.UIKit
 
 PF.LAYOUT_NAME = "WeintCodex"
+PF.CONSOLE_LAYOUT_NAME = "WeintCodex-Konsole"   -- 1.0.7.47, Design "Konsole"
+function PF.LayoutName()
+    local K0 = WeintCodex.UIKit
+    if K0 and K0.LookKey and K0.LookKey() == "konsole" then return PF.CONSOLE_LAYOUT_NAME end
+    return PF.LAYOUT_NAME
+end
+function PF.IsOwnName(n) return n == PF.LAYOUT_NAME or n == PF.CONSOLE_LAYOUT_NAME end
 
 local function Say(text)
     print(WeintCodex.ColorText("accent", "[WeintCodex]") .. " " .. text)
@@ -112,7 +119,7 @@ function PF.IndexOf(want, info)
     return nil
 end
 
-function PF.IsOurs(active) return type(active) == "table" and active.name == PF.LAYOUT_NAME end
+function PF.IsOurs(active) return type(active) == "table" and PF.IsOwnName(active.name) end
 
 -- Name zum Anzeigen.
 function PF.LayoutLabel(want)
@@ -167,8 +174,9 @@ end
 function PF.Enter()
     local info = PF.Layouts()
     if not info then return nil end
-    if PF.IsOurs(PF.Active(info)) then return true end
-    local idx = PF.IndexOf({ name = PF.LAYOUT_NAME }, info)
+    local act = PF.Active(info)
+    if type(act) == "table" and act.name == PF.LayoutName() then return true end
+    local idx = PF.IndexOf({ name = PF.LayoutName() }, info)
     if not idx then return false end
     return SetActive(idx)
 end
@@ -195,7 +203,7 @@ function PF.Leave()
         how = "fallback"
         want = nil
         for _, l in ipairs(info.layouts) do
-            if l.layoutName ~= PF.LAYOUT_NAME then want = { name = l.layoutName } break end
+            if not PF.IsOwnName(l.layoutName) then want = { name = l.layoutName } break end
         end
         want = want or { preset = 1 }
         idx = PF.IndexOf(want, info)

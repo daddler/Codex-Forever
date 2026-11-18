@@ -16,10 +16,16 @@ nicht zusammen.
   Karten 58 + 6 hoch, passen in die Höhe von vier), Vorschau
   `media/welcome/look_konsole.blp` aus den Konsolenbildern
   (`make_console_media.py`, `welcome_preview`).
-- Designwechsel ohne neues Layout: `root.layoutLook` beim Einrichten gemerkt,
-  `ES.LookMismatch`/`ES.CheckLook` öffnen nach dem Neuladen einmal
-  „Einrichten“; der Assistent baut das Layout bei Wechsel neu statt es nur
-  aktiv zu schalten.
+- Designwechsel: eigenes Layout `WeintCodex-Konsole` (`PF.LayoutName`,
+  `PF.IsOwnName`, `ES.LayoutName`); beide bleiben als Sicherung. `ES.CheckLook`
+  schaltet nach dem Neuladen das Layout des Designs aktiv oder bietet
+  „Einrichten“ an.
+- Namensplaketten (Fehlerbericht, `nameplates.lua:2254`, „anchor family
+  connection“ seit 1.0.7.44): die Debuff-Liste des Spiels hing an unserer
+  Plakette, die wiederverwendet wird; jetzt an der Plakette des Spiels
+  (CENTER + halbe Höhe). `Attach` baut bei abgelehntem Anker eine frische.
+- Flugpunkt in der Nähe/hier (`QX.BigFlight`): groß in der Mitte wie
+  `RT.RemindTaxi`, dazu Chat und Ton.
 
 ## [1.0.7.46] – 2026-11-18
 
