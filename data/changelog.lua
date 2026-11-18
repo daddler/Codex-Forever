@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.0.7.54",
+        date    = "18.11.2026",
+        notes   = {
+            "|cff7C6CFFKonsole: schlank|r – keine Schultern mehr. Spieler und Ziel sitzen direkt auf der Oberkante der Leiste, dicht an der Karte, das Porträt jeweils innen am Ring. Ohne Ziel bleibt die Seite einfach frei.",
+        },
+    },
+    {
         version = "1.0.7.53",
         date    = "18.11.2026",
         notes   = {

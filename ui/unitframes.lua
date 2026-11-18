@@ -877,6 +877,11 @@ function Frame:Layout()
     local pf = self._portrait
     local inset = 0
     local right = Opt(u .. "_portraitRight")
+    -- 1.0.7.54: Konsole - Portraet innen am Ring (Spieler rechts, Ziel
+    -- links), solange die Einstellung die ab Werk ist.
+    if (u == "player" or u == "target") and right == (u == "target") and K.LookKey and K.LookKey() == "konsole" then
+        right = not right
+    end
     local kind = Opt(u .. "_portrait")
     if kind == "bar" and not self._barModel then kind = "none" end
     -- 6.108.0.0: runde Form - das eckige Portraet weicht dem runden.

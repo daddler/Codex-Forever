@@ -79,71 +79,18 @@ local function Slot(i, bar)
     return s
 end
 
--- Zierplatten hinter Spieler und Ziel (1.0.7.49, Wunsch: "Spieler- und
--- Zielfenster muessen besser ins Ornament integriert sein"): eine Platte je
--- Rahmen, die zum Buckel hin in die Konsole auslaeuft. An den Rahmen
--- verankert - wer sie verschiebt, nimmt die Platte mit.
-CO.UNIT_W, CO.UNIT_H = 420, 96
-CO.UNIT_X, CO.UNIT_Y = 180, 40  -- Luft aussen und oben
-CO.UNIT_IN = 200                -- Luft innen (zur Karte)
-CO.TOP = 130         -- Oberkante der Seitenteile (Bild 96 von 256 px)
-CO.UNIT_SINK = 24    -- so weit taucht die Platte in die Konsole ein
-local unitPlates = {}
-local function UnitPlate(key, uf, mirror)
-    local f = unitPlates[key]
-    if not f then
-        -- 1.0.7.51: unter der Konsole (eigener Rahmen an UIParent, Stufe
-        -- unter ihr) - Seitenteile und Buckel decken das untere Ende ab.
-        f = CreateFrame("Frame", nil, UIParent)
-        f:SetFrameStrata("BACKGROUND")
-        f:SetFrameLevel(1)
-        f:SetSize(CO.UNIT_W, CO.UNIT_H)
-        local t = Tex(f, "console_unit", "ARTWORK", 0)
-        t:SetAllPoints(f)
-        if mirror then t:SetTexCoord(1, 0, 0, 1) end
-        unitPlates[key] = f
-    end
-    -- 1.0.7.50 (Bild: Luecke zwischen Rahmen und Leistenornament): die
-    -- Platte reicht immer bis in die Konsole hinein, egal wie hoch der
-    -- Rahmen steht - Hoehe aus der echten Lage, nicht aus der Tabelle.
-    local top = K.Plain(uf:GetTop())
-    local base = K.Plain(frame:GetBottom())
-    local us = K.Plain(uf:GetEffectiveScale()) or 1
-    local fs = K.Plain(frame:GetEffectiveScale()) or 1
-    if top and base and fs > 0 then
-        local h = top * us / fs + CO.UNIT_Y - (base + CO.TOP - CO.UNIT_SINK)
-        f:SetHeight(math.max(40, math.min(260, h)))
-    end
-    f:ClearAllPoints()
-    -- Breite aus dem Rahmen: aussen Luft, innen (zur Karte) nur wenig.
-    if mirror then
-        f:SetPoint("TOPLEFT", uf, "TOPLEFT", -CO.UNIT_IN, CO.UNIT_Y)
-        f:SetPoint("TOPRIGHT", uf, "TOPRIGHT", CO.UNIT_X, CO.UNIT_Y)
-    else
-        f:SetPoint("TOPLEFT", uf, "TOPLEFT", -CO.UNIT_X, CO.UNIT_Y)
-        f:SetPoint("TOPRIGHT", uf, "TOPRIGHT", CO.UNIT_IN, CO.UNIT_Y)
-    end
-    return f
-end
+-- 1.0.7.49-1.0.7.53 standen hier Zierplatten/Schultern hinter Spieler und
+-- Ziel. 1.0.7.54 (Wunsch mit Bild: "genau so, alles andere ist zu dick"):
+-- keine - die Rahmen sitzen selbst auf der Oberkante, das Portraet innen am
+-- Ring (Plaetze in ui/layout.lua).
 
 function CO.Update()
     if not CO.Active() then
         if frame then frame:Hide() end
-        for _, p in pairs(unitPlates) do p:Hide() end
         return false
     end
     Build()
     frame:Show()
-    for key, mirror in pairs({ player = false, target = true }) do
-        local uf = _G["WeintCodexUF_" .. key]
-        if type(uf) == "table" and uf.GetTop then
-            -- 1.0.7.52: immer da, auch ohne Ziel - die Schulter gehoert
-            -- zur Konsole, nicht zum Rahmen (Wunsch des Spielers).
-            UnitPlate(key, uf, mirror):Show()
-        elseif unitPlates[key] then
-            unitPlates[key]:Hide()
-        end
-    end
     for i, names in ipairs(CO.SLOT_BARS) do
         local bar
         for _, n in ipairs(names) do
