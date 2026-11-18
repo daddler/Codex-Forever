@@ -26,6 +26,10 @@ nicht zusammen.
 - Namensplaketten: Debuffs des Spiels bei Ausrichtung „links“ lagen auf dem
   Namen – Liste wird verschoben, sobald oben ein Text steht; Abstand nach
   Zeilenhöhe (1,25 × Schriftgröße).
+- Berufslink im Chat still: WeintCodex fängt ihn nirgends ab, das Spiel öffnet
+  ihn nicht. `PT.OnTradeLink` (Haken an `SetItemRef`): ohne Berufsfenster nach
+  0,6 s Hinweis mit dem Bekannten aus `guildProfs` und Seite „Berufe“;
+  `/wcui prüfen` → Berufe zeigt die letzten Klicks.
 - Buffzeiten: Schlachtruf 3 min (Forever) statt 2 min (Classic).
 
 ## [1.0.7.43] – 2026-11-18

@@ -27,6 +27,7 @@ WeintCodex_ChangelogData = {
         notes   = {
             "|cff7C6CFFNeues Design „Konsole“|r – unten eine Konsole aus Stein mit Ornamenten: in der Mitte ein Buckel mit runder Fassung für die Minikarte, links und rechts je zwei Reihen Aktionsleisten in eingelassenen Schächten, Leiste 4 und 5 als Kästen außen, Spieler und Ziel neben der Mitte. Unter /wcui → Allgemein → Design der Oberfläche, danach neu laden und /wcui einrichten.",
             "|cff7C6CFFDebuffs an den Namensplaketten wieder frei|r – steht der Name über der Plakette, rücken die Symbole jetzt über ihn statt auf ihn.",
+            "|cff7C6CFFBerufslinks im Chat nicht mehr stumm|r – öffnet das Spiel einen verlinkten Beruf nicht, nennt WeintCodex, was es vom Besitzer weiß (Fertigkeit und Rezepte, wenn er in der Gilde teilt), und öffnet die Seite „Berufe“.",
             "|cff7C6CFFSchlachtruf hält 3 Minuten|r – die Buffzeit zeigte noch die alten 2 Minuten.",
         },
     },

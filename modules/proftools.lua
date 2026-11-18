@@ -2764,3 +2764,81 @@ do
         else pcall(PT.MarkMerchant) end
     end))
 end
+
+--------------------------------------------------
+-- Berufslinks im Chat (1.0.7.44)
+--------------------------------------------------
+-- Meldung: "[Schmiedekunst] verlinkt - Klick darauf oeffnet nichts, der
+-- Link ist still". WeintCodex faengt diesen Klick nirgends ab; das Spiel
+-- selbst oeffnet ihn hier offenbar nicht. Darum: nach dem Klick kurz
+-- warten - hat das Spiel kein Berufsfenster geoeffnet, nennt WeintCodex,
+-- was es vom Besitzer weiss (geteilte Berufe der Gilde), und oeffnet die
+-- Seite "Berufe". Nichts wird gesendet. Gemerkt fuer /wcui pruefen.
+PT.linkLog = {}
+PT.LINK_WAIT = 0.6
+function PT.TradeOwner(link)
+    -- trade:<GUID>:<Zauber>:<Fertigkeitslinie> (Reihenfolge je Client
+    -- verschieden - die GUID ist das Feld, das mit "Player-" beginnt)
+    local guid = type(link) == "string" and link:match("(Player%-[%w%-]+)") or nil
+    if not guid or not _G.GetPlayerInfoByGUID then return nil end
+    local ok, _, _, _, _, _, name, realm = pcall(_G.GetPlayerInfoByGUID, guid)
+    name = ok and Plain(name) or nil
+    if type(name) ~= "string" or name == "" then return nil end
+    realm = ok and Plain(realm) or nil
+    return name, (type(realm) == "string" and realm ~= "") and realm or nil
+end
+function PT.GameTradeShown()
+    for _, n in ipairs({ "ProfessionsFrame", "TradeSkillFrame", "CraftFrame" }) do
+        local f = _G[n]
+        if type(f) == "table" and f.IsShown and f:IsShown() then return n end
+    end
+    return nil
+end
+function PT.OnTradeLink(link, text)
+    local profName = type(text) == "string" and text:match("%[(.-)%]") or nil
+    local key = profName and PRO.KeyByName and PRO.KeyByName(profName) or nil
+    local name, realm = PT.TradeOwner(link)
+    local rec = { link = tostring(link):sub(1, 60), prof = profName, owner = name }
+    table.insert(PT.linkLog, 1, rec)
+    if #PT.linkLog > 5 then table.remove(PT.linkLog) end
+    local function Check()
+        local shown = PT.GameTradeShown()
+        rec.game = shown or "nichts geöffnet"
+        if shown then return end
+        local g = PT.Guild() or {}
+        local e = name and (g[name] or (realm and g[name .. "-" .. realm]))
+        local p = e and key and e[key]
+        local who = name or "dem Spieler"
+        local msg
+        if p then
+            local n = 0
+            for _ in pairs(p.known or {}) do n = n + 1 end
+            msg = string.format("%s von %s: Fertigkeit %s%s, %d Rezepte bekannt – Seite „Berufe“ geöffnet.",
+                profName or "Beruf", who, tostring(p.rank or "?"), p.max and ("/" .. p.max) or "", n)
+        else
+            msg = string.format("Das Spiel öffnet diesen Berufslink hier nicht. Von %s kennt WeintCodex %s nicht – nur Gildenmitglieder mit WeintCodex teilen ihre Rezepte.",
+                who, profName or "diesen Beruf")
+        end
+        print(WeintCodex.AC .. "[WeintCodex]|r " .. msg)
+        if p and PT.Show then
+            pcall(PT.Show, nil)
+        end
+    end
+    if _G.C_Timer and _G.C_Timer.After then _G.C_Timer.After(PT.LINK_WAIT, Check) else Check() end
+    return rec
+end
+if _G.hooksecurefunc and type(_G.SetItemRef) == "function" then
+    _G.hooksecurefunc("SetItemRef", function(link, text, button)
+        if type(link) == "string" and link:sub(1, 6) == "trade:" and button ~= "RightButton" then
+            pcall(PT.OnTradeLink, link, text)
+        end
+    end)
+end
+function PT.LinkLines()
+    local out = {}
+    for _, r in ipairs(PT.linkLog) do
+        out[#out + 1] = string.format("Berufslink %s · %s · Besitzer %s · Spiel: %s",
+            tostring(r.prof), r.link, tostring(r.owner), tostring(r.game or "…"))
+    end
+    return out
+end

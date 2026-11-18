@@ -778,6 +778,8 @@ Check("Gespräche", function(add)
 end)
 
 Check("Berufe", function(add)
+    local PTl = WeintCodex.ProfTools
+    for _, l in ipairs(PTl and PTl.LinkLines and PTl.LinkLines() or {}) do add("", "   " .. l) end
     local PRO = WeintCodex.Professions
     if not (PRO and PRO.Skills) then
         add(SC.OPEN, "Berufe-Seite nicht geladen.")

@@ -26982,6 +26982,23 @@ do
     Check(ok, "Design Konsole" .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 1.0.7.44: stiller Berufslink - Besitzer erkannt, Ersatz ohne Fenster.
+do
+    local ok, err = pcall(function()
+        local PT = WeintCodex.ProfTools
+        local G = _G
+        local gp = G.GetPlayerInfoByGUID
+        G.GetPlayerInfoByGUID = function() return "Krieger", "WARRIOR", "Zwerg", "Dwarf", 2, "Mobec", "" end
+        local n = PT.TradeOwner("trade:Player-1-0ABC:2018:164")
+        assert(n == "Mobec", "Besitzer: " .. tostring(n))
+        local rec = PT.OnTradeLink("trade:Player-1-0ABC:2018:164", "[Schmiedekunst]")
+        G.GetPlayerInfoByGUID = gp
+        assert(rec.prof == "Schmiedekunst" and rec.owner == "Mobec", "Link nicht gelesen")
+        assert(#PT.LinkLines() >= 1, "nicht gemerkt")
+    end)
+    Check(ok, "Berufslink im Chat" .. (ok and "" or (": " .. tostring(err))))
+end
+
 -- 1.0.7.43: Dialoge bleiben bei "Transparent" lesbar.
 do
     local ok, err = pcall(function()
