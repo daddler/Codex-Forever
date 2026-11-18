@@ -964,24 +964,44 @@ function MM.RescueSpartan()
         local a, b, c, d, e = pos:match("^([^,]*),([^,]*),([^,]*),([^,]*),([^,]*)")
         point, anchorName, rp, x, y = a or point, b, c or a or rp, tonumber(d) or 0, tonumber(e) or 0
     end
-    local anchor = anchorName and _G[anchorName]
-    local how = anchorName
-    if type(anchor) ~= "table" then
-        anchor = _G.SUI_BottomAnchor
-        how = "SUI_BottomAnchor (" .. tostring(anchorName) .. " fehlt)"
-        if type(anchor) ~= "table" then anchor, how, point, rp, x, y = UIParent, "UIParent", "BOTTOM", "BOTTOM", 0, 140 end
+    -- 1.0.7.42: gemessen (1.0.7.41) - der Anker an SUI_Art_<Stil>_Center
+    -- (eine Textur) wird vom Client abgelehnt, die alte Notloesung lag 140
+    -- Punkte zu hoch. Jetzt der Reihe nach: das Ziel von SpartanUI, dann der
+    -- Rahmen des Kunstwerks (die Mitte sitzt mit BOTTOM genau auf seinem
+    -- BOTTOM - gleicher Platz), dann SUI_BottomAnchor, dann UIParent -
+    -- immer mit SpartanUIs eigenem Versatz. Jeder Versuch wird gemerkt.
+    local style
+    pcall(function() style = SUI:GetActiveStyle() end)
+    local tries = {}
+    local cands = {}
+    if anchorName then cands[#cands + 1] = anchorName end
+    if type(style) == "string" then cands[#cands + 1] = "SUI_Art_" .. style end
+    cands[#cands + 1] = "SUI_BottomAnchor"
+    cands[#cands + 1] = "UIParent"
+    local done
+    for _, n in ipairs(cands) do
+        local a = n == "UIParent" and UIParent or _G[n]
+        if type(a) ~= "table" then
+            tries[#tries + 1] = n .. " fehlt"
+        else
+            local okS, err = pcall(mover.SetPoint, mover, point, a, rp, x, y)
+            local np = K.Plain(mover:GetNumPoints()) or 0
+            if okS and np > 0 then
+                tries[#tries + 1] = n .. " ok"
+                done = n
+                break
+            end
+            tries[#tries + 1] = n .. (okS and " ohne Wirkung" or (" Fehler " .. tostring(err):sub(1, 80)))
+            pcall(mover.ClearAllPoints, mover)
+        end
     end
-    local okS = pcall(mover.SetPoint, mover, point, anchor, rp, x, y)
-    if not okS or (K.Plain(mover:GetNumPoints()) or 0) == 0 then
-        okS = pcall(mover.SetPoint, mover, "BOTTOM", UIParent, "BOTTOM", 0, 140)
-        how = "UIParent (Notlösung)"
-    end
-    MM.rescued = string.format("%s · %s %s %s/%s", okS and "gesetzt" or "gescheitert", point, how, tostring(x), tostring(y))
+    MM.rescued = string.format("%s · %s %s %s/%s · Versuche: %s", done and "gesetzt" or "gescheitert", point, tostring(done), tostring(x), tostring(y), table.concat(tries, ", "))
+    MM.rescueCount = (MM.rescueCount or 0) + 1
     local sm = _G.SUI_Minimap
-    if okS and type(sm) == "table" and (K.Plain(sm:GetNumPoints()) or 0) == 0 then
+    if done and type(sm) == "table" and (K.Plain(sm:GetNumPoints()) or 0) == 0 then
         pcall(sm.SetPoint, sm, "TOPLEFT", mover, "TOPLEFT", 0, 0)
     end
-    return okS
+    return done ~= nil
 end
 do
     local ev = CreateFrame("Frame")
@@ -991,6 +1011,22 @@ do
         if not (_G.C_Timer and _G.C_Timer.After) then return MM.RescueSpartan() end
         for _, d in ipairs({ 0.5, 2, 5, 10 }) do _G.C_Timer.After(d, MM.RescueSpartan) end
     end)
+    -- SpartanUI loescht den Anker spaeter erneut (Groesse/Position neu,
+    -- gemessen alle paar Sekunden): direkt danach wieder setzen.
+    MM.rescueHooked = false
+    function MM.HookRescue()
+        local mover = _G.SUI_Mover_Minimap
+        if MM.rescueHooked or type(mover) ~= "table" or type(_G.hooksecurefunc) ~= "function" then return end
+        MM.rescueHooked = true
+        _G.hooksecurefunc(mover, "ClearAllPoints", function()
+            if _G.C_Timer and _G.C_Timer.After then _G.C_Timer.After(0, MM.RescueSpartan) end
+        end)
+    end
+    local orig = MM.RescueSpartan
+    MM.RescueSpartan = function()
+        MM.HookRescue()
+        return orig()
+    end
 end
 
 -- Ein Rahmen ausfuehrlich: Name, Eltern, Lage, alle Anker, sichtbar, Alpha,
@@ -1114,7 +1150,9 @@ function MM.SpartanLines()
     local fe = ER and ER.foreign or {}
     out[#out + 1] = "Fehler anderer Addons seit dem Laden (" .. #fe .. "):"
     for _, l in ipairs(fe) do out[#out + 1] = "  " .. l end
-    out[#out + 1] = "Rettung der Minikarte: " .. tostring(MM.rescued or "nicht nötig")
+    out[#out + 1] = "Rettung der Minikarte (" .. tostring(MM.rescueCount or 0) .. "×): " .. tostring(MM.rescued or "nicht nötig")
+    local mv = _G.SUI_Mover_Minimap
+    if type(mv) == "table" then out[#out + 1] = "Verschieber jetzt: " .. MM.FrameLine(mv) end
     return out
 end
 

@@ -9,6 +9,16 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.0.7.42] – 2026-11-18
+
+### Behoben
+- Rettung der SpartanUI-Minikarte: der Anker an `SUI_Art_<Stil>_Center`
+  wird vom Client abgelehnt, die Notlösung (UIParent, y 140) lag zu hoch.
+  Jetzt nacheinander SpartanUIs Ziel, `SUI_Art_<Stil>` (gleicher Platz),
+  `SUI_BottomAnchor`, UIParent – immer mit SpartanUIs Versatz; erneut gesetzt
+  direkt nach jedem `ClearAllPoints` von SpartanUI (gemessen: alle paar
+  Sekunden). `/wcui prüfen` nennt jeden Versuch und den Verschieber.
+
 ## [1.0.7.41] – 2026-11-18
 
 ### Behoben

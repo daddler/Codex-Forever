@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.0.7.42",
+        date    = "18.11.2026",
+        notes   = {
+            "|cff7C6CFFMinikarte mit SpartanUI am richtigen Platz|r – sie sitzt wieder im Kreis des Kunstwerks statt darüber und bleibt dort, auch wenn SpartanUI sie neu ausrichtet.",
+        },
+    },
+    {
         version = "1.0.7.41",
         date    = "18.11.2026",
         notes   = {
