@@ -86,8 +86,8 @@ end
 -- Spieler und Ziel sitzen darin, an der Konsole verankert.
 CO.TOP = 130          -- Oberkante der Seitenteile (Bild 96 von 256 px)
 CO.DECK_W, CO.DECK_H = 1120, 72   -- Bild 1024 x 64
-CO.DECK_SINK = 28     -- so weit taucht die Erhoehung in die Leiste
-CO.UNIT_Y = -10         -- Unterkante Spieler/Ziel ueber der Oberkante
+CO.DECK_SINK = 14     -- so weit taucht die Erhoehung in die Leiste
+CO.UNIT_Y = 4         -- Unterkante Spieler/Ziel ueber der Oberkante
 CO.UNIT_GAP = 8       -- Abstand Begleiter/Ziel des Ziels
 local deck
 local function Deck()

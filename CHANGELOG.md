@@ -12,8 +12,8 @@ nicht zusammen.
 ## [1.0.7.59] – 2026-11-18
 
 ### Geändert
-- Konsole: `CO.UNIT_Y` 4 → -10, `CO.DECK_SINK` 14 → 28 (Rahmen und Erhöhung
-  14 tiefer).
+- Konsole: Leben 11 (`K.CONSOLE_UF_H`), rundes Porträt Höhe + 10 statt
+  1,5 × Höhe + 10.
 
 ## [1.0.7.58] – 2026-11-18
 

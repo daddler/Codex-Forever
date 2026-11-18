@@ -25,7 +25,7 @@ WeintCodex_ChangelogData = {
         version = "1.0.7.59",
         date    = "18.11.2026",
         notes   = {
-            "|cff7C6CFFKonsole: Rahmen tiefer|r – Spieler und Ziel sitzen tiefer in der Leiste, die Erhöhung darunter ist niedriger.",
+            "|cff7C6CFFKonsole: Rahmen flacher|r – Spieler und Ziel sind niedriger, das runde Porträt ragt kaum noch über den Rahmen.",
         },
     },
     {

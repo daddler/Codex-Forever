@@ -891,6 +891,9 @@ function Frame:Layout()
         kind = "none"
         local r = self:Round()
         local D = math.floor(total * 1.5 + 10)
+        -- 1.0.7.59 (Wunsch: "den Spielerrahmen nicht so hoch"): in der
+        -- Konsole ragt das Portraet kaum ueber den Rahmen.
+        if konsole then D = math.floor(total + 10) end
         -- 6.122.1.0 (Beta-Test: "der goldene Rahmen ist zu dick"): bei Holz
         -- ist der Ring gelb und faellt auf - 2 px statt 3 px.
         local ringW = WeintCodex.GameColors.kachelWood and 4 or 6
