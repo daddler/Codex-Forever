@@ -22,6 +22,14 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.0.7.33",
+        date    = "18.11.2026",
+        notes   = {
+            "|cff7C6CFFDie Buffs in den Gruppenrahmen sind gefiltert|r – ab Werk nur, was du selbst wirken kannst (wie Erneuerung, Seelenstärke); Aufspüren von Kräutern, Mineralien und Co. erscheint nie. Einstellbar unter Gruppenrahmen → „Welche Buffs“.",
+            "|cff7C6CFFHoT-Felder|r – die Zauberliste geht wieder so ans Spiel, wie es sie erwartet; ein Feld, das trotzdem nichts zeigt, liest außerhalb des Kampfes selbst.",
+        },
+    },
+    {
         version = "1.0.7.32",
         date    = "18.11.2026",
         notes   = {

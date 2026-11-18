@@ -291,19 +291,18 @@ local function BuildEngine(self, minimal)
         end,
     })
     pcall(c.SetAuraGroupMaxFrameCount, c, "wc", o.max)
+    -- 1.0.7.33: Zauber, die nie gezeigt werden (Aufspueren u. ae.).
+    if o.exclude and not o.spells then
+        local okX, errX = pcall(c.SetAuraGroupCandidateFilters, c, "wc", { excludeSpellIDs = o.exclude })
+        if not okX then Note("SetAuraGroupCandidateFilters (exclude)", errX) end
+    end
     -- 1.0.6.20: nur bestimmte Zauber (HoT-Felder der Gruppenrahmen). Das
     -- Spiel vergleicht selbst - Lua liest keine Aura. Technik nach VoidBox
     -- (MIT, VoiD911): SetAuraGroupCandidateFilters mit includeSpellIDs.
     if o.spells then
-        -- 1.0.7.32 (Spieler: "Erneuerung jetzt auch ausserhalb des Kampfes
-        -- weg"): includeSpellIDs ist eine LISTE von Nummern. Bis hierher
-        -- bekam das Spiel die Menge { [139] = true } - und fand nichts. Bis
-        -- 1.0.7.30 fiel das nicht auf, weil die Selbstpruefung alles auf
-        -- Selbstlesen umschaltete (ausserhalb des Kampfes sichtbar).
-        local ids = {}
-        for id, on in pairs(o.spells) do if on then ids[#ids + 1] = id end end
-        table.sort(ids)
-        local okF, errF = pcall(c.SetAuraGroupCandidateFilters, c, "wc", { includeSpellIDs = ids })
+        -- includeSpellIDs ist eine MENGE { [id] = true } (so auch VoidBox,
+        -- MIT; 1.0.7.32 hatte eine Liste daraus gemacht - zurueck).
+        local okF, errF = pcall(c.SetAuraGroupCandidateFilters, c, "wc", { includeSpellIDs = o.spells })
         if not okF then Note("SetAuraGroupCandidateFilters", errF) end
     end
     return c
@@ -558,7 +557,7 @@ function Obj:SpellCheck()
                 local aura = AuraAt(self.unit, i, self.opts.filter)
                 if not aura then break end
                 local sid = K.Plain(aura.spellId)
-                if type(sid) == "number" and self.opts.spells[sid] then has = true break end
+                if not self.opts.spells or (type(sid) == "number" and self.opts.spells[sid]) then has = true break end
             end
         end)
         if not ok or not has then return end
@@ -583,6 +582,12 @@ end
 local verdict      -- nil = offen, "ok" oder "broken"
 local pending = setmetatable({}, { __mode = "k" })
 function Obj:AutoCheck()
+    -- 1.0.7.33 (Spieler: Gruppenrahmen ohne Erneuerung, auch ausserhalb des
+    -- Kampfes; /wcui auren: Container des Spiels): das Urteil galt fuer
+    -- ALLE Symbole - zeigte EIN Container (Zielrahmen) etwas, hiess es "ok",
+    -- auch fuer die Gruppenrahmen, deren Container leer blieben. Jetzt
+    -- prueft jedes Symbolfeld zusaetzlich fuer sich (Obj:SpellCheck).
+    if A.mode == "auto" and verdict == "ok" then return self:SpellCheck() end
     if A.mode ~= "auto" or verdict or not self.engine or not self.unit or pending[self] then return end
     -- 1.0.7.31 (Spieler: "HoTs im Kampf nicht zu sehen, ausserhalb schon"):
     -- ein Feld mit Zauberliste (HoT-Felder) zeigt mit Absicht nur seinen
@@ -642,6 +647,10 @@ function Obj:Refresh()
                     local sid = K.Plain(aura.spellId)
                     want = type(sid) == "number" and o.spells[sid] == true
                 end
+                if want and o.exclude then
+                    local sid = K.Plain(aura.spellId)
+                    if type(sid) == "number" and o.exclude[sid] then want = false end
+                end
                 if want then
                 shown = shown + 1
                 local b = self.buttons[shown]
@@ -681,7 +690,7 @@ function Obj:ApplyLayout(opts)
         return
     end
     if old.size == new.size and old.spacing == new.spacing and old.filter == new.filter
-       and old.spells == new.spells
+       and old.spells == new.spells and old.exclude == new.exclude
        and old.anchor == new.anchor and old.growth == new.growth and old.growthV == new.growthV
        and old.perRow == new.perRow and (old.timer and true or false) == (new.timer and true or false) then
         pcall(self.frame.SetAuraGroupMaxFrameCount, self.frame, "wc", new.max)
@@ -788,6 +797,9 @@ function A.Inspect()
     local out = { "Auren: Weg " .. A.mode .. " · " .. A.StatusText() }
     local target = _G.UnitExists and K.Bool(_G.UnitExists("target"), false)
     -- 1.0.7.32: HoT-Felder (Zauberliste) an Mitspielern, mit Ziel oder ohne.
+    local hotFields = 0
+    for obj in pairs(objects) do if obj.opts.spells then hotFields = hotFields + 1 end end
+    if hotFields == 0 then out[#out + 1] = "HoT-Felder: keine eingerichtet (Gruppenrahmen → HoT-Felder)" end
     for obj in pairs(objects) do
         if obj.opts.spells and obj.unit then
             local total, shown = Visible(obj)

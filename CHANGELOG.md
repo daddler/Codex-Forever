@@ -9,6 +9,18 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.0.7.33] – 2026-11-18
+
+### Behoben / Geändert
+- `includeSpellIDs` wieder als Menge (VoidBox, MIT, bestätigt; 1.0.7.32
+  war falsch).
+- Selbstprüfung je Feld auch nach globalem „ok“ (`Obj:SpellCheck` für alle
+  Felder): ein leerer Container fällt allein auf Selbstlesen zurück.
+- Gruppenrahmen: Buffreihe `buffFilter` (raid/mine/all, ab Werk
+  `HELPFUL|RAID`) und `exclude = GF.NOISE` (Aufspüren), Container über
+  `excludeSpellIDs`, alter Weg filtert selbst. `/wcui auren` sagt, wenn
+  keine HoT-Felder eingerichtet sind.
+
 ## [1.0.7.32] – 2026-11-18
 
 ### Behoben

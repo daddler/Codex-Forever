@@ -70,6 +70,10 @@ local defaults = {
     buffs       = true,
     buffSize    = 14,
     buffMax     = 4,
+    -- 1.0.7.33 (Spieler: "Kraeutersuche etc. von allen - unnoetig"):
+    -- "raid" = Buffs, die du selbst wirken kannst (Filter des Spiels,
+    -- wie seine Schlachtzugsrahmen), "mine" = nur deine, "all" = alle.
+    buffFilter  = "raid",
     onlyDispellable = true,
     -- Seit 6.3.2.4 (Beta-Test: "muss etwas detaillierter werden"):
     healPrediction = true,   -- eingehende Heilung als heller Balken hinter dem Leben
@@ -115,6 +119,15 @@ GF.CLASS_HOTS = {
     SHAMAN  = { 546, 131 },
     WARLOCK = { 5697, 132 },
 }
+-- Buffs, die in einem Gruppenrahmen nie etwas sagen: Aufspueren (Kraeuter,
+-- Mineralien, Schaetze, Wild ...). Zaubernummern aus Classic (Art classic).
+GF.NOISE = {}
+for _, id in ipairs({ 2383, 2580, 2481, 1494, 19878, 19879, 19880, 19882, 19883, 19884, 19885, 5225, 5500, 5502, 43308 }) do
+    GF.NOISE[id] = true
+end
+GF.BUFF_FILTERS = { raid = "HELPFUL|RAID", mine = "HELPFUL|PLAYER", all = "HELPFUL" }
+function GF.BuffFilter() return GF.BUFF_FILTERS[K.Get(KEY, "buffFilter")] or GF.BUFF_FILTERS.raid end
+
 GF.HOT_POSITIONS = { "TOPLEFT", "TOP", "TOPRIGHT", "LEFT", "CENTER", "RIGHT", "BOTTOMLEFT", "BOTTOM", "BOTTOMRIGHT" }
 GF.HOT_POS_TEXT = { TOPLEFT = "Oben links", TOP = "Oben Mitte", TOPRIGHT = "Oben rechts", LEFT = "Links",
     CENTER = "Mitte", RIGHT = "Rechts", BOTTOMLEFT = "Unten links", BOTTOM = "Unten Mitte", BOTTOMRIGHT = "Unten rechts" }
@@ -463,7 +476,7 @@ function Btn:Layout(w, h)
     if _G.rawget(c, "ring") then c.ring:SetShown(Opt("dispelRing") and true or false) end
 
     if c.buffs then
-        c.buffs:ApplyLayout({ filter = "HELPFUL", max = Opt("buffMax"), size = Opt("buffSize"), spacing = 1,
+        c.buffs:ApplyLayout({ filter = GF.BuffFilter(), exclude = GF.NOISE, max = Opt("buffMax"), size = Opt("buffSize"), spacing = 1,
             anchor = "BOTTOMLEFT", growth = "RIGHT", growthV = "UP", perRow = Opt("buffMax") })
         c.buffs:ClearAllPoints()
         c.buffs:SetPoint("BOTTOMLEFT", c, "BOTTOMLEFT", 2, ph + 3)
@@ -763,7 +776,7 @@ local function Style(b)
     if not b._wcTest then c.ring = WeintCodex.UIAuras.DispelRing(c) end
     c.debuffs = WeintCodex.UIAuras.Create(host, { filter = "HARMFUL|RAID", max = 3, size = 16,
         spacing = 1, anchor = "BOTTOMRIGHT", growth = "LEFT", growthV = "UP", perRow = 3 })
-    c.buffs = WeintCodex.UIAuras.Create(host, { filter = "HELPFUL", max = 4, size = 14,
+    c.buffs = WeintCodex.UIAuras.Create(host, { filter = GF.BuffFilter(), exclude = GF.NOISE, max = 4, size = 14,
         spacing = 1, anchor = "BOTTOMLEFT", growth = "RIGHT", growthV = "UP", perRow = 4 })
 
     for k, v in pairs(Btn) do b[k] = v end
@@ -1342,6 +1355,13 @@ K.Register({
                   { type = "slider", label = "Höchstens Buffs", key = "buffMax", min = 1, max = 8, step = 1,
                     format = function(v) return tostring(v) end,
                     disabled = function() return not K.Get(KEY, "buffs") end })
+            B:Row({ type = "dropdown", label = "Welche Buffs", key = "buffFilter",
+                    disabled = function() return not K.Get(KEY, "buffs") end, items = {
+                        { value = "raid", text = "Die du wirken kannst" },
+                        { value = "mine", text = "Nur deine" },
+                        { value = "all",  text = "Alle" } },
+                    description = "Aufspüren (Kräuter, Mineralien …) erscheint nie." },
+                  { type = "empty" })
             B:Row({ type = "toggle", label = "Krone beim Gruppenleiter", key = "leaderIcon" },
                   { type = "toggle", label = "Balken: Leben des Ziels", key = "groupTargetBar",
                     description = "Rechts neben jedem Rahmen ein schmaler Balken: das Leben des Ziels dieses Mitspielers, rot bei Gegnern." })
