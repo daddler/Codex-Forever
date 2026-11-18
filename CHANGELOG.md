@@ -9,6 +9,18 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.0.7.47] – 2026-11-18
+
+### Behoben
+- Konsole fehlte im Willkommens-Assistenten: fünfte Karte (`WL.LOOK_CARDS`,
+  Karten 58 + 6 hoch, passen in die Höhe von vier), Vorschau
+  `media/welcome/look_konsole.blp` aus den Konsolenbildern
+  (`make_console_media.py`, `welcome_preview`).
+- Designwechsel ohne neues Layout: `root.layoutLook` beim Einrichten gemerkt,
+  `ES.LookMismatch`/`ES.CheckLook` öffnen nach dem Neuladen einmal
+  „Einrichten“; der Assistent baut das Layout bei Wechsel neu statt es nur
+  aktiv zu schalten.
+
 ## [1.0.7.46] – 2026-11-18
 
 ### Geändert

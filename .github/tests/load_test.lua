@@ -26976,6 +26976,20 @@ do
         K.UIEnabled = function() return true end
         CO.Update()
         K.UIEnabled = en
+        -- 1.0.7.47: Assistent bietet Konsole an, Wechsel verlangt neues Layout.
+        local WL = WeintCodex.UIWelcome
+        local found = false
+        for _, lc in ipairs(WL.LOOK_CARDS) do if lc.key == "konsole" then found = true end end
+        assert(found, "Konsole fehlt im Assistenten")
+        assert(5 * (WL.LOOK_CARD_H + WL.LOOK_CARD_GAP) <= 4 * (WL.CARD_H + WL.CARD_GAP), "fuenf Karten zu hoch")
+        local root = K.Root()
+        if root then
+            root.layoutLook = "schwarz"
+            assert(WeintCodex.UISetup.LookMismatch(), "Wechsel zur Konsole nicht erkannt")
+            root.layoutLook = "konsole"
+            assert(not WeintCodex.UISetup.LookMismatch(), "Konsole eingerichtet, trotzdem Wechsel")
+            root.layoutLook = nil
+        end
         K.Set("general", "look", keep)
         assert(K.Layout("uf_player").y == base and K.ConsoleBar(4) == nil, "Grundplatz verloren")
     end)

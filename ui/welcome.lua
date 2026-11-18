@@ -181,7 +181,7 @@ for _, h in ipairs(WL.HELPERS) do
     WL.SHOTS[h.shot] = WL.SHOTS[h.shot] or { file = MEDIA .. h.shot, caption = h.label .. ": " .. h.text }
 end
 -- Je Aussehen ein Bild (look_none, look_schwarz, ...).
-for _, k in ipairs({ "none", "schwarz", "transparent", "klassisch" }) do
+for _, k in ipairs({ "none", "schwarz", "transparent", "klassisch", "konsole" }) do
     WL.SHOTS["look_" .. k] = { file = MEDIA .. "look_" .. k, caption = "" }
 end
 
@@ -425,7 +425,13 @@ function WL.Apply()
     local ES = WeintCodex.UISetup
     -- 6.26.17.0: auch, wenn es das Layout schon gibt, es hier aber nicht
     -- aktiv ist (zweiter Charakter) oder der Client es nicht sagt.
-    if ui and ES and ES.LayoutActive() ~= true then
+    -- 1.0.7.47: ein Design mit eigenen Plaetzen (Konsole) braucht das Layout
+    -- neu, auch wenn es schon da und aktiv ist.
+    local lookChanged = ui and ES and ES.LookMismatch and ES.LookMismatch()
+    if lookChanged then
+        local ok, why = ES.Apply()
+        report.layout = ok and true or tostring(why)
+    elseif ui and ES and ES.LayoutActive() ~= true then
         -- Gibt es das Layout schon (anderer Charakter, frueher eingerichtet),
         -- wird es nur aktiv geschaltet - nie neu gebaut (6.26.18.0).
         if ES.HasLayout() == true and ES.ActivateExisting() then
@@ -741,7 +747,7 @@ end
 -- gewaehlt mit Rand im Akzent. Einmal gebaut.
 WL.CARD_H, WL.CARD_GAP = 72, 8
 local cards = {}
-local function Card(id, head, text, y, onClick)
+local function Card(id, head, text, y, onClick, h)
     local c = cards[id]
     if not c then
         c = CreateFrame("Button", nil, WL.cardsHost)
@@ -756,11 +762,11 @@ local function Card(id, head, text, y, onClick)
         c.head = K.NewText(c)
         c.head:SetFont(F.sansSemi, 14, "")
         c.head:SetTextColor(unpack(C.textBright))
-        c.head:SetPoint("TOPLEFT", c, "TOPLEFT", 14, -12)
+        c.head:SetPoint("TOPLEFT", c, "TOPLEFT", 14, -9)
         c.text = K.NewText(c)
         c.text:SetFont(F.sans, 11, "")
         c.text:SetTextColor(unpack(C.textDim))
-        c.text:SetPoint("TOPLEFT", c.head, "BOTTOMLEFT", 0, -6)
+        c.text:SetPoint("TOPLEFT", c.head, "BOTTOMLEFT", 0, -4)
         c.text:SetWidth(WL.COL_W - 28)
         c.text:SetJustifyH("LEFT")
         c.id = id
@@ -770,6 +776,7 @@ local function Card(id, head, text, y, onClick)
     c.head:SetText(head)
     c.text:SetText(text)
     c._onClick = onClick
+    c:SetHeight(h or WL.CARD_H)
     c:ClearAllPoints()
     c:SetPoint("TOPLEFT", WL.cardsHost, "TOPLEFT", 0, -y)
     c:Show()
@@ -812,7 +819,11 @@ WL.LOOK_CARDS = {
     { key = "schwarz",     head = "Schwarz",     text = "Ruhig und klar lesbar – die WeintCodex-Oberfläche." },
     { key = "transparent", head = "Transparent", text = "Leichter: die Spielwelt scheint durch die Flächen." },
     { key = "klassisch",   head = "Holz",        text = "Holzmaserung mit gelbem Rand – an das Spiel angelehnt." },
+    -- 1.0.7.47 (Meldung: "Konsole steht hier nicht zur Auswahl").
+    { key = "konsole",     head = "Konsole",     text = "Leisten unten in einer Konsole aus Stein, die Karte in der Mitte." },
 }
+-- Fuenf Karten muessen in die Hoehe von vier passen.
+WL.LOOK_CARD_H, WL.LOOK_CARD_GAP = 58, 6
 
 -- Vorschau rechts: Beispielflaeche in Fuellung und Rand des Bilds.
 function WL.ShowLook(key)
@@ -864,8 +875,8 @@ local function StepUI()
             WL.ShowLook(lc.key)
             local nb = WL.Button("next")
             if nb and nb.SetEnabled then nb:SetEnabled(true) end
-        end)
-        y = y + WL.CARD_H + WL.CARD_GAP
+        end, WL.LOOK_CARD_H)
+        y = y + WL.LOOK_CARD_H + WL.LOOK_CARD_GAP
     end
     local hint = WL.uiHint
     if not hint then

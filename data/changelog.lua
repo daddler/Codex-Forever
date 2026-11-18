@@ -22,6 +22,14 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.0.7.47",
+        date    = "18.11.2026",
+        notes   = {
+            "|cff7C6CFFKonsole im Willkommens-Assistenten|r – das vierte Design steht jetzt mit eigenem Vorschaubild zur Auswahl.",
+            "|cff7C6CFFDesignwechsel stellt die Leisten mit|r – wer zur Konsole oder zurück wechselt, bekommt nach dem Neuladen einmal „Einrichten“ angeboten; Leisten, Karte und Chat kommen damit an ihren Platz.",
+        },
+    },
+    {
         version = "1.0.7.46",
         date    = "18.11.2026",
         notes   = {

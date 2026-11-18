@@ -606,6 +606,8 @@ function ES.Apply()
     if root then root.setupVerify = true end
     -- Fuer welche Breite eingerichtet wurde (Breitbild, ES.CheckWide).
     if root then root.wideInset = K.WideInset() end
+    -- Fuer welches Design (1.0.7.47: "Konsole" stellt Leisten und Karte anders).
+    if root then root.layoutLook = K.LookKey and K.LookKey() or nil end
     -- Die eigenen Rahmen bleiben, wo der Spieler sie im Gestaltungsmodus
     -- hingezogen hat (6.6.1.3 setzte sie zurueck - Beta-Test: die
     -- Schadensanzeige wanderte von oben links nach unten rechts). Ohne
@@ -1032,6 +1034,29 @@ function ES.CheckWide()
     return true
 end
 
+-- DESIGN GEWECHSELT (1.0.7.47, Meldung: "Konsole kann mit /wcui einrichten
+-- nicht eingestellt werden"). Die Rahmen des Spiels stehen im Layout des
+-- Bearbeitungsmodus - fuer das Design, mit dem eingerichtet wurde. Gilt jetzt
+-- ein Design mit anderen Plaetzen (Konsole hin oder zurueck), oeffnet nach
+-- dem Neuladen einmal das Einrichten; "Alles einrichten" stellt sie dann.
+local lookTold = false
+function ES.LookMismatch()
+    local root = K.Root()
+    if not root then return false end
+    local now = K.LookKey and K.LookKey() or nil
+    local was = root.layoutLook
+    local function Own(l) return l and K.LOOK_LAYOUT and K.LOOK_LAYOUT[l] ~= nil end
+    if was == nil then return Own(now) end      -- vor 1.0.7.47 eingerichtet
+    return was ~= now and (Own(was) or Own(now))
+end
+function ES.CheckLook()
+    if lookTold or not K.UIEnabled() or ES.LayoutActive() ~= true or not ES.LookMismatch() then return false end
+    lookTold = true
+    Say("Das Design der Oberfläche hat sich geändert – „Alles einrichten“ stellt Leisten, Karte und Chat dafür an ihren Platz.")
+    K.AfterCombat(ES.Show)
+    return true
+end
+
 K.Listen(function(kind, module, key)
     if kind == "setting" and module == "general" and key == "uiScaleMode" then ES.ApplyScaleChoice() end
 end)
@@ -1049,7 +1074,7 @@ ev:SetScript("OnEvent", WeintCodex.Measured("Einrichtung", function(_, event, is
         if _G.C_Timer and _G.C_Timer.After then _G.C_Timer.After(1, ES.CheckWide) end
         return
     end
-    if _G.C_Timer and _G.C_Timer.After then _G.C_Timer.After(5, ES.CheckWide) end
+    if _G.C_Timer and _G.C_Timer.After then _G.C_Timer.After(5, ES.CheckWide) _G.C_Timer.After(6, ES.CheckLook) end
     if not (isInitialLogin or isReloadingUi) then return end
     ES._reload = isReloadingUi and true or false
     if not K.UIEnabled() then return end

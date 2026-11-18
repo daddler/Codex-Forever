@@ -199,3 +199,83 @@ if __name__ == "__main__":
     side()
     slot()
     print("ok")
+
+
+def welcome_preview():
+    """Vorschau fuer den Willkommens-Assistenten (media/welcome/look_konsole.blp)
+    aus den eben gerechneten Bildern - dieselbe Anordnung wie im Spiel."""
+    import tempfile
+    import sys
+    from PIL import Image, ImageDraw
+    sys.path.insert(0, os.path.dirname(__file__))
+    from make_artwork import dxt1_blocks, write_blp
+
+    W, H = 1024, 512
+    img = Image.new("RGBA", (W, H))
+    d = ImageDraw.Draw(img)
+    for y in range(H):   # Spielwelt: dunkler Abendhimmel ueber Gras
+        t = y / H
+        d.line([(0, y), (W, y)], fill=(int(30 + 20 * t), int(44 + 30 * t), int(58 - 20 * t), 255))
+    s = 0.75   # 1 Einheit = 0,75 px (1365 Einheiten auf 1024 px)
+    ch = int(208 * s)
+    cw = int(416 * s)
+    side = Image.open(os.path.join(OUT, "console_side.tga")).convert("RGBA")
+    center_img = Image.open(os.path.join(OUT, "console_center.tga")).convert("RGBA")
+    sw = W // 2 - cw // 2 + 6
+    left = side.resize((sw, ch))
+    img.alpha_composite(left, (0, H - ch))
+    img.alpha_composite(left.transpose(Image.FLIP_LEFT_RIGHT), (W - sw, H - ch))
+    # Karte in der Fassung
+    r = int(80 * s)
+    cx, cy = W // 2, H - int(86 * s)
+    d.ellipse([cx - r, cy - r, cx + r, cy + r], fill=(46, 66, 40, 255))
+    img.alpha_composite(center_img.resize((cw, ch)), (W // 2 - cw // 2, H - ch))
+    d = ImageDraw.Draw(img)
+    d.polygon([(cx, cy - 10), (cx - 7, cy + 8), (cx, cy + 3), (cx + 7, cy + 8)], fill=(240, 240, 240, 255))
+    slot = Image.open(os.path.join(OUT, "console_slot.tga")).convert("RGBA")
+    cols = [(255, 155, 74), (159, 227, 255), (201, 182, 255), (255, 224, 138), (168, 255, 176), (255, 138, 160),
+            (208, 208, 208), (127, 208, 255), (255, 207, 127), (176, 255, 239), (90, 90, 90), (90, 90, 90)]
+
+    def bar(cxu, yu, size=34, n=12):
+        bw = int((n * (size + 2)) * s)
+        bh = int(size * s)
+        x0 = W // 2 + int(cxu * s) - bw // 2
+        y0 = H - int(yu * s) - bh
+        img.alpha_composite(slot.resize((bw + 8, bh + 8)), (x0 - 4, y0 - 4))
+        dd = ImageDraw.Draw(img)
+        for i in range(n):
+            x = x0 + int(i * (size + 2) * s)
+            c = cols[i % len(cols)]
+            dd.rectangle([x, y0, x + bh - 1, y0 + bh - 1], fill=c, outline=(0, 0, 0, 255))
+    bar(-359, 62)
+    bar(-359, 20)
+    bar(359, 62)
+    bar(359, 20)
+    d = ImageDraw.Draw(img)
+
+    def unit(x0u, name_col, pct, right=False):
+        w, h = int(200 * s), int(31 * s)
+        x0 = W // 2 + int(x0u * s) - (0 if right else w)
+        y0 = H - int(170 * s) - h
+        d.rectangle([x0, y0, x0 + w, y0 + h], fill=(12, 12, 15, 235), outline=(0, 0, 0, 255))
+        d.rectangle([x0 + 2, y0 + 2, x0 + 2 + int((w - 4) * pct), y0 + h - 7], fill=name_col)
+        d.rectangle([x0 + 2, y0 + h - 5, x0 + w - 2, y0 + h - 2], fill=(63, 111, 224))
+    unit(-182, (63, 199, 235), 0.88)
+    unit(182, (200, 60, 50), 0.64, right=True)
+    # Erfahrung unter Leiste 2
+    xw = int(430 * s)
+    x0 = W // 2 - int(359 * s) - xw // 2
+    d.rectangle([x0, H - int(16 * s), x0 + xw, H - int(8 * s)], fill=(20, 20, 30, 255))
+    d.rectangle([x0, H - int(16 * s), x0 + int(xw * 0.6), H - int(8 * s)], fill=(140, 80, 220, 255))
+    out = img.convert("RGB").resize((512, 256), Image.LANCZOS)
+    with tempfile.TemporaryDirectory() as work:
+        dest = os.path.join(os.path.dirname(__file__), "..", "..", "media", "welcome", "look_konsole.blp")
+        write_blp(dest, dxt1_blocks(out, work), 512, 256)
+    return out
+
+
+if __name__ == "__main__":
+    prev = welcome_preview()
+    if len(os.sys.argv) > 1:
+        prev.save(os.sys.argv[1])
+    print("look_konsole ok")
