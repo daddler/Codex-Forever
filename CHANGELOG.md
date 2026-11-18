@@ -9,6 +9,15 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.0.7.31] – 2026-11-18
+
+### Behoben
+- Auren im Kampf leer (Gruppenrahmen, HoT-Felder): die Selbstprüfung
+  (`Obj:AutoCheck`, ui/auras.lua) sah an einem HoT-Feld mit Zauberliste
+  „Spiel nennt eigene Buffs, Container zeigt keinen“ und schaltete ALLE
+  Symbole auf den alten Weg – der liest im Kampf geheime Werte, also
+  nichts. Felder mit `spells` urteilen jetzt nie. Prüflauf ergänzt.
+
 ## [1.0.7.30] – 2026-11-18
 
 ### Geändert

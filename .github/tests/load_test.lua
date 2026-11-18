@@ -6141,6 +6141,16 @@ do
         assert(A.StatusText():find("liest selbst", 1, true), "Rueckfall nicht im Zustand: " .. A.StatusText())
         A._ResetVerdict()
         A.SetMode("legacy") A.SetMode("auto")
+        -- 1.0.7.31: ein HoT-Feld (Zauberliste) zeigt mit Absicht nichts
+        -- und darf den Container nicht fuer kaputt erklaeren.
+        local h = A.Create(UIParent, { filter = "HELPFUL|PLAYER", max = 1, size = 14, spacing = 1, spells = { [774] = true } })
+        h:SetPoint("BOTTOMLEFT", UIParent, "TOPLEFT", 0, 3)
+        _G.C_Timer.After = function(_, fn) fn() end
+        h:SetUnit("target")
+        h:Refresh()
+        _G.C_Timer.After = oldAfter
+        assert(h.engine and not A.stats.autoFallback, "HoT-Feld erklaert den Container fuer kaputt")
+        A._ResetVerdict()
     end)
     Check(ok, "Auren: Weg umschaltbar, Container in voller Groesse, /wcui auren gibt Auskunft"
         .. (ok and "" or (": " .. tostring(err))))

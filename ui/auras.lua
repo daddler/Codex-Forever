@@ -544,6 +544,13 @@ local verdict      -- nil = offen, "ok" oder "broken"
 local pending = setmetatable({}, { __mode = "k" })
 function Obj:AutoCheck()
     if A.mode ~= "auto" or verdict or not self.engine or not self.unit or pending[self] then return end
+    -- 1.0.7.31 (Spieler: "HoTs im Kampf nicht zu sehen, ausserhalb schon"):
+    -- ein Feld mit Zauberliste (HoT-Felder) zeigt mit Absicht nur seinen
+    -- Zauber. Das Spiel nennt fuer "HELPFUL|PLAYER" aber jeden eigenen Buff
+    -- (Seelenstaerke, Mal der Wildnis ...) - "Auren da, nichts gezeigt"
+    -- hiess dann "Container kaputt", und ALLE Symbole lasen ab da selbst:
+    -- im Kampf geheim, also leer. Felder mit Zauberliste urteilen nie.
+    if self.opts and self.opts.spells then return end
     if not (_G.C_Timer and _G.C_Timer.After) then return end
     pending[self] = true
     _G.C_Timer.After(0.6, function()

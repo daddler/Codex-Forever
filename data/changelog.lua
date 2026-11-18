@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.0.7.31",
+        date    = "18.11.2026",
+        notes   = {
+            "|cff7C6CFFHoTs, Buffs und Debuffs an den Gruppenrahmen bleiben im Kampf sichtbar|r – bisher verschwanden sie dort oft, sobald ein HoT-Feld eingerichtet war.",
+        },
+    },
+    {
         version = "1.0.7.30",
         date    = "18.11.2026",
         notes   = {
