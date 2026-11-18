@@ -445,6 +445,14 @@ function MM.ArcButtons(mm)
     local r = w / 2 + MM.ARC_GAP
     local list = ColumnButtons()
     if bag then list[#list + 1] = bag end
+    -- 1.0.7.51 (Bild: der Addon-Knopf des Spiels mit der Zahl hing halb
+    -- unter der Fassung): er kommt mit in den Bogen.
+    local ac = _G.AddonCompartmentFrame
+    if type(ac) == "table" and ac.SetPoint and not (ac.IsForbidden and ac:IsForbidden()) then
+        local dup = false
+        for _, b in ipairs(list) do if b == ac then dup = true end end
+        if not dup then list[#list + 1] = ac end
+    end
     for i, b in ipairs(list) do
         Watch(b)
         local ang = math.rad(MM.ARC_START + (i - 1) * MM.ARC_STEP)

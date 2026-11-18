@@ -17,6 +17,7 @@ nicht zusammen.
   (`CO.UNIT_X`/`CO.UNIT_IN`), taucht 24 ein (`CO.UNIT_SINK`).
 - `K.CONSOLE_RING` 182 → 128 (Spieler/Ziel mittiger).
 - `MM.CONSOLE_TEXT_Y` 14 → 24, `LY.CONSOLE_Y` 44 → 56.
+- `MM.ArcButtons`: `AddonCompartmentFrame` mit im Bogen.
 
 ## [1.0.7.50] – 2026-11-18
 
