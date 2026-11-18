@@ -9,6 +9,14 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.0.7.36] – 2026-11-18
+
+### Behoben
+- Klassenquests: `CQ.State` = „done“, wenn der Charakter den gelehrten
+  Zauber kennt (`CQ.Learned`, `TR.Known`). Zuordnung Quest → Zauber neu
+  `data/questspell_map.lua` (127 Quests, `import_wt_questspells.lua` aus
+  What's Training 11.4.8, MIT).
+
 ## [1.0.7.35] – 2026-11-18
 
 ### Behoben

@@ -165,7 +165,23 @@ CQ.SECTIONS = {
 
 function CQ.State(q)
     local DP = WeintCodex.DungeonPages
-    return DP and DP.QuestState and DP.QuestState({ id = q.id, requires = q.rl }) or nil
+    local st = DP and DP.QuestState and DP.QuestState({ id = q.id, requires = q.rl }) or nil
+    -- 1.0.7.36 (Spieler, Hexenmeister: "Wichtel-Quest am Anfang in Dun
+    -- Morogh erledigt - jetzt soll ich sie woanders machen"): denselben Zauber
+    -- lehren je Volk verschiedene Quests (Wichtel: 1470, 1485, 1598, 1599).
+    -- Kennt der Charakter den Zauber schon (Antwort des Clients), ist jede
+    -- Quest dafuer erledigt. Welche Quest welchen Zauber lehrt:
+    -- data/questspell_map.lua.
+    if st ~= "done" and st ~= "active" and st ~= "ready" and CQ.Learned(q) then return "done" end
+    return st
+end
+
+function CQ.Learned(q)
+    local map = WeintCodex.QuestSpellMap
+    local spell = map and q and map[q.id]
+    local TR = WeintCodex.Trainer
+    if not (spell and TR and TR.Known) then return false end
+    return TR.Known(spell) and true or false
 end
 
 -- Wartet die Quest auf eine Vorquest? Questie nennt mehrere Vorquests oft

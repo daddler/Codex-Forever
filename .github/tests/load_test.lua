@@ -26914,6 +26914,23 @@ do
     Check(ok, "Glitzern: drei Stärken" .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 1.0.7.36: Klassenquest fuer einen Zauber, den man schon kann, ist erledigt.
+do
+    local ok, err = pcall(function()
+        local CQ = WeintCodex.ClassQuests
+        assert(CQ and CQ.State and CQ.Learned, "ClassQuests fehlt")
+        assert(WeintCodex.QuestSpellMap[1598] == 688 and WeintCodex.QuestSpellMap[1599] == 688, "Zuordnung fehlt")
+        local TR = WeintCodex.Trainer
+        local keep = TR.Known
+        TR.Known = function(id) return id == 688 end
+        assert(CQ.State({ id = 1598, rl = 1 }) == "done", "gelernter Wichtel noch offen")
+        TR.Known = function() return false end
+        assert(CQ.State({ id = 1598, rl = 1 }) ~= "done", "ungelernter Wichtel als erledigt")
+        TR.Known = keep
+    end)
+    Check(ok, "Klassenquests: gelernter Zauber = Quest erledigt" .. (ok and "" or (": " .. tostring(err))))
+end
+
 -- 1.0.7.30: Flugpunkt-Erinnerung nach Entfernung.
 do
     local ok, err = pcall(function()

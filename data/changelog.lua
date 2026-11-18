@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.0.7.36",
+        date    = "18.11.2026",
+        notes   = {
+            "|cff7C6CFFKlassenquests für Zauber, die du schon kannst, gelten als erledigt|r – z. B. der Wichtel: je Volk gibt es eine eigene Quest, und wer sie in Dun Morogh gemacht hat, bekam bisher die aus Elwynn vorgeschlagen.",
+        },
+    },
+    {
         version = "1.0.7.35",
         date    = "18.11.2026",
         notes   = {
