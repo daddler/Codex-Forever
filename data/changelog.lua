@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.0.7.37",
+        date    = "18.11.2026",
+        notes   = {
+            "|cff7C6CFFDer Schlüsselbund steht in den Taschen|r – als eigener Block mit allen Schlüsseln; bisher waren sie nirgends zu sehen.",
+        },
+    },
+    {
         version = "1.0.7.36",
         date    = "18.11.2026",
         notes   = {

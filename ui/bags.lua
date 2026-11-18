@@ -103,6 +103,17 @@ local used = 0
 -- Welche Taschen?
 --------------------------------------------------
 
+-- 1.0.7.37 (Meldung: "Der Schluesselbund laesst die Schluessel nicht
+-- anzeigen"): der Schluesselbund ist eine eigene Tasche (Classic: -2). Er
+-- fehlte hier, und die Taschenfenster des Spiels blendet WeintCodex aus -
+-- die Schluessel standen nirgends. Jetzt ein eigener Block, wenn der Client
+-- ihm Plaetze gibt.
+function BG.KeyringID()
+    local id = _G.KEYRING_CONTAINER
+    if type(id) ~= "number" and _G.Enum and _G.Enum.BagIndex then id = _G.Enum.BagIndex.Keyring end
+    return type(id) == "number" and id or nil
+end
+
 local function BagIDs()
     local ids = {}
     local first = _G.BACKPACK_CONTAINER or 0
@@ -113,6 +124,8 @@ local function BagIDs()
     if _G.Enum and _G.Enum.BagIndex and _G.Enum.BagIndex.ReagentBag then
         ids[#ids + 1] = _G.Enum.BagIndex.ReagentBag
     end
+    local kr = BG.KeyringID()
+    if kr and K.Get(KEY, "keyring") ~= false then ids[#ids + 1] = kr end
     return ids
 end
 
@@ -798,8 +811,9 @@ end
 function BG.FreeSlot(toBank)
     local BK = WeintCodex.UIBankCats
     local ids = toBank and (BK and BK.BagIDs() or {}) or BagIDs()
+    local kr = BG.KeyringID()
     for _, bag in ipairs(ids) do
-        for slot = 1, NumSlots(bag) do
+        for slot = 1, (bag == kr and 0 or NumSlots(bag)) do
             local info = Info(bag, slot)
             if not (info and K.Plain(info.itemID)) then return bag, slot end
         end
@@ -908,6 +922,7 @@ end
 -- Plaetze"; ihre Plaetze mischen sich nicht in die Kategorien.
 function BG.SpecialBag(bag)
     if bag == (_G.BACKPACK_CONTAINER or 0) then return false end
+    if bag == BG.KeyringID() then return true end
     -- 1.0.6.13 (Meldung: "Inventar voll, laut Tasche 2 Plaetze frei"): die
     -- Reagenzientasche nimmt nur Handwerksmaterial - ihre freien Plaetze
     -- sind keine fuer Beute, auch wenn der Client Taschenart 0 meldet.
@@ -1169,6 +1184,7 @@ end
 -- Name einer Tasche fuer die Kopfzeile: vom Client, sonst "Tasche n".
 function BG.BagLabel(bag)
     if bag == (_G.BACKPACK_CONTAINER or 0) then return "Rucksack" end
+    if bag == BG.KeyringID() then return "Schlüsselbund" end
     local cc = _G.C_Container
     local f = (cc and cc.GetBagName) or _G.GetBagName
     if f then
@@ -1387,7 +1403,7 @@ local function Enable()
     BG.NoteBags, BG.RunBags = Note, Run
     BG.Mirror = Mirror
     if _G.hooksecurefunc then
-        local kinds = { ToggleAllBags = "toggle", ToggleBackpack = "toggle", ToggleBag = "toggle",
+        local kinds = { ToggleAllBags = "toggle", ToggleBackpack = "toggle", ToggleBag = "toggle", ToggleKeyRing = "toggle",
                         OpenAllBags = "open", OpenBackpack = "open", OpenBag = "open",
                         CloseAllBags = "close", CloseBackpack = "close", CloseBag = "close" }
         for fn, kind in pairs(kinds) do

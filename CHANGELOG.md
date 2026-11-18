@@ -9,6 +9,15 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.0.7.37] – 2026-11-18
+
+### Behoben
+- Taschen (`ui/bags.lua`): Schlüsselbund (`KEYRING_CONTAINER`, Classic −2)
+  fehlte in `BagIDs` – die Taschenfenster des Spiels sind ausgeblendet,
+  die Schlüssel also unsichtbar. Jetzt eigener Block „Schlüsselbund“
+  (`BG.SpecialBag`), nie Ziel beim Umlagern (`BG.FreeSlot`),
+  `ToggleKeyRing` öffnet die Taschen.
+
 ## [1.0.7.36] – 2026-11-18
 
 ### Behoben

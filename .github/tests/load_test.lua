@@ -26914,6 +26914,19 @@ do
     Check(ok, "Glitzern: drei Stärken" .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 1.0.7.37: Schluesselbund als eigene Tasche.
+do
+    local ok, err = pcall(function()
+        local BG = WeintCodex.UIBags
+        local keep = _G.KEYRING_CONTAINER
+        _G.KEYRING_CONTAINER = -2
+        assert(BG.KeyringID() == -2, "Schluesselbund nicht erkannt")
+        assert(BG.SpecialBag(-2) == true and BG.BagLabel(-2) == "Schlüsselbund", "Schluesselbund kein eigener Block")
+        _G.KEYRING_CONTAINER = keep
+    end)
+    Check(ok, "Taschen: Schlüsselbund" .. (ok and "" or (": " .. tostring(err))))
+end
+
 -- 1.0.7.36: Klassenquest fuer einen Zauber, den man schon kann, ist erledigt.
 do
     local ok, err = pcall(function()
