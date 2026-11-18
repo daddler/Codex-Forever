@@ -26898,6 +26898,21 @@ do
     Check(ok, "Glitzern: drei Stärken" .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 1.0.7.30: Flugpunkt-Erinnerung nach Entfernung.
+do
+    local ok, err = pcall(function()
+        local QX = WeintCodex.UIQoLExtra
+        assert(QX and QX.NearFlight, "NearFlight fehlt")
+        local s = { read = true, known = { B = true }, all = { A = true, B = true, C = true },
+                    pos = { A = { 0, 100, 100 }, B = { 0, 110, 100 }, C = { 0, 5000, 100 } } }
+        local name, d = QX.NearFlight(0, 400, 100, s)
+        assert(name == "A" and math.abs(d - 300) < 1e-6, "naher Punkt nicht erkannt")
+        assert(QX.NearFlight(1, 400, 100, s) == nil, "anderer Kontinent")
+        assert(QX.FLIGHT_YARDS >= 400, "zu nah")
+    end)
+    Check(ok, "Flugpunkte: Erinnerung nach Entfernung" .. (ok and "" or (": " .. tostring(err))))
+end
+
 -- 1.0.7.17: Anordnung der Knoepfe - unterste Reihe zuerst.
 do
     local ok, err = pcall(function()

@@ -9,6 +9,14 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.0.7.30] – 2026-11-18
+
+### Geändert
+- Flugpunkt-Erinnerung (`ui/qolextra.lua`): Lage je Punkt aus der Flugkarte
+  (`st.flights.pos`, Weltkoordinaten), Prüfung alle 3 s nach Entfernung
+  (`QX.NearFlight`, `QX.FLIGHT_YARDS = 600`); die Erinnerung über den
+  Ortsnamen bleibt zusätzlich.
+
 ## [1.0.7.29] – 2026-11-17
 
 ### Behoben

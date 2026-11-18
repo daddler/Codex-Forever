@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.0.7.30",
+        date    = "18.11.2026",
+        notes   = {
+            "|cff7C6CFFDie Flugpunkt-Erinnerung kommt früher|r – schon, wenn ein noch nicht entdeckter Flugpunkt etwa 600 m entfernt ist, nicht erst vor dem Greifenmeister. Dafür einmal eine Flugkarte öffnen.",
+        },
+    },
+    {
         version = "1.0.7.29",
         date    = "17.11.2026",
         notes   = {

@@ -367,6 +367,7 @@ local function FlightStore()
     local st = K.CharState and K.CharState()
     if not st then return nil end
     st.flights = st.flights or { known = {}, all = {} }
+    st.flights.pos = st.flights.pos or {}
     return st.flights
 end
 -- Beim Oeffnen einer Flugkarte: alle Punkte mit Stand merken.
@@ -382,6 +383,16 @@ function QX.ReadTaxi()
         local name = K.Plain(nd.name)
         if type(name) == "string" then
             s.all[name] = true
+            -- 1.0.7.30: Lage des Punkts in der Welt (Kontinent, Norden,
+            -- Westen), damit die Erinnerung nach Entfernung kommt.
+            local p = nd.position
+            local x, y = p and p.x, p and p.y
+            if p and p.GetXY then x, y = p:GetXY() end
+            x, y = K.Plain(x), K.Plain(y)
+            if type(x) == "number" and type(y) == "number" then
+                local c, wn, ww = K.ToWorld(K.Plain(_G.GetTaxiMapID()), x, y)
+                if c then s.pos[name] = { c, wn, ww } end
+            end
             local st = K.Plain(nd.state)
             if E and (st == E.Current or st == E.Reachable) then s.known[name] = true n = n + 1 end
         end
@@ -404,6 +415,41 @@ function QX.MissingFlight(zone, sub)
     return nil
 end
 local reminded = {}
+-- 1.0.7.30 (Spieler: "zu nah dran, man sieht meist schon den Greifen-
+-- meister"): bisher nur ueber den Namen des Ortes - der faellt erst im
+-- Ort selbst. Jetzt zusaetzlich nach Entfernung: ein unentdeckter Punkt
+-- naeher als QX.FLIGHT_YARDS Meter (Weltkoordinaten, Lage von der Flugkarte).
+QX.FLIGHT_YARDS = 600
+QX.FLIGHT_EVERY = 3
+function QX.NearFlight(c, n, w, s)
+    if not (c and s and s.read and s.pos) then return nil end
+    local best, bd
+    for name, p in pairs(s.pos) do
+        if not s.known[name] and not reminded[name] and p[1] == c then
+            local dn, dw = p[2] - n, p[3] - w
+            local d = math.sqrt(dn * dn + dw * dw)
+            if d <= QX.FLIGHT_YARDS and (not bd or d < bd) then best, bd = name, d end
+        end
+    end
+    return best, bd
+end
+function QX.CheckFlightNear()
+    if not Get("flightRemind") or K.InCombat() then return end
+    local c, n, w = K.PlayerWorld()
+    local name, d = QX.NearFlight(c, n, w, FlightStore())
+    if name then
+        reminded[name] = true
+        Say(string.format("Flugpunkt in der Nähe noch nicht entdeckt: %s (etwa %d m) – sprich mit dem Flugmeister.", name, math.floor(d / 10 + 0.5) * 10))
+    end
+end
+local flightAcc = 0
+local flightTick = CreateFrame("Frame")
+flightTick:SetScript("OnUpdate", K.Measured("Helfer", function(_, el)
+    flightAcc = flightAcc + (el or 0)
+    if flightAcc < QX.FLIGHT_EVERY then return end
+    flightAcc = 0
+    QX.CheckFlightNear()
+end))
 function QX.CheckFlight()
     if not Get("flightRemind") then return end
     local zone = _G.GetZoneText and K.Plain(_G.GetZoneText())
@@ -492,7 +538,7 @@ local function Build(B)
           { type = "toggle", label = "Schließkassetten im Tooltip", key = "lockboxTip",
             description = "Welche Fertigkeit im Schlossknacken eine Kassette braucht." })
     B:Row({ type = "toggle", label = "Flugpunkte erinnern", key = "flightRemind",
-            description = "Hinweis im Chat, wenn ein Flugpunkt in diesem Gebiet noch nicht entdeckt ist. Erst, nachdem du einmal eine Flugkarte geöffnet hast." },
+            description = "Hinweis im Chat, wenn ein noch nicht entdeckter Flugpunkt näher als etwa 600 m ist oder du sein Gebiet betrittst. Erst, nachdem du einmal eine Flugkarte geöffnet hast." },
           { type = "toggle", label = "Instanzen zählen", key = "instTracker",
             description = "Beim Betreten: wie viele neue Instanzen du in der letzten Stunde betreten hast (Grenze 10 je Konto). Beim Verlassen: wie lange. Liste: /wcui instanzen." })
     B:Row({ type = "toggle", label = "Taschendiebstahl melden", key = "pickpocketMsg",
