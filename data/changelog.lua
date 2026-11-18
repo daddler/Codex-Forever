@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.0.7.46",
+        date    = "18.11.2026",
+        notes   = {
+            "|cff7C6CFF/wcui prüfen sucht weiter nach dem stillen Berufslink|r – geprüft wird jetzt, ob ein Addon den Weg des Klicks verändert hat, was das Link-Fenster des Spiels zeigt und welche Fehler anderer Addons dabei auftreten.",
+        },
+    },
+    {
         version = "1.0.7.45",
         date    = "18.11.2026",
         notes   = {

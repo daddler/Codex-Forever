@@ -2808,6 +2808,15 @@ function PT.OnTradeLink(link, text)
     local function Check()
         local shown = PT.GameTradeShown()
         rec.game = shown or "nichts geöffnet"
+        local it = _G.ItemRefTooltip
+        if type(it) == "table" and it.IsShown then
+            local n = it.NumLines and Plain(it:NumLines())
+            local l1 = _G.ItemRefTooltipTextLeft1
+            local t1 = type(l1) == "table" and l1.GetText and Plain(l1:GetText()) or nil
+            if PT.Flow then PT.Flow(string.format("Tooltip %s · Zeilen %s · %s", it:IsShown() and "offen" or "zu", tostring(n), tostring(t1))) end
+        end
+        local ER = WeintCodex.UIErrors
+        for _, e in ipairs(ER and ER.foreign or {}) do if PT.Flow then PT.Flow("Fehler: " .. e) end end
         if shown then return end
         local g = PT.Guild() or {}
         local e = name and (g[name] or (realm and g[name .. "-" .. realm]))
@@ -2907,12 +2916,45 @@ do
     end)
 end
 
+-- Ist der Weg eines Klicks auf einen Link "sauber"? Der Client oeffnet einen
+-- Berufslink ueber ItemRefTooltip:SetHyperlink (Blizzard-Quelltext: kein
+-- eigener Link-Handler fuer "trade"). Hat ein Addon eine Funktion auf
+-- diesem Weg ersetzt oder ein Feld daran geschrieben, laeuft der Klick
+-- "verunreinigt", und der Client verweigert still. issecurevariable nennt
+-- das Addon.
+PT.TAINT_CHECKS = {
+    { nil, "SetItemRef" }, { nil, "ShowUIPanel" }, { nil, "HideUIPanel" },
+    { "LinkUtil", "ProcessLink" }, { "ItemRefTooltip", "SetHyperlink" },
+    { "ItemRefTooltip", "ItemRefSetHyperlink" }, { "ItemRefTooltip", "ProcessInfo" },
+    { "ItemRefTooltip", "SetOwner" }, { "ItemRefTooltip", "SetPadding" }, { "ItemRefTooltip", "Show" },
+    { "ItemRefTooltip", "CloseButton" }, { "ItemRefTooltip", "shoppingTooltips" },
+    { "ChatFrame1", "OnHyperlinkClick" }, { nil, "ChatFrame_OnHyperlinkShow" },
+    { "ChatFrameUtil", "OnHyperlinkClick" }, { nil, "IsModifiedClick" }, { nil, "HandleModifiedItemClick" },
+}
+function PT.TaintLines()
+    local out = {}
+    local isv = _G.issecurevariable
+    if type(isv) ~= "function" then return { "issecurevariable fehlt" } end
+    for _, c in ipairs(PT.TAINT_CHECKS) do
+        local t, k = c[1], c[2]
+        local tbl = t and _G[t]
+        if not t or type(tbl) == "table" then
+            local ok, secure, by
+            if t then ok, secure, by = pcall(isv, tbl, k) else ok, secure, by = pcall(isv, k) end
+            if ok and not secure then out[#out + 1] = string.format("VERUNREINIGT: %s%s durch %s", t and (t .. ".") or "", k, tostring(by)) end
+        end
+    end
+    if #out == 0 then out[1] = "Klickweg sauber (" .. #PT.TAINT_CHECKS .. " Stellen geprüft)" end
+    return out
+end
+
 function PT.LinkLines()
     local out = {}
     for _, r in ipairs(PT.linkLog) do
         out[#out + 1] = string.format("Berufslink %s · %s · Besitzer %s · Spiel: %s",
             tostring(r.prof), r.link, tostring(r.owner), tostring(r.game or "…"))
     end
+    for _, l in ipairs(PT.TaintLines()) do out[#out + 1] = l end
     if #PT.flow > 0 then out[#out + 1] = "Ablauf nach dem letzten Klick:" end
     for _, l in ipairs(PT.flow) do out[#out + 1] = "  " .. l end
     return out

@@ -9,6 +9,16 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.0.7.46] – 2026-11-18
+
+### Geändert
+- Berufslink: 1.0.7.45 zeigte nach dem Klick keinerlei Antwort des Spiels
+  (kein `TRADE_SKILL_SHOW`, nichts blockiert). Laut Blizzard-Quelltext geht
+  „trade“ ohne eigenen Handler an `ItemRefTooltip:SetHyperlink`. `PT.TaintLines`
+  prüft mit `issecurevariable` 17 Stellen dieses Wegs und nennt das Addon, das
+  eine verändert hat; dazu Zustand des `ItemRefTooltip` und fremde Fehler im
+  Ablauf.
+
 ## [1.0.7.45] – 2026-11-18
 
 ### Geändert
