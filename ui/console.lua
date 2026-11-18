@@ -80,17 +80,56 @@ local function Slot(i, bar)
 end
 
 -- 1.0.7.49-1.0.7.53 standen hier Zierplatten/Schultern hinter Spieler und
--- Ziel. 1.0.7.54 (Wunsch mit Bild: "genau so, alles andere ist zu dick"):
--- keine - die Rahmen sitzen selbst auf der Oberkante, das Portraet innen am
--- Ring (Plaetze in ui/layout.lua).
+-- Ziel, 1.0.7.54 nichts ("verloren, nicht integriert"). 1.0.7.55: eine
+-- flache, breite Erhoehung der Leiste in der Mitte (media/ui/console_deck),
+-- unter der Konsole gezeichnet - Seitenteile und Buckel decken ihren Fuss.
+-- Spieler und Ziel sitzen darin, an der Konsole verankert.
+CO.TOP = 130          -- Oberkante der Seitenteile (Bild 96 von 256 px)
+CO.DECK_W, CO.DECK_H = 1120, 72   -- Bild 1024 x 64
+CO.DECK_SINK = 14     -- so weit taucht die Erhoehung in die Leiste
+CO.UNIT_Y = 4         -- Unterkante Spieler/Ziel ueber der Oberkante
+local deck
+local function Deck()
+    if deck then return deck end
+    deck = CreateFrame("Frame", nil, UIParent)
+    deck:SetFrameStrata("BACKGROUND")
+    deck:SetFrameLevel(1)
+    deck:SetSize(CO.DECK_W, CO.DECK_H)
+    local t = Tex(deck, "console_deck", "ARTWORK", 0)
+    t:SetAllPoints(deck)
+    return deck
+end
+-- Rahmen in die Erhoehung setzen: nur ausserhalb des Kampfes (geschuetzte
+-- Knoepfe), immer wieder nach dem Platz aus ui/layout.lua.
+function CO.SeatUnits()
+    if _G.InCombatLockdown and _G.InCombatLockdown() then return end
+    local ring = K.CONSOLE_RING or 150
+    for key, side in pairs({ player = -1, target = 1 }) do
+        local uf = _G["WeintCodexUF_" .. key]
+        if type(uf) == "table" and uf.SetPoint then
+            local s = K.Plain(uf:GetEffectiveScale()) or 1
+            local fs = K.Plain(frame:GetEffectiveScale()) or 1
+            local k = (s > 0) and fs / s or 1
+            uf:ClearAllPoints()
+            uf:SetPoint(side < 0 and "BOTTOMRIGHT" or "BOTTOMLEFT", frame, "BOTTOM",
+                side * ring * k, (CO.TOP + CO.UNIT_Y) * k)
+        end
+    end
+end
 
 function CO.Update()
     if not CO.Active() then
         if frame then frame:Hide() end
+        if deck then deck:Hide() end
         return false
     end
     Build()
     frame:Show()
+    local d = Deck()
+    d:ClearAllPoints()
+    d:SetPoint("BOTTOM", frame, "BOTTOM", 0, CO.TOP - CO.DECK_SINK)
+    d:Show()
+    CO.SeatUnits()
     for i, names in ipairs(CO.SLOT_BARS) do
         local bar
         for _, n in ipairs(names) do

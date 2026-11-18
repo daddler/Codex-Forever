@@ -190,6 +190,28 @@ def slot(W=256, H=64):
     write_tga("console_slot", np.clip(v, 0, 1), np.clip(a, 0, 1))
 
 
+def deck(W=1024, H=64):
+    # Erhoehung der Leiste in der Mitte (1.0.7.55, Wunsch: Spieler- und
+    # Zielrahmen "integriert" wie im Bild): flach und breit, an beiden Enden
+    # lang auslaufend. Ihr unterer Teil liegt hinter den Seitenteilen, die
+    # Mitte hinter dem Buckel (ui/console.lua).
+    yy, xx = np.mgrid[0:H, 0:W]
+    T, E = 10.0, 150.0
+    dx = np.minimum(xx + 0.5, W - xx - 0.5)
+    up = smooth(0, E, dx) ** 1.8
+    top = T + (H + 4 - T) * (1 - up)
+    v = stone(H, W)
+    a = smooth(-0.5, 1.2, yy - top)
+    d = yy - top
+    v = v + 0.20 * np.exp(-((d - 1.5) / 1.3) ** 2) - 0.08 * np.exp(-((d - 5) / 1.5) ** 2)
+    m = np.zeros((H, W))
+    stroke(m, bezier((20, 62), (90, 56), (130, 22), (200, 18)), 0.6, 2.4)
+    stroke(m, bezier((200, 18), (400, 16), (620, 16), (824, 18)), 2.4, 2.4)
+    stroke(m, bezier((824, 18), (894, 22), (934, 56), (1004, 62)), 2.4, 0.6)
+    v = carve(v, m)
+    write_tga("console_deck", np.clip(v, 0, 1), np.clip(a, 0, 1))
+
+
 def knob(n=64):
     # runder Steinknopf mit Metallrand, Licht von oben links
     yy, xx = np.mgrid[0:n, 0:n]
@@ -205,6 +227,7 @@ def knob(n=64):
 
 
 if __name__ == "__main__":
+    deck()
     knob()
     for old in ("console_plate", "console_ring", "console_square", "console_unit"):
         p = os.path.join(OUT, old + ".tga")

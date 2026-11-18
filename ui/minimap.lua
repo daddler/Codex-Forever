@@ -470,6 +470,13 @@ function MM.ArcButtons(mm)
         local ang = math.rad(MM.ARC_START + (i - 1) * MM.ARC_STEP)
         b:ClearAllPoints()
         b:SetPoint("CENTER", mm, "CENTER", r * math.cos(ang), r * math.sin(ang))
+        -- 1.0.7.55 (Bild: der Sammelknopf lag hinter der Zierleiste der
+        -- Fassung): ueber Karte und Konsole heben.
+        if not (b.IsProtected and b:IsProtected() and _G.InCombatLockdown and _G.InCombatLockdown()) then
+            if b.SetFixedFrameStrata then pcall(b.SetFixedFrameStrata, b, false) end
+            if b.SetFrameStrata then pcall(b.SetFrameStrata, b, mm:GetFrameStrata() or "LOW") end
+            if b.SetFrameLevel then pcall(b.SetFrameLevel, b, (K.Plain(mm:GetFrameLevel()) or 1) + 12) end
+        end
         MM.Knob(b)
         end
     end
