@@ -342,7 +342,7 @@ K.CONSOLE_RING = 213   -- Spieler/Ziel stehen so weit neben der Mitte
 K.CONSOLE_MAP = 160    -- Karte in der Fassung (Bild: Halbmesser 83)
 K.CONSOLE_XP = { w = 430, h = 8 }
 local CX, CY = 359, 0   -- Mitte der Leisten links/rechts
-local PY = 170          -- Unterkante Spieler/Ziel
+local PY = 115          -- Unterkante Spieler/Ziel
 -- Groesse/Reihen je Leiste (Index wie ui/actionbars.lua).
 K.CONSOLE_BARS = {
     [1] = { size = 34, perRow = 12 }, [2] = { size = 34, perRow = 12 },

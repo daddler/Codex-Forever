@@ -15,6 +15,9 @@ nicht zusammen.
 - Konsole: `console_unit.tga` als Schulter (außen langer Anstieg, innen Abfall
   zum Ring), `CO.UNIT_X`/`CO.UNIT_IN` 175, `K.CONSOLE_RING` 128 → 213 (Rahmen mittig auf der Schulter); immer sichtbar, unabhängig vom
   Ziel.
+- Konsole: Rahmen vorn auf der Schulter (`PY` 170 → 115, `CO.UNIT_Y` 71).
+- `MM.ArcButtons`: nur sichtbare Knöpfe, 145° in 19°-Schritten nach unten; neu
+  gesetzt bei OnShow/OnHide.
 - `console_side.tga`: Zierlinie beginnt auf Höhe und Stärke des Mittelstücks.
 
 ## [1.0.7.51] – 2026-11-18

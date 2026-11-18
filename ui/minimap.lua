@@ -423,7 +423,7 @@ end
 
 MM.AXIS = 22   -- Breite der Knopfspalte, Knoepfe mittig darin
 
-MM.ARC_START, MM.ARC_STEP, MM.ARC_GAP = 205, -23, 22  -- Grad, Grad, Abstand zur Karte
+MM.ARC_START, MM.ARC_STEP, MM.ARC_GAP = 145, 19, 22  -- links, nach unten  -- Grad, Grad, Abstand zur Karte
 local knobs = setmetatable({}, { __mode = "k" })
 function MM.Knob(b)
     local k = knobs[b]
@@ -440,6 +440,7 @@ function MM.Knob(b)
     end
     return k
 end
+local arcHooked = setmetatable({}, { __mode = "k" })
 function MM.ArcButtons(mm)
     local w = K.Plain(mm:GetWidth()) or 160
     local r = w / 2 + MM.ARC_GAP
@@ -453,14 +454,26 @@ function MM.ArcButtons(mm)
         for _, b in ipairs(list) do if b == ac then dup = true end end
         if not dup then list[#list + 1] = ac end
     end
-    for i, b in ipairs(list) do
+    -- 1.0.7.52 (Bild: der Sammelknopf lag oben unter dem Ring): nur
+    -- sichtbare Knoepfe bekommen einen Platz - versteckte (Post, Schwierig-
+    -- keit ...) schoben die letzten bis nach oben.
+    local i = 0
+    for _, b in ipairs(list) do
         Watch(b)
+        if b.HookScript and not arcHooked[b] then
+            arcHooked[b] = true
+            b:HookScript("OnShow", function() MM.Later(MM.LayoutButtons) end)
+            b:HookScript("OnHide", function() MM.Later(MM.LayoutButtons) end)
+        end
+        if K.Bool(b:IsShown(), false) then
+        i = i + 1
         local ang = math.rad(MM.ARC_START + (i - 1) * MM.ARC_STEP)
         b:ClearAllPoints()
         b:SetPoint("CENTER", mm, "CENTER", r * math.cos(ang), r * math.sin(ang))
         MM.Knob(b)
+        end
     end
-    return #list
+    return i
 end
 
 function MM.LayoutButtons()

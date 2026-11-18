@@ -84,7 +84,7 @@ end
 -- Rahmen, die zum Buckel hin in die Konsole auslaeuft. An den Rahmen
 -- verankert - wer sie verschiebt, nimmt die Platte mit.
 CO.UNIT_W, CO.UNIT_H = 420, 96
-CO.UNIT_X, CO.UNIT_Y = 175, 16  -- Luft aussen und oben
+CO.UNIT_X, CO.UNIT_Y = 175, 71  -- Luft aussen und oben
 CO.UNIT_IN = 175                -- Luft innen (zur Karte)
 CO.TOP = 130         -- Oberkante der Seitenteile (Bild 96 von 256 px)
 CO.UNIT_SINK = 24    -- so weit taucht die Platte in die Konsole ein
