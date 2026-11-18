@@ -27079,6 +27079,25 @@ do
     Check(ok, "Gestaltung: geschützte Rahmen nie im Kampf" .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 1.0.7.40: Minikarten-Diagnose mit Zugriffsprotokoll, Ankerbaum und Kreis.
+do
+    local ok, err = pcall(function()
+        local MM = WeintCodex.UIMinimap
+        local a = CreateFrame("Frame", "WCTestKreisA", UIParent)
+        local b = CreateFrame("Frame", "WCTestKreisB", UIParent)
+        a.GetNumPoints = function() return 1 end
+        a.GetPoint = function() return "TOP", b, "TOP", 0, 0 end
+        b.GetNumPoints = function() return 1 end
+        b.GetPoint = function() return "TOP", a, "TOP", 0, 0 end
+        local _, cycles = MM.Walk(a)
+        assert(#cycles == 1, "Kreis nicht erkannt")
+        local lines = MM.DiagLines()
+        local txt = table.concat(lines, "\n")
+        assert(txt:find("Ankerbaum", 1, true) and txt:find("Zugriffe auf die Karte", 1, true), txt)
+    end)
+    Check(ok, "Minikarte: Diagnose" .. (ok and "" or (": " .. tostring(err))))
+end
+
 if failures == 0 then
     print("BESTANDEN")
     os.exit(0)

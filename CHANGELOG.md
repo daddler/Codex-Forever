@@ -14,6 +14,11 @@ nicht zusammen.
 ### Geändert
 - `MM.WhereLine`: ganze Ankerkette (bis 8 Glieder) mit Anker, Ziel, Lage,
   Sichtbarkeit – Meldung SpartanUI: `SUI_Minimap` selbst ohne Lage.
+- `/wcui prüfen` → Minikarte: Ankerbaum mit allen Ankern und Kreiserkennung,
+  Cluster/Container, SpartanUI (Stil, Modul, Versatz-Rahmen, Sockel), alle
+  Rahmen mit Anker auf Karte/Halter, Zugriffsprotokoll (`MM.HookTouch`:
+  SetPoint/ClearAllPoints/SetParent/Hide/SetAlpha/SetScale/SetSize mit
+  aufrufender Datei:Zeile, ab dem Laden).
 
 ## [1.0.7.39] – 2026-11-18
 

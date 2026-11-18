@@ -599,7 +599,9 @@ end)
 -- Karte (6.20.0.0): Eingaenge im Bestand, ob der Client Kontinent und
 Check("Minikarte", function(add)
     local MM = WeintCodex.UIMinimap
-    if MM and MM.WhereLine then add("", MM.WhereLine()) end
+    if MM and MM.DiagLines then
+        for _, l in ipairs(MM.DiagLines()) do add("", l) end
+    elseif MM and MM.WhereLine then add("", MM.WhereLine()) end
 end)
 
 -- eigene Eingaenge kennt.

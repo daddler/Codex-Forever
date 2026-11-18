@@ -25,7 +25,7 @@ WeintCodex_ChangelogData = {
         version = "1.0.7.40",
         date    = "18.11.2026",
         notes   = {
-            "|cff7C6CFF/wcui prüfen verfolgt die Minikarte bis zum Ende|r – je Rahmen, woran er hängt und ob er eine Lage hat. Damit lässt sich klären, warum sie mit SpartanUI verschwindet.",
+            "|cff7C6CFF/wcui prüfen untersucht die Minikarte vollständig|r – woran jeder Rahmen hängt, ob die Anker im Kreis laufen, was SpartanUI eingestellt hat und welches Addon die Karte seit dem Einloggen verschoben oder versteckt hat.",
         },
     },
     {

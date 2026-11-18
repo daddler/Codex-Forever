@@ -872,6 +872,238 @@ function MM.WhereLine()
         K.IsActive(KEY) and "an" or "aus")
 end
 
+-- 1.0.7.40: Protokoll, WER die Karte anfasst. Jeder Aufruf von SetPoint,
+-- ClearAllPoints, SetParent, Hide, SetAlpha, SetScale auf Minimap,
+-- MinimapCluster und SpartanUIs SUI_Minimap wird mit der aufrufenden Datei
+-- und Zeile gemerkt (hooksecurefunc - veraendert nichts, nimmt nichts weg).
+-- Damit zeigt /wcui pruefen, ob ein WeintCodex-Code die Karte bewegt hat.
+local touchLog, touchN = {}, 0
+local TOUCH_MAX = 40
+local hookedTouch = setmetatable({}, { __mode = "k" })
+local TOUCH_METHODS = { "SetPoint", "ClearAllPoints", "SetAllPoints", "SetParent", "Hide", "SetAlpha", "SetScale", "SetSize" }
+local function Caller()
+    if type(_G.debugstack) ~= "function" then return "?" end
+    local ok, s = pcall(_G.debugstack, 3, 4, 0)
+    if not ok or type(s) ~= "string" then return "?" end
+    -- erste Zeile, die nicht aus dem Blizzard-Hakenwerk stammt
+    for line in s:gmatch("[^\n]+") do
+        if not line:find("hooksecurefunc") and not line:find("%[C%]") then
+            local file, ln = line:match("Interface[/\\]AddOns[/\\](.-)%.lua\"?%]?:(%d+)")
+            if not file then file, ln = line:match("([%w_/\\%.]+)%.lua\"?%]?:(%d+)") end
+            if file then return file .. ":" .. ln end
+        end
+    end
+    return (s:gsub("\n.*", "")):sub(1, 80)
+end
+function MM.HookTouch(f, label)
+    if type(f) ~= "table" or hookedTouch[f] or type(_G.hooksecurefunc) ~= "function" then return end
+    hookedTouch[f] = true
+    for _, m in ipairs(TOUCH_METHODS) do
+        if type(f[m]) == "function" then
+            pcall(_G.hooksecurefunc, f, m, function(_, a1)
+                touchN = touchN + 1
+                local arg = ""
+                if m == "SetPoint" or m == "SetParent" then
+                    local rn = type(a1) == "table" and a1.GetName and K.Plain(a1:GetName()) or a1
+                    arg = " " .. tostring(rn)
+                elseif m == "SetAlpha" or m == "SetScale" then
+                    arg = " " .. tostring(K.Plain(a1))
+                end
+                local t = _G.GetTime and math.floor((K.Plain(_G.GetTime()) or 0) * 10) / 10 or 0
+                touchLog[(touchN - 1) % TOUCH_MAX + 1] = string.format("%s:%s%s ← %s @%s", label, m, arg, Caller(), t)
+            end)
+        end
+    end
+end
+function MM.TouchLines(max)
+    local out = {}
+    local first = math.max(1, touchN - TOUCH_MAX + 1)
+    first = math.max(first, touchN - (max or TOUCH_MAX) + 1)
+    for i = first, touchN do out[#out + 1] = touchLog[(i - 1) % TOUCH_MAX + 1] end
+    return out, touchN
+end
+MM.HookTouch(_G.Minimap, "Minimap")
+MM.HookTouch(_G.MinimapCluster, "Cluster")
+do
+    -- SUI_Minimap entsteht erst beim Einschalten von SpartanUI.
+    local tries = 0
+    local function Look()
+        tries = tries + 1
+        MM.HookTouch(_G.MinimapCluster and _G.MinimapCluster.MinimapContainer, "Container")
+        for _, n in ipairs({ "SUI_Minimap", "SUI_Mover_Minimap" }) do MM.HookTouch(_G[n], n) end
+        if tries < 60 and _G.C_Timer and _G.C_Timer.After then _G.C_Timer.After(0.25, Look) end
+    end
+    local ev = CreateFrame("Frame")
+    ev:RegisterEvent("ADDON_LOADED")
+    ev:RegisterEvent("PLAYER_LOGIN")
+    ev:SetScript("OnEvent", function(self, e)
+        if e == "PLAYER_LOGIN" then self:UnregisterAllEvents() end
+        tries = 0
+        Look()
+    end)
+end
+
+-- Ein Rahmen ausfuehrlich: Name, Eltern, Lage, alle Anker, sichtbar, Alpha,
+-- Massstab, Ebene.
+local function FN(f)
+    if type(f) ~= "table" then return tostring(f) end
+    if f == _G.UIParent then return "UIParent" end
+    local n = f.GetName and K.Plain(f:GetName())
+    if n then return n end
+    local p = f.GetParent and f:GetParent()
+    local pn = p and p.GetName and K.Plain(p:GetName())
+    return "namenlos(" .. tostring(pn or "?") .. ")"
+end
+local function R(x) x = K.Plain(x) return type(x) == "number" and tostring(math.floor(x + 0.5)) or "?" end
+function MM.FrameLine(f)
+    if type(f) ~= "table" then return "fehlt" end
+    local pts = {}
+    local n = f.GetNumPoints and K.Plain(f:GetNumPoints()) or 0
+    for i = 1, n do
+        local ok, pt, rel, rp, x, y = pcall(f.GetPoint, f, i)
+        if ok then pts[#pts + 1] = string.format("%s→%s %s %s/%s", tostring(pt), FN(rel), tostring(rp), R(x), R(y)) end
+    end
+    local function B(m) return f[m] and tostring(K.Bool(f[m](f), false)) or "?" end
+    local okR, l, b, w, h = false
+    if f.GetRect then okR, l, b, w, h = pcall(f.GetRect, f) end
+    return string.format("%s: Eltern %s · Anker %d [%s] · Rechteck %s/%s %sx%s · gezeigt %s sichtbar %s · Alpha %s Maßstab %s · %s/%s",
+        FN(f), FN(f.GetParent and f:GetParent()), n, table.concat(pts, "; "),
+        okR and R(l) or "?", okR and R(b) or "?", okR and R(w) or "?", okR and R(h) or "?",
+        B("IsShown"), B("IsVisible"),
+        f.GetAlpha and tostring(K.Plain(f:GetAlpha())) or "?", f.GetScale and tostring(K.Plain(f:GetScale())) or "?",
+        f.GetFrameStrata and tostring(K.Plain(f:GetFrameStrata())) or "?", f.GetFrameLevel and tostring(K.Plain(f:GetFrameLevel())) or "?")
+end
+
+-- Alle Anker rekursiv, mit Kreiserkennung: ein Rahmen, der auf dem Weg
+-- noch einmal vorkommt, ist ein Kreis - dann kann das Spiel keinen platzieren.
+function MM.Walk(start)
+    local lines, visited, cycles = {}, {}, {}
+    local function Go(f, path, depth)
+        if type(f) ~= "table" or f == _G.UIParent or depth > 12 then return end
+        for i, p in ipairs(path) do
+            if p == f then
+                local names = {}
+                for j = i, #path do names[#names + 1] = FN(path[j]) end
+                names[#names + 1] = FN(f)
+                cycles[#cycles + 1] = table.concat(names, " → ")
+                return
+            end
+        end
+        if visited[f] then return end
+        visited[f] = true
+        lines[#lines + 1] = string.rep("  ", depth) .. MM.FrameLine(f)
+        path[#path + 1] = f
+        local n = f.GetNumPoints and K.Plain(f:GetNumPoints()) or 0
+        for i = 1, n do
+            local ok, _, rel = pcall(f.GetPoint, f, i)
+            if ok and rel then Go(rel, path, depth + 1) end
+        end
+        -- ohne Anker haengt die Lage am Eltern (SetAllPoints o. a.)
+        path[#path] = nil
+    end
+    Go(start, {}, 0)
+    return lines, cycles
+end
+
+-- Wer haengt an der Karte oder ihrem Halter (Anker auf sie)? Nur auf Anfrage,
+-- einmal ueber alle Rahmen.
+function MM.Dependents(targets)
+    local out = {}
+    if type(_G.EnumerateFrames) ~= "function" then return out end
+    local f = _G.EnumerateFrames()
+    local guard = 0
+    while f and guard < 30000 do
+        guard = guard + 1
+        if not (f.IsForbidden and f:IsForbidden()) and f.GetNumPoints then
+            local n = K.Plain(f:GetNumPoints()) or 0
+            for i = 1, n do
+                local ok, pt, rel, rp = pcall(f.GetPoint, f, i)
+                if ok and rel and targets[rel] then
+                    out[#out + 1] = string.format("%s %s→%s %s", FN(f), tostring(pt), FN(rel), tostring(rp))
+                    break
+                end
+            end
+        end
+        f = _G.EnumerateFrames(f)
+    end
+    return out
+end
+
+-- SpartanUI: Stil, Einstellungen der Minikarte, Versatz-Rahmen.
+function MM.SpartanLines()
+    local out = {}
+    local SUI = _G.SUI
+    if type(SUI) ~= "table" then return out end
+    local function G(fn)
+        local ok, v = pcall(fn)
+        if ok then return v end
+        return "Fehler"
+    end
+    out[#out + 1] = "SpartanUI: Version " .. tostring(G(function() return SUI.Version end))
+        .. " · Stil " .. tostring(G(function() return SUI.DB.Artwork.Style end))
+    local mod = G(function() return SUI:GetModule("Minimap", true) end)
+    if type(mod) == "table" then
+        out[#out + 1] = "SUI-Modul Minimap: an " .. tostring(G(function() return mod:IsEnabled() end))
+            .. " · Position " .. tostring(G(function() return mod.Settings and mod.Settings.position end))
+            .. " · verschoben " .. tostring(G(function() return mod.Settings and mod.Settings.moved end))
+    else
+        out[#out + 1] = "SUI-Modul Minimap: " .. tostring(mod)
+    end
+    for _, n in ipairs({ "SpartanUI", "SUI_BottomAnchor", "SUI_TopAnchor", "SUI_Minimap", "SUI_Mover_Minimap" }) do
+        out[#out + 1] = MM.FrameLine(_G[n])
+    end
+    -- Sockel des Stils
+    local style = G(function() return SUI.DB.Artwork.Style end)
+    if type(style) == "string" then
+        for _, n in ipairs({ "SUI_Art_" .. style, "SUI_Art_" .. style .. "_Minimap" }) do
+            out[#out + 1] = MM.FrameLine(_G[n])
+        end
+    end
+    return out
+end
+
+-- Alles zusammen fuer /wcui pruefen.
+function MM.DiagLines()
+    local out = { MM.WhereLine() }
+    local mm = _G.Minimap
+    local ok, lines, cycles = pcall(MM.Walk, mm)
+    if ok then
+        out[#out + 1] = "Ankerbaum der Minikarte:"
+        for _, l in ipairs(lines) do out[#out + 1] = "  " .. l end
+        out[#out + 1] = #cycles > 0 and ("KREIS: " .. table.concat(cycles, " | ")) or "Kein Ankerkreis."
+    else
+        out[#out + 1] = "Ankerbaum: Fehler " .. tostring(lines)
+    end
+    local cl = _G.MinimapCluster
+    out[#out + 1] = "Cluster: " .. MM.FrameLine(cl)
+    out[#out + 1] = "Container: " .. MM.FrameLine(cl and cl.MinimapContainer)
+    for _, l in ipairs(MM.SpartanLines()) do out[#out + 1] = l end
+    local targets = {}
+    for _, n in ipairs({ "Minimap", "SUI_Minimap", "MinimapCluster" }) do
+        if type(_G[n]) == "table" then targets[_G[n]] = true end
+    end
+    local okD, deps = pcall(MM.Dependents, targets)
+    if okD then
+        out[#out + 1] = "Daran verankert (" .. #deps .. "): " .. table.concat(deps, " | ", 1, math.min(#deps, 30))
+    end
+    -- Was WeintCodex selbst gerade dazu sagt
+    local BMv = WeintCodex.UIBarMover
+    out[#out + 1] = string.format("WeintCodex: Oberfläche %s · Minikarten-Modul %s · fremd %s · Insets %s · Kampf %s",
+        tostring(K.Bool(K.UIEnabled and K.UIEnabled(), false)), K.IsActive(KEY) and "an" or "aus",
+        tostring(BMv and BMv.ForeignMinimap and BMv.ForeignMinimap() or "keine"),
+        tostring(BMv and BMv.mmInsets or "nein"), tostring(K.InCombat()))
+    local DL = WeintCodex.UIDialogue
+    if DL and DL.hidden then
+        local h = {}
+        for f in pairs(DL.hidden) do h[#h + 1] = FN(f) end
+        out[#out + 1] = "Von Gespräche versteckt: " .. (#h > 0 and table.concat(h, ", ") or "nichts")
+    end
+    local log, total = MM.TouchLines(40)
+    out[#out + 1] = "Zugriffe auf die Karte (" .. total .. " gesamt, letzte " .. #log .. "):"
+    for _, l in ipairs(log) do out[#out + 1] = "  " .. l end
+    return out
+end
+
 local function Apply()
     local mm = _G.Minimap
     if type(mm) ~= "table" then return end
