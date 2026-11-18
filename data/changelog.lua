@@ -22,6 +22,14 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.0.7.56",
+        date    = "18.11.2026",
+        notes   = {
+            "|cff7C6CFFKonsole: schmalere Rahmen|r – Spieler und Ziel passen jetzt in die Erhöhung der Leiste.",
+            "|cff7C6CFFAddon-Knöpfe sichtbar|r – die Liste des Sammelknopfs liegt über allem und klappt in der Konsole nach links auf, statt unter dem Kalender zu verschwinden.",
+        },
+    },
+    {
         version = "1.0.7.55",
         date    = "18.11.2026",
         notes   = {

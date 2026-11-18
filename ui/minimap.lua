@@ -727,7 +727,8 @@ local function BuildBag()
     -- (SetFixedFrameStrata/-Level). Eine Liste in DIALOG lag deshalb mit
     -- ihrer dunklen Flaeche ueber ihnen, auch nachdem 6.3.1.2 ihre Schicht
     -- "gesetzt" hatte - das Spiel ignoriert das bei eingefrorenen Rahmen.
-    flyout:SetFrameStrata("MEDIUM")
+    -- 1.0.7.56 (Bild: die Liste lag unter dem Kalender): ganz oben.
+    flyout:SetFrameStrata("DIALOG")
     flyout:SetFrameLevel(1)
     flyout.kachel = K.Kachel(flyout, { shadow = 6 })
     flyout:Hide()
@@ -777,7 +778,13 @@ function MM.LayoutBag()
     local rows = math.max(1, math.ceil(#list / BAG_PER_ROW))
     local cols = math.max(1, math.min(BAG_PER_ROW, #list))
     flyout:ClearAllPoints()
-    flyout:SetPoint("BOTTOMRIGHT", bag, "TOPRIGHT", 0, 4)
+    if K.LookKey and K.LookKey() == "konsole" then
+        -- Konsole: der Knopf steht im Bogen links der Karte - die Liste
+        -- klappt nach links auf, weg von Karte und Kalender.
+        flyout:SetPoint("BOTTOMRIGHT", bag, "BOTTOMLEFT", -6, 0)
+    else
+        flyout:SetPoint("BOTTOMRIGHT", bag, "TOPRIGHT", 0, 4)
+    end
     flyout:SetSize(cols * BAG_CELL + 8, rows * BAG_CELL + 8)
     local inset = (BAG_CELL - 26) / 2
     -- Addon-Knoepfe setzen ihre Schicht selbst (LibDBIcon: MEDIUM). Unter
