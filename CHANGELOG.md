@@ -13,8 +13,9 @@ nicht zusammen.
 
 ### Geändert
 - Konsole: `K.CONSOLE_RING` 213 → 290, Spieler/Ziel 170 breit
-  (`K.CONSOLE_UF_W`, nur bei Breite ab Werk), Schulter `CO.UNIT_X`/`_IN`
-  175 → 100, `CO.UNIT_Y` 71 → 40.
+  (`K.CONSOLE_UF_W`, nur bei Breite ab Werk), Schulter `CO.UNIT_X` 180,
+  `CO.UNIT_IN` 200, `CO.UNIT_Y` 71 → 40; `console_unit.tga` mit langen
+  flachen Ausläufern.
 
 ## [1.0.7.52] – 2026-11-18
 

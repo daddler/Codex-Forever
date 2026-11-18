@@ -197,9 +197,9 @@ def unit_plate(W=512, H=128):
     # zum Ring der Karte. Der untere Teil liegt HINTER Seitenteilen und
     # Buckel (ui/console.lua) - Konsole und Schulter sind eine Flaeche.
     yy, xx = np.mgrid[0:H, 0:W]
-    T, XO, XI = 16.0, 175.0, 340.0
-    up = smooth(0, XO, xx + 0.5) ** 1.6          # aussen: lang und flach
-    down = smooth(XI, W + 30, xx + 0.5) ** 1.2        # innen: kurz zum Ring
+    T, XO, XI = 16.0, 168.0, 326.0
+    up = smooth(0, XO, xx + 0.5) ** 2.2          # aussen: lang und flach
+    down = smooth(XI, W + 60, xx + 0.5) ** 0.55        # innen: kurz zum Ring
     top = T + (H + 6 - T) * np.maximum(1 - up, down)
     v = stone(H, W)
     a = smooth(-0.5, 1.2, yy - top)
@@ -207,9 +207,9 @@ def unit_plate(W=512, H=128):
     v = v + 0.22 * np.exp(-((d - 1.5) / 1.3) ** 2) - 0.08 * np.exp(-((d - 5) / 1.5) ** 2)
     m = np.zeros((H, W))
     # Zierlinie der Kante entlang, aussen aus der Leiste, innen zum Ring
-    stroke(m, bezier((6, 124), (90, 112), (140, 40), (200, 25)), 1.0, 3.2)
-    stroke(m, bezier((200, 25), (260, 23), (300, 23), (340, 26)), 3.2, 3.2)
-    stroke(m, bezier((340, 26), (420, 36), (480, 70), (511, 112)), 3.2, 1.0)
+    stroke(m, bezier((6, 124), (100, 118), (140, 50), (175, 25)), 1.0, 3.2)
+    stroke(m, bezier((175, 25), (240, 23), (290, 23), (326, 26)), 3.2, 3.2)
+    stroke(m, bezier((326, 26), (360, 60), (430, 90), (511, 108)), 3.2, 1.0)
     stroke(m, bezier((258, 24), (272, 10), (252, 4), (242, 12)), 3, 0.4)
     v = carve(v, m)
     write_tga("console_unit", np.clip(v, 0, 1), np.clip(a, 0, 1))
