@@ -9,6 +9,24 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.0.7.44] – 2026-11-18
+
+### Neu
+- Design „Konsole“ (`WeintCodex.LOOKS.konsole`, Wunsch: „so, wie Spartan UI
+  es macht“ – nur Verhalten, eigene Bilder aus
+  `.github/scripts/make_console_media.py`): `K.LOOK_LAYOUT`/`K.LOOK_SHIFT`
+  (Leisten 1/2 links, 3/6 rechts vom Ring, Erfahrung links unten, Cockpit
+  +45, Chat höher, Mikromenü/Taschenleiste oben rechts), `K.LookPlace` in
+  `K.Layout` und `ES.Target`; Karte unten mittig (`MM.PlaceMap`);
+  `ui/console.lua` zeichnet Konsole (Höhe der höchsten Leiste) und Ring
+  (um die Karte, rund/eckig).
+
+### Behoben
+- Namensplaketten: Debuffs des Spiels bei Ausrichtung „links“ lagen auf dem
+  Namen – Liste wird verschoben, sobald oben ein Text steht; Abstand nach
+  Zeilenhöhe (1,25 × Schriftgröße).
+- Buffzeiten: Schlachtruf 3 min (Forever) statt 2 min (Classic).
+
 ## [1.0.7.43] – 2026-11-18
 
 ### Geändert

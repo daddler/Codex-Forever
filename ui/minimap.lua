@@ -757,6 +757,7 @@ end
 -- holt sie einen Takt spaeter zurueck.
 
 local placingMap = false
+MM.CONSOLE_Y = 12
 function MM.PlaceMap()
     local mm, cl = _G.Minimap, _G.MinimapCluster
     if placingMap or type(mm) ~= "table" or type(cl) ~= "table" or not Opt("atTop") or MM.GameEditing() then return end
@@ -764,7 +765,13 @@ function MM.PlaceMap()
     -- Steht das Gebiet ueber der Karte, braucht es seine Zeile.
     local top = (Opt("zoneText") and not Opt("zoneInside")) and 22 or 6
     mm:ClearAllPoints()
-    mm:SetPoint("TOPRIGHT", cl, "TOPRIGHT", -6, -top)
+    -- 1.0.7.44: Design "Konsole" - die Karte sitzt unten mittig im Ring
+    -- (ui/console.lua); ihr Bereich (MinimapCluster) bleibt, wo er ist.
+    if K.LookKey and K.LookKey() == "konsole" then
+        mm:SetPoint("BOTTOM", UIParent, "BOTTOM", 0, MM.CONSOLE_Y)
+    else
+        mm:SetPoint("TOPRIGHT", cl, "TOPRIGHT", -6, -top)
+    end
     placingMap = false
 end
 

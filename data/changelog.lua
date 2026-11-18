@@ -22,6 +22,15 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.0.7.44",
+        date    = "18.11.2026",
+        notes   = {
+            "|cff7C6CFFNeues Design „Konsole“|r – unten eine durchgehende Konsole: Aktionsleisten links und rechts, die Minikarte in einem Ring in der Mitte, Spieler und Ziel darüber. Unter /wcui → Allgemein → Design der Oberfläche, danach einmal neu laden und /wcui einrichten.",
+            "|cff7C6CFFDebuffs an den Namensplaketten wieder frei|r – steht der Name über der Plakette, rücken die Symbole jetzt über ihn statt auf ihn.",
+            "|cff7C6CFFSchlachtruf hält 3 Minuten|r – die Buffzeit zeigte noch die alten 2 Minuten.",
+        },
+    },
+    {
         version = "1.0.7.43",
         date    = "18.11.2026",
         notes   = {

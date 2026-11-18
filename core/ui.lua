@@ -513,10 +513,17 @@ WeintCodex.LOOKS = {
     -- Holzes - fuer Flaechen, die nur eine Farbe kennen.
     klassisch   = { label = "Holz",   fill = {0.180, 0.110, 0.055, 0.95}, edge = {0.960, 0.780, 0.220, 0.95},
                     wood = true, edgeSize = 1 },  -- 6.122.1.0: 2 px war zu dick
+    -- 1.0.7.44 (Wunsch: "als viertes Design so, wie Spartan UI es macht"):
+    -- Flaechen wie Schwarz, dazu unten eine Konsole aus eigenen Bildern -
+    -- Platten hinter den Leisten, ein Ring um die Minikarte in der Mitte
+    -- (ui/console.lua, Plaetze K.LOOK_LAYOUT.konsole). Verhalten angelehnt,
+    -- kein Code und kein Bild von SpartanUI.
+    konsole     = { label = "Konsole", fill = {0.050, 0.050, 0.058, 0.92}, edge = {0.000, 0.000, 0.000, 1.00},
+                    console = true },
 }
 -- Transparent: Deckkraft in Prozent (general.lookAlpha, 0 = ausgeblendet).
 WeintCodex.LOOK_ALPHA_DEFAULT = 45
-WeintCodex.LOOK_ORDER = { "schwarz", "transparent", "klassisch" }
+WeintCodex.LOOK_ORDER = { "schwarz", "transparent", "klassisch", "konsole" }
 function WeintCodex.SetLook(key, alphaPct)
     local look = WeintCodex.LOOKS[key] or WeintCodex.LOOKS.schwarz
     local GC = WeintCodex.GameColors
@@ -529,6 +536,7 @@ function WeintCodex.SetLook(key, alphaPct)
         GC.kachelEdge[4] = math.min(1, a * 0.55 / 0.45)
     end
     GC.kachelWood = look.wood and true or false
+    GC.lookConsole = look.console and true or false
     GC.lookTransparent = key == "transparent"
     -- 6.122.3.0 (Beta-Test: "die Transparenz aendert nur das Spielmenue, nicht
     -- die Leisten"): Faktor fuer Grund von Knoepfen und Balken. Bei 45 %

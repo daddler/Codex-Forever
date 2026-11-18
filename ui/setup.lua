@@ -137,6 +137,8 @@ end
 -- eines eigenen Rahmens aus K.LAYOUT).
 local function Target(e)
     local p = e.from and K.LAYOUT[e.from] or e
+    -- 1.0.7.44: Design "Konsole" stellt einige Rahmen anders (ui/layout.lua).
+    p = (K.LookPlace and K.LookPlace(e.from or e.key, p)) or p
     local rel = p.relPoint or p.point
     -- Breitbild: am Rand Haengendes rueckt zur Mitte (ui/layout.lua).
     return { point = p.point, relPoint = rel, x = p.x + K.WideShift(rel, p.rel), y = p.y }

@@ -69,9 +69,10 @@ local GROUPS = {
 O.LOOK_CELL = { type = "dropdown", label = "Design der Oberfläche", key = "look", reload = true, items = {
         { value = "schwarz",     text = "Schwarz (Standard)" },
         { value = "transparent", text = "Transparent – die Welt scheint durch" },
-        { value = "klassisch",   text = "Holz – mit gelbem Rand" } },
+        { value = "klassisch",   text = "Holz – mit gelbem Rand" },
+        { value = "konsole",     text = "Konsole – Leisten unten, Karte in der Mitte" } },
     disabled = function() return not K.UIEnabled() end,
-    tooltip = "Füllung und Rand aller Flächen der Oberfläche: Rahmen, Leisten, Schadensanzeige, Tooltips. Gilt nach dem Neuladen." }
+    tooltip = "Füllung und Rand aller Flächen der Oberfläche: Rahmen, Leisten, Schadensanzeige, Tooltips. Gilt nach dem Neuladen. „Konsole“ ordnet außerdem unten neu an: Aktionsleisten links und rechts, die Minikarte in einem Ring dazwischen – danach einmal /wcui einrichten." }
 
 K.Register({
     key = "general", group = "general", order = 0,

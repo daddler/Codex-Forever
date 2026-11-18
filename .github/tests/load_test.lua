@@ -26958,6 +26958,29 @@ do
     Check(ok, "Taschen: Schlüsselbund" .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 1.0.7.44: Design "Konsole" - eigene Plaetze, Cockpit hoeher, Zeichnung.
+do
+    local ok, err = pcall(function()
+        local keep = K.Get("general", "look")
+        K.Set("general", "look", "konsole")
+        local base = K.LAYOUT.uf_player.y
+        assert(K.Layout("uf_player").y == base + 45, "Cockpit nicht hoeher")
+        assert(K.Layout("xpbar").point == "BOTTOMRIGHT", "Erfahrung nicht links")
+        local bar1
+        for _, e in ipairs(K.GAME_LAYOUT) do if e.key == "bar1" then bar1 = e end end
+        local t = WeintCodex.UISetup.Target(bar1)
+        assert(t.point == "BOTTOMRIGHT" and t.x == -K.CONSOLE_RING, "Leiste 1 nicht links vom Ring")
+        local CO = WeintCodex.UIConsole
+        local en = K.UIEnabled
+        K.UIEnabled = function() return true end
+        CO.Update()
+        K.UIEnabled = en
+        K.Set("general", "look", keep)
+        assert(K.Layout("uf_player").y == base, "Grundplatz verloren")
+    end)
+    Check(ok, "Design Konsole" .. (ok and "" or (": " .. tostring(err))))
+end
+
 -- 1.0.7.43: Dialoge bleiben bei "Transparent" lesbar.
 do
     local ok, err = pcall(function()

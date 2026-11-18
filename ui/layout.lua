@@ -326,6 +326,64 @@ K.GAME_LAYOUT = {
 }
 
 --------------------------------------------------
+-- Design "Konsole" (1.0.7.44)
+--------------------------------------------------
+-- Wunsch: "als viertes Design so, wie Spartan UI es macht" (Bild: Leisten
+-- links und rechts in Platten, die Minikarte in einem Ring in der Mitte
+-- unten). Verhalten angelehnt, eigener Entwurf. Nur diese Plaetze weichen
+-- ab; alles andere bleibt wie oben. Die Platten zeichnet ui/console.lua um
+-- die echten Leisten, der Ring liegt um die echte Karte.
+--   UNTEN, Mitte: Karte (bis 200) im Ring, Ring +-118 um die Mittelachse.
+--   LINKS: Erfahrung 3-13, Leiste 1 16-56, Leiste 2 62-98, Haltungen 104.
+--   RECHTS: Leiste 3 16-52, Leiste 6 58-92, Begleiter 98.
+--   Cockpit 45 hoeher (ueber dem Ring), Chat ueber die linke Platte,
+--   Mikromenue und Taschenleiste nach oben rechts (die Karte ist unten).
+K.CONSOLE_RING = 118   -- halbe Breite des Rings samt Luft (Einheiten)
+local CR, CDY = K.CONSOLE_RING, 45
+K.LOOK_LAYOUT = {
+    konsole = {
+        -- eigene Rahmen
+        xpbar        = { point = "BOTTOMRIGHT", relPoint = "BOTTOM", x = -CR, y = 3 },
+        hud_micro    = { point = "TOPRIGHT", relPoint = "TOPRIGHT", x = -4, y = -4 },
+        hud_bags     = { point = "TOPRIGHT", relPoint = "TOPRIGHT", x = -4, y = -40 },
+        -- Spiel
+        bar1    = { point = "BOTTOMRIGHT", relPoint = "BOTTOM", x = -CR, y = 16 },
+        bar2    = { point = "BOTTOMRIGHT", relPoint = "BOTTOM", x = -CR, y = 62 },
+        bar3    = { point = "BOTTOMLEFT",  relPoint = "BOTTOM", x = CR,  y = 16 },
+        bar6    = { point = "BOTTOMLEFT",  relPoint = "BOTTOM", x = CR,  y = 58 },
+        stance  = { point = "BOTTOMRIGHT", relPoint = "BOTTOM", x = -CR, y = 104 },
+        possess = { point = "BOTTOMRIGHT", relPoint = "BOTTOM", x = -CR, y = 104 },
+        pet     = { point = "BOTTOMLEFT",  relPoint = "BOTTOM", x = CR,  y = 98 },
+        vehicle = { point = "BOTTOM", relPoint = "BOTTOM", x = 0, y = 218 },
+        chat    = { point = "BOTTOMLEFT", relPoint = "BOTTOMLEFT", x = 14, y = 150 },
+    },
+}
+-- Was in der Mitte ueber Leisten und Karte steht, rueckt im Ganzen hoeher.
+K.LOOK_SHIFT = {
+    konsole = { dy = CDY, keys = {
+        uf_player = true, uf_target = true, uf_targettarget = true, uf_focus = true, uf_pet = true,
+        uf_combo = true, uf_playercast = true, procs = true, cooldowns = true, gcd = true, swing = true,
+        druidmana = true, trinketbar = true, consumables = true, paladinbuffs = true,
+        extra = true, essential = true, utility = true, bufficon = true, buffbar = true } },
+}
+function K.LookKey()
+    local ok, v = pcall(function() return K.Get("general", "look") end)
+    return ok and v or nil
+end
+-- Platz eines Rahmens im gewaehlten Design: eigener Eintrag, sonst der
+-- Grundplatz (p) versetzt, sonst nil (= Grundplatz).
+function K.LookPlace(key, p)
+    local look = K.LookKey()
+    local t = look and K.LOOK_LAYOUT[look]
+    if t and t[key] then return t[key] end
+    local sh = look and K.LOOK_SHIFT[look]
+    if sh and sh.keys[key] and p then
+        return { point = p.point, relPoint = p.relPoint, rel = p.rel, x = p.x, y = p.y + sh.dy, set = p.set }
+    end
+    return nil
+end
+
+--------------------------------------------------
 -- Breitbild (6.29.10.0)
 --------------------------------------------------
 -- Die Hoehe ist mit Skalierung 1 immer 768 Einheiten (ui/setup.lua); die
@@ -393,6 +451,7 @@ end
 function K.Layout(key, dx, dy)
     local p = K.LAYOUT[key]
     assert(p, "UIKit.Layout: unbekannter Rahmen '" .. tostring(key) .. "'")
+    p = K.LookPlace(key, p) or p
     -- `rel` mitgeben (fehlte bis 6.27.0.7: der Platz an der Minikarte galt
     -- nie, das Flüstern-Symbol stand unten links am Bildschirm).
     return { point = p.point, relPoint = p.relPoint, rel = p.rel,

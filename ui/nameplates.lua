@@ -350,14 +350,19 @@ local function AlignGameAuras(auras, p)
         if align ~= "left" then NP.gameAlign = "die Debuff-Liste des Spiels heißt hier anders" end
         return
     end
-    if align == "left" and not movedList[list] then return end
+    -- 1.0.7.44 (Meldung: "Name ueber der Plakette - die Debuffs sieht man
+    -- nicht richtig"): links liess die Liste bisher am Platz des Spiels, und
+    -- der liegt genau auf dem Namen. Steht oben ein Text, wird sie immer
+    -- darueber gesetzt.
+    if align == "left" and not movedList[list] and S.textTop == "none" then return end
     if type(p) ~= "table" then return end
     local pt = (align == "right" and "BOTTOMRIGHT") or (align == "center" and "BOTTOM") or "BOTTOMLEFT"
     local rel = (align == "right" and "TOPRIGHT") or (align == "center" and "TOP") or "TOPLEFT"
     -- Der Versatz gilt im Massstab der Liste (Groesse der Symbole des
     -- Spiels), gemeint ist er im Massstab der Plakette.
     local scale = (S.gameAuraScale or 100) / 100
-    local y = ((S.textTop ~= "none" and S.nameSize or 0) + 6) / scale
+    -- Zeilenhoehe einer Schrift ist gut 1,25 x ihre Groesse.
+    local y = ((S.textTop ~= "none" and math.ceil(S.nameSize * 1.25) or 0) + 6) / scale
     local ok, err = pcall(function()
         list:ClearAllPoints()
         list:SetPoint(pt, p, rel, 0, y)
@@ -1096,7 +1101,7 @@ local function Layout(p)
     local qc = WeintCodex.GameColors.questObjective
     p.quest:SetTextColor(qc[1], qc[2], qc[3], 1)
     p.auras:ClearAllPoints()
-    local auraY = (S.textTop ~= "none" and S.nameSize or 0) + 8
+    local auraY = (S.textTop ~= "none" and math.ceil(S.nameSize * 1.25) or 0) + 8
     if align == "right" then
         p.auras:SetPoint("BOTTOMRIGHT", p, "TOPRIGHT", 0, auraY)
     elseif align == "center" then
@@ -2527,7 +2532,7 @@ function NP.PreviewAuras(p)
     local list = p._pvAuras
     local n = S.auraEnabled and math.min(#NP.PREVIEW_ICONS, S.auraMax or 3) or 0
     local size = S.auraSize or 20
-    local y = (S.textTop ~= "none" and S.nameSize or 0) + 8
+    local y = (S.textTop ~= "none" and math.ceil(S.nameSize * 1.25) or 0) + 8
     local align = S.auraAlign or "left"
     local total = n * size + math.max(0, n - 1) * 2
     for i = 1, #NP.PREVIEW_ICONS do

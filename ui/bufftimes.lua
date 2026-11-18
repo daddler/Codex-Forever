@@ -143,7 +143,7 @@ BT.CLASSES = {
         { key = "stance", label = "Haltung", remind = true,   -- ohne Dauer
           spells = { 2457, 71, 2458 } },  -- Kampf-, Verteidigungs-, Berserkerhaltung (Start/Quest)
         { key = "shout", label = "Schlachtruf",
-          duration = 2 * MIN,           -- 2 min
+          duration = 3 * MIN,           -- 1.0.7.44: auf Forever 3 min (Meldung eines Kriegers; Classic: 2 min)
           spells = { 6673, 5242, 6192, 11549, 11550, 11551 } },
     },
     ROGUE = {
