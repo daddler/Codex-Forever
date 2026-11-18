@@ -249,23 +249,22 @@ local function BuildEngine(self, minimal)
     -- ihr), blieb bis 6.1.0.0 kein Platz fuer ein einziges Symbol.
     c:SetSize(self:Extent())
     if c.SetClipsChildren then pcall(c.SetClipsChildren, c, false) end
+    -- 1.0.7.35: Aufbau Schritt fuer Schritt wie VoidBox 2.8.1 (MIT), das auf
+    -- Forever im Kampf zeichnet: Ankerpunkt, Achse, Richtung als Vorzeichen,
+    -- Innenabstand 0, Zeilenbreite - und der Container eingeschaltet.
     Call(c, { "SetFlowLayoutAnchorPoint", "SetAuraLayoutAnchorPoint" }, o.anchor)
-    -- 1.0.7.35 (/wcui auren im Spiel: "Spiel nennt 2, gezeigt 0, Rahmen
-    -- sichtbar"): wie VoidBox (MIT), das auf Forever zeichnet - Richtung als
-    -- Vorzeichen (x, y), Achse waagerecht, und der Container EINGESCHALTET.
-    -- Bis hierher bekam er Werte aus AnchorUtil.FlowDirection und wurde nie
-    -- mit SetEnabled(true) angeschaltet.
+    if _G.AnchorUtil and _G.AnchorUtil.FlowLayoutAxis and c.SetFlowLayoutAxis then
+        pcall(c.SetFlowLayoutAxis, c, _G.AnchorUtil.FlowLayoutAxis.Horizontal)
+    end
     local okD = pcall(c.SetFlowLayoutGrowthDirection, c, o.growth == "LEFT" and -1 or 1, o.growthV == "UP" and 1 or -1)
     if not okD then
         Call(c, { "SetFlowLayoutGrowthDirection", "SetAuraLayoutGrowthDirection" },
             FlowDir(o.growth), FlowDir(o.growthV))
     end
-    if _G.AnchorUtil and _G.AnchorUtil.FlowLayoutAxis and c.SetFlowLayoutAxis then
-        pcall(c.SetFlowLayoutAxis, c, _G.AnchorUtil.FlowLayoutAxis.Horizontal)
-    end
-    if c.SetEnabled then pcall(c.SetEnabled, c, true) end
+    if c.SetFlowLayoutPadding then pcall(c.SetFlowLayoutPadding, c, 0, 0, 0, 0) end
     Call(c, { "SetFlowLayoutMaximumLineSize", "SetAuraLayoutRowWidth" },
         o.perRow * (o.size + o.spacing))
+    if c.SetEnabled then pcall(c.SetEnabled, c, true) end
 
     local size = o.size
     local sort = _G.AuraContainerSortMethod and _G.AuraContainerSortMethod.Default or nil
@@ -275,6 +274,12 @@ local function BuildEngine(self, minimal)
         layout = { elementWidth = size, elementHeight = size,
                    elementSpacing = o.spacing, lineSpacing = o.spacing },
         initializeFrame = function(button)
+            -- 1.0.7.35 (Ursache, im Vergleich mit VoidBox gefunden): das
+            -- Spiel legt jeden Knopf OHNE Groesse an. Bis hierher bekam er
+            -- keine - 0 x 0 Bildpunkte, also unsichtbar, obwohl das Spiel die
+            -- Aura kannte ("Spiel nennt 2, gezeigt 0"). Groesse zuerst.
+            pcall(button.SetSize, button, size, size)
+            pcall(button.EnableMouse, button, false)
             if minimal then
                 -- Zweiter Versuch: nur Symbol und Uhr, nichts darum herum.
                 local icon = button:CreateTexture(nil, "ARTWORK")
@@ -289,7 +294,7 @@ local function BuildEngine(self, minimal)
             if not okI then Note("SetIcon", errI) end
             local okC, errC = pcall(button.SetDurationCooldown, button, cd)
             if not okC then Note("SetDurationCooldown", errC) end
-            local okA, errA = pcall(button.SetApplicationCount, button, count, {})
+            local okA, errA = pcall(button.SetApplicationCount, button, count)
             if not okA then Note("SetApplicationCount", errA) end
             -- 1.0.7.7 (Bild: Restzeit doppelt, "17" und "18"): sobald der
             -- Behaelter die Uhr fuehrt, zeichnet sie ihre Zahl selbst. Also

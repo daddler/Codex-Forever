@@ -12,6 +12,9 @@ nicht zusammen.
 ## [1.0.7.35] – 2026-11-18
 
 ### Behoben
+- **Ursache:** `initializeFrame` setzte keine Größe – jeder Knopf des
+  Containers war 0 × 0 (VoidBox 2.8.1 setzt `button:SetSize(size, size)`
+  zuerst). Jetzt Größe und `EnableMouse(false)` zuerst; Prüflauf prüft es.
 - Aurencontainer zeichneten an den Gruppenrahmen nichts (`/wcui auren`:
   „Spiel nennt 2, gezeigt 0, Rahmen sichtbar“). Wie VoidBox (MIT):
   `SetEnabled(true)` (auch in `Obj:SetShown`), Wachstum als Vorzeichen

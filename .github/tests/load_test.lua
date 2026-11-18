@@ -6068,11 +6068,13 @@ do
                     b.SetDurationCooldown = function(_, c) registered.cd = c end
                     b.SetApplicationCount = function(_, fs) registered.count = fs; fs:SetText("3") end
                     b.SetDurationText = function(_, fs) registered.dur = fs; fs:SetText("7") end
+                    b.SetSize = function(_, w, h) registered.w, registered.h = w, h end
                     spec.initializeFrame(b)
                     self._anchoredBeforeGroup = self._anchored
                 end
                 local sp = f.SetPoint
                 f.SetPoint = function(self, ...) self._anchored = true return sp(self, ...) end
+                f.SetEnabled = function(_, on) registered.enabled = on end
             end
             return f
         end
@@ -6080,6 +6082,10 @@ do
         assert(o.engine and o.frame._anchoredBeforeGroup, "Container nicht vor der ersten Gruppe verankert")
         assert(registered.icon and registered.cd and registered.count,
             "Knopf hat nicht alles angemeldet")
+        -- 1.0.7.35: der Knopf bekommt seine Groesse (sonst 0 x 0, unsichtbar),
+        -- der Container wird eingeschaltet - wie VoidBox auf Forever.
+        assert(registered.w == 24 and registered.h == 24, "Knopf ohne Groesse")
+        assert(registered.enabled == true, "Container nicht eingeschaltet")
         -- 1.0.7.7: keine zweite Restzeit neben der Zahl der Uhr des Spiels.
         assert(not registered.dur, "Restzeit doppelt angemeldet")
         failNext = true
