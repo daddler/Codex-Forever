@@ -9,6 +9,15 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.0.7.50] – 2026-11-18
+
+### Behoben
+- Konsole: Höhe der Zierplatte aus der echten Lage des Rahmens bis 10 unter
+  die Oberkante der Seitenteile (`CO.TOP`, `CO.UNIT_SINK`); Platte folgt
+  Zeigen/Verbergen des Rahmens (Ziel ohne Ziel).
+- Konsole: Gebiet, Uhr (`MM.CONSOLE_TEXT_Y`) und Layer (`LY.CONSOLE_Y`) über
+  dem Ring statt in der runden Karte; nur Koordinaten bleiben darin.
+
 ## [1.0.7.49] – 2026-11-18
 
 ### Geändert

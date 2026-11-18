@@ -22,6 +22,14 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.0.7.50",
+        date    = "18.11.2026",
+        notes   = {
+            "|cff7C6CFFKonsole: Platten ohne Lücke|r – die Steinplatte unter Spieler und Ziel reicht jetzt bis in die Leiste hinein, wo immer der Rahmen steht. Ohne Ziel verschwindet ihre Platte mit.",
+            "|cff7C6CFFKonsole: Karte aufgeräumt|r – Gebiet, Uhr und Layer stehen über dem Ring, in der Karte bleiben nur die Koordinaten.",
+        },
+    },
+    {
         version = "1.0.7.49",
         date    = "18.11.2026",
         notes   = {

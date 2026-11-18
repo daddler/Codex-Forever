@@ -85,6 +85,8 @@ end
 -- verankert - wer sie verschiebt, nimmt die Platte mit.
 CO.UNIT_W, CO.UNIT_H = 420, 96
 CO.UNIT_X, CO.UNIT_Y = 62, 16   -- Luft links (Bild) und oben
+CO.TOP = 130         -- Oberkante der Seitenteile (Bild 96 von 256 px)
+CO.UNIT_SINK = 10    -- so weit taucht die Platte in die Konsole ein
 local unitPlates = {}
 local function UnitPlate(key, uf, mirror)
     local f = unitPlates[key]
@@ -97,6 +99,22 @@ local function UnitPlate(key, uf, mirror)
         t:SetAllPoints(f)
         if mirror then t:SetTexCoord(1, 0, 0, 1) end
         unitPlates[key] = f
+    end
+    -- 1.0.7.50 (Bild: Luecke zwischen Rahmen und Leistenornament): die
+    -- Platte reicht immer bis in die Konsole hinein, egal wie hoch der
+    -- Rahmen steht - Hoehe aus der echten Lage, nicht aus der Tabelle.
+    local top = K.Plain(uf:GetTop())
+    local base = K.Plain(frame:GetBottom())
+    local us = K.Plain(uf:GetEffectiveScale()) or 1
+    local fs = K.Plain(frame:GetEffectiveScale()) or 1
+    if top and base and fs > 0 then
+        local h = top * us / fs + CO.UNIT_Y - (base + CO.TOP - CO.UNIT_SINK)
+        f:SetHeight(math.max(40, math.min(260, h)))
+    end
+    if not f.hooked and uf.HookScript then
+        f.hooked = true
+        uf:HookScript("OnShow", function() if CO.Active() then f:Show() end end)
+        uf:HookScript("OnHide", function() f:Hide() end)
     end
     f:ClearAllPoints()
     if mirror then
@@ -117,7 +135,7 @@ function CO.Update()
     for key, mirror in pairs({ player = false, target = true }) do
         local uf = _G["WeintCodexUF_" .. key]
         if type(uf) == "table" and uf.GetTop then
-            UnitPlate(key, uf, mirror):Show()
+            UnitPlate(key, uf, mirror):SetShown(K.Bool(uf:IsShown(), false))
         elseif unitPlates[key] then
             unitPlates[key]:Hide()
         end

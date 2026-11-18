@@ -232,13 +232,20 @@ function LY.OpenOptions()
     return true
 end
 
+LY.CONSOLE_Y = 44
 local function Build()
     if frame then return frame end
     local mm = _G.Minimap
     if type(mm) ~= "table" then return nil end
     frame = CreateFrame("Button", "WeintCodexLayer", mm)
     frame:SetSize(92, 16)
-    frame:SetPoint("TOP", mm, "TOP", 0, -3)
+    -- 1.0.7.50: Konsole - ueber dem Ring, ueber Uhr und Gebiet, nicht in
+    -- der runden Karte (Wunsch: "Layer Button ... sieht nicht gut aus").
+    if K.LookKey and K.LookKey() == "konsole" and K.UIEnabled and K.UIEnabled() then
+        frame:SetPoint("BOTTOM", mm, "TOP", 0, LY.CONSOLE_Y)
+    else
+        frame:SetPoint("TOP", mm, "TOP", 0, -3)
+    end
     frame:SetFrameLevel((K.Plain(mm:GetFrameLevel()) or 1) + 10)
     frame.kachel = K.Kachel(frame, { shadow = 0 })
     frame.text = K.NewText(frame, 10, "OVERLAY")

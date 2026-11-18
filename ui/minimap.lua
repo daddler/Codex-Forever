@@ -798,6 +798,7 @@ end
 
 local placingMap = false
 MM.CONSOLE_Y = 6
+MM.CONSOLE_TEXT_Y = 14
 function MM.PlaceMap()
     local mm, cl = _G.Minimap, _G.MinimapCluster
     if placingMap or type(mm) ~= "table" or type(cl) ~= "table" or not Opt("atTop") or MM.GameEditing() then return end
@@ -1309,14 +1310,15 @@ local function Apply()
     -- (unter dem Layer), Koordinaten unten mittig ueber dem Gebiet, ohne
     -- eckigen Streifen.
     if K.LookKey and K.LookKey() == "konsole" then
+        -- 1.0.7.50 (Wunsch: "die Map sieht noch nicht gut aus mit dem
+        -- Layer Button und den anderen Sachen"): Gebiet und Uhr stehen ueber
+        -- dem Ring auf dem Buckel, in der Karte nur die Koordinaten unten.
+        zone:ClearAllPoints()
+        zone:SetPoint("BOTTOM", mm, "TOP", 0, MM.CONSOLE_TEXT_Y)
         clock:ClearAllPoints()
-        clock:SetPoint("TOP", mm, "TOP", 0, -20)
+        clock:SetPoint("BOTTOM", mm, "TOP", 0, MM.CONSOLE_TEXT_Y + 15)
         coords:ClearAllPoints()
-        coords:SetPoint("BOTTOM", mm, "BOTTOM", 0, inside and 22 or 8)
-        if inside then
-            zone:ClearAllPoints()
-            zone:SetPoint("BOTTOM", mm, "BOTTOM", 0, 8)
-        end
+        coords:SetPoint("BOTTOM", mm, "BOTTOM", 0, 12)
         strip:Hide()
     end
     MM.LayoutButtons()
