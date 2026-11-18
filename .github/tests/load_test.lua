@@ -27009,6 +27009,16 @@ do
     Check(ok, "Berufslink im Chat" .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 1.0.7.48: Flugpunkt-Hinweis gross (1.0.7.47 rief eine fehlende Funktion).
+do
+    local ok, err = pcall(function()
+        local QX = WeintCodex.UIQoLExtra
+        assert(QX and type(QX.BigFlight) == "function", "QX.BigFlight fehlt")
+        QX.BigFlight("Test", "Test")
+    end)
+    Check(ok, "Flugpunkt in der Nähe: grosser Hinweis" .. (ok and "" or (": " .. tostring(err))))
+end
+
 -- 1.0.7.43: Dialoge bleiben bei "Transparent" lesbar.
 do
     local ok, err = pcall(function()

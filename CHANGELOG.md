@@ -9,6 +9,13 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.0.7.48] – 2026-11-18
+
+### Behoben
+- `qolextra.lua:443` „attempt to call a nil value“: `QX.BigFlight` wurde in
+  1.0.7.47 aufgerufen, aber nie angelegt (Einfügen griff ins Leere). Jetzt
+  definiert; Prüflauf ruft sie auf.
+
 ## [1.0.7.47] – 2026-11-18
 
 ### Behoben

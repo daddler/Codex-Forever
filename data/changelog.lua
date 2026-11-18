@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.0.7.48",
+        date    = "18.11.2026",
+        notes   = {
+            "|cff7C6CFFFlugpunkt in der Nähe ohne Fehler|r – 1.0.7.47 meldete statt des großen Hinweises einen Fehler. Jetzt erscheint er wie gedacht groß in der Mitte.",
+        },
+    },
+    {
         version = "1.0.7.47",
         date    = "18.11.2026",
         notes   = {

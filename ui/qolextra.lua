@@ -433,6 +433,19 @@ function QX.NearFlight(c, n, w, s)
     end
     return best, bd
 end
+-- 1.0.7.48 (Wunsch: "diese Meldung soll gross im Hauptfenster sein, wie
+-- die Flugpunkterinnerung auch"; 1.0.7.47 rief diese Funktion schon auf,
+-- sie fehlte aber - Fehlerbericht "attempt to call a nil value"): wie
+-- RT.RemindTaxi - gross in der Mitte, Zeile im Chat, leiser Ton.
+function QX.BigFlight(head, text)
+    local col = C.gold
+    if col and _G.RaidNotice_AddMessage and _G.RaidWarningFrame then
+        pcall(_G.RaidNotice_AddMessage, _G.RaidWarningFrame, head, { r = col[1], g = col[2], b = col[3] })
+    end
+    Say(text)
+    if _G.PlaySound and _G.SOUNDKIT and _G.SOUNDKIT.MAP_PING then pcall(_G.PlaySound, _G.SOUNDKIT.MAP_PING, "Master") end
+end
+
 function QX.CheckFlightNear()
     if not Get("flightRemind") or K.InCombat() then return end
     local c, n, w = K.PlayerWorld()
