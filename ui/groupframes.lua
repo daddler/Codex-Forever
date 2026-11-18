@@ -128,6 +128,16 @@ end
 GF.BUFF_FILTERS = { raid = "HELPFUL|RAID", mine = "HELPFUL|PLAYER", all = "HELPFUL" }
 function GF.BuffFilter() return GF.BUFF_FILTERS[K.Get(KEY, "buffFilter")] or GF.BUFF_FILTERS.raid end
 
+-- Fuer /wcui auren (1.0.7.34): woraus die Rahmen bestehen und welche
+-- HoT-Felder belegt sind.
+function GF.DiagLine()
+    local ids = {}
+    for i = 1, 4 do ids[i] = tostring(GF.HotSpell(i) or "-") end
+    return string.format("Gruppenrahmen: Quelle %s, an %s, HoT-Felder %s (%s), Buffs %s (%s)",
+        tostring(K.Get(KEY, "source")), tostring(K.IsActive(KEY)), tostring(K.Get(KEY, "hots")),
+        table.concat(ids, "/"), tostring(K.Get(KEY, "buffs")), tostring(GF.BuffFilter()))
+end
+
 GF.HOT_POSITIONS = { "TOPLEFT", "TOP", "TOPRIGHT", "LEFT", "CENTER", "RIGHT", "BOTTOMLEFT", "BOTTOM", "BOTTOMRIGHT" }
 GF.HOT_POS_TEXT = { TOPLEFT = "Oben links", TOP = "Oben Mitte", TOPRIGHT = "Oben rechts", LEFT = "Links",
     CENTER = "Mitte", RIGHT = "Rechts", BOTTOMLEFT = "Unten links", BOTTOM = "Unten Mitte", BOTTOMRIGHT = "Unten rechts" }

@@ -800,6 +800,29 @@ function A.Inspect()
     local hotFields = 0
     for obj in pairs(objects) do if obj.opts.spells then hotFields = hotFields + 1 end end
     if hotFields == 0 then out[#out + 1] = "HoT-Felder: keine eingerichtet (Gruppenrahmen → HoT-Felder)" end
+    -- 1.0.7.34: was die Gruppenrahmen selbst sagen (Quelle, HoT-Einstellung).
+    local GF = WeintCodex.UIGroupFrames
+    if GF and GF.DiagLine then
+        local okG, line = pcall(GF.DiagLine)
+        if okG and line then out[#out + 1] = line end
+    end
+    -- 1.0.7.34: jede Symbolreihe an Gruppenmitgliedern - Filter, Weg, gezeigt.
+    local shownLines = 0
+    for obj in pairs(objects) do
+        local u = obj.unit
+        if shownLines < 12 and type(u) == "string" and (u == "player" or u:find("^party") or u:find("^raid")) then
+            local okL, line = pcall(function()
+                local total, shown = Visible(obj)
+                local said = ApiCount(u, obj.opts.filter)
+                return string.format("%s [%s%s]: %s, Spiel nennt %s, gezeigt %s, Rahmen %s",
+                    u, obj.opts.filter, obj.opts.spells and "+Liste" or "",
+                    obj.engine and "Container" or "selbst gelesen",
+                    tostring(said), type(shown) == "number" and tostring(shown) or "nicht messbar",
+                    K.Bool(obj.frame.IsVisible and obj.frame:IsVisible(), false) and "sichtbar" or "unsichtbar")
+            end)
+            if okL then out[#out + 1] = line shownLines = shownLines + 1 end
+        end
+    end
     for obj in pairs(objects) do
         if obj.opts.spells and obj.unit then
             local total, shown = Visible(obj)

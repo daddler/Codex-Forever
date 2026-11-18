@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.0.7.34",
+        date    = "18.11.2026",
+        notes   = {
+            "|cff7C6CFF/wcui auren sagt mehr über die Gruppenrahmen|r – je Symbolreihe, was das Spiel nennt und was davon zu sehen ist, dazu die HoT-Felder. Damit lässt sich klären, warum HoTs fehlen.",
+        },
+    },
+    {
         version = "1.0.7.33",
         date    = "18.11.2026",
         notes   = {

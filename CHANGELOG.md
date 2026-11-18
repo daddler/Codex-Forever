@@ -9,6 +9,13 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.0.7.34] – 2026-11-18
+
+### Geändert
+- `/wcui auren`: `GF.DiagLine` (Quelle, an, HoT-Einstellung, belegte
+  Zauber, Buff-Filter) und je Symbolreihe an player/party/raid: Filter,
+  Weg, vom Spiel genannt, gezeigt, sichtbar.
+
 ## [1.0.7.33] – 2026-11-18
 
 ### Behoben / Geändert
