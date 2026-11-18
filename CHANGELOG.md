@@ -9,6 +9,12 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.0.7.59] – 2026-11-18
+
+### Geändert
+- Konsole: `CO.UNIT_Y` 4 → -10, `CO.DECK_SINK` 14 → 28 (Rahmen und Erhöhung
+  14 tiefer).
+
 ## [1.0.7.58] – 2026-11-18
 
 ### Geändert
