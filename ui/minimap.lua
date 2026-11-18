@@ -844,7 +844,27 @@ function MM.WhereLine()
     end
     local pl = p and p.GetLeft and v(p:GetLeft()) or "?"
     local pv = p and p.IsVisible and tostring(K.Bool(p:IsVisible(), false)) or "?"
-    return string.format("Minikarte: Anker %s · Eltern links %s sichtbar %s · ", anchor, pl, pv) .. string.format("Eltern %s · sichtbar %s · Alpha %s · Größe %sx%s · links %s unten %s · Bildschirm %sx%s · fremde Oberfläche %s · Modul %s",
+    -- 1.0.7.40: die ganze Ankerkette (SpartanUI: SUI_Minimap ohne Lage) -
+    -- je Glied Name, Anker, Ziel, ob es eine Lage hat und ob es sichtbar ist.
+    local chain, f, seen = {}, mm, {}
+    for _ = 1, 8 do
+        if type(f) ~= "table" or seen[f] or not f.GetNumPoints then break end
+        seen[f] = true
+        local n = K.Plain(f:GetNumPoints()) or 0
+        local nm = f.GetName and K.Plain(f:GetName()) or nil
+        if n == 0 then
+            chain[#chain + 1] = tostring(nm or "?") .. "(kein Anker)"
+            break
+        end
+        local okP, pt, rel, rp = pcall(f.GetPoint, f, 1)
+        local rn = okP and rel and rel.GetName and K.Plain(rel:GetName()) or (okP and rel and "namenlos") or "UIParent?"
+        chain[#chain + 1] = string.format("%s[%s→%s %s, links %s, %s]", tostring(nm or "namenlos"), tostring(pt), tostring(rn),
+            tostring(rp), tostring(f.GetLeft and v(f:GetLeft()) or "?"),
+            (f.IsVisible and K.Bool(f:IsVisible(), false)) and "sichtbar" or "unsichtbar")
+        if not okP or not rel or rel == UIParent then break end
+        f = rel
+    end
+    return "Kette: " .. table.concat(chain, " > ") .. " · " .. string.format("Minikarte: Anker %s · Eltern links %s sichtbar %s · ", anchor, pl, pv) .. string.format("Eltern %s · sichtbar %s · Alpha %s · Größe %sx%s · links %s unten %s · Bildschirm %sx%s · fremde Oberfläche %s · Modul %s",
         tostring(pn), tostring(K.Bool(mm:IsVisible(), false)), tostring(K.Plain(mm:GetAlpha())),
         v(mm:GetWidth()), v(mm:GetHeight()), v(mm:GetLeft()), v(mm:GetBottom()),
         v(UIParent:GetWidth()), v(UIParent:GetHeight()),

@@ -9,6 +9,12 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.0.7.40] – 2026-11-18
+
+### Geändert
+- `MM.WhereLine`: ganze Ankerkette (bis 8 Glieder) mit Anker, Ziel, Lage,
+  Sichtbarkeit – Meldung SpartanUI: `SUI_Minimap` selbst ohne Lage.
+
 ## [1.0.7.39] – 2026-11-18
 
 ### Behoben
