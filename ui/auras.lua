@@ -295,7 +295,15 @@ local function BuildEngine(self, minimal)
     -- Spiel vergleicht selbst - Lua liest keine Aura. Technik nach VoidBox
     -- (MIT, VoiD911): SetAuraGroupCandidateFilters mit includeSpellIDs.
     if o.spells then
-        local okF, errF = pcall(c.SetAuraGroupCandidateFilters, c, "wc", { includeSpellIDs = o.spells })
+        -- 1.0.7.32 (Spieler: "Erneuerung jetzt auch ausserhalb des Kampfes
+        -- weg"): includeSpellIDs ist eine LISTE von Nummern. Bis hierher
+        -- bekam das Spiel die Menge { [139] = true } - und fand nichts. Bis
+        -- 1.0.7.30 fiel das nicht auf, weil die Selbstpruefung alles auf
+        -- Selbstlesen umschaltete (ausserhalb des Kampfes sichtbar).
+        local ids = {}
+        for id, on in pairs(o.spells) do if on then ids[#ids + 1] = id end end
+        table.sort(ids)
+        local okF, errF = pcall(c.SetAuraGroupCandidateFilters, c, "wc", { includeSpellIDs = ids })
         if not okF then Note("SetAuraGroupCandidateFilters", errF) end
     end
     return c
@@ -452,7 +460,7 @@ function Obj:Build()
         end
     end
     self.buttons, self.events, self.ticker = nil, nil, nil
-    self.engine = UseEngine()
+    self.engine = UseEngine() and not self.legacy
     if self.engine then
         local ok, c = pcall(BuildEngine, self)
         if not (ok and c) then
@@ -534,6 +542,38 @@ function Obj:SetUnit(unit)
     self:Refresh()
 end
 
+-- 1.0.7.32: Pruefung NUR fuer ein Feld mit Zauberliste, nur ausserhalb des
+-- Kampfes: liegt einer seiner Zauber nachweislich auf der Einheit (Lua darf
+-- das dann lesen) und der Container zeigt nichts, liest DIESES Feld selbst -
+-- ausserhalb des Kampfes sichtbar wie bis 1.0.7.30; die anderen bleiben.
+function Obj:SpellCheck()
+    if self.legacy or self.spellChecked or not self.engine or not self.unit then return end
+    if not (_G.C_Timer and _G.C_Timer.After) then return end
+    _G.C_Timer.After(0.6, function()
+        if self.legacy or self.spellChecked or not self.engine or not self.unit then return end
+        if K.InCombat() or not self.frame:IsVisible() then return end
+        local has = false
+        local ok = pcall(function()
+            for i = 1, 40 do
+                local aura = AuraAt(self.unit, i, self.opts.filter)
+                if not aura then break end
+                local sid = K.Plain(aura.spellId)
+                if type(sid) == "number" and self.opts.spells[sid] then has = true break end
+            end
+        end)
+        if not ok or not has then return end
+        local _, shown = Visible(self)
+        if type(shown) ~= "number" then return end
+        self.spellChecked = true
+        if shown > 0 then stats.spellsOk = true return end
+        self.legacy = true
+        stats.spellFallback = (stats.spellFallback or 0) + 1
+        local unit = self.unit
+        self:Build()
+        self:SetUnit(unit)
+    end)
+end
+
 -- SELBSTHEILUNG ("Automatisch"). Nennt das Spiel fuer eine Einheit Auren,
 -- und der Container zeigt einen Augenblick spaeter keine einzige, dann
 -- geht der Container-Weg auf diesem Client nicht - WeintCodex liest ab da
@@ -550,7 +590,7 @@ function Obj:AutoCheck()
     -- (Seelenstaerke, Mal der Wildnis ...) - "Auren da, nichts gezeigt"
     -- hiess dann "Container kaputt", und ALLE Symbole lasen ab da selbst:
     -- im Kampf geheim, also leer. Felder mit Zauberliste urteilen nie.
-    if self.opts and self.opts.spells then return end
+    if self.opts and self.opts.spells then return self:SpellCheck() end
     if not (_G.C_Timer and _G.C_Timer.After) then return end
     pending[self] = true
     _G.C_Timer.After(0.6, function()
@@ -747,6 +787,17 @@ end
 function A.Inspect()
     local out = { "Auren: Weg " .. A.mode .. " · " .. A.StatusText() }
     local target = _G.UnitExists and K.Bool(_G.UnitExists("target"), false)
+    -- 1.0.7.32: HoT-Felder (Zauberliste) an Mitspielern, mit Ziel oder ohne.
+    for obj in pairs(objects) do
+        if obj.opts.spells and obj.unit then
+            local total, shown = Visible(obj)
+            local n = 0
+            for _ in pairs(obj.opts.spells) do n = n + 1 end
+            out[#out + 1] = string.format("HoT-Feld %s: %s, %d Zauber in der Liste, gezeigt %s" .. (obj.legacy and " (Container zeigte nichts – liest selbst, nur außerhalb des Kampfes)" or ""),
+                obj.unit, obj.engine and "Container" or "alter Weg", n,
+                type(shown) == "number" and tostring(shown) or "nicht messbar")
+        end
+    end
     if not target then
         out[#out + 1] = "Kein Ziel gewählt – mit einem Gegner als Ziel noch einmal /wcui auren."
         return out

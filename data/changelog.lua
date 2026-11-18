@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.0.7.32",
+        date    = "18.11.2026",
+        notes   = {
+            "|cff7C6CFFHoT-Felder an den Gruppenrahmen zeigen wieder an|r – die Zauberliste ging falsch ans Spiel. Klappt es auf einem Client trotzdem nicht, liest das Feld wenigstens außerhalb des Kampfes selbst.",
+        },
+    },
+    {
         version = "1.0.7.31",
         date    = "18.11.2026",
         notes   = {

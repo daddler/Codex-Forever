@@ -9,6 +9,15 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.0.7.32] – 2026-11-18
+
+### Behoben
+- HoT-Felder leer (seit 1.0.7.31 auch außerhalb des Kampfes):
+  `includeSpellIDs` bekam eine Menge `{ [id] = true }` statt einer Liste.
+  Jetzt sortierte Liste. Absicherung `Obj:SpellCheck`: zeigt der Container
+  außerhalb des Kampfes nichts, obwohl ein Zauber der Liste nachweislich
+  liegt, liest nur dieses Feld selbst. `/wcui auren` nennt jedes HoT-Feld.
+
 ## [1.0.7.31] – 2026-11-18
 
 ### Behoben
