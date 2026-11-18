@@ -101,11 +101,43 @@ function BM.MinimapGaps()
     local function gap(a) return math.max(0, a) end
     return gap(mL * f - cL), gap(cR - mR * f), gap(ct - mt * f), gap(mb * f - cb), cs
 end
+-- 1.0.7.38 (Spielerin mit SpartanUI: "Minimap auf einmal verschwunden,
+-- egal ob das Modul an oder aus ist"): eine andere Oberflaeche (SpartanUI,
+-- ElvUI, ...) haengt die Karte in ihren eigenen Rahmen. Dann liegen Bereich
+-- und Karte weit auseinander, und die "Luecken" waeren riesige Klemm-
+-- Abstaende. Nur, wenn die Karte wirklich im Bereich des Spiels sitzt -
+-- sonst die Abstaende des Spiels (0) zurueck.
+BM.FOREIGN_MINIMAP = { "SpartanUI", "ElvUI", "TukUI", "SexyMap", "BasicMinimap", "Chinchilla", "LUI", "NDui", "GW2_UI" }
+function BM.ForeignMinimap()
+    local ca = _G.C_AddOns
+    local loaded = (ca and ca.IsAddOnLoaded) or _G.IsAddOnLoaded
+    if not loaded then return nil end
+    for _, n in ipairs(BM.FOREIGN_MINIMAP) do
+        local ok, on = pcall(loaded, n)
+        if ok and K.Bool(on, false) then return n end
+    end
+    return nil
+end
+function BM.MinimapInCluster()
+    local cl, mm = _G.MinimapCluster, _G.Minimap
+    if type(cl) ~= "table" or type(mm) ~= "table" or not mm.GetParent then return false end
+    local p = mm:GetParent()
+    for _ = 1, 3 do
+        if p == cl then return true end
+        p = p and p.GetParent and p:GetParent() or nil
+    end
+    return false
+end
 function BM.MinimapInsets(g)
     if K.InCombat() then return false end
+    local cl = _G.MinimapCluster
+    if BM.ForeignMinimap() or not BM.MinimapInCluster() then
+        if BM.mmInsets and type(cl) == "table" and cl.SetClampRectInsets then pcall(cl.SetClampRectInsets, cl, 0, 0, 0, 0) end
+        BM.mmInsets = nil
+        return false
+    end
     local l, r, t, b, cs = BM.MinimapGaps()
     if not l then return false end
-    local cl = _G.MinimapCluster
     if cl.SetClampRectInsets then pcall(cl.SetClampRectInsets, cl, l, -r, -t, b) end
     if g and g.SetClampRectInsets then
         local u = K.Plain(UIParent:GetEffectiveScale())

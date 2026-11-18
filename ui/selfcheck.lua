@@ -597,6 +597,11 @@ Check("Flüstern", function(add)
 end)
 
 -- Karte (6.20.0.0): Eingaenge im Bestand, ob der Client Kontinent und
+Check("Minikarte", function(add)
+    local MM = WeintCodex.UIMinimap
+    if MM and MM.WhereLine then add("", MM.WhereLine()) end
+end)
+
 -- eigene Eingaenge kennt.
 Check("Karte", function(add)
     local ME = WeintCodex.UIMapEntrances

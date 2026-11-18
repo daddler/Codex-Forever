@@ -27044,10 +27044,14 @@ do
             return f
         end
         G.MinimapCluster = fr(800, 560, 1000, 1220, { SetClampRectInsets = function(_, ...) got = { ... } end })
-        G.Minimap = fr(790, 600, 1010, 1210)
+        G.Minimap = fr(790, 600, 1010, 1210, { GetParent = function() return G.MinimapCluster end })
         local l, r, t, b = BMv.MinimapGaps()
         assert(l == 10 and r == 10 and t == 10 and b == 40, "Raender falsch")
         assert(BMv.MinimapInsets(nil) and got and got[4] == 40 and got[3] == -10, "Klemm-Abstand nicht gesetzt")
+        -- 1.0.7.38: haengt die Karte woanders (SpartanUI), Abstaende zurueck auf 0.
+        G.Minimap = fr(200, 10, 600, 790, { GetParent = function() return UIParent end })
+        assert(BMv.MinimapInsets(nil) == false and got[1] == 0 and got[2] == 0 and got[3] == 0 and got[4] == 0,
+            "fremde Karte bekam Klemm-Abstaende")
         G.MinimapCluster, G.Minimap = sc, sm
     end)
     Check(ok, "Minikarte: bis an den Bildschirmrand ziehbar" .. (ok and "" or (": " .. tostring(err))))

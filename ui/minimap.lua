@@ -825,9 +825,36 @@ function MM.HideOtherCoords()
     return found
 end
 
+-- 1.0.7.38: Wo steckt die Karte? Fuer /wcui pruefen (Meldung mit SpartanUI).
+function MM.WhereLine()
+    local mm, cl = _G.Minimap, _G.MinimapCluster
+    if type(mm) ~= "table" then return "Minikarte: kein Rahmen Minimap" end
+    local function v(x) x = K.Plain(x) return type(x) == "number" and math.floor(x + 0.5) or "?" end
+    local p = mm.GetParent and mm:GetParent()
+    local pn = p and p.GetName and K.Plain(p:GetName()) or tostring(p)
+    local BMv = WeintCodex.UIBarMover
+    return string.format("Minikarte: Eltern %s · sichtbar %s · Alpha %s · Größe %sx%s · links %s unten %s · Bildschirm %sx%s · fremde Oberfläche %s · Modul %s",
+        tostring(pn), tostring(K.Bool(mm:IsVisible(), false)), tostring(K.Plain(mm:GetAlpha())),
+        v(mm:GetWidth()), v(mm:GetHeight()), v(mm:GetLeft()), v(mm:GetBottom()),
+        v(UIParent:GetWidth()), v(UIParent:GetHeight()),
+        tostring(BMv and BMv.ForeignMinimap and BMv.ForeignMinimap() or "keine"),
+        K.IsActive(KEY) and "an" or "aus")
+end
+
 local function Apply()
     local mm = _G.Minimap
     if type(mm) ~= "table" then return end
+    -- 1.0.7.38: verwaltet eine andere Oberflaeche die Karte (SpartanUI ...),
+    -- fasst WeintCodex sie nicht an - zwei Herren verschieben sie ins Leere.
+    local BMv = WeintCodex.UIBarMover
+    local foreign = BMv and BMv.ForeignMinimap and BMv.ForeignMinimap()
+    if foreign then
+        if not MM.saidForeign then
+            MM.saidForeign = true
+            print(WeintCodex.AC .. "[WeintCodex]|r Minikarte: " .. foreign .. " verwaltet die Karte – WeintCodex lässt sie in Ruhe.")
+        end
+        return
+    end
     -- 1.0.7.19: der leere Rand des Bereichs darf aus dem Bild ragen, damit
     -- die Karte bis an den Bildschirmrand kommt (ui/barmover.lua).
     if MM.Later then MM.Later(function()

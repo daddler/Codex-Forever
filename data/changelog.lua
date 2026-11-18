@@ -27,6 +27,7 @@ WeintCodex_ChangelogData = {
         notes   = {
             "|cff7C6CFFDer Berufe-Planer sucht den günstigsten Weg über alle Punkte|r – Rezepte vom Lehrer und Händler mit Gebühr und Preis eingerechnet, statt Punkt für Punkt das gerade Billigste.",
             "|cff7C6CFFMaterial: Händler oder Auktionshaus, was billiger ist – oder selbst herstellen|r. Was du schon hast (Taschen, Bank, Twinks), zählt als bezahlt; die Einkaufsliste sagt, was noch fehlt und wo es das gibt.",
+            "|cff7C6CFFMinikarte mit SpartanUI, ElvUI und Co.|r – verwaltet eine andere Oberfläche die Karte, lässt WeintCodex sie in Ruhe; /wcui prüfen sagt, wo sie steckt.",
             "|cff7C6CFFZiel wählbar und ein fester Weg|r – bis zum nächsten Rang oder ganz nach oben; der Weg bleibt derselbe, bis du „Neu berechnen“ klickst.",
         },
     },

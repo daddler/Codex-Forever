@@ -20,6 +20,13 @@ nicht zusammen.
   berechnen“), Ziel wählbar (`PT.planTarget`), Einkaufsliste mit „hast /
   fehlen / Händler|Auktion“. `PT.CraftCost` nimmt `PT.BuyPrice`. Prüflauf.
 
+### Behoben
+- Minikarte mit fremder Oberfläche (Meldung mit SpartanUI: Karte weg, Modul
+  an oder aus): `BM.MinimapInsets` setzt Klemm-Abstände nur, wenn die Karte
+  im `MinimapCluster` sitzt und keine fremde Oberfläche sie verwaltet
+  (`BM.ForeignMinimap`), sonst zurück auf 0; `ui/minimap.lua` `Apply` fasst
+  sie dann nicht an. `/wcui prüfen` → Minikarte (`MM.WhereLine`).
+
 ## [1.0.7.37] – 2026-11-18
 
 ### Behoben
