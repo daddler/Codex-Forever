@@ -405,7 +405,8 @@ end
 function PT.CraftCost(r)
     local sum = 0
     for _, e in ipairs(r.reagents) do
-        local p = PT.Price(e[1])
+        -- 1.0.7.38: Haendler oder Auktion, was billiger ist (nicht nur Auktion).
+        local p = PT.BuyPrice and PT.BuyPrice(e[1]) or PT.Price(e[1])
         if not p then return nil end
         sum = sum + p * e[2]
     end
@@ -589,92 +590,216 @@ function PT.Ranks(key)
     return out
 end
 
-function PT.Plan(key, rank, target, cap)
-    local usable = PT.Usable(key)
-    local steps, shop = {}, {}
-    local cur
-    local function costOf(r)
-        if r._cost == nil then r._cost = PT.CraftCost(r) or false end
-        return r._cost or nil
+-- 1.0.7.38 (Wunsch: "Berufe skillen - welchen Weg man nehmen soll, so gut
+-- beschrieben wie in OneForAll"; nach dem VERHALTEN von OneForAll, eigener
+-- Code - es steht unter GPL-3):
+--   * Preis je Material: der guenstigere von Haendler und Auktionshaus
+--     (bis hierher nur Auktion - Garn, Phiolen, Farben waren "unbekannt"),
+--     oder selbst herstellen, wenn das billiger ist (Zwischenprodukte).
+--   * Was du hast (Taschen, Bank, Twinks), zaehlt als schon bezahlt - in
+--     zwei Durchgaengen: erst rechnen, dann den eigenen Anteil abziehen.
+--   * Der ganze Weg auf einmal: fuer jede Fertigkeit das guenstigste Stueck
+--     (dynamische Programmierung ueber die Punkte), einmalige Kosten (Rezept
+--     beim Haendler, Gebuehr beim Lehrer) eingerechnet - statt Punkt fuer
+--     Punkt das gerade Billigste.
+--   * Derselbe Weg bleibt, bis du "Neu berechnen" klickst (PT.planCache).
+PT.UNKNOWN_PRICE = 5000     -- Kupfer je Stueck, wenn kein Preis bekannt: teuer, aber moeglich
+PT.planCache = {}
+
+local function OneTime(r)
+    if r._how == "known" then return 0 end
+    local nf = PRO.NFSources and PRO.NFSources(r.spell)
+    if r._how == "trainer" then return (nf and nf.cost) or 0 end
+    if r._how == "vendor" then
+        local best
+        for _, v in ipairs(PRO.Vendors(r)) do
+            local p = v.price
+            if type(p) == "number" and (not best or p < best) then best = p end
+        end
+        return best or PT.UNKNOWN_PRICE * 4
     end
-    for _, r in ipairs(usable) do r._cost = nil end
-    local gap
-    local function pick(s, allowGreen, allowVendor)
-        local best, bestScore, bestKnown
+    return 0
+end
+
+-- Preis je Stueck eines Materials fuer den Weg: kaufen oder herstellen
+-- (eine Stufe tief, nur mit Rezepten, die du kannst), abzueglich des Anteils,
+-- den du schon hast (cover 0..1). Zweiter Wert: woher.
+function PT.UnitCost(id, usable, cover, depth)
+    local own = cover and cover[id] or 0
+    local buy, src = PT.BuyPrice(id)
+    local best, how = buy, src
+    if (depth or 0) < 1 then
         for _, r in ipairs(usable) do
-            local col = PT.Color(r, s)
-            if (r._how ~= "vendor" or allowVendor)
-               and (col == "orange" or col == "yellow" or (allowGreen and col == "green")) then
-                local ch = PT.Chance(r, s)
-                if ch > 0 then
-                    local c = costOf(r)
-                    local known = c ~= nil
-                    local score = known and (c / ch) or (1 / ch)
-                    if not best or (known and not bestKnown) or (known == bestKnown and score < bestScore) then
-                        best, bestScore, bestKnown = r, score, known
-                    end
+            if r.item == id and r._how == "known" then
+                local made = PT.Made(r) or 1
+                local sum, ok = 0, true
+                for _, e in ipairs(r.reagents) do
+                    local c = PT.UnitCost(e[1], usable, cover, (depth or 0) + 1)
+                    if not c then ok = false break end
+                    sum = sum + c * e[2]
+                end
+                if ok and (not best or sum / made < best) then best, how = sum / made, "herstellen" end
+            end
+        end
+    end
+    if not best then return nil, nil end
+    return best * (1 - math.min(1, own)), how
+end
+
+local function CraftUnit(r, usable, cover)
+    local sum, guess = 0, false
+    for _, e in ipairs(r.reagents) do
+        local c = PT.UnitCost(e[1], usable, cover)
+        if not c then c, guess = PT.UNKNOWN_PRICE, true end
+        sum = sum + c * e[2]
+    end
+    return sum, guess
+end
+
+-- Der guenstigste Weg rank -> target als Abschnitte { r, from, to }.
+function PT.Route(usable, rank, target, cover)
+    local n = target - rank
+    if n <= 0 then return {} end
+    local unit, once = {}, {}
+    for i, r in ipairs(usable) do unit[i] = CraftUnit(r, usable, cover) once[i] = OneTime(r) end
+    -- best[k] = guenstigste Kosten, um rank+k zu erreichen
+    local best, back = { [0] = 0 }, {}
+    for k = 0, n - 1 do
+        local base = best[k]
+        if base then
+            local s = rank + k
+            for i, r in ipairs(usable) do
+                local acc = base + once[i]
+                local e = s
+                while e < target do
+                    local ch = PT.Chance(r, e)
+                    if ch <= 0 then break end
+                    acc = acc + unit[i] / ch
+                    e = e + 1
+                    local kk = e - rank
+                    if not best[kk] or acc < best[kk] - 1e-6 then best[kk], back[kk] = acc, { i, k } end
                 end
             end
         end
-        return best
     end
+    -- So weit es geht (ab dort ist alles grau).
+    local reach = n
+    while reach > 0 and not best[reach] do reach = reach - 1 end
+    local segs = {}
+    local k = reach
+    while k > 0 do
+        local b = back[k]
+        local r = usable[b[1]]
+        local prev = segs[1]
+        if prev and prev.r == r then prev.from = rank + b[2]
+        else table.insert(segs, 1, { r = r, from = rank + b[2], to = rank + k }) end
+        k = b[2]
+    end
+    return segs, rank + reach
+end
+
+function PT.Plan(key, rank, target, cap, fresh)
+    local usable = PT.Usable(key)
+    -- Durchgang 1 ohne eigenes Material, Durchgang 2 mit dem Anteil, den
+    -- du vom Bedarf des ersten schon hast.
+    local cacheKey = key .. ":" .. target
+    local cached = not fresh and PT.planCache[cacheKey]
+    local segs, reach
+    if cached and cached.from <= rank then
+        local ok = true
+        for _, sg in ipairs(cached.segs) do
+            local still = false
+            for _, r in ipairs(usable) do if r == sg.r then still = true break end end
+            if not still then ok = false break end
+        end
+        if ok then
+            segs = {}
+            for _, sg in ipairs(cached.segs) do
+                if sg.to > rank then segs[#segs + 1] = { r = sg.r, from = math.max(sg.from, rank), to = sg.to } end
+            end
+            reach = cached.reach
+        end
+    end
+    if not segs then
+        local first = PT.Route(usable, rank, target, nil)
+        local need = {}
+        for _, sg in ipairs(first) do
+            local crafts = 0
+            for x = sg.from, sg.to - 1 do crafts = crafts + 1 / math.max(0.01, PT.Chance(sg.r, x)) end
+            for _, e in ipairs(sg.r.reagents) do need[e[1]] = (need[e[1]] or 0) + e[2] * crafts end
+        end
+        local cover = {}
+        for id, nd in pairs(need) do
+            local mine, others = PT.Have(id)
+            local have = (mine or 0) + (others or 0)
+            if nd > 0 and have > 0 then cover[id] = math.min(1, have / nd) end
+        end
+        segs, reach = PT.Route(usable, rank, target, cover)
+        PT.planCache[cacheKey] = { from = rank, segs = segs, reach = reach }
+    end
+
+    local steps, shop = {}, {}
     local announced = {}
-    local lastCraft
     local ranks = PT.Ranks(key)
-    local stop
-    for s = rank, target - 1 do
-        -- Obergrenze erreicht: naechster Rang - beim Lehrer, als Buch oder
-        -- ueber eine Quest (1.9.0.0; vorher hiess es immer "Lehrer").
-        if cap and s >= cap and cap < target then
-            local nextRank = ranks and ranks[cap + PT.RANK_STEP]
-            if ranks and not nextRank then stop = s break end
-            steps[#steps + 1] = { kind = "rank", at = s, cap = cap, name = PT.RANK_NAMES[cap], rank = nextRank }
-            cap = cap + PT.RANK_STEP
-            cur = nil
+    local stop, gap
+    local RANKC = { orange = 1, yellow = 2, green = 3 }
+    local cur
+    for _, sg in ipairs(segs) do
+        local r = sg.r
+        for s = sg.from, sg.to - 1 do
+            if cap and s >= cap and cap < target then
+                local nextRank = ranks and ranks[cap + PT.RANK_STEP]
+                if ranks and not nextRank then stop = s break end
+                steps[#steps + 1] = { kind = "rank", at = s, cap = cap, name = PT.RANK_NAMES[cap], rank = nextRank }
+                cap = cap + PT.RANK_STEP
+                cur = nil
+            end
+            if r._how ~= "known" and not announced[r] then
+                announced[r] = true
+                steps[#steps + 1] = { kind = r._how == "vendor" and "buy" or "learn", at = s, recipe = r, fee = OneTime(r) }
+                cur = nil
+            end
+            local col, ch = PT.Color(r, s), PT.Chance(r, s)
+            if cur and cur.recipe == r then
+                cur.to, cur.crafts = s + 1, cur.crafts + 1 / ch
+                cur.chances[#cur.chances + 1] = ch
+                cur.minChance = math.min(cur.minChance, ch)
+                if (RANKC[col] or 0) > (RANKC[cur.color] or 0) then cur.color = col end
+                if col == "green" then cur.risky = true end
+            else
+                cur = { kind = "craft", from = s, to = s + 1, recipe = r, crafts = 1 / ch, color = col,
+                        minChance = ch, risky = col == "green", chances = { ch } }
+                steps[#steps + 1] = cur
+            end
         end
-        -- Beim selben Rezept bleiben, solange es noch fast sicher Punkte
-        -- bringt - sonst springt der Weg alle paar Punkte zum Lehrer.
-        local last = lastCraft and lastCraft.recipe
-        local best
-        if last and PT.Chance(last, s) >= PT.STICKY then best = last end
-        best = best or pick(s, false, false) or pick(s, false, true) or pick(s, true, false) or pick(s, true, true)
-        if not best then gap = s break end
-        if best._how ~= "known" and not announced[best] then
-            announced[best] = true
-            steps[#steps + 1] = { kind = best._how == "vendor" and "buy" or "learn", at = s, recipe = best }
-            cur = nil
-        end
-        local col = PT.Color(best, s)
-        local ch = PT.Chance(best, s)
-        local RANKC = { orange = 1, yellow = 2, green = 3 }
-        if cur and cur.recipe == best then
-            cur.to, cur.crafts = s + 1, cur.crafts + 1 / ch
-            cur.chances[#cur.chances + 1] = ch
-            cur.minChance = math.min(cur.minChance, ch)
-            if (RANKC[col] or 0) > (RANKC[cur.color] or 0) then cur.color = col end
-            if col == "green" then cur.risky = true end
-        else
-            cur = { kind = "craft", from = s, to = s + 1, recipe = best, crafts = 1 / ch, color = col, minChance = ch, risky = col == "green", chances = { ch } }
-            steps[#steps + 1] = cur
-            lastCraft = cur
-        end
+        if stop then break end
     end
+    if not stop and reach and reach < target then gap = reach end
     local total, unknown = 0, 0
     for _, st in ipairs(steps) do
         if st.kind == "craft" then
-            -- Im Schnitt `mean`, eingeplant wird, was in 9 von 10 Faellen reicht.
             st.mean = math.ceil(st.crafts - 0.001)
             st.crafts = math.max(st.mean, PT.Covered(st.chances))
             for _, e in ipairs(st.recipe.reagents) do shop[e[1]] = (shop[e[1]] or 0) + e[2] * st.crafts end
+        elseif (st.kind == "learn" or st.kind == "buy") and st.fee and st.fee < PT.UNKNOWN_PRICE * 4 then
+            total = total + st.fee
         end
     end
     local list = {}
     for id, n in pairs(shop) do
-        local p = PT.Price(id)
-        if p then total = total + p * n else unknown = unknown + 1 end
-        list[#list + 1] = { id = id, count = n, price = p }
+        local mine, others = PT.Have(id)
+        local have = (mine or 0) + (others or 0)
+        local missing = math.max(0, n - have)
+        local p, from = PT.BuyPrice(id)
+        if missing > 0 then
+            if p then total = total + p * missing else unknown = unknown + 1 end
+        end
+        list[#list + 1] = { id = id, count = n, price = p, from = from, have = have, missing = missing }
     end
-    table.sort(list, function(a, b) return a.count > b.count end)
+    table.sort(list, function(a, b)
+        if (a.missing > 0) ~= (b.missing > 0) then return a.missing > 0 end
+        return a.count > b.count
+    end)
     return { steps = steps, shop = list, total = total, unknown = unknown, gap = gap, stop = stop }
 end
 
@@ -748,11 +873,13 @@ function PT.PlanLines(plan)
             out[#out + 1] = PT.RankLine(st)
         elseif st.kind == "learn" then
             out[#out + 1] = { left = "→ Lehrer: " .. PRO.RecipeName(st.recipe) .. " lernen", right = "bei " .. st.at,
-                tone = "accent", recipe = st.recipe, hint = "Beim Berufslehrer lernen (falls du es noch nicht kannst)." }
+                tone = "accent", recipe = st.recipe, hint = "Beim Berufslehrer lernen (falls du es noch nicht kannst)."
+                    .. ((st.fee and st.fee > 0) and ("\nGebühr: " .. PT.MoneyText(st.fee)) or "") }
         elseif st.kind == "buy" then
             local v = PRO.Vendors(st.recipe)[1]
             out[#out + 1] = { left = "→ Händler: Rezept " .. PRO.RecipeName(st.recipe) .. " kaufen", right = "bei " .. st.at,
-                tone = "goldBright", recipe = st.recipe, hint = v and ("Bei " .. v[1] .. " – Händler aus Classic.") or "Händler unbekannt." }
+                tone = "goldBright", recipe = st.recipe, hint = (v and ("Bei " .. v[1] .. ".") or "Händler unbekannt.")
+                    .. ((st.fee and st.fee < PT.UNKNOWN_PRICE * 4) and ("\nPreis: " .. PT.MoneyText(st.fee)) or "") }
         else
             local pct = math.floor(st.minChance * 100 + 0.5)
             local sure = st.mean == st.crafts
@@ -1112,6 +1239,7 @@ local function Money(c)
     if AP and AP.Money then return AP.Money(c) end
     return type(c) == "number" and (math.floor(c / 10000) .. "g") or "—"
 end
+PT.MoneyText = function(c) return Money(c) end
 
 local SUBS = {
     gilde     = "Wer in deiner Gilde und unter deinen Charakteren welches Rezept kann.",
@@ -1425,10 +1553,29 @@ function PT.DrawPlanner(body, w)
         y = Note(body, y, w, PRO.ProfName(sel) .. " hast du nicht gelernt – geplant wird " .. PRO.ProfName(key) .. ".")
     end
     local s = skills[key]
-    local target, cap = PT.Goal(key, s)
+    local maxTarget, cap = PT.Goal(key, s)
+    -- 1.0.7.38: Ziel waehlbar (naechster Rang, ... , alles), wie OneForAll.
+    PT.planTarget = PT.planTarget or {}
+    local target = PT.planTarget[key]
+    if not target or target <= s.rank or target > maxTarget then target = maxTarget end
     f.Title:SetText("Planer · " .. PRO.ProfName(key) .. "  " .. s.rank .. " → " .. target)
-    if s.rank >= target then return Note(body, y, w, "Nichts mehr zu planen.") end
-    local plan = PT.Plan(key, s.rank, target, cap)
+    if s.rank >= maxTarget then return Note(body, y, w, "Nichts mehr zu planen.") end
+    local goals = {}
+    for g = math.floor(s.rank / PT.RANK_STEP + 1) * PT.RANK_STEP, maxTarget, PT.RANK_STEP do goals[#goals + 1] = g end
+    if goals[#goals] ~= maxTarget then goals[#goals + 1] = maxTarget end
+    y = Row(body, y, w, "Ziel: " .. target .. (target == maxTarget and " (so weit es geht)" or ""), "ändern", { tone = "accent",
+        hint = "Klick: nächstes Ziel – " .. table.concat(goals, ", "),
+        onClick = function()
+            local nxt = goals[1]
+            for i, g in ipairs(goals) do if g == target then nxt = goals[i % #goals + 1] end end
+            PT.planTarget[key] = nxt
+            PRO.Show()
+        end })
+    y = Row(body, y, w, "Neu berechnen", "mit heutigen Preisen und Beständen", { tone = "accent",
+        hint = "Der Weg bleibt sonst derselbe, damit er sich nicht nach jedem Einkauf ändert.",
+        onClick = function() PT.planCache[key .. ":" .. target] = nil PT.planFresh = true PRO.Show() end })
+    local plan = PT.Plan(key, s.rank, target, cap, PT.planFresh)
+    PT.planFresh = nil
     local lines = PT.PlanLines(plan)
     y = Head(body, y, w, "Weg", #lines .. " Schritte")
     -- 6.141.0.0 (Beta-Test: "es muss irgendwo stehen, dass man das anklicken kann").
@@ -1463,15 +1610,19 @@ function PT.DrawPlanner(body, w)
             print(WeintCodex.AC .. "[WeintCodex]|r " .. #plan.shop .. " Gegenstände auf der Merkliste.")
         end })
     for _, e in ipairs(plan.shop) do
-        local mine = PT.Have(e.id)
-        y = Row(body, y, w, e.count .. "× " .. PRO.ItemName(e.id),
-            (mine > 0 and ("hast " .. mine .. "   ") or "") .. (e.price and Money(e.price * e.count) or "Preis unbekannt"),
+        local right
+        if e.missing == 0 then right = "hast alles (" .. e.have .. ")"
+        else
+            right = (e.have > 0 and ("hast " .. e.have .. " · ") or "") .. "fehlen " .. e.missing .. "   "
+                .. (e.price and (Money(e.price * e.missing) .. (e.from and (" · " .. e.from) or "")) or "Preis unbekannt")
+        end
+        y = Row(body, y, w, e.count .. "× " .. PRO.ItemName(e.id), right,
             { item = e.id, onClick = function()
                 PT.AddWatchItem(e.id, e.count)
                 print(WeintCodex.AC .. "[WeintCodex]|r " .. e.count .. "× " .. PRO.ItemName(e.id) .. " auf der Merkliste.")
             end })
     end
-    y = Note(body, y - 6, w, "Gerechnet wird mit Rezepten, die du kannst oder beim Lehrer lernst, und der Chance auf einen Punkt wie in Classic: orange immer, gelb meist, grün selten, grau nie. Orange und Gelb gehen vor; Grün nur, wenn es nichts anderes gibt. Die Anzahl reicht in 9 von 10 Fällen – im Schnitt brauchst du weniger. Preise nur aus deinen Auktionspreisen – „Preis unbekannt“ heißt: nie gesehen, nicht umsonst. Klick auf einen Schritt setzt ihn auf die Merkliste.")
+    y = Note(body, y - 6, w, "Gerechnet wird der günstigste Weg über alle Punkte: Rezepte, die du kannst, beim Lehrer lernst oder beim Händler kaufst – Gebühr und Rezeptpreis eingerechnet. Chance auf einen Punkt wie in Classic: orange immer, gelb meist, grün selten, grau nie. Material zum günstigeren Preis von Händler oder Auktionshaus, oder selbst hergestellt, wenn das billiger ist; was du schon hast (Taschen, Bank, Twinks), zählt als bezahlt. Die Anzahl reicht in 9 von 10 Fällen. „Preis unbekannt“ heißt: nie gesehen, nicht umsonst.")
     return y
 end
 

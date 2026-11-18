@@ -26914,6 +26914,31 @@ do
     Check(ok, "Glitzern: drei Stärken" .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 1.0.7.38: Berufe - guenstigster Weg ueber alle Punkte.
+do
+    local ok, err = pcall(function()
+        local PT = WeintCodex.ProfTools
+        assert(PT and PT.Route, "Route fehlt")
+        local keepBuy, keepMade = PT.BuyPrice, PT.Made
+        PT.BuyPrice = function(id) if id == 1 then return 10, "Händler" end if id == 2 then return 1, "Händler" end end
+        PT.Made = function() return 1 end
+        -- A: kann ich, orange 0..50, kostet 10 je Herstellen.
+        -- B: beim Lehrer (keine Gebuehr bekannt), orange 0..50, kostet 1.
+        local A = { spell = 9001, learn = 0, yellow = 50, green = 55, grey = 60, reagents = { { 1, 1 } }, _how = "known" }
+        local B = { spell = 9002, learn = 0, yellow = 50, green = 55, grey = 60, reagents = { { 2, 1 } }, _how = "trainer" }
+        local segs, reach = PT.Route({ A, B }, 0, 40, nil)
+        assert(reach == 40 and #segs == 1 and segs[1].r == B, "nicht der guenstigste Weg")
+        -- Mit eigenem Material ist A umsonst.
+        segs = PT.Route({ A, B }, 0, 40, { [1] = 1 })
+        assert(segs[1].r == A, "eigenes Material nicht als bezahlt gezaehlt")
+        -- Grau bringt nichts: ab 60 kein Weg.
+        local _, r2 = PT.Route({ A }, 0, 80, nil)
+        assert(r2 == 60, "Weg ueber grau hinaus: " .. tostring(r2))
+        PT.BuyPrice, PT.Made = keepBuy, keepMade
+    end)
+    Check(ok, "Berufe: günstigster Weg, eigenes Material, nie grau" .. (ok and "" or (": " .. tostring(err))))
+end
+
 -- 1.0.7.37: Schluesselbund als eigene Tasche.
 do
     local ok, err = pcall(function()

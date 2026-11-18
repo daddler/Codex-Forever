@@ -9,6 +9,17 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.0.7.38] – 2026-11-18
+
+### Geändert
+- Berufe-Planer (`modules/proftools.lua`), nach dem Verhalten von OneForAll
+  (GPL-3, kein Code): `PT.Route` (dynamische Programmierung über die Punkte,
+  einmalige Kosten `OneTime` = Lehrergebühr/Rezeptpreis), `PT.UnitCost`
+  (Händler oder Auktion, oder herstellen, eine Stufe tief), zwei Durchgänge
+  mit eigenem Material (`cover`), Weg im Speicher (`PT.planCache`, „Neu
+  berechnen“), Ziel wählbar (`PT.planTarget`), Einkaufsliste mit „hast /
+  fehlen / Händler|Auktion“. `PT.CraftCost` nimmt `PT.BuyPrice`. Prüflauf.
+
 ## [1.0.7.37] – 2026-11-18
 
 ### Behoben

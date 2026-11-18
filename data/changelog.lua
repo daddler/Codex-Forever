@@ -22,6 +22,15 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.0.7.38",
+        date    = "18.11.2026",
+        notes   = {
+            "|cff7C6CFFDer Berufe-Planer sucht den günstigsten Weg über alle Punkte|r – Rezepte vom Lehrer und Händler mit Gebühr und Preis eingerechnet, statt Punkt für Punkt das gerade Billigste.",
+            "|cff7C6CFFMaterial: Händler oder Auktionshaus, was billiger ist – oder selbst herstellen|r. Was du schon hast (Taschen, Bank, Twinks), zählt als bezahlt; die Einkaufsliste sagt, was noch fehlt und wo es das gibt.",
+            "|cff7C6CFFZiel wählbar und ein fester Weg|r – bis zum nächsten Rang oder ganz nach oben; der Weg bleibt derselbe, bis du „Neu berechnen“ klickst.",
+        },
+    },
+    {
         version = "1.0.7.37",
         date    = "18.11.2026",
         notes   = {
