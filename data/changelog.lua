@@ -25,7 +25,7 @@ WeintCodex_ChangelogData = {
         version = "1.0.7.55",
         date    = "18.11.2026",
         notes   = {
-            "|cff7C6CFFKonsole: Rahmen eingebettet|r – die Leiste hebt sich in der Mitte flach an, Spieler, Ziel und Karte sitzen darin. Die Rahmen stehen fest auf dieser Erhöhung.",
+            "|cff7C6CFFKonsole: Rahmen eingebettet|r – die Leiste hebt sich in der Mitte flach an, Spieler, Ziel und Karte sitzen darin. Die Rahmen stehen fest auf dieser Erhöhung; der Begleiter sitzt kleiner links neben dem Spieler, das Ziel des Ziels rechts neben dem Ziel.",
             "|cff7C6CFFKonsole: Kartenknöpfe vorn|r – der Sammelknopf und die anderen Knöpfe im Bogen liegen über der Fassung, nicht mehr dahinter.",
         },
     },

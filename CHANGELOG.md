@@ -15,7 +15,8 @@ nicht zusammen.
 - Konsole: Erhöhung `console_deck.tga` (1120 × 72, unter der Konsole, Fuß 14
   in der Leiste); `CO.SeatUnits` verankert Spieler/Ziel außerhalb des Kampfes
   an der Konsole (Oberkante + 4, `K.CONSOLE_RING` seitlich, Skalierung
-  ausgeglichen).
+  ausgeglichen); Begleiter außen links neben dem Spieler, Ziel des Ziels
+  außen rechts neben dem Ziel (`CO.UNIT_GAP`).
 - `MM.ArcButtons`: Knöpfe in Schicht der Karte, Stufe + 12.
 
 ## [1.0.7.54] – 2026-11-18

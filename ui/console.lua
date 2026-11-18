@@ -88,6 +88,7 @@ CO.TOP = 130          -- Oberkante der Seitenteile (Bild 96 von 256 px)
 CO.DECK_W, CO.DECK_H = 1120, 72   -- Bild 1024 x 64
 CO.DECK_SINK = 14     -- so weit taucht die Erhoehung in die Leiste
 CO.UNIT_Y = 4         -- Unterkante Spieler/Ziel ueber der Oberkante
+CO.UNIT_GAP = 8       -- Abstand Begleiter/Ziel des Ziels
 local deck
 local function Deck()
     if deck then return deck end
@@ -104,15 +105,28 @@ end
 function CO.SeatUnits()
     if _G.InCombatLockdown and _G.InCombatLockdown() then return end
     local ring = K.CONSOLE_RING or 150
-    for key, side in pairs({ player = -1, target = 1 }) do
-        local uf = _G["WeintCodexUF_" .. key]
+    -- 1.0.7.55 (Wunsch: "mit Begleiter links neben dem Spieler etwas
+    -- kleiner, wie bei Spartan"): Begleiter aussen neben dem Spieler, Ziel
+    -- des Ziels gespiegelt aussen neben dem Ziel - beide auf der Erhoehung.
+    local fs = K.Plain(frame:GetEffectiveScale()) or 1
+    local function Width(uf)
+        local w = uf and K.Plain(uf:GetWidth()) or 0
+        local s = uf and K.Plain(uf:GetEffectiveScale()) or 1
+        return w * s / fs
+    end
+    local seats = {
+        { "player", -1, ring }, { "target", 1, ring },
+        { "pet", -1, ring + Width(_G.WeintCodexUF_player) + CO.UNIT_GAP },
+        { "targettarget", 1, ring + Width(_G.WeintCodexUF_target) + CO.UNIT_GAP },
+    }
+    for _, seat in ipairs(seats) do
+        local uf, side, x = _G["WeintCodexUF_" .. seat[1]], seat[2], seat[3]
         if type(uf) == "table" and uf.SetPoint then
             local s = K.Plain(uf:GetEffectiveScale()) or 1
-            local fs = K.Plain(frame:GetEffectiveScale()) or 1
             local k = (s > 0) and fs / s or 1
             uf:ClearAllPoints()
             uf:SetPoint(side < 0 and "BOTTOMRIGHT" or "BOTTOMLEFT", frame, "BOTTOM",
-                side * ring * k, (CO.TOP + CO.UNIT_Y) * k)
+                side * x * k, (CO.TOP + CO.UNIT_Y) * k)
         end
     end
 end
