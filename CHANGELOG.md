@@ -13,7 +13,7 @@ nicht zusammen.
 
 ### Geändert
 - Konsole: `console_unit.tga` als Schulter (außen langer Anstieg, innen Abfall
-  zum Ring), `CO.UNIT_X` 260, `CO.UNIT_IN` 90; immer sichtbar, unabhängig vom
+  zum Ring), `CO.UNIT_X`/`CO.UNIT_IN` 175, `K.CONSOLE_RING` 128 → 213 (Rahmen mittig auf der Schulter); immer sichtbar, unabhängig vom
   Ziel.
 - `console_side.tga`: Zierlinie beginnt auf Höhe und Stärke des Mittelstücks.
 

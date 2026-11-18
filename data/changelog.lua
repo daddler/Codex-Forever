@@ -25,7 +25,7 @@ WeintCodex_ChangelogData = {
         version = "1.0.7.52",
         date    = "18.11.2026",
         notes   = {
-            "|cff7C6CFFKonsole: Schultern statt Platten|r – unter Spieler und Ziel steigt die Konsole außen flach aus der Leiste an und fällt innen zum Ring der Karte ab. Beide sind immer da, auch ohne Ziel.",
+            "|cff7C6CFFKonsole: Schultern statt Platten|r – unter Spieler und Ziel steigt die Konsole außen flach aus der Leiste an und fällt innen zum Ring der Karte ab. Die Rahmen sitzen mittig darauf, beide Schultern sind immer da, auch ohne Ziel.",
             "|cff7C6CFFKonsole: Zierlinie ohne Bruch|r – die Linie läuft vom Mittelstück ohne Absatz in die Seitenteile weiter.",
         },
     },
