@@ -191,23 +191,28 @@ def slot(W=256, H=64):
 
 
 def unit_plate(W=512, H=128):
-    # Zierplatte hinter Spieler/Ziel (fuer den Spieler; das Ziel spiegelt):
-    # links rund, oben flach, rechts in einem Bogen hinab zur Konsole -
-    # so laeuft sie in den Buckel der Mitte aus. Dorn entlang der Oberkante.
+    # Zierplatte hinter Spieler/Ziel (1.0.7.51, Skizze des Spielers): aussen
+    # (links; das Ziel spiegelt) laeuft die Oberkante in einem weichen
+    # S-Bogen hinab zur Konsole, innen flach mit kleiner Rundung. Der untere
+    # Teil liegt HINTER den Seitenteilen und dem Buckel (ui/console.lua
+    # zeichnet sie darunter) - so schmiegt sie sich an die Leiste.
     yy, xx = np.mgrid[0:H, 0:W]
-    top = np.where(xx < 330, 16.0, 16.0 + (H - 16.0) * smooth(330, W - 4, xx) ** 0.8)
+    T, X0 = 16.0, 170.0
+    t = smooth(0, X0, xx + 0.5)
+    top = T + (H + 4 - T) * (1 - t)
     v = stone(H, W)
     a = smooth(-0.5, 1.2, yy - top)
-    R = 22.0
-    left = np.where(xx < R, R - np.hypot(R - xx, np.maximum(0, R - (yy - 16))), 99)
-    a *= smooth(0, 1.5, np.minimum(left, xx + 0.5))
-    # Kante oben hell (auch im Bogen)
+    R = 18.0
+    dx = W - xx - 0.5
+    corner = np.where(dx < R, R - np.hypot(R - dx, np.maximum(0, R - (yy - T))), 99)
+    a *= smooth(0, 1.5, np.minimum(corner, dx))
     d = yy - top
     v = v + 0.22 * np.exp(-((d - 1.5) / 1.3) ** 2) - 0.08 * np.exp(-((d - 5) / 1.5) ** 2)
     m = np.zeros((H, W))
-    stroke(m, bezier((40, 26), (150, 22), (260, 24), (340, 22)), 3.5, 0.4)
-    stroke(m, bezier((340, 22), (400, 30), (440, 70), (470, 120)), 4.5, 1.0)
-    stroke(m, bezier((300, 23), (320, 10), (300, 4), (288, 12)), 3, 0.4)
+    # Dorn der Kante entlang, aus dem Bogen heraus
+    stroke(m, bezier((60, 98), (120, 40), (170, 24), (250, 25)), 3.5, 0.6)
+    stroke(m, bezier((250, 25), (340, 26), (420, 24), (490, 27)), 3.0, 0.4)
+    stroke(m, bezier((210, 25), (226, 12), (206, 6), (196, 14)), 3, 0.4)
     v = carve(v, m)
     write_tga("console_unit", np.clip(v, 0, 1), np.clip(a, 0, 1))
 

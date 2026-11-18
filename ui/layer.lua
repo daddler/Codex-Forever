@@ -232,7 +232,7 @@ function LY.OpenOptions()
     return true
 end
 
-LY.CONSOLE_Y = 44
+LY.CONSOLE_Y = 56
 local function Build()
     if frame then return frame end
     local mm = _G.Minimap

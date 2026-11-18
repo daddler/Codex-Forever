@@ -42,7 +42,7 @@ local function Build()
     if frame then return end
     frame = CreateFrame("Frame", "WeintCodexConsole", UIParent)
     frame:SetFrameStrata("BACKGROUND")
-    frame:SetFrameLevel(1)
+    frame:SetFrameLevel(3)
     frame:SetPoint("BOTTOMLEFT", UIParent, "BOTTOMLEFT", 0, 0)
     frame:SetPoint("BOTTOMRIGHT", UIParent, "BOTTOMRIGHT", 0, 0)
     frame:SetHeight(CO.H)
@@ -68,7 +68,7 @@ local function Slot(i, bar)
     if not s then
         s = CreateFrame("Frame", nil, frame)
         s:SetFrameStrata("BACKGROUND")
-        s:SetFrameLevel(4)
+        s:SetFrameLevel(5)
         local t = Tex(s, "console_slot", "ARTWORK", 0)
         t:SetAllPoints(s)
         slots[i] = s
@@ -84,16 +84,19 @@ end
 -- Rahmen, die zum Buckel hin in die Konsole auslaeuft. An den Rahmen
 -- verankert - wer sie verschiebt, nimmt die Platte mit.
 CO.UNIT_W, CO.UNIT_H = 420, 96
-CO.UNIT_X, CO.UNIT_Y = 62, 16   -- Luft links (Bild) und oben
+CO.UNIT_X, CO.UNIT_Y = 110, 16  -- Luft aussen und oben
+CO.UNIT_IN = 14                 -- Luft innen (zur Karte)
 CO.TOP = 130         -- Oberkante der Seitenteile (Bild 96 von 256 px)
-CO.UNIT_SINK = 10    -- so weit taucht die Platte in die Konsole ein
+CO.UNIT_SINK = 24    -- so weit taucht die Platte in die Konsole ein
 local unitPlates = {}
 local function UnitPlate(key, uf, mirror)
     local f = unitPlates[key]
     if not f then
-        f = CreateFrame("Frame", nil, frame)
+        -- 1.0.7.51: unter der Konsole (eigener Rahmen an UIParent, Stufe
+        -- unter ihr) - Seitenteile und Buckel decken das untere Ende ab.
+        f = CreateFrame("Frame", nil, UIParent)
         f:SetFrameStrata("BACKGROUND")
-        f:SetFrameLevel(3)
+        f:SetFrameLevel(1)
         f:SetSize(CO.UNIT_W, CO.UNIT_H)
         local t = Tex(f, "console_unit", "ARTWORK", 0)
         t:SetAllPoints(f)
@@ -117,10 +120,13 @@ local function UnitPlate(key, uf, mirror)
         uf:HookScript("OnHide", function() f:Hide() end)
     end
     f:ClearAllPoints()
+    -- Breite aus dem Rahmen: aussen Luft, innen (zur Karte) nur wenig.
     if mirror then
+        f:SetPoint("TOPLEFT", uf, "TOPLEFT", -CO.UNIT_IN, CO.UNIT_Y)
         f:SetPoint("TOPRIGHT", uf, "TOPRIGHT", CO.UNIT_X, CO.UNIT_Y)
     else
         f:SetPoint("TOPLEFT", uf, "TOPLEFT", -CO.UNIT_X, CO.UNIT_Y)
+        f:SetPoint("TOPRIGHT", uf, "TOPRIGHT", CO.UNIT_IN, CO.UNIT_Y)
     end
     return f
 end
@@ -128,6 +134,7 @@ end
 function CO.Update()
     if not CO.Active() then
         if frame then frame:Hide() end
+        for _, p in pairs(unitPlates) do p:Hide() end
         return false
     end
     Build()

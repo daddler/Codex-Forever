@@ -798,7 +798,7 @@ end
 
 local placingMap = false
 MM.CONSOLE_Y = 6
-MM.CONSOLE_TEXT_Y = 14
+MM.CONSOLE_TEXT_Y = 24
 function MM.PlaceMap()
     local mm, cl = _G.Minimap, _G.MinimapCluster
     if placingMap or type(mm) ~= "table" or type(cl) ~= "table" or not Opt("atTop") or MM.GameEditing() then return end

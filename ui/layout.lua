@@ -338,7 +338,7 @@ K.GAME_LAYOUT = {
 --   RECHTS: Leiste 3 16-52, Leiste 6 58-92, Begleiter 98.
 --   Cockpit 45 hoeher (ueber dem Ring), Chat ueber die linke Platte,
 --   Mikromenue und Taschenleiste nach oben rechts (die Karte ist unten).
-K.CONSOLE_RING = 182   -- Spieler/Ziel stehen so weit neben der Mitte
+K.CONSOLE_RING = 128   -- Spieler/Ziel stehen so weit neben der Mitte
 K.CONSOLE_MAP = 160    -- Karte in der Fassung (Bild: Halbmesser 83)
 K.CONSOLE_XP = { w = 430, h = 8 }
 local CX, CY = 359, 0   -- Mitte der Leisten links/rechts
