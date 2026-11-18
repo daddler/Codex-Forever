@@ -338,30 +338,49 @@ K.GAME_LAYOUT = {
 --   RECHTS: Leiste 3 16-52, Leiste 6 58-92, Begleiter 98.
 --   Cockpit 45 hoeher (ueber dem Ring), Chat ueber die linke Platte,
 --   Mikromenue und Taschenleiste nach oben rechts (die Karte ist unten).
-K.CONSOLE_RING = 118   -- halbe Breite des Rings samt Luft (Einheiten)
-local CR, CDY = K.CONSOLE_RING, 45
+K.CONSOLE_RING = 182   -- Spieler/Ziel stehen so weit neben der Mitte
+K.CONSOLE_MAP = 160    -- Karte in der Fassung (Bild: Halbmesser 83)
+K.CONSOLE_XP = { w = 430, h = 8 }
+local CX, CY = 359, 0   -- Mitte der Leisten links/rechts
+local PY = 170          -- Unterkante Spieler/Ziel
+-- Groesse/Reihen je Leiste (Index wie ui/actionbars.lua).
+K.CONSOLE_BARS = {
+    [1] = { size = 34, perRow = 12 }, [2] = { size = 34, perRow = 12 },
+    [3] = { size = 34, perRow = 12 }, [6] = { size = 34, perRow = 12 },
+    [4] = { size = 28, perRow = 3 },  [5] = { size = 28, perRow = 3 },
+}
+function K.ConsoleBar(i)
+    if K.LookKey() ~= "konsole" then return nil end
+    return K.CONSOLE_BARS[i]
+end
 K.LOOK_LAYOUT = {
     konsole = {
         -- eigene Rahmen
-        xpbar        = { point = "BOTTOMRIGHT", relPoint = "BOTTOM", x = -CR, y = 3 },
+        xpbar        = { point = "BOTTOM", relPoint = "BOTTOM", x = -CX, y = 8 },
         hud_micro    = { point = "TOPRIGHT", relPoint = "TOPRIGHT", x = -4, y = -4 },
         hud_bags     = { point = "TOPRIGHT", relPoint = "TOPRIGHT", x = -4, y = -40 },
-        -- Spiel
-        bar1    = { point = "BOTTOMRIGHT", relPoint = "BOTTOM", x = -CR, y = 16 },
-        bar2    = { point = "BOTTOMRIGHT", relPoint = "BOTTOM", x = -CR, y = 62 },
-        bar3    = { point = "BOTTOMLEFT",  relPoint = "BOTTOM", x = CR,  y = 16 },
-        bar6    = { point = "BOTTOMLEFT",  relPoint = "BOTTOM", x = CR,  y = 58 },
-        stance  = { point = "BOTTOMRIGHT", relPoint = "BOTTOM", x = -CR, y = 104 },
-        possess = { point = "BOTTOMRIGHT", relPoint = "BOTTOM", x = -CR, y = 104 },
-        pet     = { point = "BOTTOMLEFT",  relPoint = "BOTTOM", x = CR,  y = 98 },
-        vehicle = { point = "BOTTOM", relPoint = "BOTTOM", x = 0, y = 218 },
-        chat    = { point = "BOTTOMLEFT", relPoint = "BOTTOMLEFT", x = 14, y = 150 },
+        uf_player    = { point = "BOTTOMRIGHT", relPoint = "BOTTOM", x = -K.CONSOLE_RING, y = PY },
+        uf_target    = { point = "BOTTOMLEFT",  relPoint = "BOTTOM", x = K.CONSOLE_RING,  y = PY },
+        uf_targettarget = { point = "TOPLEFT",  relPoint = "BOTTOM", x = K.CONSOLE_RING + UF_W + 6, y = PY + UF_H },
+        uf_focus     = { point = "BOTTOMRIGHT", relPoint = "BOTTOM", x = -(K.CONSOLE_RING + UF_W + 6), y = PY + UF_H + 6 },
+        uf_pet       = { point = "TOPRIGHT",    relPoint = "BOTTOM", x = -(K.CONSOLE_RING + UF_W + 6), y = PY + UF_H },
+        -- Spiel: zwei Reihen je Seite, die Seitenleisten als Kaesten aussen
+        bar1    = { point = "BOTTOM", relPoint = "BOTTOM", x = -CX, y = 62 },
+        bar2    = { point = "BOTTOM", relPoint = "BOTTOM", x = -CX, y = 20 },
+        bar3    = { point = "BOTTOM", relPoint = "BOTTOM", x = CX,  y = 62 },
+        bar6    = { point = "BOTTOM", relPoint = "BOTTOM", x = CX,  y = 20 },
+        bar5    = { point = "BOTTOMLEFT",  relPoint = "BOTTOMLEFT",  x = 8,  y = 8 },
+        bar4    = { point = "BOTTOMRIGHT", relPoint = "BOTTOMRIGHT", x = -8, y = 8 },
+        stance  = { point = "BOTTOM", relPoint = "BOTTOM", x = -300, y = 128 },
+        possess = { point = "BOTTOM", relPoint = "BOTTOM", x = -300, y = 128 },
+        pet     = { point = "BOTTOM", relPoint = "BOTTOM", x = 300,  y = 128 },
+        vehicle = { point = "BOTTOM", relPoint = "BOTTOM", x = 0, y = 214 },
+        chat    = { point = "BOTTOMLEFT", relPoint = "BOTTOMLEFT", x = 14, y = 214 },
     },
 }
 -- Was in der Mitte ueber Leisten und Karte steht, rueckt im Ganzen hoeher.
 K.LOOK_SHIFT = {
-    konsole = { dy = CDY, keys = {
-        uf_player = true, uf_target = true, uf_targettarget = true, uf_focus = true, uf_pet = true,
+    konsole = { dy = 45, keys = {
         uf_combo = true, uf_playercast = true, procs = true, cooldowns = true, gcd = true, swing = true,
         druidmana = true, trinketbar = true, consumables = true, paladinbuffs = true,
         extra = true, essential = true, utility = true, bufficon = true, buffbar = true } },

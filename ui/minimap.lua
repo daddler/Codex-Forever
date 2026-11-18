@@ -757,7 +757,7 @@ end
 -- holt sie einen Takt spaeter zurueck.
 
 local placingMap = false
-MM.CONSOLE_Y = 12
+MM.CONSOLE_Y = 6
 function MM.PlaceMap()
     local mm, cl = _G.Minimap, _G.MinimapCluster
     if placingMap or type(mm) ~= "table" or type(cl) ~= "table" or not Opt("atTop") or MM.GameEditing() then return end
@@ -1227,6 +1227,8 @@ local function Apply()
     end) end
     local size = Opt("size")
     local square = Opt("square")
+    -- 1.0.7.44: Design "Konsole" - runde Karte in der Fassung der Mitte.
+    if K.LookKey and K.LookKey() == "konsole" then size, square = K.CONSOLE_MAP or 160, false end
 
     mm:SetSize(size, size)
     if mm.SetMaskTexture then mm:SetMaskTexture(square and MASK_SQUARE or MASK_ROUND) end

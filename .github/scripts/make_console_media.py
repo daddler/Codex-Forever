@@ -1,117 +1,201 @@
 #!/usr/bin/env python3
 """Eigene Bilder fuer das Design "Konsole" (ui/console.lua, 1.0.7.44).
 
-Wunsch: "als viertes Design so, wie Spartan UI es macht". Nur das
-Verhalten ist angelehnt (Platten hinter den Leisten, Ring um die Karte) -
-kein Bild von SpartanUI, alles aus Formeln gerechnet: dunkler Stein mit
-leiser Koernung, Fase oben, Metallkante.
-
-Graustufen mit Alpha (gefaerbt wird im Spiel ueber SetVertexColor).
+Wunsch: "so aehnlich wie moeglich Richtung Spartan UI, mit Ornamenten".
+Angelehnt ist nur die Anordnung (Mittelstueck mit Buckel und runder
+Fassung fuer die Karte, geschwungene Dornen, Seitenteile mit Ziernaht,
+eingelassene Schaechte hinter den Leisten). Kein Bild von SpartanUI -
+alles hier ist aus Formeln gerechnet.
 
     python3 .github/scripts/make_console_media.py
 """
 import math
 import os
-import random
 import struct
 
+import numpy as np
+
 OUT = os.path.join(os.path.dirname(__file__), "..", "..", "media", "ui")
+rng = np.random.default_rng(11)
 
 
-def write_tga(name, w, h, px):
+def write_tga(name, v, a):
+    h, w = v.shape
     header = struct.pack("<BBBHHBHHHHBB", 0, 0, 2, 0, 0, 0, 0, 0, w, h, 32, 0x28)
-    body = bytearray()
-    for y in range(h):
-        for x in range(w):
-            v, a = px(x, y)
-            v = max(0, min(255, int(round(v * 255))))
-            a = max(0, min(255, int(round(a * 255))))
-            body += bytes((v, v, v, a))
+    g = np.clip(v * 255 + 0.5, 0, 255).astype(np.uint8)
+    al = np.clip(a * 255 + 0.5, 0, 255).astype(np.uint8)
+    px = np.stack([g, g, g, al], axis=-1)
     with open(os.path.join(OUT, name + ".tga"), "wb") as f:
         f.write(header)
-        f.write(bytes(body))
+        f.write(px.tobytes())
 
 
 def smooth(e0, e1, x):
-    if x <= e0:
-        return 0.0
-    if x >= e1:
-        return 1.0
-    t = (x - e0) / (e1 - e0)
+    t = np.clip((x - e0) / (e1 - e0), 0, 1)
     return t * t * (3 - 2 * t)
 
 
-random.seed(7)
-GRID = 32
-NOISE = [[random.random() for _ in range(GRID + 1)] for _ in range(GRID + 1)]
+def value_noise(h, w, cell):
+    gh, gw = h // cell + 2, w // cell + 2
+    g = rng.random((gh, gw))
+    ys = np.arange(h) / cell
+    xs = np.arange(w) / cell
+    y0 = ys.astype(int)
+    x0 = xs.astype(int)
+    fy = (ys - y0)[:, None]
+    fx = (xs - x0)[None, :]
+    fy = fy * fy * (3 - 2 * fy)
+    fx = fx * fx * (3 - 2 * fx)
+    a = g[y0][:, x0]
+    b = g[y0][:, x0 + 1]
+    c = g[y0 + 1][:, x0]
+    d = g[y0 + 1][:, x0 + 1]
+    return (a * (1 - fx) + b * fx) * (1 - fy) + (c * (1 - fx) + d * fx) * fy
 
 
-def vnoise(u, v):
-    # glatte Wertrauschen-Koernung, kachelbar
-    u, v = (u % 1.0) * GRID, (v % 1.0) * GRID
-    i, j = int(u), int(v)
-    fu, fv = u - i, v - j
-    fu, fv = fu * fu * (3 - 2 * fu), fv * fv * (3 - 2 * fv)
-    a = NOISE[j][i] * (1 - fu) + NOISE[j][i + 1] * fu
-    b = NOISE[j + 1][i] * (1 - fu) + NOISE[j + 1][i + 1] * fu
-    return a * (1 - fv) + b * fv
+def stone(h, w):
+    # Grauer Stein mit Flecken und leichten senkrechten Laeufen,
+    # nach unten dunkler.
+    n = (0.5 * value_noise(h, w, 32) + 0.3 * value_noise(h, w, 9) + 0.2 * value_noise(h, w, 3))
+    spots = value_noise(h, w, 5)
+    v = 0.17 + 0.13 * n
+    v -= 0.06 * smooth(0.84, 0.95, spots)          # dunkle Flecken
+    drip = value_noise(1, w, 6)[0] if False else value_noise(h // 8 + 1, w, 7)
+    drip = np.repeat(drip, 8, axis=0)[:h]
+    v -= 0.04 * smooth(0.6, 0.9, drip)
+    ys = np.arange(h)[:, None] / h
+    v *= 1.0 - 0.45 * ys                            # nach unten dunkler
+    return v
 
 
-def stone(u, v):
-    n = 0.55 * vnoise(u, v) + 0.3 * vnoise(u * 2.3, v * 2.3) + 0.15 * vnoise(u * 5.1, v * 5.1)
-    return 0.16 + 0.10 * n
+def bezier(p0, p1, p2, p3, n=400):
+    t = np.linspace(0, 1, n)[:, None]
+    p0, p1, p2, p3 = (np.array(p, float) for p in (p0, p1, p2, p3))
+    return ((1 - t) ** 3) * p0 + 3 * ((1 - t) ** 2) * t * p1 + 3 * (1 - t) * t * t * p2 + t ** 3 * p3
 
 
-def plate(w=512, h=128):
-    # Platte: Stein, oben eine helle Fase, ringsum eine Metallkante,
-    # Ecken leicht gerundet, Rand exakt 0.
-    R = 10.0
-
-    def px(x, y):
-        dx = min(x + 0.5, w - x - 0.5)
-        dy = min(y + 0.5, h - y - 0.5)
-        if dx < R and dy < R:
-            d = R - math.hypot(R - dx, R - dy)
-        else:
-            d = min(dx, dy)
-        a = smooth(0.0, 1.5, d)
-        v = stone(x / w * 4, y / h)
-        if d < 5:                      # Metallkante
-            v = 0.42 + 0.18 * math.cos(d / 5 * math.pi)
-        elif y < 14:                   # Fase oben
-            v += 0.10 * (1 - y / 14)
-        v *= 0.9 + 0.1 * (1 - y / h)  # nach unten etwas dunkler
-        return v, a
-    write_tga("console_plate", w, h, px)
+def stroke(mask, pts, w0, w1):
+    # Dorn: Kurve mit abnehmender Breite, als Scheiben gestempelt.
+    h, w = mask.shape
+    yy, xx = np.mgrid[0:h, 0:w]
+    n = len(pts)
+    for i in range(0, n, 2):
+        x, y = pts[i]
+        r = w0 + (w1 - w0) * (i / (n - 1))
+        if r <= 0.2:
+            continue
+        x0, x1 = int(max(0, x - r - 2)), int(min(w, x + r + 3))
+        y0, y1 = int(max(0, y - r - 2)), int(min(h, y + r + 3))
+        if x0 >= x1 or y0 >= y1:
+            continue
+        d = np.hypot(xx[y0:y1, x0:x1] - x, yy[y0:y1, x0:x1] - y)
+        m = np.clip(r + 0.5 - d, 0, 1)
+        mask[y0:y1, x0:x1] = np.maximum(mask[y0:y1, x0:x1], m)
 
 
-def ring(n=256, square=False):
-    # Ring um die Karte: breiter Steinwulst mit Metallkanten innen/aussen,
-    # Licht von oben links. Innen frei (Alpha 0).
-    def px(x, y):
-        cx = (x + 0.5) / n * 2 - 1
-        cy = (y + 0.5) / n * 2 - 1
-        if square:
-            k = 6.0
-            r = (abs(cx) ** k + abs(cy) ** k) ** (1 / k)
-        else:
-            r = math.hypot(cx, cy)
-        r0, r1 = 0.80, 0.98          # innen, aussen
-        if r < r0 - 0.01 or r > r1 + 0.01:
-            return 0.0, 0.0
-        a = smooth(r0 - 0.01, r0 + 0.005, r) * (1 - smooth(r1 - 0.005, r1 + 0.01, r))
-        t = (r - r0) / (r1 - r0)       # 0 innen, 1 aussen
-        bulge = math.sin(t * math.pi)
-        light = (-cx - cy) * 0.5 / max(r, 1e-3)
-        v = stone(x / n * 3, y / n * 3) + 0.08 * bulge + 0.07 * light * bulge
-        if t < 0.12 or t > 0.88:
-            v = 0.45 + 0.12 * light
-        return v, a
-    write_tga("console_square" if square else "console_ring", n, n, px)
+def carve(v, mask):
+    # Ornament eingraviert: dunkel, oben eine helle Kante, unten Schatten.
+    up = np.roll(mask, 1, axis=0)
+    down = np.roll(mask, -1, axis=0)
+    hi = np.clip(mask - up, 0, 1)      # Oberkante
+    lo = np.clip(mask - down, 0, 1)    # Unterkante
+    v = v * (1 - mask) + 0.05 * mask
+    v += 0.28 * hi
+    v -= 0.05 * np.clip(np.roll(mask, 2, axis=0) - mask, 0, 1)
+    return v
+
+
+def rim(v, a, top):
+    # helle Fase entlang der Oberkante, darunter eine dunkle Linie
+    h, w = v.shape
+    ys = np.arange(h)[:, None]
+    d = ys - top[None, :]
+    v = v + 0.22 * np.exp(-((d - 1.5) / 1.3) ** 2) - 0.08 * np.exp(-((d - 5) / 1.5) ** 2)
+    a = a * smooth(-0.5, 1.2, d)
+    return v, a
+
+
+def mirror_pair(fn):
+    # Ornament links bauen, rechts gespiegelt
+    pass
+
+
+def center(W=512, H=256):
+    TOP0, HUMP = 96.0, 84.0
+    cx, cy, R = 256.0, 150.0, 102.0
+    xs = np.arange(W)
+    top = TOP0 - HUMP * np.exp(-((xs - cx) / 112.0) ** 2)
+    v = stone(H, W)
+    a = np.ones((H, W))
+    v, a = rim(v, a, top)
+    yy, xx = np.mgrid[0:H, 0:W]
+    r = np.hypot(xx - cx, yy - cy)
+    # Ornamente (linke Haelfte, dann gespiegelt)
+    m = np.zeros((H, W))
+    for side in (-1, 1):
+        def P(x, y):
+            return (cx + side * x, y)
+        # Schwinge aus der Fassung nach aussen, Spitze eingerollt
+        stroke(m, bezier(P(98, 108), P(150, 96), P(190, 80), P(236, 90)), 9, 0.6)
+        stroke(m, bezier(P(190, 84), P(206, 66), P(190, 56), P(174, 64)), 5, 0.5)
+        # Flamme ueber der Schwinge, nach oben zur Fassung
+        stroke(m, bezier(P(150, 100), P(130, 80), P(116, 62), P(104, 52)), 6, 0.4)
+        # Dorn an der Oberkante entlang bis an den Rand
+        stroke(m, bezier(P(126, 106), P(180, 114), P(226, 104), P(256, 101)), 5, 1.6)
+        # Dorn aus der Fassung nach unten, eingerollt
+        stroke(m, bezier(P(96, 172), P(126, 196), P(120, 226), P(146, 252)), 8.5, 0.8)
+        stroke(m, bezier(P(112, 208), P(138, 216), P(160, 206), P(170, 188)), 5, 0.4)
+        # Haken aussen, wie ein Horn
+        stroke(m, bezier(P(186, 140), P(214, 160), P(212, 200), P(184, 222)), 6.5, 0.5)
+        stroke(m, bezier(P(214, 128), P(236, 136), P(244, 150), P(238, 166)), 4, 0.4)
+    v = carve(v, m)
+    # Fassung: Wulst mit Licht von oben links, innen frei
+    ang = np.arctan2(yy - cy, xx - cx)
+    light = -np.cos(ang + math.pi * 0.75)          # oben links hell
+    band = smooth(R - 2, R, r) * (1 - smooth(R + 9, R + 11, r))
+    v = v * (1 - band) + band * (0.30 + 0.16 * light)
+    v -= 0.10 * np.exp(-((r - (R + 14)) / 4) ** 2)  # Schatten aussen
+    a = a * smooth(R - 2.5, R - 1, r)               # innen durchsichtig
+    write_tga("console_center", np.clip(v, 0, 1), np.clip(a, 0, 1))
+
+
+def side(W=1024, H=256):
+    TOP0 = 96.0
+    top = np.full(W, TOP0)
+    v = stone(H, W)
+    a = np.ones((H, W))
+    v, a = rim(v, a, top)
+    m = np.zeros((H, W))
+    # Ziernaht: von der Mitte (rechts) nach aussen auslaufend, mit Haken
+    stroke(m, bezier((1024, 108), (820, 106), (520, 124), (200, 128)), 5, 0.4)
+    stroke(m, bezier((910, 107), (880, 88), (840, 90), (834, 106)), 4.5, 0.6)
+    stroke(m, bezier((660, 115), (580, 102), (480, 106), (420, 118)), 3.5, 0.3)
+    stroke(m, bezier((300, 126), (250, 112), (200, 112), (160, 120)), 2.5, 0.3)
+    v = carve(v, m)
+    write_tga("console_side", np.clip(v, 0, 1), np.clip(a, 0, 1))
+
+
+def slot(W=256, H=64):
+    # eingelassener Schacht hinter einer Leiste
+    yy, xx = np.mgrid[0:H, 0:W]
+    dx = np.minimum(xx + 0.5, W - xx - 0.5)
+    dy = np.minimum(yy + 0.5, H - yy - 0.5)
+    d = np.minimum(dx, dy)
+    a = smooth(0, 1.5, d) * 0.92
+    v = np.full((H, W), 0.035) + 0.02 * value_noise(H, W, 6)
+    v += 0.16 * (yy > H - 3) * (d < 3)        # Kante unten hell
+    v -= 0.02 * (yy < 3)
+    edge = (d < 2.0)
+    v = np.where(edge & (yy < H / 2), 0.0, v)
+    write_tga("console_slot", np.clip(v, 0, 1), np.clip(a, 0, 1))
 
 
 if __name__ == "__main__":
-    plate()
-    ring()
-    ring(square=True)
+    for old in ("console_plate", "console_ring", "console_square"):
+        p = os.path.join(OUT, old + ".tga")
+        if os.path.exists(p):
+            os.remove(p)
+    center()
+    side()
+    slot()
     print("ok")

@@ -12,14 +12,15 @@ nicht zusammen.
 ## [1.0.7.44] – 2026-11-18
 
 ### Neu
-- Design „Konsole“ (`WeintCodex.LOOKS.konsole`, Wunsch: „so, wie Spartan UI
-  es macht“ – nur Verhalten, eigene Bilder aus
-  `.github/scripts/make_console_media.py`): `K.LOOK_LAYOUT`/`K.LOOK_SHIFT`
-  (Leisten 1/2 links, 3/6 rechts vom Ring, Erfahrung links unten, Cockpit
-  +45, Chat höher, Mikromenü/Taschenleiste oben rechts), `K.LookPlace` in
-  `K.Layout` und `ES.Target`; Karte unten mittig (`MM.PlaceMap`);
-  `ui/console.lua` zeichnet Konsole (Höhe der höchsten Leiste) und Ring
-  (um die Karte, rund/eckig).
+- Design „Konsole“ (`WeintCodex.LOOKS.konsole`, Wunsch: „so ähnlich wie möglich
+  Richtung Spartan UI, mit Ornamenten“ – Anordnung der Classic-Vorlage
+  nachgestellt, Bilder eigen aus `.github/scripts/make_console_media.py`:
+  Mittelstück mit Buckel, Fassung und Dornen, Seitenteile mit Ziernaht,
+  Schächte). `K.LOOK_LAYOUT`/`K.LOOK_SHIFT`/`K.CONSOLE_BARS`: Leiste 1/2 links,
+  3/6 rechts (je zwei Reihen, 34), 4/5 als Kästen außen (3 je Reihe, 28),
+  Spieler/Ziel ±182, Erfahrung unter Leiste 2, Karte rund 160 in der Fassung,
+  Chat höher, Mikromenü/Taschenleiste oben rechts. `ui/console.lua` zeichnet
+  Konsole und Schächte (an den Leisten verankert).
 
 ### Behoben
 - Namensplaketten: Debuffs des Spiels bei Ausrichtung „links“ lagen auf dem

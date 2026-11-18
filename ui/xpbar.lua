@@ -453,7 +453,8 @@ end
 
 function XB.Apply()
     if not frame then return end
-    frame:SetSize(Opt("width") or defaults.xpWidth, Opt("height") or defaults.xpHeight)
+    local cw = K.LookKey and K.LookKey() == "konsole" and K.CONSOLE_XP or nil
+    frame:SetSize(cw and cw.w or Opt("width") or defaults.xpWidth, cw and cw.h or Opt("height") or defaults.xpHeight)
     -- Ab 12 px Hoehe passt eine 10-px-Schrift in den Balken; darunter
     -- steht der Text ueber ihm.
     frame.text:ClearAllPoints()

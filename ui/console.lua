@@ -20,17 +20,24 @@ WeintCodex.UIConsole = {}
 local CO = WeintCodex.UIConsole
 local K  = WeintCodex.UIKit
 
-CO.BARS = { "MainActionBar", "MainMenuBar", "MultiBarBottomLeft", "MultiBarBottomRight", "MultiBar5" }
-CO.PAD = 8            -- Luft ueber der hoechsten Leiste
-CO.MIN_H = 60
-CO.RING = 1.28        -- Ring im Verhaeltnis zur Karte
+CO.H = 208            -- Hoehe der Bilder (256 px Bild = 208 Einheiten)
+CO.CENTER_W = 416     -- Mittelstueck (512 px)
+-- Leisten, hinter die ein Schacht kommt (Rahmen des Spiels).
+CO.SLOT_BARS = { { "MainActionBar", "MainMenuBar" }, { "MultiBarBottomLeft" }, { "MultiBarBottomRight" },
+                 { "MultiBar5" }, { "MultiBarLeft" }, { "MultiBarRight" } }
+CO.SLOT_PAD = 5
 
 function CO.Active()
     if not (K.UIEnabled and K.UIEnabled()) then return false end
     return K.LookKey and K.LookKey() == "konsole" or false
 end
 
-local frame, strip, ringTex
+local frame, slots = nil, {}
+local function Tex(parent, file, layer, sub)
+    local t = parent:CreateTexture(nil, layer, nil, sub)
+    t:SetTexture(K.MEDIA .. file)
+    return t
+end
 local function Build()
     if frame then return end
     frame = CreateFrame("Frame", "WeintCodexConsole", UIParent)
@@ -38,60 +45,59 @@ local function Build()
     frame:SetFrameLevel(1)
     frame:SetPoint("BOTTOMLEFT", UIParent, "BOTTOMLEFT", 0, 0)
     frame:SetPoint("BOTTOMRIGHT", UIParent, "BOTTOMRIGHT", 0, 0)
-    frame:SetHeight(CO.MIN_H)
+    frame:SetHeight(CO.H)
     frame:EnableMouse(false)
-    strip = frame:CreateTexture(nil, "BACKGROUND")
-    strip:SetAllPoints(frame)
-    strip:SetTexture(K.MEDIA .. "console_plate")
-    local ring = CreateFrame("Frame", "WeintCodexConsoleRing", UIParent)
-    ring:SetFrameStrata("BACKGROUND")
-    ring:SetFrameLevel(5)
-    ring:EnableMouse(false)
-    ringTex = ring:CreateTexture(nil, "ARTWORK")
-    ringTex:SetAllPoints(ring)
-    CO.ring = ring
+    local half = CO.CENTER_W / 2 - 6
+    local left = Tex(frame, "console_side", "BACKGROUND", 0)
+    left:SetPoint("BOTTOMLEFT", frame, "BOTTOMLEFT", 0, 0)
+    left:SetPoint("TOPRIGHT", frame, "TOP", -half, 0)
+    local right = Tex(frame, "console_side", "BACKGROUND", 0)
+    right:SetTexCoord(1, 0, 0, 1)             -- gespiegelt
+    right:SetPoint("BOTTOMRIGHT", frame, "BOTTOMRIGHT", 0, 0)
+    right:SetPoint("TOPLEFT", frame, "TOP", half, 0)
+    local mid = Tex(frame, "console_center", "BORDER", 0)
+    mid:SetSize(CO.CENTER_W, CO.H)
+    mid:SetPoint("BOTTOM", frame, "BOTTOM", 0, 0)
+    CO.parts = { left = left, right = right, mid = mid }
 end
 
--- Oberkante der hoechsten Leiste unten (Einheiten von UIParent), oder nil.
-function CO.BarTop()
-    local top
-    for _, n in ipairs(CO.BARS) do
-        local b = _G[n]
-        if type(b) == "table" and b.IsVisible and K.Bool(b:IsVisible(), false) and b.GetTop then
-            local t = K.Plain(b:GetTop())
-            local s = b.GetEffectiveScale and K.Plain(b:GetEffectiveScale())
-            local us = UIParent.GetEffectiveScale and K.Plain(UIParent:GetEffectiveScale())
-            if type(t) == "number" and type(s) == "number" and type(us) == "number" and us > 0 then
-                t = t * s / us
-                -- nur, was unten liegt (eine Leiste ganz oben zaehlt nicht)
-                if t < 300 and (not top or t > top) then top = t end
-            end
-        end
+-- Schacht hinter einer Leiste: eigener Rahmen, an der Leiste verankert
+-- (eigenes an Geschuetztem ist erlaubt, nicht umgekehrt).
+local function Slot(i, bar)
+    local s = slots[i]
+    if not s then
+        s = CreateFrame("Frame", nil, frame)
+        s:SetFrameStrata("BACKGROUND")
+        s:SetFrameLevel(4)
+        local t = Tex(s, "console_slot", "ARTWORK", 0)
+        t:SetAllPoints(s)
+        slots[i] = s
     end
-    return top
+    s:ClearAllPoints()
+    s:SetPoint("TOPLEFT", bar, "TOPLEFT", -CO.SLOT_PAD, CO.SLOT_PAD)
+    s:SetPoint("BOTTOMRIGHT", bar, "BOTTOMRIGHT", CO.SLOT_PAD, -CO.SLOT_PAD)
+    return s
 end
 
 function CO.Update()
     if not CO.Active() then
-        if frame then frame:Hide() CO.ring:Hide() end
+        if frame then frame:Hide() end
         return false
     end
     Build()
-    local top = CO.BarTop()
-    frame:SetHeight(math.max(CO.MIN_H, (top or 0) + CO.PAD))
     frame:Show()
-    local mm = _G.Minimap
-    local w = type(mm) == "table" and mm.GetWidth and K.Plain(mm:GetWidth())
-    if type(w) == "number" and w > 0 then
-        local square = K.Get and K.Get("minimap", "square")
-        ringTex:SetTexture(K.MEDIA .. (square and "console_square" or "console_ring"))
-        local ring = CO.ring
-        ring:ClearAllPoints()
-        ring:SetPoint("CENTER", mm, "CENTER", 0, 0)
-        ring:SetSize(w * CO.RING, w * CO.RING)
-        ring:Show()
-    else
-        CO.ring:Hide()
+    for i, names in ipairs(CO.SLOT_BARS) do
+        local bar
+        for _, n in ipairs(names) do
+            local f = _G[n]
+            if type(f) == "table" and f.GetTop then bar = f break end
+        end
+        local shown = bar and bar.IsVisible and K.Bool(bar:IsVisible(), false)
+        if shown then
+            Slot(i, bar):Show()
+        elseif slots[i] then
+            slots[i]:Hide()
+        end
     end
     return true
 end

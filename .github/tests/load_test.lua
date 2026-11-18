@@ -26964,19 +26964,20 @@ do
         local keep = K.Get("general", "look")
         K.Set("general", "look", "konsole")
         local base = K.LAYOUT.uf_player.y
-        assert(K.Layout("uf_player").y == base + 45, "Cockpit nicht hoeher")
-        assert(K.Layout("xpbar").point == "BOTTOMRIGHT", "Erfahrung nicht links")
+        assert(K.Layout("uf_player").x == -K.CONSOLE_RING, "Spieler nicht neben der Mitte")
+        assert(K.Layout("uf_playercast").y == K.LAYOUT.uf_playercast.y + 45, "Zauberbalken nicht hoeher")
+        assert(K.ConsoleBar(4).perRow == 3, "Seitenleiste kein Kasten")
         local bar1
         for _, e in ipairs(K.GAME_LAYOUT) do if e.key == "bar1" then bar1 = e end end
         local t = WeintCodex.UISetup.Target(bar1)
-        assert(t.point == "BOTTOMRIGHT" and t.x == -K.CONSOLE_RING, "Leiste 1 nicht links vom Ring")
+        assert(t.point == "BOTTOM" and t.x < -200, "Leiste 1 nicht links")
         local CO = WeintCodex.UIConsole
         local en = K.UIEnabled
         K.UIEnabled = function() return true end
         CO.Update()
         K.UIEnabled = en
         K.Set("general", "look", keep)
-        assert(K.Layout("uf_player").y == base, "Grundplatz verloren")
+        assert(K.Layout("uf_player").y == base and K.ConsoleBar(4) == nil, "Grundplatz verloren")
     end)
     Check(ok, "Design Konsole" .. (ok and "" or (": " .. tostring(err))))
 end

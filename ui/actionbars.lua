@@ -536,7 +536,14 @@ AB.cut = cut
 local BACKDROP_PAD = 4
 AB.backdrops = {}
 
-local function BO(i, k) return Opt("b" .. i .. "_" .. k) end
+-- 1.0.7.44: Design "Konsole" stellt Groesse und Reihen der Leisten wie die
+-- Vorlage (K.CONSOLE_BARS, ui/layout.lua): zwei Reihen je Seite, die
+-- seitlichen Leisten als Kaesten.
+local function BO(i, k)
+    local cb = K.ConsoleBar and K.ConsoleBar(i)
+    if cb and cb[k] ~= nil then return cb[k] end
+    return Opt("b" .. i .. "_" .. k)
+end
 local function WCLayout() return Opt("layout") == "wc" end
 
 local function BarFrame(entry)
