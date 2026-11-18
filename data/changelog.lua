@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.0.7.60",
+        date    = "18.11.2026",
+        notes   = {
+            "|cff7C6CFFTotems im Kampf|r – im Kampf gesetzte Totems erscheinen wieder unter dem Spielerrahmen, mit Symbol und Restzeit, und lassen sich per Rechtsklick entfernen.",
+        },
+    },
+    {
         version = "1.0.7.59",
         date    = "18.11.2026",
         notes   = {

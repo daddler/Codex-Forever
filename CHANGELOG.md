@@ -9,6 +9,13 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.0.7.60] – 2026-11-18
+
+### Behoben
+- `TT.Secret`: geheim ist auch Name/Symbol/Start/Dauer allein, nicht nur
+  „hat Totem“ – sonst machte `TT.Info` aus einem Totem im Kampf „keins“ und
+  versteckte den Platz.
+
 ## [1.0.7.59] – 2026-11-18
 
 ### Geändert

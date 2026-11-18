@@ -71,14 +71,26 @@ end
 -- Abklingspirale. Lua vergleicht nichts davon.
 function TT.Secret(b)
     if not _G.GetTotemInfo then return false end
-    local ok, have, _, start, duration, icon = pcall(_G.GetTotemInfo, b.slot)
-    if not ok or not K.IsSecret(have) then return false end
-    b._finish, b._name = nil, nil
+    local ok, have, name, start, duration, icon = pcall(_G.GetTotemInfo, b.slot)
+    if not ok then return false end
+    -- 1.0.7.60 (Bild: "Totems werden infight nicht angezeigt"): geheim ist
+    -- nicht nur "hat Totem" - auch Name, Symbol oder Zeit allein koennen es
+    -- sein. Dann machte TT.Info aus dem Totem "keins" (ohne Symbol), und der
+    -- Platz wurde versteckt.
+    local secretHave = K.IsSecret(have)
+    if not (secretHave or K.IsSecret(name) or K.IsSecret(icon) or K.IsSecret(start) or K.IsSecret(duration)) then
+        return false
+    end
+    if not secretHave and not have then return false end
+    b._finish = nil
+    b._name = (not K.IsSecret(name) and type(name) == "string" and name ~= "") and name or "Totem"
     b.time:SetText("")
     pcall(b.icon.SetTexture, b.icon, icon)
     if type(b.cd) == "table" and b.cd.SetCooldown then pcall(b.cd.SetCooldown, b.cd, start, duration) end
     if not Locked() then b:Show() end
-    if b.SetAlphaFromBoolean then
+    if not secretHave then
+        b:SetAlpha(1)
+    elseif b.SetAlphaFromBoolean then
         b:SetAlphaFromBoolean(have, 1, 0)
     else
         -- Ohne das Mittel lieber sichtbar (leer) als ein Totem, das man
