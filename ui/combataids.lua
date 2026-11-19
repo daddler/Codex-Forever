@@ -387,7 +387,9 @@ function CA.ApplyHide(fighting)
     for _, n in ipairs(CA.QUEST_FRAMES) do Fade(n, fighting and Opt("caHideQuests")) end
     local n = tonumber(_G.NUM_CHAT_WINDOWS) or 10
     for i = 1, n do
-        local hide = fighting and Opt("caHideChat")
+        -- 1.0.8.0: selbst ausgeblendet (Knopf am Chat) bleibt ausgeblendet.
+        local EVm = WeintCodex.UIEveryday
+        local hide = (fighting and Opt("caHideChat")) or (EVm and EVm.ChatHidden and EVm.ChatHidden())
         Fade("ChatFrame" .. i, hide)
         Fade("ChatFrame" .. i .. "Tab", hide)
         Fade("ChatFrame" .. i .. "EditBox", hide and not (_G["ChatFrame" .. i .. "EditBox"] and _G["ChatFrame" .. i .. "EditBox"].HasFocus and _G["ChatFrame" .. i .. "EditBox"]:HasFocus()))

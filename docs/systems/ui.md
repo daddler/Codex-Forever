@@ -120,6 +120,15 @@ Dungeon über die Instanznummer); sonst der Bereich ohne Auswahl. Schalter
 `comfort.codexLinks` (Komfort → Anzeigen), ab Werk an: kein Element auf dem
 Bildschirm, nur am offenen Fenster.
 
+### Bequem und Kampfhilfen *(1.0.8.0)*
+
+`ui/everyday.lua` (Seite „Bequem“) und `ui/combataids.lua` (Schalter auf
+„Helfer“ und „PvP“) bauen Verhalten aus OneForAll (GPL-3.0) und All in One
+(ohne Lizenz) nach – kein Code, keine Bilder. Alles ab Werk aus. Was sich
+nicht lesen lässt (geheime Zaubernummern, Auren im Kampf, fehlende Preise),
+zeigt nichts – nie eine geratene Zahl. Mehrere Belohnungen zur Wahl werden
+nie automatisch gewählt.
+
 ## Zwei Arten von Modulen
 
 | Gruppe | Module | Hängt am Hauptschalter? | Umschalten |

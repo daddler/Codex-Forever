@@ -147,6 +147,7 @@ P["comfort/klickzauber"] = { title = "Komfort · Klickzauber",
     text = "Zauber per Klick auf Gruppenrahmen, auch Makros. Erst Taste und Maustaste wählen, dann den Zauber.",
     words = "clickcast heilen klick maus" }
 P["comfort/entfluchen"] = { title = "Komfort · Entfluchen", text = "Fluch, Gift, Krankheit per Klick entfernen.", words = "dispel fluch gift krankheit magie" }
+P["comfort/bequem"] = { title = "Komfort · Bequem", text = "Quests ohne Klick annehmen und abgeben (nie bei Wahl der Belohnung), Quests der Gruppe im Dungeon teilen, Flugkarte sofort, Tooltip am Mauszeiger, Entzauberungswert im Tooltip, Fenstergröße mit Strg + Mausrad, Einladen auf ein Wort, Duelle ablehnen, Chat mit Pfeiltasten und Knopf zum Ausblenden.", words = "quest annehmen abgeben automatisch teilen gruppe flugkarte flugmeister tooltip maus zeiger entzaubern fenster größe groesse skalierung einladen inv duell chat pfeiltasten ausblenden" }
 P["comfort/helfer"] = { title = "Komfort · Helfer", text = "Kleine Helfer, alle ab Werk aus: Fadenkreuz, Mausring, Kampftimer, Mana der Heiler, Zauber-Warteschlange, Beute-Feed, Schließkassetten im Tooltip, Erinnerung an Flugpunkte.", words = "fadenkreuz mausring kampftimer heiler mana warteschlange beute feed kassette flugpunkt" }
 P["comfort/makros"] = { title = "Komfort · Makros", text = "Makros zusammenklicken, auch mit Haltung je Zeile.", words = "makro macro haltung" }
 P["comfort/ringe"] = { title = "Komfort · Ringe", text = "Ringmenü für Zauber und Gegenstände.", words = "ring menü" }

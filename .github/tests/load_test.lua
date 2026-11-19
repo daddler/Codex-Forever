@@ -20710,10 +20710,10 @@ do
         end
         local order = table.concat(keys, ",")
         local pal = WeintCodex.UIPaladinBuffs.IsPaladin()
-        assert(order == "automatik,anzeigen,zeiger,rausda,automark,klickzauber,entfluchen,makros,helfer," .. (pal and "segen," or "") .. "ringe,pvp,boss,boss_bars,boss_sounds,boss_bosses,karte,questhilfe,sammeln,glitzern,selten,flugspiele,auktion,post,fluestern,danke,gespraeche",
+        assert(order == "automatik,anzeigen,zeiger,bequem,rausda,automark,klickzauber,entfluchen,makros,helfer," .. (pal and "segen," or "") .. "ringe,pvp,boss,boss_bars,boss_sounds,boss_bosses,karte,questhilfe,sammeln,glitzern,selten,flugspiele,auktion,post,fluestern,danke,gespraeche",
             "Reihenfolge: " .. order)
         local d = pal and 0 or -1
-        assert(O.PageIndex("comfort", "gespraeche") == 27 + d and O.PageIndex("comfort", "fluestern") == 25 + d, "Index nach Sortieren")
+        assert(O.PageIndex("comfort", "gespraeche") == 28 + d and O.PageIndex("comfort", "fluestern") == 26 + d, "Index nach Sortieren")
         for _, h in ipairs(WL.HELPERS) do
             local mod = K.Module(h.module)
             assert(mod and mod.group ~= "ui" or h.module == "groupframes", h.label .. ": haengt an einem Modul der Oberflaeche")
@@ -27003,6 +27003,80 @@ do
         assert(K.Layout("uf_player").y == base and K.ConsoleBar(4) == nil, "Grundplatz verloren")
     end)
     Check(ok, "Design Konsole" .. (ok and "" or (": " .. tostring(err))))
+end
+
+-- 1.0.8.0: Bequem - Quests, Einladen, Duelle, Entzaubern, Flugkarte; Dungeon-Schluessel.
+do
+    local G = _G
+    local ok, err = pcall(function()
+        local EV = WeintCodex.UIEveryday
+        assert(EV and EV.OnQuestDetail and EV.DisenchantValue, "Bequem fehlt")
+        for k, v in pairs(EV.DEFAULTS) do
+            if type(v) == "boolean" and k ~= "tipMouseInst" then assert(K.Get("comfort", k) == false, "ab Werk an: " .. k) end
+        end
+        assert(not EV.OnQuestDetail(), "ohne Schalter angenommen")
+        local accepted, rewarded = 0, nil
+        local oA, oN, oR, oT = G.AcceptQuest, G.GetNumQuestChoices, G.GetQuestReward, G.C_Timer
+        G.AcceptQuest = function() accepted = accepted + 1 end
+        G.GetQuestReward = function(i) rewarded = i end
+        G.C_Timer = nil
+        K.Set("comfort", "questAccept", true)
+        K.Set("comfort", "questTurnIn", true)
+        assert(EV.OnQuestDetail() and accepted == 1, "nicht angenommen")
+        G.GetNumQuestChoices = function() return 3 end
+        assert(not EV.OnQuestComplete() and rewarded == nil, "Belohnung gewaehlt, obwohl drei zur Wahl")
+        G.GetNumQuestChoices = function() return 0 end
+        assert(EV.OnQuestComplete() and rewarded == 0, "ohne Wahl nicht abgegeben")
+        K.Set("comfort", "questAccept", false)
+        K.Set("comfort", "questTurnIn", false)
+        G.AcceptQuest, G.GetNumQuestChoices, G.GetQuestReward, G.C_Timer = oA, oN, oR, oT
+        -- Einladen nur fuer Freunde/Gilde und genau das Wort
+        local invited
+        local oPI, oFL = G.C_PartyInfo, G.C_FriendList
+        G.C_PartyInfo = { InviteUnit = function(n) invited = n end }
+        G.C_FriendList = { GetFriendInfo = function(n) if n == "Freundin" then return {} end end }
+        K.Set("comfort", "inviteWord", true)
+        assert(not EV.OnWhisper("inv", "Fremder") and invited == nil, "Fremden eingeladen")
+        assert(not EV.OnWhisper("inv bitte", "Freundin"), "falsches Wort angenommen")
+        assert(EV.OnWhisper(" INV ", "Freundin") and invited == "Freundin", "Freundin nicht eingeladen")
+        K.Set("comfort", "inviteWord", false)
+        -- Duelle
+        local cancelled = 0
+        local oC = G.CancelDuel
+        G.CancelDuel = function() cancelled = cancelled + 1 end
+        K.Set("comfort", "duelDecline", true)
+        assert(not EV.OnDuel("Freundin") and cancelled == 0, "Freundin abgelehnt")
+        assert(EV.OnDuel("Fremder") and cancelled == 1, "Fremden nicht abgelehnt")
+        K.Set("comfort", "duelDecline", false)
+        G.C_PartyInfo, G.C_FriendList, G.CancelDuel = oPI, oFL, oC
+        -- Entzaubern: ohne Preis keine Zahl, mit Preisen ein Wert
+        local AP = WeintCodex.UIAuctionPrices
+        local oL = AP.Lookup
+        AP.Lookup = function() return nil end
+        assert(EV.DisenchantValue(2, 22, false) == nil, "Wert ohne Preis")
+        AP.Lookup = function(id) return { price = 1000 } end
+        local v = EV.DisenchantValue(2, 22, false)
+        assert(type(v) == "number" and v > 0, "kein Wert mit Preisen")
+        assert(EV.DisenchantValue(3, 30, false) == 1000 and EV.DisenchantValue(1, 30, false) == nil, "blau/grau falsch")
+        AP.Lookup = oL
+        -- Flugkarte: nur bei genau einer Wahl, die der Flug ist
+        local picked
+        local oGI = G.C_GossipInfo
+        G.C_GossipInfo = { GetActiveQuests = function() return {} end, GetAvailableQuests = function() return {} end,
+            GetOptions = function() return { { name = "Zeigt mir, wohin ich fliegen kann.", icon = 1, gossipOptionID = 7 } } end,
+            SelectOption = function(id) picked = id end }
+        assert(EV.TaxiFromGossip() == "taxi" and picked == 7, "Flugkarte nicht gewaehlt")
+        G.C_GossipInfo.GetOptions = function() return { { name = "Ich möchte hier rasten.", icon = 1, gossipOptionID = 8 }, { name = "Flug", icon = 132057, gossipOptionID = 9 } } end
+        picked = nil
+        assert(EV.TaxiFromGossip() == nil and picked == nil, "bei zwei Wahlen geflogen")
+        G.C_GossipInfo = oGI
+        -- Dungeon-Schluessel: Kennungen gibt es
+        for did, list in pairs(WeintCodex.DungeonKeys) do
+            assert(WeintCodex.DungeonData.Get(did), "Schluessel fuer unbekannten Dungeon: " .. did)
+            for _, k in ipairs(list) do assert(type(k.item) == "number" and type(k.text) == "string" and k.text ~= "", "Schluessel unvollstaendig: " .. did) end
+        end
+    end)
+    Check(ok, "Bequem: Quests, Einladen, Duelle, Entzaubern, Flugkarte; Dungeon-Schluessel" .. (ok and "" or (": " .. tostring(err))))
 end
 
 -- 1.0.8.0: zwei neue Flugspiele - Paare und Runenfolge.

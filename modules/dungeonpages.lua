@@ -2286,6 +2286,34 @@ local function DrawEntrances(inner, y, w, dungeon)
     return y
 end
 
+-- Schluessel (1.0.8.0, data/dungeonkeys.lua): was zum Betreten noetig ist
+-- oder was eine Abkuerzung oeffnet - mit "hast du", wenn der Client es
+-- sagt (Taschen und Bank). Name des Gegenstands nur vom Client.
+local function DrawKeys(inner, y, w, dungeon)
+    local list = WeintCodex.DungeonKeys and WeintCodex.DungeonKeys[dungeon.id]
+    if not list or #list == 0 then return y end
+    y = y - 10
+    local rubric = WeintCodex.Eyebrow(inner, "Schlüssel", { color = "textDim", size = 10 })
+    rubric:SetPoint("TOPLEFT", inner, "TOPLEFT", 0, y)
+    y = y - 18
+    local UK = WeintCodex.UIKit
+    local function P(v) return UK and UK.Plain and UK.Plain(v) or v end
+    for _, k in ipairs(list) do
+        local name = _G.C_Item and _G.C_Item.GetItemNameByID and P(_G.C_Item.GetItemNameByID(k.item))
+        local have = _G.GetItemCount and P(_G.GetItemCount(k.item, true))
+        local head = (type(name) == "string" and name or ("Gegenstand " .. k.item))
+            .. (k.need and " – nötig" or " – Abkürzung")
+            .. ((type(have) == "number" and have > 0) and " · hast du" or "")
+        local fs, h = WeintCodex.Paragraph(inner, head .. "\n" .. k.text, { width = w, size = 11, color = "textMuted" })
+        fs:SetPoint("TOPLEFT", inner, "TOPLEFT", 0, y)
+        y = y - h - 6
+    end
+    local src, hs = WeintCodex.Paragraph(inner, "Von Spielern gesammelt.", { width = w, size = 10, color = "textDim" })
+    src:SetPoint("TOPLEFT", inner, "TOPLEFT", 0, y)
+    WeintCodex.DungeonPages.keyRows = (WeintCodex.DungeonPages.keyRows or 0) + #list
+    return y - hs
+end
+
 -- Quests und weitere Beute eines Dungeons, unter der Aufstellung.
 -- Nur die eigene Fraktion (und "beide"); die andere wird gezaehlt,
 -- nicht verschwiegen.
@@ -2648,6 +2676,7 @@ local function DrawRoster(f, y, dungeon)
             end
 
             endY = DrawEntrances(inner, endY, w, dungeon)
+            endY = DrawKeys(inner, endY, w, dungeon)
             endY = DrawJournal(inner, endY, w, dungeon)
 
             if not inspectorShown then

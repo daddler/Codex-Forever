@@ -105,6 +105,8 @@ local defaults = {
     -- 1.0.8.0 (Debuff-Filter mit eigener Liste, nach "All in One"): Namen
     -- oder Nummern, getrennt durch Komma - diese Debuffs nie zeigen.
     debuffNever    = "",
+    -- 1.0.8.0 (nach OneForAll "Brighter colors"): Klassenfarben heller.
+    classBright    = false,
     classBadge     = true,    -- Elite/selten/Boss an Ziel und Fokus (6.27.0.0)
     -- 6.30.20.0 (Beta-Test: "das Dunkelblau auf Schwarz ist schwer zu
     -- erkennen"): Farbe der Kraftleisten - wie im Spiel, heller, eigene.
@@ -256,7 +258,10 @@ local function HealthColor(unit)
         local _, class = _G.UnitClass(unit)
         class = K.Plain(class)
         local cc = class and _G.RAID_CLASS_COLORS and _G.RAID_CLASS_COLORS[class]
-        if cc then return cc.r, cc.g, cc.b end
+        if cc then
+            if Opt("classBright") then return UF.Brighten(cc.r, cc.g, cc.b) end
+            return cc.r, cc.g, cc.b
+        end
     end
     if Opt("reactionColor") and not K.Bool(_G.UnitIsPlayer and _G.UnitIsPlayer(unit), false) then
         local r = K.Plain(_G.UnitReaction and _G.UnitReaction(unit, "player"))
@@ -2221,6 +2226,10 @@ local pages = {
         B:Row({ type = "toggle", label = "Spieler in Klassenfarbe", key = "classColor" },
               { type = "toggle", label = "NPCs nach Gesinnung", key = "reactionColor",
                 description = "Feindlich rot, neutral gelb, freundlich grün." })
+        B:Row({ type = "toggle", label = "Klassenfarben heller", key = "classBright",
+                disabled = function() return not K.Get(KEY, "classColor") end,
+                description = "Dunkle Klassenfarben (Hexer, Schamane) lesen sich auf dunklem Grund besser." },
+              { type = "empty" })
         B:Row({ type = "color", label = "Lebensbalken sonst", key = "healthColor" },
               { type = "color", label = "Hintergrund", key = "bgColor" })
         B:Row({ type = "toggle", label = "Rand anzeigen", key = "showBorder" },

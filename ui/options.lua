@@ -1919,6 +1919,11 @@ SlashCmdList["WEINTCODEXUI"] = function(msg)
         if FJ and FJ.Report then K.ShowReport("Feldbuch", FJ.Report()) end
         return
     end
+    if msg == "teilen" or msg == "share" then
+        local EVm = WeintCodex.UIEveryday
+        if EVm and EVm.ShowShare then EVm.ShowShare(true) end
+        return
+    end
     if msg == "ruf" or msg == "reputation" then
         local FJ = WeintCodex.UIFieldJournal
         if FJ and FJ.RepReport then K.ShowReport("Ruf-Belohnungen", FJ.RepReport()) end

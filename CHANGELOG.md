@@ -44,6 +44,18 @@ nicht zusammen.
   `WCFG`; Fenster 620 hoch, Karten 72, Reiter der Bestenliste 72 breit.
 - Berufe · Gilde: Suchfeld verlor nach jedem Buchstaben den Fokus (`PT.Draw`
   versteckt die Seite kurz); danach `SetFocus` + Zeiger ans Ende.
+- `ui/everyday.lua` (Seite „Bequem“, nach OneForAll, nur Verhalten): Quests
+  annehmen/abgeben (nie bei mehr als einer Belohnung, zweimal gezählt),
+  Gespräch: erst abgeben, dann annehmen; Flugkarte sofort (eine Wahl, Symbol
+  oder „flug/flieg“); Tooltip am Zeiger (`GameTooltip_SetDefaultAnchor`);
+  Fenstergröße mit Strg + Mausrad (`ui.winScale`); Einladen auf ein Wort
+  (Freunde/Gilde, ohne Gruppe oder als Leiter); Duelle ablehnen;
+  `SetAltArrowKeyMode(false)`; Chat-Knopf + Ausblenden nach Zeit;
+  Entzauberungswert (Ertrag Classic, eigene Auktionspreise, sonst keine Zahl);
+  Quests im Dungeon teilen (`C_QuestLog.IsUnitOnQuest`, `QuestLogPushQuest`).
+- `data/dungeonkeys.lua` (Daten aus OneForAll, GPL – nur Daten, Sätze eigen,
+  `community`), Abschnitt „Schlüssel“ auf der Dungeonseite.
+- Einheitenrahmen: `classBright`.
 - `ui/petstable.lua`: `PetStableFrame` in Gold (W.WINDOWS + CalmParts,
   Bilder gemessen mit `/wcui fenster`).
 

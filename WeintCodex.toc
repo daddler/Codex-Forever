@@ -83,6 +83,7 @@ data/dungeons.lua
 data/dungeons_classic.lua
 # Beute und Quests je Dungeon (6.5.0.0); braucht die Kennungen oben.
 data/dungeon_journal.lua
+data/dungeonkeys.lua
 # Abgleich mit ForeverGuide (6.14.0.0), erzeugt: mischt sich in das Journal
 # darueber ein (J.MergeForeverGuide) - steht deshalb direkt danach.
 data/dungeon_journal_fg.lua
@@ -381,6 +382,7 @@ ui/bossmod.lua
 ui/bossshare.lua
 ui/pvpframes.lua
 ui/combataids.lua
+ui/everyday.lua
 # Glitzern: Questgegenstaende, Kraeuter und Erz (6.29.0.0, Komfort; Verhalten von ForeverLootSparkles, eigener Code).
 ui/sparkles.lua
 ui/selftext.lua
