@@ -275,7 +275,10 @@ function PB.OnInspect(guid)
     local t = PB.ReadTrees(true)
     if t then PB.specOf[PB.inspecting] = t PB.specAt[PB.inspecting] = Now() end
     PB.inspecting = nil
-    if _G.ClearInspectPlayer then pcall(_G.ClearInspectPlayer) end
+    -- 1.0.7.64: nie die Plaetze eines offenen Betrachten-Fensters leeren.
+    local f = _G.InspectFrame
+    local open = type(f) == "table" and f.IsShown and K.Bool(f:IsShown(), false)
+    if _G.ClearInspectPlayer and not open then pcall(_G.ClearInspectPlayer) end
 end
 
 function PB.RoleOf(unit, class)

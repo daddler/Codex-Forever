@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.0.7.64",
+        date    = "19.11.2026",
+        notes   = {
+            "|cff7C6CFFBetrachten zeigt die Ausrüstung wieder|r – beim Betrachten eines Spielers blieben die Plätze leer, weil eine Abfrage im Hintergrund die Antwort des Spiels gelöscht hat. Solange das Fenster offen ist, fragt WeintCodex jetzt nichts nebenher.",
+        },
+    },
+    {
         version = "1.0.7.63",
         date    = "19.11.2026",
         notes   = {

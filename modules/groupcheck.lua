@@ -59,6 +59,13 @@ local function Safe(fn, ...)
     return unpack(res, 2, 8)
 end
 
+-- 1.0.7.64: ein offenes Betrachten-Fenster des Spielers nie leeren.
+local function ClearInspect()
+    local f = _G.InspectFrame
+    if type(f) == "table" and f.IsShown and f:IsShown() == true then return end
+    Safe(ClearInspectPlayer)
+end
+
 local function After(seconds, fn)
     if C_Timer and C_Timer.After then
         if pcall(C_Timer.After, seconds, fn) then return end
@@ -240,7 +247,7 @@ NextUnit = function()
     if not item then
         running   = false
         lastRunAt = time()
-        Safe(ClearInspectPlayer)
+        ClearInspect()
         RefreshIfVisible()
         return
     end
@@ -277,7 +284,7 @@ NextUnit = function()
 
     currentGuid = Safe(UnitGUID, unit)
 
-    Safe(ClearInspectPlayer)
+    ClearInspect()
     Safe(NotifyInspect, unit)
 
     runToken = runToken + 1

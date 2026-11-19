@@ -174,8 +174,16 @@ local function OwnIlvl()
 end
 
 local asking, askedAt = nil, 0
+-- 1.0.7.64 (Bild: "Betrachten zeigt nicht, was der Spieler anhat"): das
+-- Betrachten-Fenster des Spielers hat Vorrang - solange es offen ist, wird
+-- weder gefragt noch die Antwort geloescht (ClearInspectPlayer leerte die
+-- Plaetze im offenen Fenster).
+function GT.InspectOpen()
+    local f = _G.InspectFrame
+    return type(f) == "table" and f.IsShown and K.Bool(f:IsShown(), false) or false
+end
 function GT.Next()
-    if K.InCombat() or asking and (_G.GetTime() - askedAt) < 2 then return end
+    if K.InCombat() or GT.InspectOpen() or asking and (_G.GetTime() - askedAt) < 2 then return end
     asking = nil
     for i = #GT.queue, 1, -1 do
         local u = table.remove(GT.queue, i)
@@ -188,7 +196,10 @@ function GT.Next()
     end
 end
 function GT.OnInspect(guid)
-    if type(guid) ~= "string" then return end
+    guid = K.Plain(guid)
+    -- Nur die eigene Frage - die Antwort auf das Betrachten des Spielers
+    -- gehoert dem Fenster.
+    if type(guid) ~= "string" or guid ~= asking then return end
     for _, u in ipairs(GT.Members()) do
         if _G.UnitGUID and K.Plain(_G.UnitGUID(u)) == guid then
             local pd = _G.C_PaperDollInfo
@@ -196,8 +207,8 @@ function GT.OnInspect(guid)
             if type(v) == "number" and v > 0 then GT.ilvl[guid] = v end
         end
     end
-    if guid == asking then asking = nil end
-    if _G.ClearInspectPlayer then pcall(_G.ClearInspectPlayer) end
+    asking = nil
+    if _G.ClearInspectPlayer and not GT.InspectOpen() then pcall(_G.ClearInspectPlayer) end
     GT.Paint()
     GT.Next()
 end

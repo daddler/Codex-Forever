@@ -27005,6 +27005,21 @@ do
     Check(ok, "Design Konsole" .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 1.0.7.64: Betrachten - fremde Antworten und offenes Fenster nie geleert.
+do
+    local G = _G
+    local ok, err = pcall(function()
+        local GT = WeintCodex.UIGroupTools
+        assert(GT and GT.OnInspect and GT.InspectOpen, "Gruppenwerkzeug fehlt")
+        local cleared, oC = 0, G.ClearInspectPlayer
+        G.ClearInspectPlayer = function() cleared = cleared + 1 end
+        GT.OnInspect("Player-1-00000001")
+        assert(cleared == 0, "Antwort auf das Betrachten des Spielers geloescht")
+        G.ClearInspectPlayer = oC
+    end)
+    Check(ok, "Betrachten: Ausruestung im Fenster bleibt" .. (ok and "" or (": " .. tostring(err))))
+end
+
 -- 1.0.7.63: Buffzeiten je Buff - Vorwarnung mit Ton, einmal je Wirken, ausblendbar.
 do
     local ok, err = pcall(function()

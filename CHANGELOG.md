@@ -9,6 +9,16 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.0.7.64] – 2026-11-19
+
+### Behoben
+- Betrachten: `GT.OnInspect` (Gruppenwerkzeug) rief bei JEDEM
+  `INSPECT_READY` `ClearInspectPlayer()` – auch auf die Antwort zum
+  Betrachten des Spielers; die Plätze im offenen `InspectFrame` blieben leer.
+  Jetzt nur die eigene Frage (`asking`), nie bei offenem Fenster; `GT.Next`
+  fragt nicht, solange es offen ist. Dasselbe für Segen verteilen
+  (`PB.OnInspect`) und den Gruppencheck (`ClearInspect`).
+
 ## [1.0.7.63] – 2026-11-19
 
 ### Neu
