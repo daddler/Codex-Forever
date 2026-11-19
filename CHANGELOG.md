@@ -42,6 +42,8 @@ nicht zusammen.
 - Flugspiele: „Paare“ (`FG.P`, 20 Karten, 10 Paare aus Zaubersymbolen) und
   „Runenfolge“ (`FG.R`, Folge nachklicken, je Runde +1); Codes `p`/`f` in
   `WCFG`; Fenster 620 hoch, Karten 72, Reiter der Bestenliste 72 breit.
+- Berufe · Gilde: Suchfeld verlor nach jedem Buchstaben den Fokus (`PT.Draw`
+  versteckt die Seite kurz); danach `SetFocus` + Zeiger ans Ende.
 - `ui/petstable.lua`: `PetStableFrame` in Gold (W.WINDOWS + CalmParts,
   Bilder gemessen mit `/wcui fenster`).
 

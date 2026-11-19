@@ -1361,7 +1361,12 @@ local function SearchBox(f)
     eb:SetScript("OnTextChanged", function(self, user)
         if not user then return end
         PT.bookQuery = self:GetText() or ""
+        -- 1.0.8.0 (Meldung: "nach dem ersten Buchstaben ist die Eingabe
+        -- weg"): PT.Draw versteckt kurz die ganze Seite - ein verstecktes
+        -- Feld verliert den Fokus. Danach zurueck ins Feld, Zeiger ans Ende.
         PT.Draw("gilde")
+        if self.SetFocus then self:SetFocus() end
+        if self.SetCursorPosition then pcall(self.SetCursorPosition, self, #(self:GetText() or "")) end
     end)
     eb:SetScript("OnEscapePressed", function(self) self:ClearFocus() end)
     bookSearch = eb
