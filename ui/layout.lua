@@ -77,6 +77,10 @@ K.LAYOUT = {
     bufftimes       = { point = "BOTTOM",      relPoint = "BOTTOM", x = 0, y = 432 },
     -- Beschwoerungen mit Laufzeit (Falken), eigene Reihe darueber
     summontimes     = { point = "BOTTOM",      relPoint = "BOTTOM", x = 0, y = 470 },
+    -- 1.0.8.0 (ui/combataids.lua): letzte eigene Zauber, ueber den
+    -- Beschwoerungen; Heiler unter Kontrolle oben mittig.
+    spellhistory    = { point = "BOTTOM",      relPoint = "BOTTOM", x = 0, y = 508 },
+    healercc        = { point = "TOP",         relPoint = "TOP",    x = 0, y = -150 },
     -- Eigener Abklingzeitmanager (ui/owncooldowns.lua): dort, wo sonst die
     -- Reihen des Spiels stehen (die sind bei "WeintCodex" aus) - Wichtig
     -- unten, darueber Weitere, darueber die Buffs.

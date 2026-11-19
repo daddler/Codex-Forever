@@ -27005,6 +27005,64 @@ do
     Check(ok, "Design Konsole" .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 1.0.8.0: Debuffs nie zeigen - Nummern sofort, Namen gelernt, auch im Kampf.
+do
+    local G = _G
+    local ok, err = pcall(function()
+        local UF = WeintCodex.UIUnitFrames
+        assert(UF and UF.NeverSet and UF.LearnNever, "Debuff-Filter fehlt")
+        assert(UF.NeverSet() == nil, "leere Liste filtert")
+        K.Set("unitframes", "debuffNever", "1234, Schwäche der Seele")
+        local a = UF.NeverSet()
+        assert(a and a[1234] and UF.NeverSet() == a, "Nummer nicht gefiltert oder Tabelle neu")
+        local oUA = G.C_UnitAuras
+        G.C_UnitAuras = { GetAuraDataByIndex = function(_, i)
+            if i == 1 then return { name = "Schwäche der Seele", spellId = 6788 } end
+        end }
+        assert(UF.LearnNever("target"), "Name nicht gelernt")
+        local b = UF.NeverSet()
+        assert(b and b[6788] and b[1234] and b ~= a, "Gelerntes nicht im Filter")
+        G.C_UnitAuras = oUA
+        K.Set("unitframes", "debuffNever", "")
+        assert(UF.NeverSet() == nil, "Filter bleibt nach Leeren")
+    end)
+    Check(ok, "Debuffs nie zeigen: Nummern, gelernte Namen" .. (ok and "" or (": " .. tostring(err))))
+end
+
+-- 1.0.8.0: Kampfhilfen - Zauberverlauf, Heiler unter Kontrolle, Gegner.
+do
+    local G = _G
+    local ok, err = pcall(function()
+        local CA = WeintCodex.UICombatAids
+        assert(CA and CA.Push and CA.ControlOf and CA.OnEnemyCast, "Kampfhilfen fehlen")
+        for k in pairs(CA.DEFAULTS) do
+            if k ~= "caHistoryCount" and k ~= "caHealerSound" then
+                assert(K.Get("comfort", k) == false, "ab Werk an: " .. k)
+            end
+        end
+        assert(not CA.Push(6603, 1), "Angriff im Verlauf")
+        assert(CA.Push(133, 1) and CA.Push(116, 2), "Zauber nicht im Verlauf")
+        assert(CA.Entry(1).id == 116 and CA.Entry(2).id == 133, "Reihenfolge falsch")
+        local oUA = G.C_UnitAuras
+        G.C_UnitAuras = { GetAuraDataByIndex = function(_, i)
+            if i == 1 then return { spellId = 1234 } elseif i == 2 then return { spellId = 118, expirationTime = 50, icon = 1 } end
+        end }
+        local id, ends = CA.ControlOf("party1")
+        assert(id == 118 and ends == 50, "Verwandlung nicht erkannt")
+        G.C_UnitAuras = { GetAuraDataByIndex = function() return { spellId = 1234 } end }
+        assert(CA.ControlOf("party1") == nil, "Kontrolle geraten")
+        G.C_UnitAuras = oUA
+        assert(CA.SpecName("WARRIOR", 1) == "Waffen" and CA.SpecName("WARRIOR", 3) == "Schutz", "Baumnamen falsch")
+        assert(CA.OnEnemyCast("player", 642) == nil, "eigener Zauber als Gegner")
+        CA.ApplyHide(false)
+        local found = { helfer = false, pvp = false }
+        local m = K.Module("comfort")
+        for _, p in ipairs(m.pages) do if found[p.key] ~= nil then found[p.key] = true end end
+        assert(found.helfer and found.pvp, "Seiten fehlen")
+    end)
+    Check(ok, "Kampfhilfen: Verlauf, Heiler unter Kontrolle, Gegner" .. (ok and "" or (": " .. tostring(err))))
+end
+
 -- 1.0.8.0: Verweise zu Codex an Fenstern des Spiels.
 do
     local G = _G

@@ -380,6 +380,7 @@ ui/bossmod.lua
 # Messdaten der Bosskaempfe still teilen (1.10.13.0, auf Wunsch)
 ui/bossshare.lua
 ui/pvpframes.lua
+ui/combataids.lua
 # Glitzern: Questgegenstaende, Kraeuter und Erz (6.29.0.0, Komfort; Verhalten von ForeverLootSparkles, eigener Code).
 ui/sparkles.lua
 ui/selftext.lua

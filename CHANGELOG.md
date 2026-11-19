@@ -29,6 +29,16 @@ nicht zusammen.
   → Berufe, `InspectFrame` (nur in einer Gruppe) → Gruppencheck,
   `LootFrame` beim Angeln (`IsFishingLoot`) → Feldbuch. Knöpfe je Eintrag
   (ein Fenster kann mehrere tragen, `belowleft`).
+- `ui/combataids.lua` (nach „All in One“, nur Verhalten): Zauberverlauf
+  (Ring aus festen Einträgen, Mover `spellhistory`), Heiler unter Kontrolle
+  (Gruppenrolle HEALER, `CA.CC` Classic-IDs, Leiste `healercc`), große
+  Abklingzeiten gegnerischer Spieler (`CA.BIG`, Classic), Talentbaum an der
+  Plakette (Name des Zaubers gegen einrangige Talente aus
+  `data/talenttrees.lua`, Baumname aus `data/specs.lua`), Questliste/Chat im
+  Kampf durchsichtig. Einstellungen auf „Helfer“ und „PvP“, alles ab Werk aus.
+- Einheitenrahmen: `debuffNever` – Debuffs nie zeigen (Nummern sofort,
+  Namen außerhalb des Kampfes gelernt, `ui.debuffIds`; `excludeSpellIDs` des
+  Behälters, gilt auch im Kampf).
 - `ui/petstable.lua`: `PetStableFrame` in Gold (W.WINDOWS + CalmParts,
   Bilder gemessen mit `/wcui fenster`).
 

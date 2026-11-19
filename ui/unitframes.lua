@@ -102,6 +102,9 @@ local defaults = {
     targetAuraGap    = 3,
     auraSize      = 20,
     onlyOwnDebuffs = false,
+    -- 1.0.8.0 (Debuff-Filter mit eigener Liste, nach "All in One"): Namen
+    -- oder Nummern, getrennt durch Komma - diese Debuffs nie zeigen.
+    debuffNever    = "",
     classBadge     = true,    -- Elite/selten/Boss an Ziel und Fokus (6.27.0.0)
     -- 6.30.20.0 (Beta-Test: "das Dunkelblau auf Schwarz ist schwer zu
     -- erkennen"): Farbe der Kraftleisten - wie im Spiel, heller, eigene.
@@ -1383,12 +1386,12 @@ function Frame:LayoutAuras()
     local pt, rel, sign = UF.AuraAnchor()
     local debuffFilter = Opt("onlyOwnDebuffs") and "HARMFUL|PLAYER" or "HARMFUL"
     local rows = {
-        { self._auras.HARMFUL, debuffFilter, y0 },
+        { self._auras.HARMFUL, debuffFilter, y0, UF.NeverSet() },
         { self._auras.HELPFUL, "HELPFUL", y0 + size + 3 },
     }
     for _, r in ipairs(rows) do
         local obj = r[1]
-        obj:ApplyLayout({ filter = r[2], max = 8, size = size, spacing = 3,
+        obj:ApplyLayout({ filter = r[2], exclude = r[4], max = 8, size = size, spacing = 3,
             anchor = pt, growth = right and "LEFT" or "RIGHT", growthV = sign > 0 and "UP" or "DOWN",
             perRow = 8, timer = true })
         obj:ClearAllPoints()
@@ -1396,7 +1399,86 @@ function Frame:LayoutAuras()
     end
 end
 
+-- DEBUFFS NIE ZEIGEN (1.0.8.0). Der Behaelter des Spiels schliesst Zauber
+-- nur ueber ihre Nummer aus (excludeSpellIDs) - das gilt dann auch im
+-- Kampf. Nummern aus der Liste gelten sofort; Namen lernt WeintCodex,
+-- sobald ein Debuff mit diesem Namen ausserhalb des Kampfes lesbar auf einer
+-- Einheit liegt (gemerkt kontoweit in ui.debuffIds). Eine Tabelle, die nur
+-- neu entsteht, wenn sich Liste oder Gelerntes aendert (ApplyLayout
+-- vergleicht die Tabelle selbst).
+local neverKey, neverSet = nil, nil
+local function Empty(t) for _ in pairs(t) do return false end return true end
+local function Learned()
+    local root = K.Root()
+    if not root then return nil end
+    root.debuffIds = root.debuffIds or {}
+    return root.debuffIds
+end
+function UF.NeverNames()
+    local out = {}
+    for tok in tostring(Opt("debuffNever") or ""):gmatch("[^,;]+") do
+        tok = tok:match("^%s*(.-)%s*$")
+        if tok ~= "" then out[#out + 1] = tok end
+    end
+    return out
+end
+function UF.NeverSet()
+    local names = UF.NeverNames()
+    if #names == 0 then neverKey, neverSet = nil, nil return nil end
+    local learned = Learned() or {}
+    local parts = {}
+    for _, n in ipairs(names) do
+        local id = tonumber(n)
+        if id then parts[#parts + 1] = n
+        else
+            local key = WeintCodex.Search and WeintCodex.Search.Fold and WeintCodex.Search.Fold(n) or n:lower()
+            for sid in pairs(learned[key] or {}) do parts[#parts + 1] = tostring(sid) end
+        end
+    end
+    table.sort(parts)
+    local key = table.concat(parts, ",")
+    if key ~= neverKey then
+        neverKey = key
+        neverSet = {}
+        for _, p in ipairs(parts) do neverSet[tonumber(p)] = true end
+        if Empty(neverSet) then neverSet = nil end
+    end
+    return neverSet
+end
+-- Ausserhalb des Kampfes: Namen der Liste auf einer Einheit lernen.
+-- true, wenn etwas Neues gelernt wurde.
+function UF.LearnNever(unit)
+    if K.InCombat() then return false end
+    local names = UF.NeverNames()
+    if #names == 0 then return false end
+    local want = {}
+    for _, n in ipairs(names) do
+        if not tonumber(n) then
+            want[WeintCodex.Search and WeintCodex.Search.Fold and WeintCodex.Search.Fold(n) or n:lower()] = true
+        end
+    end
+    if Empty(want) then return false end
+    local cu = _G.C_UnitAuras
+    if not (cu and cu.GetAuraDataByIndex) then return false end
+    local learned, new = Learned(), false
+    if not learned then return false end
+    for i = 1, 40 do
+        local ok, a = pcall(cu.GetAuraDataByIndex, unit, i, "HARMFUL")
+        if not ok or type(a) ~= "table" then break end
+        local name, sid = K.Plain(a.name), K.Plain(a.spellId)
+        if type(name) == "string" and type(sid) == "number" then
+            local key = WeintCodex.Search and WeintCodex.Search.Fold and WeintCodex.Search.Fold(name) or name:lower()
+            if want[key] then
+                learned[key] = learned[key] or {}
+                if not learned[key][sid] then learned[key][sid] = true new = true end
+            end
+        end
+    end
+    return new
+end
+
 function Frame:UpdateAuras()
+    if self.unit and UF.LearnNever(self.unit) then self:LayoutAuras() end
     local on = Opt("targetAuras") and true or false
     local game = UseGameAuras()
     for _, obj in pairs(self._auras) do
@@ -2120,6 +2202,9 @@ local function UnitPage(u)
                         { value = "above", text = "Über dem Rahmen" },
                         { value = "below", text = "Unter dem Rahmen" } },
                     tooltip = "Unter dem Rahmen stehen die Symbole unter dem Platz des Zauberbalkens." },
+                  { type = "empty" })
+            B:Row({ type = "input", label = "Diese Debuffs nie zeigen", key = "debuffNever", disabled = notOwn,
+                    description = "Namen oder Nummern, mit Komma getrennt. Ein Name gilt, sobald WeintCodex den Debuff einmal außerhalb des Kampfes gesehen hat – danach auch im Kampf." },
                   { type = "empty" })
             B:Row({ type = "toggle", label = "Nur eigene Debuffs", key = "onlyOwnDebuffs",
                     disabled = notOwn },
