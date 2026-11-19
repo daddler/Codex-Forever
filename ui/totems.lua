@@ -49,7 +49,15 @@ function TT.Info(slot)
     return true, K.Plain(name), finish, K.Plain(icon)
 end
 
+-- 1.0.7.62 (Meldung: "die Totems klappen im Kampf immer noch nicht"):
+-- PLAYER_REGEN_DISABLED kommt VOR der Sperre. Dort wurden alle Plaetze
+-- gezeigt - und gleich danach versteckte TT.Update die leeren wieder
+-- (InCombatLockdown war noch falsch). Im Kampf gesetzt, blieb ein Totem
+-- damit unsichtbar: zeigen darf man den Knopf in der Sperre nicht. Ab dem
+-- Ereignis zaehlt der Kampf schon als gesperrt.
+TT.combat = false
 local function Locked()
+    if TT.combat then return true end
     return _G.InCombatLockdown and _G.InCombatLockdown() and true or false
 end
 
@@ -208,6 +216,9 @@ function TT.Enable()
         if event == "PLAYER_REGEN_DISABLED" then
             -- Gleich gesperrt: alle Plaetze stehen, leere unsichtbar.
             for _, b in ipairs(buttons) do b:Show() end
+            TT.combat = true
+        elseif event == "PLAYER_REGEN_ENABLED" then
+            TT.combat = false
         end
         TT.Update()
     end))

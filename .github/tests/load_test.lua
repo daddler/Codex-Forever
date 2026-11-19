@@ -21419,6 +21419,16 @@ do
         G.issecretvalue = nil
         G.GetTotemInfo = function() return true, "x", 1, 2, 3 end
         assert(not TT.Secret(b), "offener Wert als geheim behandelt")
+        -- 1.0.7.62: zwischen Kampfbeginn und Sperre wird ein leerer Platz
+        -- nicht versteckt (sonst kann ein Totem im Kampf nicht erscheinen).
+        local hidden = false
+        b.SetShown = function(_, on) if not on then hidden = true end end
+        TT.combat = true
+        TT.Visible(b, false)
+        assert(not hidden, "leerer Platz zu Kampfbeginn versteckt")
+        TT.combat = false
+        TT.Visible(b, false)
+        assert(hidden, "leerer Platz ausserhalb des Kampfes nicht versteckt")
         G.GetTotemInfo, G.issecretvalue = oT, oS
     end)
     Check(ok, "Totems im Kampf: geheime Werte ans Spiel, Knopf bleibt da" .. (ok and "" or (": " .. tostring(err))))

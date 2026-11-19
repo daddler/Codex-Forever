@@ -9,6 +9,14 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.0.7.62] – 2026-11-19
+
+### Behoben
+- Totems: `PLAYER_REGEN_DISABLED` zeigte alle Plätze, das folgende
+  `TT.Update` versteckte die leeren sofort wieder (Sperre noch nicht aktiv) –
+  ein im Kampf gesetztes Totem konnte nicht erscheinen. `TT.combat` gilt ab
+  dem Ereignis als gesperrt.
+
 ## [1.0.7.61] – 2026-11-19
 
 ### Neu

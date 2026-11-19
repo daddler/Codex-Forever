@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.0.7.62",
+        date    = "19.11.2026",
+        notes   = {
+            "|cff7C6CFFTotems im Kampf, wirklich|r – ein Totem, das du im Kampf setzt, erscheint jetzt unter dem Spielerrahmen. Die leeren Plätze verschwanden bisher genau beim Kampfbeginn.",
+        },
+    },
+    {
         version = "1.0.7.61",
         date    = "19.11.2026",
         notes   = {
