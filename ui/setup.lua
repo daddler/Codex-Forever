@@ -1065,6 +1065,9 @@ function ES.LookMismatch()
 end
 function ES.CheckLook()
     if lookTold or not K.UIEnabled() or K.InCombat() or not ES.LookMismatch() then return false end
+    -- 1.0.7.61: der gefuehrte Designwechsel (ui/lookswitch.lua) ist dran.
+    local LSw = WeintCodex.UILookSwitch
+    if LSw and LSw.Busy and LSw.Busy() then return false end
     lookTold = true
     if ES.HasLayout() == true and ES.ActivateExisting() then
         Say("Design gewechselt – Layout „" .. ES.LayoutName() .. "“ aktiviert.")

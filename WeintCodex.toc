@@ -2,7 +2,7 @@
 ## Title: |cff7C6CFFWeintCodex|r
 ## Notes: Raid Guide & Intelligence System — Forever Edition
 ## Author: Fabian
-## Version: 1.0.7.60
+## Version: 1.0.7.61
 ## SavedVariables: WeintCodex_SavedData, WeintCompanionDB, WeintCompanionInboxDB, WeintCodex_WhispersAccount
 ## SavedVariablesPerCharacter: WeintCodex_Whispers, WeintCodex_Backup
 
@@ -467,4 +467,5 @@ ui/selfcheck.lua
 # Zuletzt, weil sie auf das Fenster und die Einstellungsseite verweist.
 ui/welcome.lua
 ui/setup.lua
+ui/lookswitch.lua
 ui/barmover.lua

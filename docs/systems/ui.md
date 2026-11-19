@@ -87,6 +87,29 @@ Bewusst **nicht** über das Profil: die Spieleinstellungen, die die Seiten
 die Schalter des Spiels selbst, nur an anderer Stelle – wie im Spielmenü
 gelten sie auch ohne Oberfläche.
 
+### Design wechseln mit Führung *(1.0.7.61, `ui/lookswitch.lua`)*
+
+Ein Design mit eigener Anordnung (heute nur „Konsole“, `K.LOOK_LAYOUT`)
+verlangt mehr als ein Neuladen: gespeicherte Plätze (`profile.positions`)
+schlagen die Plätze des Designs, eigene Größen von Spieler/Ziel schlagen die
+der Konsole, ein ausgeschaltetes Modul hinterlässt Lücken (leerer Ring ohne
+Minikarte, Erfahrungsbalken des Spiels), und das Layout im
+Bearbeitungsmodus fehlt. Gemeldet von einer Spielerin, die von Schwarz auf
+Konsole wechselte.
+
+Darum öffnet die Wahl im Dropdown (oder ein Neuladen mit anderem Design als
+zuletzt eingerichtet, `ui.lookSwitch[Char].look`) einen Dialog mit drei
+Wegen: **eigenes Profil** (Kopie; das laufende behält sein Design und ist
+der Weg zurück), **dieses Profil** umstellen, oder **zurück** zum Profil von
+vorher (`back`; dessen Layout wird nur aktiv geschaltet, nie neu gebaut).
+Ein Klick bereitet vor (`LS.Prepare`: Plätze beider Designs frei, Module
+an, Erfahrungsbalken an und den des Spiels aus, Größen ab Werk), richtet das
+Layout im Zielprofil ein (`ES.Apply`) und lädt neu. Danach prüft
+`LS.Check` sichtbar: Layout aktiv, Module laufen, Minikarte (Konsole: Mitte
+unten), Balken des Spiels aus, Spielerrahmen da – mit „Noch einmal
+einrichten“. Ein Ergebnis, das der Client nicht hergibt, ist ein ✗, nie ein
+stilles ✓.
+
 ## Zwei Arten von Modulen
 
 | Gruppe | Module | Hängt am Hauptschalter? | Umschalten |

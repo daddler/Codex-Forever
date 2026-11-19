@@ -26995,6 +26995,38 @@ do
     Check(ok, "Design Konsole" .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 1.0.7.61: gefuehrter Designwechsel - Plaetze frei, Module an, Dialog, Pruefung.
+do
+    local ok, err = pcall(function()
+        local LS = WeintCodex.UILookSwitch
+        assert(LS and LS.Prepare and LS.Run and LS.Check, "Designwechsel fehlt")
+        local keys = LS.PlaceKeys("konsole")
+        assert(#keys > 10, "zu wenige Plaetze der Konsole")
+        local p = { modules = { unitframes = { player_width = 260, player_height = 40 },
+                                actionbars = { xpEnabled = false }, minimap = { enabled = false } },
+                    positions = { uf_player = { point = "CENTER", x = 1, y = 2 }, xpbar = { point = "TOP" },
+                                  damagemeter = { point = "TOPLEFT" } } }
+        local done, freed = LS.Prepare(p, "schwarz", "konsole")
+        assert(done and freed == 2, "Plaetze nicht freigegeben")
+        assert(p.positions.damagemeter, "fremder Platz geloescht")
+        assert(p.modules.general.look == "konsole", "Design nicht gesetzt")
+        assert(p.modules.minimap.enabled == true and p.modules.actionbars.xpEnabled == true
+            and p.modules.actionbars.xpHideGame == true, "noetige Teile nicht an")
+        assert(p.modules.unitframes.player_width == nil and p.modules.unitframes.player_height == nil,
+            "eigene Groessen schlagen die Konsole")
+        local rows = LS.Check("konsole")
+        assert(#rows >= 6, "Pruefung zu kurz")
+        local en = K.UIEnabled
+        K.UIEnabled = function() return true end
+        local f = LS.Ask("schwarz", "konsole")
+        assert(f and #LS.buttons >= 3, "Dialog ohne Wahl")
+        LS.ShowResult("konsole")
+        f:Hide()
+        K.UIEnabled = en
+    end)
+    Check(ok, "Designwechsel gefuehrt" .. (ok and "" or (": " .. tostring(err))))
+end
+
 -- 1.0.7.44: stiller Berufslink - Besitzer erkannt, Ersatz ohne Fenster.
 do
     local ok, err = pcall(function()

@@ -9,6 +9,22 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.0.7.61] – 2026-11-19
+
+### Neu
+- `ui/lookswitch.lua`: geführter Designwechsel. Auslöser: Wahl von
+  `general.look` mit Wechsel der Anordnung, oder Neuladen mit anderem Design
+  als zuletzt eingerichtet (`ui.lookSwitch[Char].look`). Wahl: eigenes Profil
+  (Kopie, bisheriges behält sein Design), dieses Profil, oder zurück zum
+  vorherigen Profil (`back`). `LS.Prepare`: Plätze aus `K.LOOK_LAYOUT`/
+  `K.LOOK_SHIFT` beider Designs frei, Einheitenrahmen/Aktionsleisten/
+  Minikarte an, Erfahrungsbalken an + Spielbalken aus, Größen von Spieler/
+  Ziel ab Werk; dann `ES.Apply` im Zielprofil (zurück: nur
+  `ES.ActivateExisting`) und Neuladen in einem Klick. Nach dem Laden
+  `LS.Check`: Layout aktiv, Module laufen, Minikarte (Konsole: Mitte unten),
+  Spielbalken aus, Spielerrahmen sichtbar – mit „Noch einmal einrichten“.
+- `ES.CheckLook` schweigt, solange der Dialog offen ist.
+
 ## [1.0.7.60] – 2026-11-18
 
 ### Behoben
