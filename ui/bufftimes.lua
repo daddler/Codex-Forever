@@ -163,6 +163,34 @@ BT.CLASSES = {
     },
 }
 
+-- 1.0.7.63 (Wunsch eines Kriegers: "Schlachtruf individuell einstellen,
+-- z. B. mit Toenen"): je Gruppe zeigen ja/nein, Vorwarnung vor dem Ablauf
+-- (Sekunden, 0 = beim Ablauf), Ton aus der Liste von "Raus da!" und eine
+-- grosse Meldung auf dem Bildschirm. Schluessel bt_<Gruppe>_<was> im Modul
+-- "reminders"; ab Werk alles wie bisher (zeigen, still).
+BT.GROUP_DEFAULTS = { show = true, warn = 0, snd = "none", big = false }
+function BT.GroupKey(g, what) return "bt_" .. g.key .. "_" .. what end
+do
+    local m = K.modules and K.modules[KEY]
+    if m and m.defaults then
+        for _, list in pairs(BT.CLASSES) do
+            for _, g in ipairs(list) do
+                for what, v in pairs(BT.GROUP_DEFAULTS) do
+                    if m.defaults[BT.GroupKey(g, what)] == nil then m.defaults[BT.GroupKey(g, what)] = v end
+                end
+            end
+        end
+    end
+end
+local function GOpt(g, what)
+    local v = K.Get(KEY, BT.GroupKey(g, what))
+    if v == nil then v = BT.GROUP_DEFAULTS[what] end
+    return v
+end
+BT.GOpt = GOpt
+-- Hat die Gruppe eine Uhr (feste Dauer)?
+function BT.Timed(g) return g.duration ~= nil and not g.variable end
+
 -- 6.87.0.0: Zauber, die kein Lehrer lehrt (angeboren oder aus Klassen-
 -- quests) - Classic-IDs, Art `classic`. Ohne sie fehlte dem Paladin auf
 -- Stufe 1 sein einziges Siegel, dem Krieger jede Haltung.
@@ -330,6 +358,7 @@ function BT.OnCast(spellID, now, fighting)
         cur.earlier = old
     end
     cur.spell, cur.start = spellID, now
+    cur.warned = nil
     cur.duration = (not g.variable) and g.duration or nil
     BT.active[g.key] = cur
     BT.last[g.key] = spellID
@@ -474,7 +503,8 @@ function BT.Entries(now, fighting, showMissing, sample, own)
     now = now or Now()
     for _, g in ipairs(BT.Groups()) do
       -- 1.0.7.0: Beschwoerungen (Falken) nur mit Schalter summonTimes (ab Werk aus).
-      if (g.ownRow and true or false) == (own and true or false) and (not g.ownRow or sample or Opt("summonTimes")) then
+      if (g.ownRow and true or false) == (own and true or false) and (not g.ownRow or sample or Opt("summonTimes"))
+         and (sample or GOpt(g, "show") ~= false) then
         local left = BT.Remaining(g.key, now)
         local a = BT.active[g.key]
         if a then
@@ -611,6 +641,40 @@ function BT.Update()
     if row2 then Draw(row2, true) end
 end
 
+-- Vorwarnung je Gruppe: einmal je Wirken, wenn die Restzeit die Schwelle
+-- erreicht (0 = beim Ablauf). Gibt die Zahl der Meldungen zurueck.
+function BT.Alert(g, left)
+    local snd = GOpt(g, "snd")
+    local FA = WeintCodex.UIFireAlarm
+    if type(snd) == "string" and snd ~= "none" and FA and FA.PlayKey then pcall(FA.PlayKey, snd, "Master") end
+    if GOpt(g, "big") and _G.RaidNotice_AddMessage and _G.RaidWarningFrame then
+        local text = (left and left >= 1) and (g.label .. " läuft in " .. math.ceil(left) .. " s ab")
+            or (g.label .. " ist abgelaufen")
+        local col = C.warning
+        pcall(_G.RaidNotice_AddMessage, _G.RaidWarningFrame, text, { r = col[1], g = col[2], b = col[3] })
+    end
+end
+function BT.CheckAlerts(now)
+    now = now or Now()
+    local n = 0
+    for _, g in ipairs(BT.Groups()) do
+        local a = BT.active[g.key]
+        if a and a.duration and BT.Timed(g) and GOpt(g, "show") ~= false
+           and (GOpt(g, "snd") ~= "none" or GOpt(g, "big")) then
+            local left = a.start + a.duration - now
+            local at = tonumber(GOpt(g, "warn")) or 0
+            if left > at + 1 then
+                a.warned = nil
+            elseif not a.warned and left <= at then
+                a.warned = true
+                BT.Alert(g, left)
+                n = n + 1
+            end
+        end
+    end
+    return n
+end
+
 -- Ein ruhiger Takt (eine Sekunde): Ablauf und Abgleich. Keine Tabelle,
 -- keine Closure je Lauf.
 local acc = 0
@@ -620,6 +684,7 @@ local function Tick(_, el)
     acc = 0
     -- 1.0.5.68: laeuft dabei ein Buff ab, die Erinnerungen gleich neu
     -- pruefen - im Kampf kommt sonst kein Ereignis, das es taete.
+    BT.CheckAlerts()
     local before = 0
     for _ in pairs(BT.active) do before = before + 1 end
     BT.Expire()
@@ -713,4 +778,29 @@ function BT.BuildPage(B)
           { type = "toggle", label = "Beschwörungen (Falken)", key = "summonTimes",
             description = "Jäger: jeder Falke mit seinen Sekunden, in eigener Reihe („Beschwörungen“ im Gestaltungsmodus)." })
     B:Note("Verschieben im Gestaltungsmodus. Dauer unbekannt (Zerhäckseln): „läuft“ ohne Uhr; ohne Dauer (Aspekt, Gestalt): „an“.")
+    -- Je Buff der eigenen Klasse (1.0.7.63).
+    local class = BT.class
+    if not class and _G.UnitClass then
+        local _, c = _G.UnitClass("player")
+        class = K.Plain(c)
+    end
+    local list = BT.Groups(class)
+    if #list == 0 then return end
+    B:Section("Je Buff", "Für jeden Buff deiner Klasse einzeln: zeigen, wann gewarnt wird, mit welchem Ton (Liste von „Raus da!“) und ob groß auf dem Bildschirm.")
+    local FA = WeintCodex.UIFireAlarm
+    local sounds = FA and FA.Items and FA.Items(true) or { { value = "none", text = "Kein Ton" } }
+    for _, g in ipairs(list) do
+        local function off() return Opt("castTimes") == false or GOpt(g, "show") == false end
+        if BT.Timed(g) then
+            B:Row({ type = "toggle", label = g.label .. " zeigen", key = BT.GroupKey(g, "show") },
+                  { type = "slider", label = "Warnen vor Ablauf", key = BT.GroupKey(g, "warn"),
+                    min = 0, max = 60, step = 5, disabled = off,
+                    format = function(v) return v == 0 and "beim Ablauf" or string.format("%d s vorher", v) end })
+            B:Row({ type = "dropdown", label = "Ton", key = BT.GroupKey(g, "snd"), items = sounds, disabled = off },
+                  { type = "toggle", label = "Groß auf dem Bildschirm", key = BT.GroupKey(g, "big"), disabled = off })
+        else
+            B:Row({ type = "toggle", label = g.label .. " zeigen", key = BT.GroupKey(g, "show"),
+                    description = "Ohne feste Dauer – keine Warnung vor dem Ablauf." })
+        end
+    end
 end

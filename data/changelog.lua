@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.0.7.63",
+        date    = "19.11.2026",
+        notes   = {
+            "|cff7C6CFFBuffzeiten je Buff einstellen|r – Schlachtruf, Siegel, Rüstungen und Co. lassen sich einzeln ausblenden, vor dem Ablauf ankündigen (beim Ablauf oder bis 60 s vorher), mit einem Ton aus der Liste von „Raus da!“ und auf Wunsch groß auf dem Bildschirm. Zu finden unter Komfort → Erinnerungen → Buffzeiten.",
+        },
+    },
+    {
         version = "1.0.7.62",
         date    = "19.11.2026",
         notes   = {

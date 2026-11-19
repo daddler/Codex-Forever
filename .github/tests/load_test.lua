@@ -27005,6 +27005,37 @@ do
     Check(ok, "Design Konsole" .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 1.0.7.63: Buffzeiten je Buff - Vorwarnung mit Ton, einmal je Wirken, ausblendbar.
+do
+    local ok, err = pcall(function()
+        local BT = WeintCodex.UIBuffTimes
+        local keep = BT.class
+        BT.SetClass("WARRIOR")
+        local shout
+        for _, g in ipairs(BT.Groups()) do if g.key == "shout" then shout = g end end
+        assert(shout and BT.Timed(shout), "Schlachtruf ohne Uhr")
+        assert(K.Get("reminders", BT.GroupKey(shout, "show")) == true, "Standard fehlt")
+        local FA = WeintCodex.UIFireAlarm
+        local played, oP = 0, FA.PlayKey
+        FA.PlayKey = function() played = played + 1 return 0 end
+        K.Set("reminders", BT.GroupKey(shout, "warn"), 30)
+        K.Set("reminders", BT.GroupKey(shout, "snd"), "alarm")
+        BT.active.shout = { spell = 6673, start = 0, duration = 180 }
+        assert(BT.CheckAlerts(100) == 0, "zu frueh gewarnt")
+        assert(BT.CheckAlerts(155) == 1 and played == 1, "Vorwarnung fehlt")
+        assert(BT.CheckAlerts(160) == 0, "doppelt gewarnt")
+        K.Set("reminders", BT.GroupKey(shout, "show"), false)
+        local seen = false
+        for _, e in ipairs(BT.Entries(160, false, false, false, false)) do if e.group == shout then seen = true end end
+        assert(not seen, "ausgeblendeter Buff gezeigt")
+        for _, w in ipairs({ "show", "warn", "snd" }) do K.Set("reminders", BT.GroupKey(shout, w), nil) end
+        BT.active.shout = nil
+        FA.PlayKey = oP
+        BT.SetClass(keep)
+    end)
+    Check(ok, "Buffzeiten je Buff: Vorwarnung, Ton, ausblenden" .. (ok and "" or (": " .. tostring(err))))
+end
+
 -- 1.0.7.61: gefuehrter Designwechsel - Plaetze frei, Module an, Dialog, Pruefung.
 do
     local ok, err = pcall(function()

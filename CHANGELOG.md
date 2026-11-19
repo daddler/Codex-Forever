@@ -9,6 +9,15 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.0.7.63] – 2026-11-19
+
+### Neu
+- Buffzeiten je Gruppe (`bt_<Gruppe>_show|warn|snd|big` im Modul
+  `reminders`, Standard aus `BT.GROUP_DEFAULTS`): ausblenden, Vorwarnung
+  0–60 s (0 = beim Ablauf), Ton (`FA.PlayKey`), große Meldung
+  (`RaidNotice_AddMessage`). `BT.CheckAlerts` im Sekundentakt, einmal je
+  Wirken (`a.warned`, zurückgesetzt bei neuem Wirken/Verlängerung).
+
 ## [1.0.7.62] – 2026-11-19
 
 ### Behoben
