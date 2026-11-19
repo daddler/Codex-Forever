@@ -40,12 +40,16 @@ FG.GAMES = {
     { key = "jewels",  name = "Juwelen",     hint = "Zwei Nachbarn tauschen – drei Gleiche in einer Reihe verschwinden." },
     { key = "mahjong", name = "Mahjong",     hint = "Zwei gleiche freie Steine anklicken. Frei ist ein Stein ohne Stein darauf und mit freier linker oder rechter Seite." },
     { key = "hunt",    name = "Hühnerjagd",  hint = "Hühner anklicken: Küken und Goldhuhn bringen viel, Zombiehühner brauchen zwei Treffer – Finger weg vom roten Bombenhuhn!" },
+    -- 1.0.8.0 (Wunsch: "zwei neue Flugspiele"): Gedaechtnis und Folge.
+    { key = "pairs",   name = "Paare",       hint = "Zwei Karten aufdecken – gleiche Zauber bleiben liegen. Wer sich mehr merkt, verdeckt weniger." },
+    { key = "runes",   name = "Runenfolge",  hint = "Die Runen leuchten nacheinander auf – klick sie in derselben Folge nach. Jede Runde eine mehr." },
 }
-FG.W, FG.WIN_H = 440, 544   -- nicht FG.H: das ist die Huehnerjagd
+FG.W, FG.WIN_H = 440, 620   -- nicht FG.H: das ist die Huehnerjagd
 FG.BOARD = 400
 FG.HUHN = "Interface\\Icons\\Spell_Magic_PolymorphChicken"
 
 local win, views = nil, {}
+local BuildPairs, BuildRunes   -- weiter unten (1.0.8.0)
 local Build   -- Fenster (weiter unten)
 FG.views = views
 FG.flight = { on = false, scores = {}, game = nil, to = nil }
@@ -113,7 +117,7 @@ end
 
 local function Show(name)
     for k, v in pairs(views) do v:SetShown(k == name) end
-    if win.score then win.score:SetShown(name == "jewels" or name == "mahjong" or name == "hunt") end
+    if win.score then win.score:SetShown(FG.CODE[name] ~= nil) end
 end
 FG.ShowView = Show
 
@@ -918,6 +922,190 @@ function H.Start()
 end
 
 --------------------------------------------------
+-- Paare (Gedaechtnis, 1.0.8.0)
+--------------------------------------------------
+-- 20 verdeckte Karten, zehn Paare aus Zaubersymbolen des Spiels. Gleiche
+-- bleiben offen (+100, jedes Paar in Folge +25 mehr), ungleiche drehen
+-- sich nach einem Augenblick zurueck. Alles abgeraeumt: +300 und ein neuer
+-- Tisch. Kein Takt; das Zurueckdrehen ist ein einzelner Zeitgeber.
+local P = { COLS = 5, ROWS = 4, cards = {}, open = nil, busy = false, combo = 0, left = 0 }
+P.ICONS = { "Spell_Fire_FlameBolt", "Spell_Frost_FrostBolt02", "Spell_Holy_HolyBolt", "Spell_Nature_Lightning",
+            "Spell_Shadow_ShadowBolt", "Ability_Warrior_Charge", "Ability_Rogue_Sprint", "Spell_Holy_PowerWordShield",
+            "Spell_Nature_Regeneration", "Spell_Nature_StarFall" }
+P.BACK = GC.tileSide
+FG.P = P
+
+function P.Deal()
+    local deck = {}
+    for i = 1, #P.ICONS do deck[#deck + 1] = i deck[#deck + 1] = i end
+    for i = #deck, 2, -1 do local j = Rand(i) deck[i], deck[j] = deck[j], deck[i] end
+    for i, c in ipairs(P.cards) do
+        c.kind, c.up, c.done = deck[i], false, false
+        P.PaintCard(c)
+    end
+    P.open, P.busy, P.left = nil, false, #P.ICONS
+end
+
+function P.PaintCard(c)
+    if c.up or c.done then
+        c.icon:SetTexture("Interface\\Icons\\" .. P.ICONS[c.kind])
+        c.icon:SetVertexColor(1, 1, 1, 1)
+        c:SetAlpha(c.done and 0.55 or 1)
+    else
+        c.icon:SetColorTexture(P.BACK[1], P.BACK[2], P.BACK[3], 1)
+        c:SetAlpha(1)
+    end
+end
+
+-- Eine Karte anklicken. Gibt zurueck: "open", "pair", "miss" oder nil.
+function P.Flip(c)
+    if P.busy or c.up or c.done then return nil end
+    c.up = true
+    P.PaintCard(c)
+    local first = P.open
+    if not first then P.open = c return "open" end
+    P.open = nil
+    if first.kind == c.kind then
+        first.done, c.done = true, true
+        P.PaintCard(first) P.PaintCard(c)
+        FG.AddScore(100 + 25 * P.combo)
+        P.combo = P.combo + 1
+        P.left = P.left - 1
+        if P.left <= 0 then
+            FG.AddScore(300)
+            P.busy = true
+            if _G.C_Timer and _G.C_Timer.After then _G.C_Timer.After(0.8, P.Deal) else P.Deal() end
+        end
+        return "pair"
+    end
+    P.combo = 0
+    P.busy = true
+    local function back()
+        first.up, c.up = false, false
+        P.PaintCard(first) P.PaintCard(c)
+        P.busy = false
+    end
+    if _G.C_Timer and _G.C_Timer.After then _G.C_Timer.After(0.8, back) else back() end
+    return "miss"
+end
+
+BuildPairs = function()
+    local v = View("pairs")
+    local gap = 8
+    local cw = math.floor((FG.BOARD - (P.COLS - 1) * gap) / P.COLS)
+    for r = 1, P.ROWS do
+        for col = 1, P.COLS do
+            local c = CreateFrame("Button", nil, v)
+            c:SetSize(cw, cw)
+            c:SetPoint("TOPLEFT", v, "TOP", -FG.BOARD / 2 + (col - 1) * (cw + gap), -30 - (r - 1) * (cw + gap))
+            c.icon = c:CreateTexture(nil, "ARTWORK")
+            c.icon:SetPoint("TOPLEFT", c, "TOPLEFT", 2, -2)
+            c.icon:SetPoint("BOTTOMRIGHT", c, "BOTTOMRIGHT", -2, 2)
+            c.icon:SetTexCoord(0.08, 0.92, 0.08, 0.92)
+            K.Border(c, 1, 0, 0, 0, 1, "OVERLAY")
+            c:SetScript("OnClick", function(self) P.Flip(self) end)
+            P.cards[#P.cards + 1] = c
+        end
+    end
+end
+
+function P.Start()
+    P.combo = 0
+    P.Deal()
+end
+
+--------------------------------------------------
+-- Runenfolge (1.0.8.0)
+--------------------------------------------------
+-- Vier Runen leuchten in einer Folge auf; der Spieler klickt sie nach.
+-- Richtig: +30 je Rune der Folge, die naechste Runde hat eine mehr. Falsch:
+-- die Runen blinken, die Folge beginnt wieder mit drei. Die Folge spielt
+-- ueber Zeitgeber ab (einer je Schritt), kein Takt.
+local R = { runes = {}, seq = {}, pos = 0, playing = false, START = 3, ON = 0.45, OFF = 0.15 }
+R.COLORS = { 1, 3, 4, 6 }
+FG.R = R
+
+function R.Light(i, on)
+    local b = R.runes[i]
+    if not b then return end
+    local c = GC["raidMark" .. R.COLORS[i]]
+    local f = on and 1 or 0.35
+    b.fill:SetColorTexture(c[1] * f, c[2] * f, c[3] * f, 1)
+end
+
+function R.Play()
+    R.playing, R.pos = true, 0
+    local step = 0
+    local function nxt()
+        if not FG.views.runes or not FG.views.runes:IsShown() then R.playing = false return end
+        step = step + 1
+        if step > #R.seq then R.playing = false return end
+        local i = R.seq[step]
+        R.Light(i, true)
+        _G.C_Timer.After(R.ON, function()
+            R.Light(i, false)
+            _G.C_Timer.After(R.OFF, nxt)
+        end)
+    end
+    if _G.C_Timer and _G.C_Timer.After then _G.C_Timer.After(0.6, nxt) else R.playing = false end
+end
+
+-- Neue Folge mit n Runen.
+function R.NewSeq(n)
+    for i = #R.seq, 1, -1 do R.seq[i] = nil end
+    for i = 1, n do R.seq[i] = Rand(4) end
+end
+
+-- Klick auf Rune i. Gibt zurueck: "ok", "round", "miss" oder nil.
+function R.Press(i)
+    if R.playing or #R.seq == 0 then return nil end
+    R.pos = R.pos + 1
+    if R.seq[R.pos] == i then
+        if R.pos == #R.seq then
+            FG.AddScore(30 * #R.seq)
+            R.NewSeq(#R.seq + 1)
+            R.Play()
+            return "round"
+        end
+        return "ok"
+    end
+    for j = 1, 4 do R.Light(j, true) end
+    if _G.C_Timer and _G.C_Timer.After then
+        _G.C_Timer.After(0.35, function() for j = 1, 4 do R.Light(j, false) end end)
+    else
+        for j = 1, 4 do R.Light(j, false) end
+    end
+    R.NewSeq(R.START)
+    R.Play()
+    return "miss"
+end
+
+BuildRunes = function()
+    local v = View("runes")
+    local size, gap = 170, 16
+    for i = 1, 4 do
+        local b = CreateFrame("Button", nil, v)
+        b:SetSize(size, size)
+        b:SetPoint("TOPLEFT", v, "TOP", -size - gap / 2 + ((i - 1) % 2) * (size + gap),
+            -40 - math.floor((i - 1) / 2) * (size + gap))
+        b.fill = b:CreateTexture(nil, "ARTWORK")
+        b.fill:SetAllPoints(b)
+        K.Border(b, 1, 0, 0, 0, 1, "OVERLAY")
+        b:SetScript("OnMouseDown", function() R.Light(i, true) end)
+        b:SetScript("OnMouseUp", function() R.Light(i, false) end)
+        b:SetScript("OnClick", function() R.Press(i) end)
+        R.runes[i] = b
+    end
+    for i = 1, 4 do R.Light(i, false) end
+end
+
+function R.Start()
+    for i = 1, 4 do R.Light(i, false) end
+    R.NewSeq(R.START)
+    R.Play()
+end
+
+--------------------------------------------------
 -- Bestenliste der Gilde (6.89.0.0)
 --------------------------------------------------
 -- Wunsch: "Bestenlisten - best erreichte Punkte und pro Flug innerhalb der
@@ -933,8 +1121,8 @@ end
 -- Gespeichert in WeintCodex_SavedData.flightGames.board.
 
 FG.PREFIX = "WCFG"
-FG.CODE = { jewels = "j", mahjong = "m", hunt = "h" }
-FG.GAME_OF = { j = "jewels", m = "mahjong", h = "hunt" }
+FG.CODE = { jewels = "j", mahjong = "m", hunt = "h", pairs = "p", runes = "f" }
+FG.GAME_OF = { j = "jewels", m = "mahjong", h = "hunt", p = "pairs", f = "runes" }
 FG.SCORE_MAX = 5000000
 FG.NODE_MAX = 99999
 FG.SECS_MAX = 7200
@@ -1388,7 +1576,7 @@ FG.Pill = Pill
 -- Masse der Ansicht (Breite der Ansicht = FG.W - 40). Spalten: Platz,
 -- Name, Punkte, Datum - nichts reicht ueber die Ansicht hinaus.
 FG.BL = {
-    GAME_W = 120, SCOPE_W = 130, GAP = 10,
+    GAME_W = 72, SCOPE_W = 130, GAP = 10,   -- 1.0.8.0: fuenf Spiele
     Y_GAMES = -4, Y_SCOPE = -36, Y_LABEL = -68, Y_HEAD = -92, Y_ROWS = -112, ROW_H = 28, ROWS = 10,
     COLS = { { x = 8, w = 28 }, { x = 42, w = 176 }, { x = 224, w = 84 }, { x = 314, w = 78 } },
     BACK_W = 140, BACK_H = 28,
@@ -1637,7 +1825,7 @@ Build = function()
     ask.text = K.NewText(ask, 15)
     ask.text:SetPoint("TOP", ask, "TOP", 0, -4)
     ask.text:SetText("Lust auf ein Spiel, bis du landest?")
-    local CARD_H, GAP = 92, 10
+    local CARD_H, GAP = 72, 8   -- 1.0.8.0: fuenf Karten
     local m, tb, acc = C.textMuted, C.textBright, C.accent
     for i, g in ipairs(FG.GAMES) do
         local card = CreateFrame("Button", nil, ask)
@@ -1683,6 +1871,22 @@ Build = function()
             n:SetText("8")
             local r = GC.raidMark7
             n:SetTextColor(r[1], r[2], r[3])
+        elseif g.key == "pairs" then
+            for j, icon in ipairs({ FG.P.ICONS[1], FG.P.ICONS[1] }) do
+                local d = pic:CreateTexture(nil, "ARTWORK")
+                d:SetTexture("Interface\\Icons\\" .. icon)
+                d:SetTexCoord(0.08, 0.92, 0.08, 0.92)
+                d:SetSize(24, 24)
+                d:SetPoint("CENTER", pic, "CENTER", (j == 1) and -13 or 13, 0)
+            end
+        elseif g.key == "runes" then
+            for j = 1, 4 do
+                local d = pic:CreateTexture(nil, "ARTWORK")
+                local c = GC["raidMark" .. FG.R.COLORS[j]]
+                d:SetColorTexture(c[1], c[2], c[3], 1)
+                d:SetSize(22, 22)
+                d:SetPoint("TOPLEFT", pic, "TOPLEFT", 6 + ((j - 1) % 2) * 26, -6 - math.floor((j - 1) / 2) * 26)
+            end
         else
             local h = pic:CreateTexture(nil, "ARTWORK")
             h:SetTexture(FG.HUHN)
@@ -1703,7 +1907,7 @@ Build = function()
         card:SetScript("OnClick", function() FG.Play(g.key) end)
     end
     ask.best = K.NewText(ask, 11)
-    ask.best:SetPoint("TOP", ask, "TOP", 0, -36 - 3 * (CARD_H + GAP) - 6)
+    ask.best:SetPoint("TOP", ask, "TOP", 0, -36 - #FG.GAMES * (CARD_H + GAP) - 6)
     ask.best:SetWidth(FG.BOARD)
     local no = Button(ask, "Nein danke", 150, 28, function() FG.Close() end)
     no:SetPoint("BOTTOMLEFT", ask, "BOTTOMLEFT", 0, 0)
@@ -1737,6 +1941,8 @@ Build = function()
     BuildJewels()
     BuildMahjong()
     BuildHunt()
+    BuildPairs()
+    BuildRunes()
     BuildBoardView()
     win.note = K.NewText(win, 11)
     win.note:SetPoint("BOTTOM", win, "BOTTOM", 0, 14)
@@ -1813,7 +2019,8 @@ function FG.Play(key)
     win.back:Show()
     win.note:SetText("")
     Show(key)
-    if key == "jewels" then J.Start() elseif key == "mahjong" then M.Start() else H.Start() end
+    if key == "jewels" then J.Start() elseif key == "mahjong" then M.Start()
+    elseif key == "pairs" then FG.P.Start() elseif key == "runes" then FG.R.Start() else H.Start() end
     win:Show()
 end
 

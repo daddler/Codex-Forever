@@ -39,6 +39,9 @@ nicht zusammen.
 - Einheitenrahmen: `debuffNever` – Debuffs nie zeigen (Nummern sofort,
   Namen außerhalb des Kampfes gelernt, `ui.debuffIds`; `excludeSpellIDs` des
   Behälters, gilt auch im Kampf).
+- Flugspiele: „Paare“ (`FG.P`, 20 Karten, 10 Paare aus Zaubersymbolen) und
+  „Runenfolge“ (`FG.R`, Folge nachklicken, je Runde +1); Codes `p`/`f` in
+  `WCFG`; Fenster 620 hoch, Karten 72, Reiter der Bestenliste 72 breit.
 - `ui/petstable.lua`: `PetStableFrame` in Gold (W.WINDOWS + CalmParts,
   Bilder gemessen mit `/wcui fenster`).
 

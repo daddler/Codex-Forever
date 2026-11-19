@@ -27005,6 +27005,50 @@ do
     Check(ok, "Design Konsole" .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 1.0.8.0: zwei neue Flugspiele - Paare und Runenfolge.
+do
+    local G = _G
+    local ok, err = pcall(function()
+        local FG = WeintCodex.UIFlightGames
+        local n = 0
+        for _, g in ipairs(FG.GAMES) do
+            n = n + 1
+            assert(FG.CODE[g.key] and FG.GAME_OF[FG.CODE[g.key]] == g.key, "Code fehlt: " .. g.key)
+        end
+        assert(n == 5, "nicht fuenf Spiele")
+        local oT = G.C_Timer
+        G.C_Timer = nil
+        FG.Play("pairs")
+        local P = FG.P
+        assert(#P.cards == 20, "nicht 20 Karten")
+        local a, b
+        for _, c in ipairs(P.cards) do
+            if not a then a = c elseif c.kind == a.kind and not b then b = c end
+        end
+        local before = FG.flight.points
+        assert(P.Flip(a) == "open" and P.Flip(b) == "pair" and FG.flight.points > before, "Paar nicht gewertet")
+        local x, y
+        for _, c in ipairs(P.cards) do
+            if not c.done then if not x then x = c elseif c.kind ~= x.kind and not y then y = c end end
+        end
+        assert(P.Flip(x) == "open" and P.Flip(y) == "miss" and not x.up and not y.up, "Fehlgriff bleibt offen")
+        FG.Play("runes")
+        local R = FG.R
+        R.playing = false
+        R.NewSeq(3)
+        local seq = { R.seq[1], R.seq[2], R.seq[3] }
+        assert(R.Press(seq[1]) == "ok" and R.Press(seq[2]) == "ok", "Folge nicht angenommen")
+        R.playing = false
+        assert(R.Press(seq[3]) == "round" and #R.seq == 4, "naechste Runde ohne neue Rune")
+        R.playing = false
+        local wrong = R.seq[1] % 4 + 1
+        assert(R.Press(wrong) == "miss" and #R.seq == R.START, "Fehler setzt nicht zurueck")
+        G.C_Timer = oT
+        FG.Close()
+    end)
+    Check(ok, "Flugspiele: Paare und Runenfolge" .. (ok and "" or (": " .. tostring(err))))
+end
+
 -- 1.0.8.0: Debuffs nie zeigen - Nummern sofort, Namen gelernt, auch im Kampf.
 do
     local G = _G

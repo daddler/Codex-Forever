@@ -34,6 +34,7 @@ WeintCodex_ChangelogData = {
             "|cff7C6CFFGegnerische Spieler|r – große Abklingzeiten wie Gottesschild oder Eisblock als Meldung, und an der Plakette der Talentbaum, sobald ein Gegner einen Zauber wirkt, den nur dieser Baum lehrt (Seite PvP, ab Werk aus).",
             "|cff7C6CFFDebuffs nie zeigen|r – am Ziel- und Fokusrahmen eine eigene Liste von Debuffs, die nie erscheinen sollen, auch im Kampf (Einheitenrahmen → Auren).",
             "|cff7C6CFFIm Kampf ausblenden|r – Questliste und Chat des Spiels auf Wunsch im Kampf durchsichtig (Helfer, ab Werk aus).",
+            "|cff7C6CFFZwei neue Flugspiele|r – „Paare“: Zauberkarten aufdecken und Paare finden. „Runenfolge“: die Runen leuchten nacheinander auf, klick sie nach – jede Runde eine mehr. Beide mit Bestwert und Bestenliste der Gilde.",
             "|cff7C6CFFStall in Gold|r – das Stallfenster des Jägers trägt jetzt das Codex-Design: flache Plätze, dunkle Fläche, Rahmen in Gold.",
         },
     },
