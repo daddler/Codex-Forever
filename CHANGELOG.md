@@ -29,6 +29,8 @@ nicht zusammen.
   → Berufe, `InspectFrame` (nur in einer Gruppe) → Gruppencheck,
   `LootFrame` beim Angeln (`IsFishingLoot`) → Feldbuch. Knöpfe je Eintrag
   (ein Fenster kann mehrere tragen, `belowleft`).
+- `ui/petstable.lua`: `PetStableFrame` in Gold (W.WINDOWS + CalmParts,
+  Bilder gemessen mit `/wcui fenster`).
 
 ## [1.0.7.64] – 2026-11-19
 

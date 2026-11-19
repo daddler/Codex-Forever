@@ -84,6 +84,8 @@ W.WINDOWS = { "CharacterFrame", "PVPFrame", "HonorFrame", "PlayerSpellsFrame", "
               "TransmogFrame",
               -- 6.30.40.0: Betrachten anderer Spieler (ui/inspect.lua).
               "InspectFrame",
+              -- 1.0.8.0: Stall des Jaegers (ui/petstable.lua).
+              "PetStableFrame",
               -- 6.9.0.4: Auktionshaus (Blizzard_AuctionHouseUI, erst beim
               -- Ansprechen geladen; ui/auction.lua).
               "AuctionHouseFrame",

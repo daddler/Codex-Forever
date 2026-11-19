@@ -29,6 +29,7 @@ WeintCodex_ChangelogData = {
             "|cff7C6CFFIm Dungeon|r – auf der Weltkarte führt „Codex: dieser Dungeon“ zu Bossen, Beute und Quests der Instanz, in der du stehst; am Beutefenster geht es zur Beute.",
             "|cff7C6CFFAuch zu den Helfern|r – Talentfenster → Talentplaner, Ruf → Ruf-Belohnungen, Auktionshaus → Berufe (für die Einkaufsliste), Betrachten in einer Gruppe → Gruppencheck, Beute beim Angeln → Feldbuch.",
             "Abschalten lässt sich das unter Komfort → Anzeigen → Codex.",
+            "|cff7C6CFFStall in Gold|r – das Stallfenster des Jägers trägt jetzt das Codex-Design: flache Plätze, dunkle Fläche, Rahmen in Gold.",
         },
     },
     {

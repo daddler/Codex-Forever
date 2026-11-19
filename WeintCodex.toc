@@ -437,6 +437,7 @@ ui/calmparts.lua
 ui/trade.lua
 ui/transmog.lua
 ui/inspect.lua
+ui/petstable.lua
 # Auktionshaus in Gold (6.9.0.4): Kategorien als Kacheln, Listen auf Flaeche, Spaltenkoepfe flach.
 ui/auction.lua
 # Bank in Gold (6.9.1.1): Plaetze flach, Grund und Geld auf Flaeche.
