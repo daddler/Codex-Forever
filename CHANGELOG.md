@@ -24,6 +24,11 @@ nicht zusammen.
   Eigener Knopf an UIParent, nur verankert und über OnShow/OnHide des
   Fensters gezeigt; spät geladene Fenster über `ADDON_LOADED`. Schalter
   `comfort.codexLinks`, ab Werk an.
+- Dazu: `PlayerTalentFrame`/`TalentFrame` → Talentplaner (`TB.Open`),
+  `ReputationFrame` → Ruf-Belohnungen (`FJ.RepReport`), `AuctionHouseFrame`
+  → Berufe, `InspectFrame` (nur in einer Gruppe) → Gruppencheck,
+  `LootFrame` beim Angeln (`IsFishingLoot`) → Feldbuch. Knöpfe je Eintrag
+  (ein Fenster kann mehrere tragen, `belowleft`).
 
 ## [1.0.7.64] – 2026-11-19
 

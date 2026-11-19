@@ -537,7 +537,7 @@ K.Register({
                          description = "Deine Position und die des Mauszeigers. Zeigt die Karte schon eigene Koordinaten, bleibt diese Zeile weg." }))
             B:Section("Codex")
             B:Row(Row2({ type = "toggle", label = "Verweise zu Codex an Fenstern des Spiels", key = "codexLinks",
-                         description = "Unter Berufen, Lehrer, Charakter, Zauberbuch, Bank, Taschen, Gruppensuche und Kompendium ein Knopf, der Codex genau dort öffnet – beim Beruf mit dem offenen Beruf, im Dungeon mit diesem Dungeon." }))
+                         description = "Unter Berufen, Lehrer, Charakter, Zauberbuch, Talenten, Ruf, Bank, Taschen, Auktionshaus, Gruppensuche und Kompendium ein Knopf, der Codex oder den passenden Helfer genau dort öffnet – beim Beruf mit dem offenen Beruf, im Dungeon mit diesem Dungeon." }))
             B:Section("Fehler")
             B:Row({ type = "toggle", label = "Fehler zum Kopieren zeigen", key = "errorCatch",
                     description = "Geht in WeintCodex etwas schief, öffnet sich ein Fenster mit allem, was zum Beheben nötig ist – markiert, Strg+C, an den Entwickler." },

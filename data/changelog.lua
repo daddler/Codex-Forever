@@ -27,6 +27,7 @@ WeintCodex_ChangelogData = {
         notes   = {
             "|cff7C6CFFDirekt zu Codex|r – unter vielen Fenstern des Spiels sitzt jetzt ein Knopf, der Codex genau an der passenden Stelle öffnet: Berufsfenster → Berufe mit dem offenen Beruf, Lehrer → Lehrer bzw. Berufe, Charakter → Charakter, Zauberbuch → Lehrer, Bank und Taschen → Taschen, Gruppensuche und Kompendium → Dungeons.",
             "|cff7C6CFFIm Dungeon|r – auf der Weltkarte führt „Codex: dieser Dungeon“ zu Bossen, Beute und Quests der Instanz, in der du stehst; am Beutefenster geht es zur Beute.",
+            "|cff7C6CFFAuch zu den Helfern|r – Talentfenster → Talentplaner, Ruf → Ruf-Belohnungen, Auktionshaus → Berufe (für die Einkaufsliste), Betrachten in einer Gruppe → Gruppencheck, Beute beim Angeln → Feldbuch.",
             "Abschalten lässt sich das unter Komfort → Anzeigen → Codex.",
         },
     },

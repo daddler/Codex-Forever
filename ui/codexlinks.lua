@@ -148,6 +148,45 @@ CL.LINKS = {
               if id and DP and DP.Select then DP.Select(id) end
           end)
       end },
+    -- Weitere Fenster (1.0.8.0, Wunsch: "bind zuerst noch die weiteren
+    -- Fenster an"). Talentplaner, Ruf-Belohnungen und Feldbuch sind eigene
+    -- Fenster von WeintCodex, keine Seiten im Codex.
+    { host = "PlayerTalentFrame", label = function() return "WeintCodex: Talentplaner" end,
+      tip = "Talente Stufe für Stufe planen, teilen und beim Leveln folgen.",
+      go = function() local TB = WeintCodex.UITalentBuilds if TB and TB.Open then TB.Open() return true end end },
+    { host = "TalentFrame", label = function() return "WeintCodex: Talentplaner" end,
+      tip = "Talente Stufe für Stufe planen, teilen und beim Leveln folgen.",
+      go = function() local TB = WeintCodex.UITalentBuilds if TB and TB.Open then TB.Open() return true end end },
+    -- Reiter Ruf im Charakterfenster: links, der Knopf zum Charakter steht rechts.
+    { host = "ReputationFrame", where = "belowleft", label = function() return "WeintCodex: Ruf-Belohnungen" end,
+      tip = "Was jede Fraktion bei welcher Rufstufe anbietet, mit deinem Stand.",
+      go = function()
+          local FJ = WeintCodex.UIFieldJournal
+          if FJ and FJ.RepReport and K.ShowReport then K.ShowReport("Ruf-Belohnungen", FJ.RepReport()) return true end
+      end },
+    { host = "AuctionHouseFrame", label = function() return "Codex: Berufe" end,
+      tip = "Rezepte auf die Einkaufsliste setzen – die Liste steht dann hier im Auktionshaus.",
+      go = function() return CL.Open("berufe") end },
+    -- Betrachten in einer Gruppe: der Gruppencheck zeigt alle zusammen.
+    { host = "InspectFrame", when = function()
+          local ok, v = pcall(_G.IsInGroup or function() return false end)
+          return ok and K.Bool(Plain(v), false)
+      end,
+      label = function() return "Codex: Gruppencheck" end,
+      tip = "Ausrüstung aller in deiner Gruppe auf einen Blick.",
+      go = function() return CL.Open("gruppe") end },
+    -- Beute beim Angeln: das Feldbuch (Fische, Gebiete, Fertigkeit).
+    { host = "LootFrame", when = function()
+          if not _G.IsFishingLoot then return false end
+          local ok, v = pcall(_G.IsFishingLoot)
+          return ok and K.Bool(Plain(v), false)
+      end,
+      where = "belowleft", label = function() return "WeintCodex: Feldbuch" end,
+      tip = "Fische und Kräuter: wo sie am meisten bringen und ab welcher Fertigkeit.",
+      go = function()
+          local FJ = WeintCodex.UIFieldJournal
+          if FJ and FJ.Report and K.ShowReport then K.ShowReport("Feldbuch", FJ.Report()) return true end
+      end },
     { host = "LootFrame", when = function() return CL.CurrentDungeon() ~= nil end,
       label = function() return "Codex: Beute" end,
       tip = "Was in diesem Dungeon fällt, mit deiner Wunschliste.",
@@ -157,7 +196,7 @@ CL.LINKS = {
 --------------------------------------------------
 -- Knoepfe
 --------------------------------------------------
-CL.buttons = {}   -- [host] = Knopf
+CL.buttons = {}   -- [Eintrag aus CL.LINKS] = Knopf (ein Fenster kann mehrere tragen)
 
 function CL.On() return K.IsActive(KEY) and K.Get(KEY, "codexLinks") ~= false end
 
@@ -165,13 +204,15 @@ local function Place(b, host, where)
     b:ClearAllPoints()
     if where == "above" then
         b:SetPoint("BOTTOMRIGHT", host, "TOPRIGHT", 0, 4)
+    elseif where == "belowleft" then
+        b:SetPoint("TOPLEFT", host, "BOTTOMLEFT", 0, -4)
     else
         b:SetPoint("TOPRIGHT", host, "BOTTOMRIGHT", 0, -4)
     end
 end
 
 function CL.Refresh(link)
-    local b = CL.buttons[link.host]
+    local b = CL.buttons[link]
     local host = _G[link.host]
     if not (b and type(host) == "table") then return end
     local show = CL.On() and host.IsShown and K.Bool(host:IsShown(), false)
@@ -185,7 +226,7 @@ function CL.Refresh(link)
 end
 
 function CL.Attach(link)
-    if CL.buttons[link.host] then return CL.buttons[link.host] end
+    if CL.buttons[link] then return CL.buttons[link] end
     local host = _G[link.host]
     if type(host) ~= "table" or not host.HookScript then return nil end
     if host.IsForbidden and host:IsForbidden() then return nil end
@@ -194,7 +235,7 @@ function CL.Attach(link)
     b:SetText(link.label())
     Place(b, host, link.where)
     b:Hide()
-    CL.buttons[link.host] = b
+    CL.buttons[link] = b
     host:HookScript("OnShow", function() CL.Refresh(link) end)
     host:HookScript("OnHide", function() b:Hide() end)
     CL.Refresh(link)
@@ -215,12 +256,12 @@ end
 
 do
     local ev = CreateFrame("Frame")
-    for _, e in ipairs({ "PLAYER_LOGIN", "ADDON_LOADED", "PLAYER_ENTERING_WORLD", "TRAINER_SHOW" }) do
+    for _, e in ipairs({ "PLAYER_LOGIN", "ADDON_LOADED", "PLAYER_ENTERING_WORLD", "TRAINER_SHOW", "LOOT_OPENED", "INSPECT_READY", "GROUP_ROSTER_UPDATE" }) do
         pcall(ev.RegisterEvent, ev, e)
     end
     ev:SetScript("OnEvent", WeintCodex.Measured("Verweise zu Codex", function(_, event)
         CL.AttachAll()
-        if event == "TRAINER_SHOW" or event == "PLAYER_ENTERING_WORLD" then CL.RefreshAll() end
+        if event ~= "ADDON_LOADED" then CL.RefreshAll() end
     end))
     CL.events = ev
 end
