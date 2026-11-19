@@ -9,6 +9,22 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.0.8.0] – 2026-11-19
+
+### Neu
+- `ui/codexlinks.lua`: Knopf „Codex: …“ an Fenstern des Spiels (`CL.LINKS`):
+  `ProfessionsFrame`/`TradeSkillFrame` → Berufe (Vorauswahl über
+  `PT.OpenProfession` + `PRO.Select`), `ClassTrainerFrame` → Lehrer bzw.
+  Berufe (`IsTradeskillTrainer`), `CharacterFrame` → Charakter,
+  `SpellBookFrame`/`PlayerSpellsFrame` → Lehrer, `BankFrame`/
+  `ContainerFrameCombinedBags` → Taschen, `LFGParentFrame`/`PVEFrame`/
+  `EncounterJournal` → Dungeons, `WorldMapFrame` (nur in einem bekannten
+  Dungeon) → dieser Dungeon (`DP.Select`, Instanznummer → Name aus
+  `data/dungeonmaps.lua` → `data/dungeons.lua`), `LootFrame` (dito) → Beute.
+  Eigener Knopf an UIParent, nur verankert und über OnShow/OnHide des
+  Fensters gezeigt; spät geladene Fenster über `ADDON_LOADED`. Schalter
+  `comfort.codexLinks`, ab Werk an.
+
 ## [1.0.7.64] – 2026-11-19
 
 ### Behoben

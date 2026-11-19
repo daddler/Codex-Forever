@@ -27005,6 +27005,38 @@ do
     Check(ok, "Design Konsole" .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 1.0.8.0: Verweise zu Codex an Fenstern des Spiels.
+do
+    local G = _G
+    local ok, err = pcall(function()
+        local CL = WeintCodex.UICodexLinks
+        assert(CL and CL.Attach and CL.Open, "Verweise fehlen")
+        assert(K.Get("comfort", "codexLinks") == true, "ab Werk aus")
+        local tabs = {}
+        for _, t in ipairs(WeintCodex.Navigation.Tabs()) do tabs[t.id] = true end
+        for _, want in ipairs({ "berufe", "lehrer", "charakter", "taschen", "dungeons", "beute" }) do
+            assert(tabs[want], "Bereich fehlt: " .. want)
+        end
+        local host = CreateFrame("Frame", "WeintCodexTestHost", UIParent)
+        local opened
+        local link = { host = "WeintCodexTestHost", label = function() return "Codex: Test" end, tip = "x",
+                       go = function() opened = true end }
+        local b = CL.Attach(link)
+        assert(b, "Knopf nicht angelegt")
+        assert(CL.Attach(link) == b, "Knopf doppelt angelegt")
+        link.go()
+        assert(opened, "Knopf oeffnet nichts")
+        local oG = WeintCodex.Navigation.GoToTab
+        local went
+        WeintCodex.Navigation.GoToTab = function(t) went = t end
+        CL.Open("berufe")
+        WeintCodex.Navigation.GoToTab = oG
+        assert(went == "berufe", "Codex nicht auf dem Bereich geoeffnet")
+        WeintCodex.MainFrame:Hide()
+    end)
+    Check(ok, "Verweise zu Codex: Knopf am Fenster, Bereich oeffnet" .. (ok and "" or (": " .. tostring(err))))
+end
+
 -- 1.0.7.64: Betrachten - fremde Antworten und offenes Fenster nie geleert.
 do
     local G = _G

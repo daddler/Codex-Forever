@@ -2,7 +2,7 @@
 ## Title: |cff7C6CFFWeintCodex|r
 ## Notes: Raid Guide & Intelligence System — Forever Edition
 ## Author: Fabian
-## Version: 1.0.7.64
+## Version: 1.0.8.0
 ## SavedVariables: WeintCodex_SavedData, WeintCompanionDB, WeintCompanionInboxDB, WeintCodex_WhispersAccount
 ## SavedVariablesPerCharacter: WeintCodex_Whispers, WeintCodex_Backup
 
@@ -321,6 +321,7 @@ ui/comfort.lua
 # Seelensplitter begrenzen (Hexenmeister, Verhalten von Necrosis, eigener Code)
 ui/soulshards.lua
 ui/camera.lua
+ui/codexlinks.lua
 # Automark (6.8.1.0): Tank und Heiler beim Betreten einer Instanz markieren.
 ui/automark.lua
 # Segen verteilen (Paladin, Seite im Komfort).

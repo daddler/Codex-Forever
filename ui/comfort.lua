@@ -37,6 +37,9 @@ local defaults = {
     durability     = false,
     durabilityThreshold = 20,
     mapCoords      = false,
+    -- 1.0.8.0: Knopf "Codex: …" an Fenstern des Spiels (ui/codexlinks.lua).
+    -- Ab Werk an - kein Element auf dem Bildschirm, nur am offenen Fenster.
+    codexLinks     = true,
 }
 
 local function Say(text)
@@ -532,6 +535,9 @@ K.Register({
             B:Section("Karte")
             B:Row(Row2({ type = "toggle", label = "Koordinaten auf der Weltkarte", key = "mapCoords",
                          description = "Deine Position und die des Mauszeigers. Zeigt die Karte schon eigene Koordinaten, bleibt diese Zeile weg." }))
+            B:Section("Codex")
+            B:Row(Row2({ type = "toggle", label = "Verweise zu Codex an Fenstern des Spiels", key = "codexLinks",
+                         description = "Unter Berufen, Lehrer, Charakter, Zauberbuch, Bank, Taschen, Gruppensuche und Kompendium ein Knopf, der Codex genau dort öffnet – beim Beruf mit dem offenen Beruf, im Dungeon mit diesem Dungeon." }))
             B:Section("Fehler")
             B:Row({ type = "toggle", label = "Fehler zum Kopieren zeigen", key = "errorCatch",
                     description = "Geht in WeintCodex etwas schief, öffnet sich ein Fenster mit allem, was zum Beheben nötig ist – markiert, Strg+C, an den Entwickler." },

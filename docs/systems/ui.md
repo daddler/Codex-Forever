@@ -110,6 +110,16 @@ unten), Balken des Spiels aus, Spielerrahmen da – mit „Noch einmal
 einrichten“. Ein Ergebnis, das der Client nicht hergibt, ist ein ✗, nie ein
 stilles ✓.
 
+### Verweise zu Codex *(1.0.8.0, `ui/codexlinks.lua`)*
+
+Ein Knopf „Codex: …“ unter Fenstern des Spiels öffnet Codex auf dem
+passenden Bereich (`CL.LINKS`: Fenster → Bereich, Vorauswahl). Eigener Knopf
+an UIParent, nur an das Fenster verankert – nichts am Fenster des Spiels
+wird geändert. Vorauswahl nur, wo Codex sie kennt (offener Beruf,
+Dungeon über die Instanznummer); sonst der Bereich ohne Auswahl. Schalter
+`comfort.codexLinks` (Komfort → Anzeigen), ab Werk an: kein Element auf dem
+Bildschirm, nur am offenen Fenster.
+
 ## Zwei Arten von Modulen
 
 | Gruppe | Module | Hängt am Hauptschalter? | Umschalten |
