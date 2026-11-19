@@ -26,6 +26,7 @@ WeintCodex_ChangelogData = {
         date    = "19.11.2026",
         notes   = {
             "|cff7C6CFFDesign wechseln mit Führung|r – wer unter Allgemein „Konsole“ wählt (oder von ihr zurück), wird in einem Schritt durch alles geführt: auf Wunsch ein eigenes Profil, Plätze und Größen des Designs, Minikarte, Aktionsleisten und Erfahrungsbalken, das Layout im Bearbeitungsmodus. Nach dem Neuladen prüft WeintCodex, ob alles steht, und richtet es auf Knopfdruck noch einmal ein.",
+            "|cff7C6CFFKonsole: Rahmen 30 hoch|r – Spieler und Ziel sind in der Konsole wieder besser lesbar: 30 statt 15 hoch.",
             "|cff7C6CFFZurück ohne Verlust|r – dein bisheriges Profil bleibt unverändert; beim Wechsel zurück bietet WeintCodex es direkt an.",
         },
     },

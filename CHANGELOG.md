@@ -24,6 +24,7 @@ nicht zusammen.
   `LS.Check`: Layout aktiv, Module laufen, Minikarte (Konsole: Mitte unten),
   Spielbalken aus, Spielerrahmen sichtbar – mit „Noch einmal einrichten“.
 - `ES.CheckLook` schweigt, solange der Dialog offen ist.
+- Konsole: Spieler/Ziel 30 hoch (Leben 24, Kraft 5, `K.CONSOLE_UF_H`/`_P`).
 
 ## [1.0.7.60] – 2026-11-18
 
