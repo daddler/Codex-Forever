@@ -62,6 +62,8 @@ nicht zusammen.
   `data/zonegather.lua` – Fische (Feldbuch, mit Anteil), Kräuter und Erze
   (Fundorte QuestieDB Forever) je Gebiet, auf der Gebietstafel (`ZI.Gather`,
   `ZI.Names`, bis 10 Zeilen). Zephras Isle zweite Kartennummer 2665.
+  `data/beasts_ofa.lua` – 9 zähmbare Tiere (8 neu in Forever) mit Lage, 3
+  Familien nach wow-petopia (Shriekling: Raubvogel, Vulgara: Fuchs).
   Lehrerzauber verglichen: keine Stufe anders, Unterschiede sind Talente,
   Start-/Volkszauber und Buchränge – nicht übernommen.
 - `ui/petstable.lua`: `PetStableFrame` in Gold (W.WINDOWS + CalmParts,

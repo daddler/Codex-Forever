@@ -27028,6 +27028,8 @@ do
         assert(found, "gemeldetes Kraut nicht auf der Tafel")
         G.C_Item = oC
         assert(ZI.LINES_MAX >= #lines, "Tafel zu klein fuer " .. #lines .. " Zeilen")
+        local BD = WeintCodex.BeastData
+        assert(BD.b[260157] and BD.b[253282]:match("^(%d+)") == "3", "Tiere aus dem Abgleich fehlen")
     end)
     Check(ok, "Abgleich OneForAll: Lernstufen, Vorkommen je Gebiet" .. (ok and "" or (": " .. tostring(err))))
 end

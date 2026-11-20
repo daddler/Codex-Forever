@@ -234,3 +234,86 @@ fh = assert(io.open(CDX .. "/data/zonegather.lua", "w"))
 fh:write(table.concat(out, "\n"), "\n")
 fh:close()
 print(string.format("Gebiete mit Meldungen: %d", nz))
+
+--------------------------------------------------
+-- Zaehmbare Tiere (Wildtierkunde)
+--------------------------------------------------
+-- OneForAll: Familien und Tiere nach wow-petopia.com/forever (gelesen
+-- 07.11.2026), Lagen aus QuestieDB Forever. Neue Tiere und andere Familie
+-- als im Bestand (data/beasts.lua) - geschrieben nach data/beasts_ofa.lua,
+-- das beim Laden in WeintCodex.BeastData eintraegt.
+local FLTP = {}
+assert(loadfile(OFA .. "/Data/HunterPets.lua"))("OneForAll", FLTP)
+assert(loadfile(OFA .. "/Data/HunterPetTames.lua"))("OneForAll", FLTP)
+dofile(CDX .. "/data/beasts.lua")
+local B = WeintCodex.BeastData
+local famIdx, zoneIdx = {}, {}
+for i, f in ipairs(B.F) do famIdx[f[1]] = i end
+for i, z in ipairs(B.Z) do
+    if type(z[2]) == "number" then zoneIdx[z[2]] = zoneIdx[z[2]] or i end
+    zoneIdx[z[1]] = zoneIdx[z[1]] or i   -- gleicher Name in beiden Sprachen (Desolace)
+end
+-- Gebiete ohne Karte (Dungeons) ueber den englischen Namen der Instanz.
+local DUNGEON_ZONE = { ["Ruins of Lordaeron"] = "Ruinen von Lordaeron" }
+for i, z in ipairs(B.Z) do
+    for en, de in pairs(DUNGEON_ZONE) do if z[1] == de then zoneIdx[en] = i end end
+end
+local tames, fam = {}, {}
+for _, f in ipairs(FLTP.PET_FAMILIES) do for _, t in ipairs(f.tames or {}) do tames[t.npcID] = t fam[t.npcID] = f.name end end
+for fname, list in pairs(FLTP.PET_TAMES_EXTRA or {}) do for _, t in ipairs(list) do tames[t.npcID] = t fam[t.npcID] = fname end end
+local addB, addS, fixF = {}, {}, {}
+local ids = {}
+for id in pairs(tames) do ids[#ids + 1] = id end
+table.sort(ids)
+for _, id in ipairs(ids) do
+    local t, fi = tames[id], famIdx[fam[id]]
+    if fi then
+        if not B.b[id] then
+            local zi = (t.mapID and zoneIdx[t.mapID]) or zoneIdx[t.zone]
+            local lvl, tag = tostring(t.level or ""):match("^([%d%-]*)%s*(%a*)$")
+            local marks = (tag == "Elite" and "e" or tag == "Rare" and "r" or "") .. (id > 200000 and "n" or "")
+            addB[#addB + 1] = string.format("        [%d] = %q,", id,
+                table.concat({ fi, t.name, lvl or "", marks, "", zi and tostring(zi) or "", "" }, "\t"))
+            if zi and t.x and t.y then
+                addS[#addS + 1] = string.format("        [%d] = %q,", id,
+                    string.format("%d:%03d%03d", zi, math.floor(t.x * 10 + 0.5), math.floor(t.y * 10 + 0.5)))
+            end
+        else
+            local mine = tonumber(B.b[id]:match("^(%d+)"))
+            if mine and mine ~= fi then fixF[#fixF + 1] = string.format("        [%d] = %d,   -- %s statt %s", id, fi, fam[id], B.F[mine][1]) end
+        end
+    end
+end
+out = {}
+W("--------------------------------------------------")
+W("-- WeintCodex :: Wildtierkunde - Abgleich mit OneForAll (1.0.8.0)")
+W("--------------------------------------------------")
+W("-- ERZEUGT von .github/scripts/import_oneforall.lua - nicht von Hand aendern.")
+W("-- Herkunft (nur fuer Betreuer): OneForAll 6.2.12 (GPL-3.0, nur Daten) -")
+W("-- Familien nach wow-petopia.com/forever (07.11.2026), Lagen QuestieDB Forever.")
+W("-- Traegt beim Laden in WeintCodex.BeastData ein: neue Tiere (b, s) und")
+W("-- die Familie, wo die neuere Quelle anders sagt. Art `community`.")
+W("--------------------------------------------------")
+W("")
+W("local B = WeintCodex and WeintCodex.BeastData")
+W("if not B then return end")
+W("local add = {")
+for _, l in ipairs(addB) do W(l) end
+W("}")
+W("local spots = {")
+for _, l in ipairs(addS) do W(l) end
+W("}")
+W("local family = {")
+for _, l in ipairs(fixF) do W(l) end
+W("}")
+W("for id, v in pairs(add) do if not B.b[id] then B.b[id] = v end end")
+W("for id, v in pairs(spots) do if not B.s[id] then B.s[id] = v end end")
+W("for id, f in pairs(family) do")
+W("    local v = B.b[id]")
+W("    if v then B.b[id] = v:gsub(\"^%d+\", tostring(f), 1) end")
+W("end")
+W("B.OFA = { added = add, family = family }")
+fh = assert(io.open(CDX .. "/data/beasts_ofa.lua", "w"))
+fh:write(table.concat(out, "\n"), "\n")
+fh:close()
+print(string.format("Tiere: %d neu, %d mit anderer Familie", #addB, #fixF))

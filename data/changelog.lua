@@ -42,6 +42,7 @@ WeintCodex_ChangelogData = {
             "|cff7C6CFFHellere Klassenfarben|r – auf Wunsch an Spieler- und Zielrahmen (Einheitenrahmen → Allgemein).",
             "|cff7C6CFFBerufe: richtige Lernstufen|r – über 400 Rezepte lassen sich früher lernen, als Codex bisher annahm (Kupferstreitkolben ab 15, nicht erst ab 55). Planer und Skillweg rechnen jetzt damit; dazu neue Farben und Reagenzien, wo der Forever-Client anders sagt.",
             "|cff7C6CFFWeltkarte: im Spiel gemeldet|r – die Gebietstafel nennt zusätzlich, welche Fische (mit Anteil am Fang), Kräuter und Erze im Spiel gemeldet sind – auch für Zephras Isle.",
+            "|cff7C6CFFWildtierkunde|r – neun zähmbare Tiere mehr, acht davon neu in Forever (Schneeleoparden in Dun Morogh, Daggerfang in Loch Modan, Carnage im Sumpfland, Spinnen in den Ruinen von Lordaeron …); drei Tiere tragen jetzt die richtige Familie.",
             "|cff7C6CFFStall in Gold|r – das Stallfenster des Jägers trägt jetzt das Codex-Design: flache Plätze, dunkle Fläche, Rahmen in Gold.",
         },
     },

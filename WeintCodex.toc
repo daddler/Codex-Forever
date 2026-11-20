@@ -120,6 +120,7 @@ data/classquests.lua
 data/questspell_map.lua
 # Wildtierkunde des Jaegers (erzeugt); gelesen von modules/beasts.lua.
 data/beasts.lua
+data/beasts_ofa.lua
 # Beute je Boss, Ruf, PvP, Sets (erzeugt); gelesen von modules/lootbook.lua.
 data/loot.lua
 # NPC-Nummer und deutscher Name je Boss des Kompendiums (erzeugt, 1.10.10.0)
