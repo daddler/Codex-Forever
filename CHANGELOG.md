@@ -93,6 +93,12 @@ nicht zusammen.
 ## [1.0.7.64] – 2026-11-19
 
 ### Behoben
+- Aktionsleisten „nur bei Maus darüber“ (`ui/actionbars.lua`): FadeStep
+  verglich nur mit der eigenen gemerkten Deckkraft – setzte das Spiel oder
+  ein anderes Addon `SetAlpha(1)`, blieb die Leiste sichtbar. Jetzt hält ein
+  Haken an `SetAlpha` die eigene Zahl (`fadeOn`/`HoldAlpha`), und FadeStep
+  prüft die echte Deckkraft nach. `ACTIONBAR_SHOWGRID` zählt nur, solange
+  `GetCursorInfo()` etwas meldet (blieb sonst nach verlorenem `HIDEGRID` an).
 - Betrachten: `GT.OnInspect` (Gruppenwerkzeug) rief bei JEDEM
   `INSPECT_READY` `ClearInspectPlayer()` – auch auf die Antwort zum
   Betrachten des Spielers; die Plätze im offenen `InspectFrame` blieben leer.

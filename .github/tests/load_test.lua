@@ -17875,6 +17875,17 @@ do
         over = true
         AB._fadeStep(nil, 1)   -- ein langer Schritt: ganz eingeblendet
         assert(micro:GetAlpha() == 1 and bags:GetAlpha() == 0, "Maus ueber dem Mikromenue blendet nicht ein")
+        -- 1.0.8.0: setzt das Spiel die Deckkraft zurueck, bleibt sie nicht stehen.
+        bags:SetAlpha(1)
+        AB._fadeStep(nil, 0.016)
+        assert(bags:GetAlpha() == 0, "von aussen eingeblendet bleibt sichtbar")
+        -- Ziehen ueber die Leisten gilt nur mit etwas am Zeiger.
+        local oldCursor = _G.GetCursorInfo
+        _G.GetCursorInfo = function() return nil end
+        assert(AB._cursorBusy() == false, "leerer Zeiger zaehlt als Ziehen")
+        _G.GetCursorInfo = function() return "spell", 1, "spell", 133 end
+        assert(AB._cursorBusy() == true, "Zauber am Zeiger zaehlt nicht")
+        _G.GetCursorInfo = oldCursor
         K.Set("actionbars", "microShow", "always")
         K.Set("actionbars", "bagsShow", "always")
         AB.UpdateMouseover()

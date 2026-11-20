@@ -820,22 +820,62 @@ local function Extra(t)
     return nil
 end
 
+-- 1.0.8.0: Leisten "nur bei Maus darueber" tauchten immer wieder auf,
+-- ohne Maus. Zwei Gruende: (1) setzt das Spiel (Fahrzeug, Bearbeitungs-
+-- modus, Neuordnen der Leisten) oder ein anderes Addon die Deckkraft
+-- zurueck auf 1, merkte FadeStep das nie - es verglich nur mit der
+-- eigenen, gemerkten Zahl. Jetzt haelt ein Haken an SetAlpha die eigene
+-- Zahl, und FadeStep prueft die echte Deckkraft nach. (2) "Ziehen ueber
+-- die Leisten" (ACTIONBAR_SHOWGRID) blieb stehen, wenn das Ende-Ereignis
+-- ausblieb; es gilt jetzt nur, solange wirklich etwas am Zeiger haengt.
+local fadeOn, fadeOwn = {}, false
+local function HoldAlpha(self, a)
+    if fadeOwn or not fadeOn[self] then return end
+    local want = fadeAlpha[self] or 0
+    local v = K.Plain(a)
+    if type(v) ~= "number" or math.abs(v - want) > 0.01 then
+        fadeOwn = true
+        self:SetAlpha(want)
+        fadeOwn = false
+    end
+end
+local hookedAlpha = {}
+local function HookAlpha(f)
+    if hookedAlpha[f] or not (_G.hooksecurefunc and type(f.SetAlpha) == "function") then return end
+    hookedAlpha[f] = true
+    _G.hooksecurefunc(f, "SetAlpha", HoldAlpha)
+end
+local function SetFade(f, a)
+    fadeOwn = true
+    f:SetAlpha(a)
+    fadeOwn = false
+end
+local function CursorBusy()
+    local get = _G.GetCursorInfo
+    if type(get) ~= "function" then return gridShown end
+    local ok, kind = pcall(get)
+    return ok and type(kind) ~= "nil"
+end
+AB._cursorBusy = CursorBusy
+
 local function FadeStep(_, elapsed)
     local any = false
     faded = faded or Faded()
+    local grid = gridShown and CursorBusy()
     for _, t in ipairs(faded) do
         if t.on then
             any = true
             local f = t.frame
             local extra = Extra(t)
-            local over = (t.bar and gridShown) or MouseOver(f) or (extra and extra:IsShown() and MouseOver(extra))
+            local over = (t.bar and grid) or MouseOver(f) or (extra and extra:IsShown() and MouseOver(extra))
             local cur = fadeAlpha[f] or 0
             local target = over and 1 or 0
             local step = (elapsed or 0.1) * 6
             if cur < target then cur = math.min(target, cur + step) elseif cur > target then cur = math.max(target, cur - step) end
-            if cur ~= fadeAlpha[f] then
+            local real = K.Plain(f.GetAlpha and f:GetAlpha())
+            if cur ~= fadeAlpha[f] or (type(real) == "number" and math.abs(real - cur) > 0.01) then
                 fadeAlpha[f] = cur
-                f:SetAlpha(cur)
+                SetFade(f, cur)
             end
         end
     end
@@ -846,9 +886,12 @@ FadeStep = K.Measured("Aktionsleisten", FadeStep)
 local function UpdateMouseover()
     local any = false
     faded = Faded()
+    for k in pairs(fadeOn) do fadeOn[k] = nil end
     for _, t in ipairs(faded) do
         if t.on then
             any = true
+            fadeOn[t.frame] = true
+            HookAlpha(t.frame)
         elseif fadeAlpha[t.frame] then
             fadeAlpha[t.frame] = nil
             -- Leisten gibt "Ruhe und Kampf" ihre Deckkraft zurueck, die
