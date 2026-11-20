@@ -42,6 +42,7 @@ WeintCodex_ChangelogData = {
             "|cff7C6CFFHellere Klassenfarben|r – auf Wunsch an Spieler- und Zielrahmen (Einheitenrahmen → Allgemein).",
             "|cff7C6CFFBerufe: richtige Lernstufen|r – über 400 Rezepte lassen sich früher lernen, als Codex bisher annahm (Kupferstreitkolben ab 15, nicht erst ab 55). Planer und Skillweg rechnen jetzt damit; dazu neue Farben und Reagenzien, wo der Forever-Client anders sagt.",
             "|cff7C6CFFWeltkarte: im Spiel gemeldet|r – die Gebietstafel nennt zusätzlich, welche Fische (mit Anteil am Fang), Kräuter und Erze im Spiel gemeldet sind – auch für Zephras Isle.",
+            "|cff7C6CFFWildtierkunde: Spawnkarte|r – rechts beim gewählten Tier zeigt eine Karte alle bekannten Spawnpunkte, wie auf den großen Datenbankseiten. Lebt das Tier in mehreren Gebieten, wählst du das Gebiet über Knöpfe über der Karte.",
             "|cff7C6CFFWildtierkunde|r – neun zähmbare Tiere mehr, acht davon neu in Forever (Schneeleoparden in Dun Morogh, Daggerfang in Loch Modan, Carnage im Sumpfland, Spinnen in den Ruinen von Lordaeron …); drei Tiere tragen jetzt die richtige Familie.",
             "|cff7C6CFFDungeons: Dropchancen und Quests|r – über 300 Dropchancen sind jetzt in Forever gemessen (Bosse mit mehr als 100 Kills), knapp 100 fehlende kommen dazu; 42 Quests, die in Dungeons noch fehlten, stehen jetzt dabei.",
             "|cff7C6CFFBerufe: Lehrer, Gebühren, Händler|r – 23 Berufslehrer mehr (auch auf Zephras Isle), Lerngebühren für 65 Rezepte, und bei 53 Reagenzien steht jetzt, welcher Händler sie verkauft.",

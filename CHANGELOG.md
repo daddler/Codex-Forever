@@ -12,6 +12,10 @@ nicht zusammen.
 ## [1.0.8.0] – 2026-11-19
 
 ### Neu
+- Wildtierkunde: Spawnkarte im Detailbereich (`BL.MapBlock`, eigener
+  Inspector-Block): `BP.MapWidget`/`BP.PaintMap` aus der Bücherseite, Punkte
+  aus `BL.Spots` (höchstens `BL.MAP_DOTS_MAX`), Gebietswahl über Knöpfe
+  (`BL.mapZone`), Gebiet mit den meisten Punkten zuerst.
 - `ui/codexlinks.lua`: Knopf „Codex: …“ an Fenstern des Spiels (`CL.LINKS`):
   `ProfessionsFrame`/`TradeSkillFrame` → Berufe (Vorauswahl über
   `PT.OpenProfession` + `PRO.Select`), `ClassTrainerFrame` → Lehrer bzw.

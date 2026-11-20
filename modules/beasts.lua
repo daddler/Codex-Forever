@@ -720,6 +720,103 @@ local function BeastRow(body, y, w, b)
 end
 
 -- Detailbereich: das gewaehlte Tier, sonst die Uebersicht.
+-- SPAWNKARTE (1.0.8.0, Wunsch: "rechts sehen, wo das Tier respawnt - wie
+-- auf Wowhead"): die Gebietskarte (Kacheln vom Client, wie bei den Buechern)
+-- mit jedem bekannten Spawnpunkt. Mehrere Gebiete: Knoepfe darueber, das mit
+-- den meisten Punkten zuerst. Die Karte gibt es einmal (BP.MapWidget); die
+-- Punkte gehen in BP.mapExtra und verschwinden beim naechsten Zeichnen.
+BL.MAP_DOTS_MAX = 200
+BL.mapZone = {}          -- [Tier] = gewaehltes Gebiet (Index in BL.Spots)
+local dotPool, zoneBtns = {}, {}
+function BL.SpotZones(id)
+    local spots = BL.Spots(id)
+    local order = {}
+    for i, e in ipairs(spots) do order[i] = i end
+    table.sort(order, function(a, b) return #spots[a].points > #spots[b].points end)
+    return spots, order
+end
+function BL.MapBlock(parent, width, id)
+    local BP = WeintCodex.BooksPage
+    if not (BP and BP.MapWidget and BP.PaintMap) then return nil end
+    local spots, order = BL.SpotZones(id)
+    if #spots == 0 then return nil end
+    local pick = BL.mapZone[id]
+    if not (pick and spots[pick]) then pick = order[1] end
+    local f = BL.mapFrame
+    if not f then
+        f = CreateFrame("Frame", nil, parent)
+        f.title = WeintCodex.Label(f, "", { size = 11, color = "textMuted" })
+        f.title:SetPoint("TOPLEFT", f, "TOPLEFT", 0, 0)
+        BL.mapFrame = f
+    end
+    f:SetParent(parent)
+    f:SetWidth(width)
+    local e = spots[pick]
+    local K = WeintCodex.UIKit
+    local zname = BL.ZoneName(e.zone) or "?"
+    f.title:SetText(string.format("Spawns in %s: %d", zname, #e.points))
+    local y = 18
+    -- Knoepfe fuer weitere Gebiete
+    for _, b in ipairs(zoneBtns) do b:Hide() end
+    if #order > 1 and BP.Pill then
+        local x, rowH = 0, 26
+        for n, zi in ipairs(order) do
+            local b = zoneBtns[n]
+            if not b then
+                b = BP.Pill(f, "", { height = 22 })
+                zoneBtns[n] = b
+            end
+            b:SetParent(f)
+            local label = (BL.ZoneName(spots[zi].zone) or "?") .. " (" .. #spots[zi].points .. ")"
+            b:SetText(label)
+            local bw = math.min(width, math.max(70, (K and K.Plain and K.Plain(b.GetTextWidth and b:GetTextWidth())) or (#label * 6 + 20)))
+            b:SetWidth(bw)
+            if x > 0 and x + bw > width then x, y = 0, y + rowH end
+            b:ClearAllPoints()
+            b:SetPoint("TOPLEFT", f, "TOPLEFT", x, -y)
+            b:SetScript("OnClick", function() BL.mapZone[id] = zi BL.Draw() end)
+            if b.Paint then b:Paint(zi == pick) end
+            b:Show()
+            x = x + bw + 6
+        end
+        y = y + rowH + 4
+    end
+    local w = BP.MapWidget(f, width)
+    w:ClearAllPoints()
+    w:SetPoint("TOPLEFT", f, "TOPLEFT", 0, -y)
+    local first = e.points[1]
+    BP.PaintMap(w, e.map, first[1], first[2])
+    w.ring:Hide()
+    w.dot:Hide()
+    local W, H = (K and K.Plain(w:GetWidth())) or width, (K and K.Plain(w:GetHeight())) or 0
+    local g, ink = C.gold, C.bgDark or C.surface1
+    for i = 1, math.min(#e.points, BL.MAP_DOTS_MAX) do
+        local pt = e.points[i]
+        local d = dotPool[i]
+        if not d then
+            d = { ring = w:CreateTexture(nil, "OVERLAY", nil, 1), dot = w:CreateTexture(nil, "OVERLAY", nil, 2) }
+            d.ring:SetTexture("Interface\\AddOns\\WeintCodex\\media\\ui\\disc")
+            d.dot:SetTexture("Interface\\AddOns\\WeintCodex\\media\\ui\\disc")
+            d.ring:SetSize(9, 9)
+            d.dot:SetSize(5, 5)
+            dotPool[i] = d
+        end
+        d.ring:SetVertexColor(ink[1], ink[2], ink[3], 1)
+        d.dot:SetVertexColor(g[1], g[2], g[3], 1)
+        d.ring:ClearAllPoints()
+        d.ring:SetPoint("CENTER", w, "TOPLEFT", W * pt[1], -H * pt[2])
+        d.dot:ClearAllPoints()
+        d.dot:SetPoint("CENTER", d.ring, "CENTER")
+        d.ring:Show()
+        d.dot:Show()
+        BP.mapExtra[#BP.mapExtra + 1] = d.ring
+        BP.mapExtra[#BP.mapExtra + 1] = d.dot
+    end
+    BL.mapDots = math.min(#e.points, BL.MAP_DOTS_MAX)
+    f:SetHeight(y + H)
+    return f
+end
+
 function BL.InspectorBlocks(id)
     local b = id and BL.Get(id)
     local st = BL.Store()
@@ -771,6 +868,7 @@ function BL.InspectorBlocks(id)
         { type = "rows", rows = rows },
         { type = "header", text = "Gebiete" },
         { type = "text", text = ZonesText(b) },
+        { type = "custom", create = function(parent, width) return BL.MapBlock(parent, width, b.id) end },
         { type = "header", text = "Lehrt deinen Begleiter" },
         { type = "text", text = TeachText(b) or "Unbekannt – im Bestand steht nichts dazu." },
         { type = "header", text = "Von dir" },

@@ -23621,6 +23621,11 @@ do
         local sp = BL.Spots(69)
         assert(#sp > 0 and sp[1].map == 1429 and #sp[1].points > 0 and sp[1].points[1][1] > 0
             and sp[1].points[1][1] < 1, "Lagen des Wilden Waldwolfs")
+        -- Spawnkarte rechts: Titel mit Gebiet und Zahl, Punkte gedeckelt.
+        local mf = BL.MapBlock(CreateFrame("Frame"), 300, 69)
+        assert(mf and BL.mapFrame == mf, "Spawnkarte fehlt")
+        assert(BL.mapDots and BL.mapDots > 0 and BL.mapDots <= BL.MAP_DOTS_MAX, "Spawnpunkte nicht gezeichnet")
+        assert(BL.MapBlock(CreateFrame("Frame"), 300, -1) == nil, "Karte ohne Spawns")
 
         -- Nicht-Jaeger: kein Reiter, kein Aufzeichnen.
         G.UnitClass = function() return "Krieger", "WARRIOR", 1 end
