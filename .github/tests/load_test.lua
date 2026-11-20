@@ -27687,6 +27687,31 @@ do
         CL.Refresh(tl)
         tb.SetFrameStrata = oS
         assert(strata == "HIGH", "Titelknopf liegt unter der Titelleiste: " .. tostring(strata))
+        -- Mehrere Knoepfe in einer Titelleiste: vom Kreuz nach links gereiht;
+        -- reicht der Platz neben dem Titel nicht, geht der naechste unter das
+        -- Fenster (fallback).
+        assert(CL.TitleFits({ GetWidth = function() return 800 end }, nil, 150, 0), "breites Fenster: passt nicht")
+        local narrow = { GetWidth = function() return 340 end,
+                         GetTitleText = function() return { GetStringWidth = function() return 120 end } end }
+        assert(not CL.TitleFits(narrow, nil, 150, 0), "schmales Fenster: Titel verdeckt")
+        local ch = CreateFrame("Frame", "WeintCodexTestChar", UIParent)
+        ch.CloseButton = CreateFrame("Button", nil, ch)
+        ch.IsShown = function() return true end
+        local rep = CreateFrame("Frame", "WeintCodexTestRep", ch)
+        rep.IsShown = function() return true end
+        local l1 = { host = "WeintCodexTestChar", where = "title", label = function() return "Codex: Charakter" end, go = function() end }
+        local l2 = { host = "WeintCodexTestRep", where = "title", titleHost = "WeintCodexTestChar", fallback = "belowleft",
+                     label = function() return "Ruf" end, go = function() end }
+        local b1, b2 = CL.Attach(l1), CL.Attach(l2)
+        ch.GetWidth = function() return 900 end
+        CL.Arrange(ch)
+        assert(b1._mode == "title" and b2._mode == "title", "zweiter Knopf nicht in der Titelleiste")
+        ch.GetWidth = function() return 340 end
+        ch.GetTitleText = function() return { GetStringWidth = function() return 120 end } end
+        CL.Arrange(ch)
+        assert(b2._mode == "belowleft", "zu wenig Platz: Knopf verdeckt den Titel")
+        assert(CL.CloseOf({ BorderFrame = { CloseButton = ch.CloseButton } }) == ch.CloseButton, "Kreuz der Weltkarte nicht gefunden")
+        b1:Hide() b2:Hide()
         -- Beruf aus dem Fenster (Titel "Erste Hilfe"), auch ohne Abfrage des
         -- Spiels; Codex landet genau dort, auch wenn vorher ein anderer Beruf
         -- oder ein Werkzeug-Reiter offen war.

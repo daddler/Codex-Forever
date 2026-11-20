@@ -166,35 +166,35 @@ CL.LINKS = {
     { host = "TradeSkillFrame", where = "title", label = function() return "Codex: Berufe" end,
       tip = "Rezepte nach deiner Fertigkeit, Lehrer und Herkunft der Rezepte – für den offenen Beruf.",
       go = function() return CL.OpenProfession(CL.Profession(_G.TradeSkillFrame)) end },
-    { host = "ClassTrainerFrame",
+    { host = "ClassTrainerFrame", where = "title",
       label = function() return IsTradeTrainer() and "Codex: Berufe" or "Codex: Lehrer" end,
       tip = "Was du hier lernen kannst, was es kostet und was als Nächstes kommt.",
       go = function()
           if IsTradeTrainer() then return CL.Open("berufe") end
           return CL.Open("lehrer")
       end },
-    { host = "CharacterFrame", label = function() return "Codex: Charakter" end,
+    { host = "CharacterFrame", where = "title", label = function() return "Codex: Charakter" end,
       tip = "Ausrüstung, Twinks und Fortschritt deiner Charaktere.",
       go = function() return CL.Open("charakter") end },
-    { host = "SpellBookFrame", label = function() return "Codex: Lehrer" end,
+    { host = "SpellBookFrame", where = "title", label = function() return "Codex: Lehrer" end,
       tip = "Welche Zauber du bei deinem Lehrer lernen kannst und was sie kosten.",
       go = function() return CL.Open("lehrer") end },
-    { host = "PlayerSpellsFrame", label = function() return "Codex: Lehrer" end,
+    { host = "PlayerSpellsFrame", where = "title", label = function() return "Codex: Lehrer" end,
       tip = "Welche Zauber du bei deinem Lehrer lernen kannst und was sie kosten.",
       go = function() return CL.Open("lehrer") end },
-    { host = "BankFrame", label = function() return "Codex: Taschen" end,
+    { host = "BankFrame", where = "title", label = function() return "Codex: Taschen" end,
       tip = "Was alle deine Charaktere tragen – Taschen, Bank, Ausrüstung.",
       go = function() return CL.Open("taschen") end },
     { host = "ContainerFrameCombinedBags", where = "above", label = function() return "Codex: Taschen" end,
       tip = "Was alle deine Charaktere tragen – Taschen, Bank, Ausrüstung.",
       go = function() return CL.Open("taschen") end },
-    { host = "LFGParentFrame", label = function() return "Codex: Dungeons" end,
+    { host = "LFGParentFrame", where = "title", label = function() return "Codex: Dungeons" end,
       tip = "Alle Dungeons mit Stufen, Bossen, Beute und Quests.",
       go = function() return CL.Open("dungeons") end },
-    { host = "PVEFrame", label = function() return "Codex: Dungeons" end,
+    { host = "PVEFrame", where = "title", label = function() return "Codex: Dungeons" end,
       tip = "Alle Dungeons mit Stufen, Bossen, Beute und Quests.",
       go = function() return CL.Open("dungeons") end },
-    { host = "EncounterJournal", label = function() return "Codex: Dungeons" end,
+    { host = "EncounterJournal", where = "title", label = function() return "Codex: Dungeons" end,
       tip = "Alle Dungeons mit Stufen, Bossen, Beute und Quests.",
       go = function()
           local id = CL.CurrentDungeon()
@@ -204,7 +204,7 @@ CL.LINKS = {
           end)
       end },
     -- Nur in einem Dungeon, den Codex kennt: Weltkarte -> dieser Dungeon.
-    { host = "WorldMapFrame", when = function() return CL.CurrentDungeon() ~= nil end,
+    { host = "WorldMapFrame", where = "title", when = function() return CL.CurrentDungeon() ~= nil end,
       label = function() return "Codex: dieser Dungeon" end,
       tip = "Bosse, Beute und Quests des Dungeons, in dem du gerade bist.",
       go = function()
@@ -217,24 +217,24 @@ CL.LINKS = {
     -- Weitere Fenster (1.0.8.0, Wunsch: "bind zuerst noch die weiteren
     -- Fenster an"). Talentplaner, Ruf-Belohnungen und Feldbuch sind eigene
     -- Fenster von WeintCodex, keine Seiten im Codex.
-    { host = "PlayerTalentFrame", label = function() return "WeintCodex: Talentplaner" end,
+    { host = "PlayerTalentFrame", where = "title", label = function() return "WeintCodex: Talentplaner" end,
       tip = "Talente Stufe für Stufe planen, teilen und beim Leveln folgen.",
       go = function() local TB = WeintCodex.UITalentBuilds if TB and TB.Open then TB.Open() return true end end },
-    { host = "TalentFrame", label = function() return "WeintCodex: Talentplaner" end,
+    { host = "TalentFrame", where = "title", label = function() return "WeintCodex: Talentplaner" end,
       tip = "Talente Stufe für Stufe planen, teilen und beim Leveln folgen.",
       go = function() local TB = WeintCodex.UITalentBuilds if TB and TB.Open then TB.Open() return true end end },
     -- Reiter Ruf im Charakterfenster: links, der Knopf zum Charakter steht rechts.
-    { host = "ReputationFrame", where = "belowleft", label = function() return "WeintCodex: Ruf-Belohnungen" end,
+    { host = "ReputationFrame", where = "title", titleHost = "CharacterFrame", fallback = "belowleft", label = function() return "WeintCodex: Ruf-Belohnungen" end,
       tip = "Was jede Fraktion bei welcher Rufstufe anbietet, mit deinem Stand.",
       go = function()
           local FJ = WeintCodex.UIFieldJournal
           if FJ and FJ.RepReport and K.ShowReport then K.ShowReport("Ruf-Belohnungen", FJ.RepReport()) return true end
       end },
-    { host = "AuctionHouseFrame", label = function() return "Codex: Berufe" end,
+    { host = "AuctionHouseFrame", where = "title", label = function() return "Codex: Berufe" end,
       tip = "Rezepte auf die Einkaufsliste setzen – die Liste steht dann hier im Auktionshaus.",
       go = function() return CL.Open("berufe") end },
     -- Betrachten in einer Gruppe: der Gruppencheck zeigt alle zusammen.
-    { host = "InspectFrame", when = function()
+    { host = "InspectFrame", where = "title", when = function()
           local ok, v = pcall(_G.IsInGroup or function() return false end)
           return ok and K.Bool(Plain(v), false)
       end,
@@ -263,16 +263,67 @@ CL.LINKS = {
 -- Knoepfe
 --------------------------------------------------
 CL.buttons = {}   -- [Eintrag aus CL.LINKS] = Knopf (ein Fenster kann mehrere tragen)
+CL.order = {}     -- angehaengte Eintraege, in der Reihenfolge von CL.LINKS (Titelleiste: rechts zuerst)
+local function Rank(link)
+    for i, l in ipairs(CL.LINKS) do if l == link then return i end end
+    return math.huge
+end
 
 function CL.On() return K.IsActive(KEY) and K.Get(KEY, "codexLinks") ~= false end
+
+-- Das Kreuz eines Fensters (je nach Fenster an anderer Stelle) oder nil.
+function CL.CloseOf(host)
+    if type(host) ~= "table" then return nil end
+    local c = host.CloseButton
+    if type(c) ~= "table" and type(host.BorderFrame) == "table" then c = host.BorderFrame.CloseButton end
+    if type(c) ~= "table" and host.GetName then
+        local n = host:GetName()
+        if type(n) == "string" then c = _G[n .. "CloseButton"] end
+    end
+    return type(c) == "table" and c.GetObjectType and c or nil
+end
+
+-- Der Titel des Fensters (FontString) oder nil.
+function CL.TitleOf(host)
+    if type(host.GetTitleText) == "function" then
+        local ok, fs = pcall(host.GetTitleText, host)
+        if ok and type(fs) == "table" then return fs end
+    end
+    local t = (type(host.TitleContainer) == "table" and host.TitleContainer.TitleText) or host.TitleText
+    if type(t) ~= "table" and host.GetName then
+        local n = host:GetName()
+        if type(n) == "string" then t = _G[n .. "TitleText"] end
+    end
+    return type(t) == "table" and t or nil
+end
+
+-- Passt ein Knopf der Breite `w` neben das Kreuz, wenn rechts davon schon
+-- `used` Bildpunkte belegt sind - ohne den mittigen Titel zu verdecken?
+-- Ohne Masse (Fenster nicht gezeichnet) gilt: passt.
+CL.TITLE_CLEAR = 10       -- so viel Luft bleibt zum Titel
+function CL.TitleFits(host, close, w, used)
+    local W = Plain(host.GetWidth and host:GetWidth())
+    if type(W) ~= "number" or W <= 0 then return true end
+    local right = W - 30
+    local cl, hl = Plain(close and close.GetLeft and close:GetLeft()), Plain(host.GetLeft and host:GetLeft())
+    if type(cl) == "number" and type(hl) == "number" then right = cl - hl end
+    local tw = 0
+    local fs = CL.TitleOf(host)
+    if fs and fs.GetStringWidth then
+        local v = Plain(fs:GetStringWidth())
+        if type(v) == "number" then tw = v end
+    end
+    local left = right - CL.TITLE_GAP - (used or 0) - (w or 0)
+    return left >= W / 2 + tw / 2 + CL.TITLE_CLEAR
+end
 
 function CL.Place(b, host, where)
     b:ClearAllPoints()
     if where == "title" then
         -- Links neben dem Kreuz des Fensters, auf seiner Mitte; ohne Kreuz
         -- oben rechts in der Titelleiste.
-        local close = type(host.CloseButton) == "table" and host.CloseButton or nil
-        if close and close.GetObjectType then
+        local close = CL.CloseOf(host)
+        if close then
             b:SetPoint("RIGHT", close, "LEFT", -CL.TITLE_GAP, 0)
         else
             b:SetPoint("TOPRIGHT", host, "TOPRIGHT", -34, -4)
@@ -283,6 +334,47 @@ function CL.Place(b, host, where)
         b:SetPoint("TOPLEFT", host, "BOTTOMLEFT", 0, -4)
     else
         b:SetPoint("TOPRIGHT", host, "BOTTOMRIGHT", 0, -4)
+    end
+end
+
+-- Alle sichtbaren Titelknoepfe eines Fensters der Reihe nach vom Kreuz
+-- nach links (Reihenfolge wie in CL.LINKS). Was nicht mehr passt, ohne den
+-- Titel zu verdecken, geht an seinen Platz ausserhalb (fallback, sonst
+-- unter das Fenster). 1.0.8.0 (Wunsch: "diesen Button fuer die anderen
+-- Fenster nachziehen").
+function CL.Arrange(frame)
+    if type(frame) ~= "table" then return end
+    local close = CL.CloseOf(frame)
+    local used, prev, full = 0, nil, false
+    for _, link in ipairs(CL.order) do
+        local b = CL.buttons[link]
+        if b and link.where == "title" and _G[link.titleHost or link.host] == frame
+            and b.IsShown and b:IsShown() then
+            local w = Plain(b:GetWidth()) or 0
+            local mode
+            if not full and CL.TitleFits(frame, close, w, used) then
+                b:ClearAllPoints()
+                if prev then
+                    b:SetPoint("RIGHT", prev, "LEFT", -CL.TITLE_GAP, 0)
+                else
+                    CL.Place(b, frame, "title")
+                end
+                used, prev, mode = used + w + (prev and CL.TITLE_GAP or 0), b, "title"
+            else
+                full = true   -- danach nichts mehr oben: die Reihe bleibt in Ordnung
+                mode = link.fallback or "below"
+                CL.Place(b, _G[link.host], mode)
+            end
+            b._mode = mode
+            local host = _G[link.host]
+            local strata = Plain(host.GetFrameStrata and host:GetFrameStrata()) or "HIGH"
+            -- 1.0.8.0 (Bild: Knopf in der Titelleiste blass, nicht anklickbar):
+            -- die Titelleiste des Spiels liegt ueber Fensterebene + 20. Auf
+            -- dem Fenster eine Schicht hoeher - darunter bleibt er unsichtbar.
+            if mode == "title" then strata = CL.ABOVE[strata] or strata end
+            b:SetFrameStrata(strata)
+            b:SetFrameLevel((Plain(host.GetFrameLevel and host:GetFrameLevel()) or 1) + 20)
+        end
     end
 end
 
@@ -346,17 +438,14 @@ function CL.Refresh(link)
     if not (b and type(host) == "table") then return end
     local show = CL.On() and host.IsShown and K.Bool(host:IsShown(), false)
         and (not link.when or link.when()) and true or false
-    if show then
-        b:SetText(link.label())   -- passt die Breite an
-        local strata = Plain(host.GetFrameStrata and host:GetFrameStrata()) or "HIGH"
-        -- 1.0.8.0 (Bild: Knopf in der Titelleiste blass, nicht anklickbar):
-        -- die Titelleiste des Spiels liegt ueber Fensterebene + 20. Auf dem
-        -- Fenster selbst eine Schicht hoeher - darunter bleibt er unsichtbar.
-        if link.where == "title" then strata = CL.ABOVE[strata] or strata end
-        b:SetFrameStrata(strata)
+    if show then b:SetText(link.label()) end   -- passt die Breite an
+    b:SetShown(show)
+    if link.where == "title" then
+        CL.Arrange(_G[link.titleHost or link.host])
+    elseif show then
+        b:SetFrameStrata(Plain(host.GetFrameStrata and host:GetFrameStrata()) or "HIGH")
         b:SetFrameLevel((Plain(host.GetFrameLevel and host:GetFrameLevel()) or 1) + 20)
     end
-    b:SetShown(show)
 end
 
 function CL.Attach(link)
@@ -364,18 +453,26 @@ function CL.Attach(link)
     local host = _G[link.host]
     if type(host) ~= "table" or not host.HookScript then return nil end
     if host.IsForbidden and host:IsForbidden() then return nil end
-    local title = link.where == "title"
+    -- Alle Knoepfe in Gold mit Logo - auch die ausserhalb der Titelleiste
+    -- (Taschen, Beute): ein Aussehen fuer "Codex: ...".
     local b = WeintCodex.CreateButton(UIParent, { text = link.label(), kind = "secondary",
-        height = title and CL.TITLE_H or CL.H, size = 11, padding = title and (30 + CL.TITLE_ICON) or nil,
-        radius = title and 0 or nil,
+        height = CL.TITLE_H, size = 11, padding = 30 + CL.TITLE_ICON, radius = 0,
         backdrop = "surface2", tooltip = link.tip, onClick = function() link.go() end })
-    if title then b._tip = link.tip CL.Gold(b) end
+    b._tip = link.tip
+    CL.Gold(b)
     b:SetText(link.label())
     CL.Place(b, host, link.where)
     b:Hide()
     CL.buttons[link] = b
+    CL.order[#CL.order + 1] = link
+    table.sort(CL.order, function(a, c) return Rank(a) < Rank(c) end)
     host:HookScript("OnShow", function() CL.Refresh(link) end)
-    host:HookScript("OnHide", function() b:Hide() end)
+    host:HookScript("OnHide", function()
+        b:Hide()
+        -- Ein Reiter im Fenster (Ruf im Charakterfenster) geht: die anderen
+        -- Titelknoepfe ruecken nach.
+        if link.where == "title" and link.titleHost then CL.Arrange(_G[link.titleHost]) end
+    end)
     CL.Refresh(link)
     return b
 end

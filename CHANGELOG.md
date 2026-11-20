@@ -75,6 +75,12 @@ nicht zusammen.
   Suche und Lagerfeuer zurueck und zeichnet nach dem Wechsel neu (war
   „Berufe“ offen, tat der Klick auf den Bereich nichts). Aussehen: eckig,
   goldgetoente Flaeche, eigener Rand, hell mit der Maus.
+- Titelleiste fuer alle passenden Fenster (Lehrer, Charakter, Zauberbuch,
+  Bank, Gruppensuche, Kompendium, Weltkarte, Talente, Auktionshaus,
+  Betrachten; Ruf im Charakterfenster gereiht): `CL.Arrange` reiht vom Kreuz
+  nach links, `CL.TitleFits` misst gegen den mittigen Titel, sonst `fallback`
+  (danach alle folgenden). Kreuz auch unter `BorderFrame` (Weltkarte).
+  Taschen und Beute bleiben ausserhalb, alle Knoepfe in Gold mit Logo.
 - Bequem: nach `AcceptQuest` blieb das leere Questfenster offen (Client schliesst
   nicht selbst) – `EV.CloseDetail` nach 0,1 s, nur solange `QuestFrameDetailPanel` steht.
 - `K.HeldSize`: geheime Schluessel uebersprungen („cannot be indexed with
