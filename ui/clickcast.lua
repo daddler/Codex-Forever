@@ -1301,6 +1301,12 @@ function CC.Capture(input, isMouse, mod)
     return true
 end
 
+-- Mausrad am Feld an/aus: aus heisst, das Rad geht an die Seite darunter.
+function CC.ArmWheel(f, on)
+    f.armed = on and true or false
+    if f.EnableMouseWheel then f:EnableMouseWheel(f.armed) end
+end
+
 function CC.BuildCapture(parent, width)
     local f = CreateFrame("Button", nil, parent)
     f:SetSize(width, 34)
@@ -1317,8 +1323,10 @@ function CC.BuildCapture(parent, width)
     f.text:SetWordWrap(false)
     if f.RegisterForClicks then f:RegisterForClicks("AnyUp") end
     local function Sync()
-        if f.hover then
+        if f.hover and f.armed then
             f.text:SetText(CC.KeyText(draft) .. "   –   jetzt drücken oder scrollen: Maustaste, Mausrad oder Taste, gern mit Umschalt, Strg oder Alt")
+        elseif f.hover then
+            f.text:SetText(CC.KeyText(draft) .. "   –   Maustaste oder Taste drücken; fürs Mausrad erst ins Feld klicken")
         else
             f.text:SetText("Taste zuweisen:  " .. CC.KeyText(draft) .. "   –   Maus hierher, dann die Taste drücken.")
         end
@@ -1337,13 +1345,23 @@ function CC.BuildCapture(parent, width)
     end)
     f:SetScript("OnLeave", function(self)
         self.hover = false
+        CC.ArmWheel(self, false)
         self.ring:SetShown(false)
         if not K.InCombat() and self.EnableKeyboard then self:EnableKeyboard(false) end
         Sync()
     end)
-    f:SetScript("OnMouseDown", function(_, button) CC.Capture(button, true) end)
-    if f.EnableMouseWheel then f:EnableMouseWheel(true) end
-    f:SetScript("OnMouseWheel", function(_, delta)
+    -- 1.0.8.4 (Rueckmeldung: "beim Scrollen der Seite nimmt das Feld das
+    -- Mausrad, weil der Zeiger irgendwann darueber kommt"): das Mausrad zaehlt
+    -- erst, nachdem das Feld angeklickt wurde - bis dahin scrollt die Seite
+    -- weiter. Verlaesst die Maus das Feld, ist es wieder aus.
+    f:SetScript("OnMouseDown", function(self, button)
+        CC.Capture(button, true)
+        CC.ArmWheel(self, true)
+        Sync()
+    end)
+    CC.ArmWheel(f, false)
+    f:SetScript("OnMouseWheel", function(self, delta)
+        if not self.armed then return end
         CC.Capture((delta or 0) > 0 and "MOUSEWHEELUP" or "MOUSEWHEELDOWN", false)
     end)
     f:SetScript("OnKeyDown", function(self, key)
@@ -1354,6 +1372,7 @@ function CC.BuildCapture(parent, width)
     end)
     f:SetScript("OnHide", function(self)
         self.hover = false
+        CC.ArmWheel(self, false)
         if not K.InCombat() and self.EnableKeyboard then self:EnableKeyboard(false) end
     end)
     Sync()

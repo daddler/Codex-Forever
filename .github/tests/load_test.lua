@@ -27700,6 +27700,31 @@ do
     Check(ok, "Kampfhilfen: Verlauf, Heiler unter Kontrolle, Gegner" .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 1.0.8.4: Klickzauber - das Feld "Taste zuweisen" nimmt das Mausrad erst
+-- nach einem Klick; beim Scrollen der Seite darueber hinweg nicht.
+do
+    local ok, err = pcall(function()
+        local CC = WeintCodex.UIClickCast
+        local f = CC.BuildCapture(UIParent, 300)
+        local wheelOn
+        local oE = f.EnableMouseWheel
+        f.EnableMouseWheel = function(self, v) wheelOn = v return oE and oE(self, v) end
+        CC.ArmWheel(f, false)
+        f:GetScript("OnEnter")(f)
+        assert(wheelOn == false and not f.armed, "Mausrad beim Darueberfahren genommen")
+        local before = CC.draft and CC.draft.button
+        f:GetScript("OnMouseWheel")(f, -1)
+        assert((CC.draft and CC.draft.button) == before, "Scrollen ohne Klick belegt die Taste")
+        f:GetScript("OnMouseDown")(f, "LeftButton")
+        assert(f.armed and wheelOn == true, "Klick schaltet das Mausrad nicht frei")
+        f:GetScript("OnMouseWheel")(f, 1)
+        assert(CC.draft.button == "MOUSEWHEELUP", "Mausrad nach Klick nicht belegt: " .. tostring(CC.draft.button))
+        f:GetScript("OnLeave")(f)
+        assert(not f.armed and wheelOn == false, "nach dem Verlassen noch scharf")
+    end)
+    Check(ok, "Klickzauber: Mausrad erst nach Klick ins Feld" .. (ok and "" or (": " .. tostring(err))))
+end
+
 -- 1.0.8.3: Mana (Kraft) als Zahl in der Kraftleiste, ab Werk aus.
 do
     local G = _G
