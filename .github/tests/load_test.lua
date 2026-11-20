@@ -8241,7 +8241,7 @@ do
             local list = J.Quests(did)
             assert(#list >= 3, did .. " ohne Quests")
             for _, q in ipairs(list) do
-                assert(q.src == "fg" and q.nf and J.QuestSource(q).kind == "community", did .. ": Herkunft der Quest " .. q.id)
+                assert(q.src == "fg" and (q.nf or q.ofa) and J.QuestSource(q).kind == "community", did .. ": Herkunft der Quest " .. q.id)
             end
         end
         assert(#J.Quests("kroldok_stronghold", "horde") < #J.Quests("kroldok_stronghold"), "Seite nicht gefiltert")
@@ -27028,6 +27028,15 @@ do
         assert(found, "gemeldetes Kraut nicht auf der Tafel")
         G.C_Item = oC
         assert(ZI.LINES_MAX >= #lines, "Tafel zu klein fuer " .. #lines .. " Zeilen")
+        local J = WeintCodex.DungeonJournal
+        local q7581 = false
+        for _, q in ipairs(J.Quests("dire_maul")) do if q.id == 7581 then q7581 = q.ofa end end
+        assert(q7581, "Quest aus dem Abgleich fehlt (Die Fesseln des Gefaengnisses)")
+        local wrex
+        for _, list in pairs(J.DATA.alcaz_island_prison.loot) do
+            for _, it in ipairs(list) do if it[1] == 276732 then wrex = it.chance end end
+        end
+        assert(wrex == 32, "in Forever gemessene Dropchance nicht gesetzt (" .. tostring(wrex) .. ")")
         local BD = WeintCodex.BeastData
         assert(BD.b[260157] and BD.b[253282]:match("^(%d+)") == "3", "Tiere aus dem Abgleich fehlen")
     end)

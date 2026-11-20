@@ -317,3 +317,145 @@ fh = assert(io.open(CDX .. "/data/beasts_ofa.lua", "w"))
 fh:write(table.concat(out, "\n"), "\n")
 fh:close()
 print(string.format("Tiere: %d neu, %d mit anderer Familie", #addB, #fixF))
+
+--------------------------------------------------
+-- Dungeons: Dropchancen und Quests
+--------------------------------------------------
+-- Dropchancen: in Forever gemessen (DUNGEON_DROP_FOREVER, Wowhead Forever,
+-- Bosse mit 100+ Kills) gelten vor dem Bestand; Classic-Chancen fuellen nur,
+-- wo der Bestand keine Zahl hat. Nur fuer Gegenstaende, die der Bestand im
+-- Dungeon fuehrt - die Liste der Beute bleibt, wie sie ist.
+-- Quests: nur die, die dem Dungeon fehlen (Nummer, Name, Stufen, Seite,
+-- Klasse) - keine Texte. Was nur der Bestand kennt, bleibt.
+local FLTD = { DUNGEON_REGISTRY = {} }
+assert(loadfile(OFA .. "/Data/DungeonDropChance.lua"))("OneForAll", FLTD)
+for f in io.popen('ls "' .. OFA .. '/Data/Dungeons"'):lines() do
+    assert(loadfile(OFA .. "/Data/Dungeons/" .. f))("OneForAll", FLTD)
+end
+WeintCodex.Sources = WeintCodex.Sources or setmetatable({}, { __index = function() return function() return true end end })
+for _, f in ipairs({ "sources.lua", "dungeons.lua", "dungeons_classic.lua", "dungeon_journal.lua", "dungeon_journal_fg.lua", "dungeon_journal_nf.lua" }) do
+    dofile(CDX .. "/data/" .. f)
+end
+local J = WeintCodex.DungeonJournal
+if J.EnsureAllClassic then J.EnsureAllClassic() end
+local byName = {}
+for _, d in ipairs(WeintCodex_Dungeons or {}) do byName[d.name] = d.id end
+for _, d in ipairs(WeintCodex_ClassicDungeons or {}) do byName[d.name] = d.id end
+local ALIAS = { ["Alcaz Prison"] = "alcaz_island_prison", ["Dire Maul: East"] = "dire_maul", ["Dire Maul: North"] = "dire_maul",
+    ["Dire Maul: West"] = "dire_maul", ["Scarlet Monastery: Armory"] = "scarlet_monastery",
+    ["Scarlet Monastery: Cathedral"] = "scarlet_monastery", ["Scarlet Monastery: Graveyard"] = "scarlet_monastery",
+    ["Scarlet Monastery: Library"] = "scarlet_monastery", ["Drowned City"] = "drowned_city",
+    ["Excavation Site: Wetlands"] = "excavation_site", ["The Temple of Atal'Hakkar"] = "sunken_temple" }
+local function DId(n) return byName[n] or ALIAS[n] end
+-- Was der Bestand je Dungeon fuehrt, mit Chance (nil = ohne Zahl).
+local listed = {}
+for did, d in pairs(J.DATA or {}) do
+    listed[did] = listed[did] or {}
+    for _, list in pairs(d.loot or {}) do
+        for _, e in ipairs(list) do if type(e) == "table" and e[1] then listed[did][e[1]] = e.chance or false end end
+    end
+    for _, g in ipairs(d.others or {}) do
+        for _, e in ipairs(g.items or {}) do if type(e) == "table" and e[1] then listed[did][e[1]] = e.chance or false end end
+    end
+end
+local forever = {}
+for _, e in ipairs(FLTD.DUNGEON_DROP_FOREVER or {}) do forever[e[3]] = true end
+local drops, dstat = {}, { set = 0, fill = 0 }
+for dname, bosses in pairs(FLTD.DUNGEON_DROP_CHANCE) do
+    local did = DId(dname)
+    if did and listed[did] then
+        for _, items in pairs(bosses) do
+            for item, ch in pairs(items) do
+                local mine = listed[did][item]
+                -- Ganze Prozent, mindestens 1 (der Bestand kennt keine Bruchteile).
+                ch = type(ch) == "number" and math.floor(ch + 0.5) or nil
+                if mine ~= nil and ch and ch >= 1 and ch <= 100 then
+                    if forever[item] and mine ~= ch then
+                        drops[did] = drops[did] or {}
+                        drops[did][item] = { ch, true }
+                        dstat.set = dstat.set + 1
+                    elseif mine == false then
+                        drops[did] = drops[did] or {}
+                        drops[did][item] = { ch, forever[item] or false }
+                        dstat.fill = dstat.fill + 1
+                    end
+                end
+            end
+        end
+    end
+end
+local have = {}
+for did, d in pairs(J.DATA or {}) do
+    have[did] = {}
+    for _, q in ipairs(d.quests or {}) do have[did][q.id] = true end
+end
+local quests, qn = {}, 0
+local dnames = {}
+for n in pairs(FLTD.DUNGEON_REGISTRY) do dnames[#dnames + 1] = n end
+table.sort(dnames)
+for _, dname in ipairs(dnames) do
+    local did = DId(dname)
+    if did then
+        for _, q in ipairs(FLTD.DUNGEON_REGISTRY[dname].quests or {}) do
+            if type(q.id) == "number" and not (have[did] and have[did][q.id]) then
+                have[did] = have[did] or {}
+                have[did][q.id] = true
+                local fac = q.faction == "Alliance" and "alliance" or q.faction == "Horde" and "horde" or "both"
+                quests[did] = quests[did] or {}
+                quests[did][#quests[did] + 1] = string.format("        { id = %d, name = %q, level = %s, requires = %s, faction = %q%s },",
+                    q.id, q.name, tostring(q.level or "nil"), tostring(q.requires or "nil"), fac,
+                    q.class and string.format(", classes = { %q }", q.class) or "")
+                qn = qn + 1
+            end
+        end
+    end
+end
+out = {}
+W("--------------------------------------------------")
+W("-- WeintCodex :: Dungeon-Journal, Abgleich mit OneForAll (1.0.8.0)")
+W("--------------------------------------------------")
+W("-- ERZEUGT von .github/scripts/import_oneforall.lua - nicht von Hand aendern.")
+W("-- Herkunft (nur fuer Betreuer): OneForAll 6.2.12 (GPL-3.0, nur Daten) -")
+W("-- Dropchancen von Wowhead Forever (Bosse mit 100+ Kills, Stand 08.-13.11.2026),")
+W("-- Classic-Chancen von foreverchanges.pro; Quests aus QuestieDB Forever.")
+W("--   OFA_DROP[Dungeon][Gegenstand] = { Chance %, in Forever gemessen }")
+W("--     gemessen: gilt vor dem Bestand; sonst nur, wo der Bestand keine Zahl hat.")
+W("--   OFA_QUESTS[Dungeon]  Quests, die dem Dungeon fehlten (keine Texte).")
+W("-- Art `community`.")
+W("--------------------------------------------------")
+W("")
+W("local J = WeintCodex.DungeonJournal")
+W("")
+W("J.OFA_DROP = {")
+local dids = {}
+for did in pairs(drops) do dids[#dids + 1] = did end
+table.sort(dids)
+for _, did in ipairs(dids) do
+    local items = {}
+    for item in pairs(drops[did]) do items[#items + 1] = item end
+    table.sort(items)
+    local parts = {}
+    for _, item in ipairs(items) do
+        local v = drops[did][item]
+        parts[#parts + 1] = string.format("[%d] = { %g, %s }", item, v[1], v[2] and "true" or "false")
+    end
+    W(string.format("    %s = { %s },", did, table.concat(parts, ", ")))
+end
+W("}")
+W("")
+W("J.OFA_QUESTS = {")
+dids = {}
+for did in pairs(quests) do dids[#dids + 1] = did end
+table.sort(dids)
+for _, did in ipairs(dids) do
+    W("    " .. did .. " = {")
+    for _, l in ipairs(quests[did]) do W(l) end
+    W("    },")
+end
+W("}")
+W("")
+W("J.MergeOneForAll()")
+fh = assert(io.open(CDX .. "/data/dungeon_journal_ofa.lua", "w"))
+fh:write(table.concat(out, "\n"), "\n")
+fh:close()
+print(string.format("Dungeons: %d Chancen gemessen gesetzt, %d Chancen gefuellt, %d Quests neu", dstat.set, dstat.fill, qn))

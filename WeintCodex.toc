@@ -90,6 +90,7 @@ data/dungeon_journal_fg.lua
 # Abgleich mit Naowh Forever (1.4.0.0), erzeugt: Beute mit Dropchancen,
 # Stufen der Bosse, "noch nicht im Spiel" (J.MergeNaowh) - nach dem Abgleich oben.
 data/dungeon_journal_nf.lua
+data/dungeon_journal_ofa.lua
 
 #
 # data/artwork.lua steht NACH den Dungeondateien, weil es sie mit

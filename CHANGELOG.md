@@ -64,6 +64,10 @@ nicht zusammen.
   `ZI.Names`, bis 10 Zeilen). Zephras Isle zweite Kartennummer 2665.
   `data/beasts_ofa.lua` – 9 zähmbare Tiere (8 neu in Forever) mit Lage, 3
   Familien nach wow-petopia (Shriekling: Raubvogel, Vulgara: Fuchs).
+  `data/dungeon_journal_ofa.lua` – 338 in Forever gemessene Dropchancen (gelten
+  vor dem Bestand), 95 Classic-Chancen, wo keine Zahl stand (ganze Prozent ≥ 1),
+  42 fehlende Dungeon-Quests (`J.MergeOneForAll`, `J.ApplyOfaDrop` auch nach
+  dem späten Classic-Abgleich). Nur für Beute, die der Bestand führt.
   Lehrerzauber verglichen: keine Stufe anders, Unterschiede sind Talente,
   Start-/Volkszauber und Buchränge – nicht übernommen.
 - `ui/petstable.lua`: `PetStableFrame` in Gold (W.WINDOWS + CalmParts,

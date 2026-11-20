@@ -2349,10 +2349,55 @@ function J.MergeClassic(did)
     end
 end
 
+-- 1.0.8.0: Abgleich mit OneForAll (data/dungeon_journal_ofa.lua).
+-- Dropchancen: in Forever gemessen gilt vor dem Bestand, sonst nur, wo
+-- keine Zahl steht. Laeuft auch nach dem spaeten Classic-Abgleich.
+function J.ApplyOfaDrop(did)
+    local drops = J.OFA_DROP and J.OFA_DROP[did]
+    local e = J.DATA[did]
+    if not (drops and e) then return 0 end
+    local n = 0
+    local function apply(list)
+        for _, it in ipairs(list or {}) do
+            local v = type(it) == "table" and drops[it[1]]
+            if v and (v[2] or not it.chance) and it.chance ~= v[1] then
+                it.chance = v[1]
+                n = n + 1
+            end
+        end
+    end
+    for _, list in pairs(e.loot or {}) do apply(list) end
+    for _, g in ipairs(e.others or {}) do apply(g.items) end
+    return n
+end
+function J.MergeOneForAll()
+    for did, list in pairs(J.OFA_QUESTS or {}) do
+        local e = J.DATA[did]
+        if not e then
+            e = { loot = {}, quests = {} }
+            J.DATA[did] = e
+        end
+        e.quests = e.quests or {}
+        local have = {}
+        for _, q in ipairs(e.quests) do have[q.id] = true end
+        for _, q in ipairs(list) do
+            if not have[q.id] then
+                q.src, q.ofa = "fg", true
+                e.quests[#e.quests + 1] = q
+                have[q.id] = true
+            end
+        end
+    end
+    for did in pairs(J.OFA_DROP or {}) do J.ApplyOfaDrop(did) end
+end
+
 -- Vor jedem Blick auf Beute eines Dungeons.
 local function EnsureClassic(did)
     local l, o = J.CLASSIC_LOOT and J.CLASSIC_LOOT[did], J.CLASSIC_OTHERS and J.CLASSIC_OTHERS[did]
-    if type(l) == "function" or type(o) == "function" then J.MergeClassic(did) end
+    if type(l) == "function" or type(o) == "function" then
+        J.MergeClassic(did)
+        J.ApplyOfaDrop(did)
+    end
 end
 J.EnsureClassic = EnsureClassic
 
