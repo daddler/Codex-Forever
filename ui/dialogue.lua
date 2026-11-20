@@ -22,6 +22,23 @@
 --
 -- Bricht der Aufbau ab, gibt DL.Fail die Fenster des Spiels zurueck und
 -- sagt es; im Kampf keine Tasten (das Spiel sperrt das Weiterreichen).
+--
+-- ROLLENSPIEL (1.0.8.0, Wunsch: "soll besser wirken, mehr Rollenspiel"):
+--   * Sprechende Bueste: das 3D-Bild des NPCs im Rahmen, es spricht, solange
+--     der Text einlaeuft (Frage/Ausruf je nach Satzende), danach ruht es.
+--     Ohne NPC (Quest aus einem Gegenstand) oder ohne Modell: das Bild.
+--   * Sprechabschnitte: langer Text in Abschnitten wie gesprochen - die
+--     Leertaste (oder ein Klick in den Text) blaettert weiter, Ruecktaste
+--     zurueck; erst nach dem letzten handelt die Leertaste.
+--   * Erzaehlung abgesetzt: was das Spiel in spitzen Klammern schreibt
+--     ("<Er mustert Euch.>"), steht gedaempft als Erzaehlung da.
+--   * Antworten sind eigene Worte: kursiv, wie gesprochen.
+--   * Knoepfe in der Sprache des Spiels ("Auftrag annehmen", "Lebt wohl").
+--   * Titel des NPCs unter dem Namen ("<Gastwirtin>"), wo der Client ihn nennt.
+--   * Leises Blaettern (Klaenge des Spiels ueber ihre Nummer).
+--   * Buehne (ab Werk aus - neues Element auf dem Bildschirm): schwarze
+--     Balken oben und unten wie im Kino, solange gesprochen wird.
+-- Verhalten angelehnt an Immersion/DialogueUI, eigener Code und Entwurf.
 --------------------------------------------------
 
 local K = WeintCodex.UIKit
@@ -46,16 +63,29 @@ DL.DEFAULTS = {
     dlgCamRepair = 0,    -- 6.26.1.0: einmalige Kamerareparatur gelaufen (Fassung)
     dlgSpeed = 35,       -- Zeichen je Sekunde beim Einlaufen (6.23.2.0)
     dlgFade  = true,     -- Oberflaeche ausblenden (6.23.2.0)
+    -- 1.0.8.0 Rollenspiel
+    dlgModel = true,     -- sprechende Bueste (3D) statt Bild
+    dlgPages = true,     -- Text in Sprechabschnitten
+    dlgSound = true,     -- leises Blaettern
+    dlgStage = false,    -- Kinobalken oben und unten (neues Element: ab Werk aus)
 }
 DL.W = 560
 DL.TEXT_SIZE = 17        -- Erzaehltext (6.23.4.0: groesser, Serife)
 DL.BODY_MAX = 300        -- hoechstens so hoch, dann rollt der Text
-DL.PORTRAIT = 60         -- Bild des NPCs
+DL.PORTRAIT = 72         -- Bild des NPCs (1.0.8.0: Rahmen fuer die Bueste)
 DL.FADE_IN = 0.35        -- Fenster blendet ein (s)
 DL.CAM_MAX = 3           -- (bis 6.23.3.0) so lange wartete der Text hoechstens
 DL.TEXT_DELAY = 0.4      -- so lange nach dem Beginn der Kamerafahrt beginnt der Text (s)
 DL.MAX_ROWS = 20       -- 1.0.7.11: Wachen haben 14 Antworten (Klassen-/Berufslehrer fehlten)
 DL.MAX_ITEMS = 10
+DL.PAGE_CHARS = 420      -- 1.0.8.0: so viele Zeichen hat ein Sprechabschnitt hoechstens
+DL.STAGE_FRAC = 0.1      -- Buehne: Balken je so hoch wie ein Zehntel des Bildes
+DL.STAGE_TIME = 0.6      -- und so lange fahren sie herein (s)
+-- Bewegungen der Bueste (Animationen des Spiels): sprechen, fragen, rufen, ruhen.
+DL.ANIM = { talk = 60, ask = 65, exclaim = 64, idle = 0 }
+DL.TALK_MAX = 8          -- ohne Einlaufen spricht die Bueste hoechstens so lange (s)
+-- Klaenge des Spiels (SOUNDKIT), nie eigene Dateien.
+DL.SOUNDS = { page = "IG_ABILITY_PAGE_TURN", accept = "IG_QUEST_LIST_OPEN", finish = "IG_QUEST_LIST_COMPLETE" }
 
 -- Ereignisse, die den Fenstern des Spiels genommen werden.
 -- 6.23.1.1 (Beta-Test: altes Fenster UND neues): auf dem neuen Client
@@ -125,6 +155,7 @@ end
 --------------------------------------------------
 
 local win, portrait, ring, head, sub, scroll, body, rowsTitle, foot, primary, secondary, close, tip
+local bust, model, pageMark       -- 1.0.8.0: Rahmen der Bueste, 3D-Bild, "2 / 3"
 local rows, items = {}, {}
 local reveal, revealLen = nil, 0
 local fadeIn = nil                 -- Fenster blendet ein (0..1)
@@ -137,7 +168,8 @@ local function Accent() local a = GC.frameAccent return a[1], a[2], a[3] end
 -- (freie Lizenz). Geht sie nicht, bleibt die Schrift von K.NewText.
 local function Serif(fs, size, bold)
     local F = WeintCodex.Fonts or {}
-    local path = bold and F.serifBold or F.serif
+    -- 1.0.8.0: "italic" = eigene Worte (Antworten), Newsreader kursiv.
+    local path = (bold == "italic" and (F.displayQuiet or F.serif)) or (bold and F.serifBold) or F.serif
     if not (path and fs and fs.SetFont) then return fs end
     local ok = fs:SetFont(path, size, "")
     if ok == false then K.SetFont(fs, size) return fs end
@@ -391,6 +423,8 @@ local function OnKey(self, key)
         take = true
     elseif key == "SPACE" or key == "ENTER" then
         take = DL.Primary()
+    elseif key == "BACKSPACE" then
+        take = DL.Back()
     else
         local n = tonumber(key)
         if n and n >= 1 and n <= 9 then take = DL.Pick(n) or DL.Choose(n) end
@@ -425,8 +459,83 @@ function DL.CamMoving()
     return type(z) == "number" and z > target + 0.4
 end
 
+--------------------------------------------------
+-- Die Bueste (1.0.8.0)
+--------------------------------------------------
+-- Das 3D-Bild des NPCs. Es spricht, solange der Text einlaeuft (ohne
+-- Einlaufen: so lange, wie man ungefaehr liest, hoechstens DL.TALK_MAX),
+-- dann ruht es. Satzende "?" fragt, "!" ruft. Ohne Gegenueber ("npc" fehlt,
+-- etwa bei einer Quest aus einem Gegenstand) oder ohne Modell: das Bild.
+DL.talk = { untilT = nil, anim = nil }
+local function Now() local t = _G.GetTime and K.Plain(_G.GetTime()) return type(t) == "number" and t or 0 end
+function DL.Mood(text)
+    if type(text) ~= "string" then return DL.ANIM.talk end
+    local tail = text:gsub("|c%x%x%x%x%x%x%x%x", ""):gsub("|r", ""):gsub("[%s\"']+$", "")
+    local last = tail:sub(-1)
+    if last == "?" then return DL.ANIM.ask elseif last == "!" then return DL.ANIM.exclaim end
+    return DL.ANIM.talk
+end
+local function Anim(id)
+    if not (model and model:IsShown()) or DL.talk.anim == id then return end
+    DL.talk.anim = id
+    if model.SetAnimation then pcall(model.SetAnimation, model, id) end
+end
+function DL.ShowBust()
+    local useModel = K.Get(KEY, "dlgModel") and model and K.Bool(_G.UnitExists and _G.UnitExists("npc"), false)
+    local shown = false
+    if useModel then
+        local ok = pcall(function()
+            if model.ClearModel then model:ClearModel() end
+            model:SetUnit("npc")
+            if model.SetPortraitZoom then model:SetPortraitZoom(0.9) end
+            if model.SetCamDistanceScale then model:SetCamDistanceScale(1.15) end
+        end)
+        shown = ok
+    end
+    DL.SetBust(shown)
+    -- Hat der Client nach einem Augenblick kein Modell geladen (Gegenstand,
+    -- Briefkasten, Anschlagbrett als Gegenueber), zurueck zum Bild - nie ein
+    -- leerer Rahmen.
+    if shown and _G.C_Timer and _G.C_Timer.After then
+        _G.C_Timer.After(0.4, function()
+            if not (model and model:IsShown()) or not model.GetModelFileID then return end
+            local fid = K.Plain(model:GetModelFileID())
+            if fid == nil or (type(fid) == "number" and fid <= 0) then DL.SetBust(false) end
+        end)
+    end
+    return shown
+end
+function DL.Model() return model end
+function DL.SetBust(on)
+    if model then model:SetShown(on and true or false) end
+    ring:SetShown(not on)
+    portrait:SetShown(not on)
+    DL.talk.anim = nil
+    DL.bustModel = on and true or false
+end
+-- Sprechen beginnen: Dauer in Sekunden (nil = bis der Text steht).
+function DL.Talk(text, secs)
+    DL.talk.untilT = secs and (Now() + secs) or nil
+    DL.talk.mood = DL.Mood(text)
+    DL.talk.on = true
+    Anim(DL.talk.mood)
+end
+function DL.Rest()
+    DL.talk.on, DL.talk.untilT = false, nil
+    Anim(DL.ANIM.idle)
+end
+
 local function OnUpdate(self, el)
     el = el or 0
+    -- Bueste: Ende des Sprechens (Zeit um), und neu ansetzen, falls das
+    -- Modell die Bewegung beim Laden verworfen hat.
+    if DL.talk.on then
+        if DL.talk.untilT and Now() >= DL.talk.untilT then DL.Rest()
+        elseif model and model:IsShown() and model.GetAnimation then
+            local a = K.Plain(model:GetAnimation())
+            if type(a) == "number" and a ~= DL.talk.mood then DL.talk.anim = nil Anim(DL.talk.mood) end
+        end
+    end
     if fadeIn then
         fadeIn = fadeIn + el / DL.FADE_IN
         if fadeIn >= 1 then fadeIn = nil self:SetAlpha(1) else self:SetAlpha(fadeIn) end
@@ -451,6 +560,7 @@ local function OnUpdate(self, el)
     reveal = reveal + el * DL.Speed()
     if reveal >= revealLen then
         reveal = nil
+        DL.Rest()
         -- Ganz zeigen: Verlauf HINTER dem letzten Zeichen. (0, 0) hiess
         -- "ab Zeichen 0 nichts" - 6.23.2.0 blieb nur der Anfang stehen.
         DL.ShowAll()
@@ -524,14 +634,36 @@ function DL.Build()
     edge:SetHeight(2)
     edge:SetColorTexture(r, g, b, 0.85)
 
-    -- Bild des NPCs im goldenen Ring
-    ring = win:CreateTexture(nil, "ARTWORK", nil, 1)
+    -- 1.0.8.0: Rahmen fuer die Bueste (3D, spricht) - darin, wo es kein
+    -- Modell gibt, das Bild des NPCs im goldenen Ring wie bisher.
+    bust = CreateFrame("Frame", nil, win)
+    bust:SetSize(DL.PORTRAIT + 6, DL.PORTRAIT + 6)
+    bust:SetPoint("TOPLEFT", win, "TOPLEFT", 18, -18)
+    bust.bg = bust:CreateTexture(nil, "BACKGROUND")
+    bust.bg:SetPoint("TOPLEFT", bust, "TOPLEFT", 1, -1)
+    bust.bg:SetPoint("BOTTOMRIGHT", bust, "BOTTOMRIGHT", -1, 1)
+    local deep = C.bgPanel
+    bust.bg:SetColorTexture(deep[1], deep[2], deep[3], 1)
+    -- Schein von unten, wie Licht am Feuer
+    bust.glow = bust:CreateTexture(nil, "BORDER")
+    bust.glow:SetPoint("BOTTOMLEFT", bust, "BOTTOMLEFT", 1, 1)
+    bust.glow:SetPoint("BOTTOMRIGHT", bust, "BOTTOMRIGHT", -1, 1)
+    bust.glow:SetHeight(DL.PORTRAIT * 0.6)
+    bust.glow:SetColorTexture(1, 1, 1, 1)
+    do
+        local CC0 = _G.CreateColor
+        if not (bust.glow.SetGradient and CC0 and pcall(bust.glow.SetGradient, bust.glow, "VERTICAL", CC0(r, g, b, 0.22), CC0(r, g, b, 0))) then
+            bust.glow:SetColorTexture(r, g, b, 0.06)
+        end
+    end
+    bust.border = K.Border(bust, 1, r, g, b, 0.85, "OVERLAY")
+    ring = bust:CreateTexture(nil, "ARTWORK", nil, 1)
     ring:SetTexture(K.MEDIA .. "disc")
-    ring:SetSize(DL.PORTRAIT + 6, DL.PORTRAIT + 6)
-    ring:SetPoint("TOPLEFT", win, "TOPLEFT", 18, -18)
+    ring:SetSize(DL.PORTRAIT - 4, DL.PORTRAIT - 4)
+    ring:SetPoint("CENTER", bust, "CENTER", 0, 0)
     ring:SetVertexColor(r, g, b, 0.9)
-    portrait = win:CreateTexture(nil, "ARTWORK", nil, 2)
-    portrait:SetSize(DL.PORTRAIT, DL.PORTRAIT)
+    portrait = bust:CreateTexture(nil, "ARTWORK", nil, 2)
+    portrait:SetSize(DL.PORTRAIT - 10, DL.PORTRAIT - 10)
     portrait:SetPoint("CENTER", ring, "CENTER", 0, 0)
     if win.CreateMaskTexture then
         local mask = win:CreateMaskTexture()
@@ -539,9 +671,16 @@ function DL.Build()
         mask:SetAllPoints(portrait)
         if portrait.AddMaskTexture then pcall(portrait.AddMaskTexture, portrait, mask) end
     end
+    local okM, m = pcall(CreateFrame, "PlayerModel", nil, bust)
+    if okM and type(m) == "table" then
+        model = m
+        model:SetPoint("TOPLEFT", bust, "TOPLEFT", 1, -1)
+        model:SetPoint("BOTTOMRIGHT", bust, "BOTTOMRIGHT", -1, 1)
+        model:Hide()
+    end
 
     head = Serif(K.NewText(win, 22), 22, true)
-    head:SetPoint("TOPLEFT", ring, "TOPRIGHT", 14, -8)
+    head:SetPoint("TOPLEFT", bust, "TOPRIGHT", 14, -10)
     head:SetPoint("RIGHT", win, "RIGHT", -44, 0)
     head:SetJustifyH("LEFT")
     head:SetWordWrap(false)
@@ -583,6 +722,15 @@ function DL.Build()
     body:SetTextColor(t[1], t[2], t[3])
     scroll:SetScrollChild(child)
     scroll.child = child
+    -- 1.0.8.0: Klick in den Text blaettert weiter (nie eine Handlung).
+    scroll:EnableMouse(true)
+    scroll:SetScript("OnMouseUp", function(_, button)
+        if button == "RightButton" then DL.Back() else DL.Advance() end
+    end)
+    pageMark = K.NewText(win, 10)
+    pageMark:SetPoint("BOTTOMRIGHT", win.orn, "TOPRIGHT", 0, 4)
+    pageMark:SetJustifyH("RIGHT")
+    pageMark:SetTextColor(r, g, b)
     scroll:SetScript("OnMouseWheel", function(self, d)
         local max = K.Plain(self:GetVerticalScrollRange()) or 0
         local v = (K.Plain(self:GetVerticalScroll()) or 0) - d * 30
@@ -610,12 +758,101 @@ function DL.Build()
     win:SetScript("OnUpdate", OnUpdate)
     win:SetScript("OnHide", function()
         reveal, camWait, fadeIn = nil, nil, nil
+        DL.shownKey = nil
+        DL.Rest()
+        DL.StageLater()
         if tip then tip:Hide() end
         DL.CamLater()
         DL.FadeLater()
     end)
     DL.win, DL.body = win, body
     return win
+end
+
+--------------------------------------------------
+-- Rollenspiel: Text, Abschnitte, Titel, Klang (1.0.8.0)
+--------------------------------------------------
+
+-- Laenge ohne Farbcodes (fuer das Einlaufen: der Verlauf zaehlt Zeichen,
+-- die man sieht).
+function DL.VisibleLen(text)
+    if type(text) ~= "string" then return 0 end
+    local plain = text:gsub("|c%x%x%x%x%x%x%x%x", ""):gsub("|r", "")
+    return (WeintCodex.Utf8Len and WeintCodex.Utf8Len(plain)) or #plain
+end
+
+-- Erzaehlung absetzen: "<Er mustert Euch.>" gedaempft, ohne Klammern.
+-- Nur offene Texte (geheime kommen hier gar nicht an - Str).
+function DL.Narrate(text)
+    if type(text) ~= "string" or text == "" or not text:find("<", 1, true) then return text end
+    local ok, out = pcall(string.gsub, text, "<([^<>\n]+)>", function(inner)
+        return WeintCodex.ColorText("textMuted", inner)
+    end)
+    return ok and out or text
+end
+
+-- Sprechabschnitte: nach Absaetzen, je hoechstens DL.PAGE_CHARS Zeichen;
+-- ein zu langer Absatz bricht am Satzende. Kurzer Text: ein Abschnitt.
+local function Len(t) return (WeintCodex.Utf8Len and WeintCodex.Utf8Len(t)) or #t end
+function DL.Paginate(text, limit)
+    limit = limit or DL.PAGE_CHARS
+    local pages = {}
+    if type(text) ~= "string" or text == "" then return { "" } end
+    local paras = {}
+    for para in (text .. "\n\n"):gmatch("(.-)\n%s*\n") do
+        para = para:gsub("^%s+", ""):gsub("%s+$", "")
+        if para ~= "" then
+            -- Zu lang: an Satzenden teilen.
+            while Len(para) > limit do
+                local cut
+                local pos = 1
+                while true do
+                    local a, b = para:find("[%.!%?]+[\"']?%s+", pos)
+                    if not a or Len(para:sub(1, b)) > limit then break end
+                    cut, pos = b, b + 1
+                end
+                if not cut then break end
+                paras[#paras + 1] = para:sub(1, cut):gsub("%s+$", "")
+                para = para:sub(cut + 1)
+            end
+            paras[#paras + 1] = para
+        end
+    end
+    local cur = nil
+    for _, para in ipairs(paras) do
+        if cur and Len(cur) + 2 + Len(para) <= limit then
+            cur = cur .. "\n\n" .. para
+        else
+            if cur then pages[#pages + 1] = cur end
+            cur = para
+        end
+    end
+    if cur then pages[#pages + 1] = cur end
+    if #pages == 0 then pages[1] = "" end
+    return pages
+end
+
+-- Titel des NPCs ("Gastwirtin"), wenn der Client ihn nennt: die zweite
+-- Zeile seines Tooltips - ausser sie nennt Stufe/Art (dann hat er keinen).
+function DL.NpcRole()
+    local ti = _G.C_TooltipInfo
+    if not (ti and ti.GetUnit) then return nil end
+    local ok, data = pcall(ti.GetUnit, "npc")
+    if not ok or type(data) ~= "table" or type(data.lines) ~= "table" then return nil end
+    local line = data.lines[2]
+    local t = line and Plain(line.leftText)
+    if type(t) ~= "string" or t == "" then return nil end
+    if t:find("%d") or t:find("Stufe", 1, true) or t:find("Level", 1, true) or t:find("??", 1, true) then return nil end
+    return t
+end
+
+function DL.Sound(kind)
+    if not K.Get(KEY, "dlgSound") then return false end
+    local sk, key = _G.SOUNDKIT, DL.SOUNDS[kind]
+    local id = type(sk) == "table" and key and sk[key]
+    if type(id) ~= "number" or type(_G.PlaySound) ~= "function" then return false end
+    pcall(_G.PlaySound, id)
+    return true
 end
 
 --------------------------------------------------
@@ -691,7 +928,7 @@ end
 -- Sammelt Text, Zeilen und Belohnungen des Zustands.
 function DL.Collect(state)
     DL.list, DL.rewards = {}, {}
-    local c = { state = state, title = "", text = "", extra = nil, primary = nil, secondary = "Tschüss" }
+    local c = { state = state, title = "", text = "", extra = nil, primary = nil, secondary = "Lebt wohl" }
     local npc = _G.UnitName and Str(_G.UnitName("npc"))
     c.npc = npc ~= "" and npc or "Gespräch"
     if state == "gossip" then
@@ -726,15 +963,16 @@ function DL.Collect(state)
         c.title = Str(Call("GetTitleText"))
         c.text = Str(Call("GetQuestText"))
         local obj = Str(Call("GetObjectiveText"))
-        if obj ~= "" then c.text = c.text .. "\n\n" .. WeintCodex.ColorText("textBright", "Ziele") .. "\n" .. obj end
+        -- 1.0.8.0: der Auftrag steht unter dem letzten Abschnitt.
+        if obj ~= "" then c.tail = WeintCodex.ColorText("textBright", "Euer Auftrag") .. "\n" .. obj end
         AddItems("reward", Num("GetNumQuestRewards"))
         AddItems("choice", Num("GetNumQuestChoices"))
-        c.primary, c.canPrimary, c.secondary = "Annehmen", true, "Ablehnen"
+        c.primary, c.canPrimary, c.secondary = "Auftrag annehmen", true, "Nicht jetzt"
     elseif state == "progress" then
         c.title = Str(Call("GetTitleText"))
         c.text = Str(Call("GetProgressText"))
         AddItems("required", Num("GetNumQuestItems"))
-        c.primary, c.canPrimary, c.secondary = "Weiter", K.Bool(Call("IsQuestCompletable"), false), "Schließen"
+        c.primary, c.canPrimary, c.secondary = "Übergeben", K.Bool(Call("IsQuestCompletable"), false), "Später"
     elseif state == "complete" then
         c.title = Str(Call("GetTitleText"))
         c.text = Str(Call("GetRewardText"))
@@ -742,8 +980,17 @@ function DL.Collect(state)
         local choices = Num("GetNumQuestChoices")
         AddItems("choice", choices)
         c.choices = choices
-        c.primary, c.canPrimary, c.secondary = "Abschließen", choices <= 1 or DL.choice ~= nil, "Schließen"
+        c.primary, c.canPrimary, c.secondary = "Belohnung nehmen", choices <= 1 or DL.choice ~= nil, "Später"
     end
+    -- 1.0.8.0: Sprechabschnitte, Erzaehlung abgesetzt, Auftrag am Ende.
+    local speech = DL.Narrate(c.text)
+    c.pages = K.Get(KEY, "dlgPages") and DL.Paginate(speech) or { speech }
+    if c.tail then
+        local n = #c.pages
+        c.pages[n] = (c.pages[n] ~= "" and (c.pages[n] .. "\n\n") or "") .. c.tail
+        c.text = c.text .. "\n\n" .. c.tail
+    end
+    if state == "gossip" or state == "greeting" then c.role = DL.NpcRole() end
     if state == "detail" or state == "complete" then
         local money, xp = Num("GetRewardMoney"), Num("GetRewardXP")
         local parts = {}
@@ -771,10 +1018,20 @@ function DL.Draw(c)
     win:SetScale(Scale())
     if first then DL.Place() end
     head:SetText(c.npc)
-    local subText = (c.title and c.title ~= "") and c.title or "Gespräch"
-    sub:SetText(WeintCodex.Upper and WeintCodex.Upper(subText) or subText)
+    -- 1.0.8.0: Quest: ihr Titel; Gespraech: der Titel des NPCs ("<Gastwirtin>").
+    local subText = (c.title and c.title ~= "") and c.title or (c.role and ("<" .. c.role .. ">")) or "Gespräch"
+    sub:SetText((c.role and subText:sub(1, 1) == "<") and subText or (WeintCodex.Upper and WeintCodex.Upper(subText) or subText))
     if _G.SetPortraitTexture then pcall(_G.SetPortraitTexture, portrait, "npc") end
-    body:SetText(c.text ~= "" and c.text or " ")
+    -- Sprechabschnitt (1.0.8.0)
+    local pages = c.pages or { c.text }
+    DL.page = math.max(1, math.min(DL.page or 1, #pages))
+    local last = DL.page >= #pages
+    local pageText = pages[DL.page] or ""
+    pageMark:SetText(#pages > 1 and ("Abschnitt " .. DL.page .. " / " .. #pages) or "")
+    local key = tostring(c.state) .. "|" .. DL.page .. "|" .. pageText
+    local same = (DL.shownKey == key) and win:IsShown()
+    DL.shownKey = key
+    body:SetText(pageText ~= "" and pageText or " ")
     local th = K.Plain(body:GetStringHeight())
     th = type(th) == "number" and th or 14
     scroll.child:SetHeight(th)
@@ -786,7 +1043,7 @@ function DL.Draw(c)
     -- Belohnungen / benoetigte Gegenstaende
     local shownItems = 0
     local label
-    if #DL.rewards > 0 or c.extra then
+    if last and (#DL.rewards > 0 or c.extra) then
         label = c.state == "progress" and "Benötigt" or (c.choices and c.choices > 1 and "Belohnung – wähle eine" or "Belohnung")
     end
     if label then
@@ -816,7 +1073,8 @@ function DL.Draw(c)
     for i = shownItems + 1, #items do items[i]:Hide() end
 
     -- Zeilen (Antworten, Quests), mit Zierlinie davor
-    if #DL.list > 0 then
+    local list = last and DL.list or {}
+    if #list > 0 then
         win.orn2:ClearAllPoints()
         win.orn2:SetPoint("TOPLEFT", win, "TOPLEFT", 20, -y)
         win.orn2:SetPoint("RIGHT", win, "RIGHT", -20, 0)
@@ -825,7 +1083,7 @@ function DL.Draw(c)
     else
         win.orn2:Hide()
     end
-    for i, l in ipairs(DL.list) do
+    for i, l in ipairs(list) do
         local r = Row(i)
         r.index = i
         r.num:SetText(i <= 9 and tostring(i) or "")
@@ -843,6 +1101,9 @@ function DL.Draw(c)
         local look = DL.LOOK[l.status or "none"]
         local mc = look.mark == "accent" and { ar, ag, ab } or C[look.mark]
         r.mark:SetTextColor(mc[1], mc[2], mc[3])
+        -- 1.0.8.0: Antworten sind eigene Worte - kursiv; Quests aufrecht.
+        local own = l.kind == "option"
+        if r.italic ~= own then Serif(r.label, 15, own and "italic" or nil) r.italic = own end
         r.label:SetText(l.text)
         local t = C[look.label]
         r.label:SetTextColor(t[1], t[2], t[3])
@@ -858,25 +1119,37 @@ function DL.Draw(c)
         r:Show()
         y = y + h + 4
     end
-    for i = #DL.list + 1, #rows do rows[i]:Hide() end
+    for i = #list + 1, #rows do rows[i]:Hide() end
 
-    SetButton(primary, c.primary, c.canPrimary)
+    if last then
+        SetButton(primary, c.primary, c.canPrimary)
+    else
+        SetButton(primary, "Weiter  ›", true)
+    end
     SetButton(secondary, c.secondary, true)
     local keys = K.Get(KEY, "dlgKeys")
-    foot:SetText(keys and ((#DL.list > 0 and "1–9 wählen · " or "") .. (c.primary and "Leertaste: " .. c.primary .. " · " or "") .. "Esc schließt") or "")
+    local space = (not last and "weiter") or c.primary
+    foot:SetText(keys and ((#list > 0 and "1–9 wählen · " or "") .. (space and "Leertaste: " .. space .. " · " or "")
+        .. (DL.page > 1 and "Rücktaste: zurück · " or "") .. "Esc schließt") or "")
     win:SetHeight(y + 8 + 52)
 
-    -- Text laeuft ein - erst, wenn die Kamera angekommen ist.
-    if K.Get(KEY, "dlgType") and body.SetAlphaGradient then
-        revealLen = (WeintCodex.Utf8Len and WeintCodex.Utf8Len(c.text)) or #c.text
+    -- Text laeuft ein - erst, wenn die Kamera angekommen ist. Derselbe
+    -- Abschnitt noch einmal gezeichnet (Belohnung gewaehlt, Gegenstand
+    -- geladen): nicht neu einlaufen lassen.
+    if same then
+        -- bleibt, wie er steht
+    elseif K.Get(KEY, "dlgType") and body.SetAlphaGradient then
+        revealLen = DL.VisibleLen(pageText)
         reveal = 0
-        camWait = 0
+        camWait = (DL.page == 1) and 0 or nil     -- weiterblaettern: ohne Atemzug
         body:SetAlpha(0)
         Gradient(0)
+        DL.Talk(pageText, nil)
     else
         reveal, camWait = nil, nil
         body:SetAlpha(1)
         DL.ShowAll()
+        DL.Talk(pageText, math.min(DL.TALK_MAX, math.max(1.5, DL.VisibleLen(pageText) / 18)))
     end
     local combat = _G.InCombatLockdown and K.Bool(_G.InCombatLockdown(), false)
     win:EnableKeyboard(keys and not combat and true or false)
@@ -1104,14 +1377,23 @@ function DL.CamLater()
     if t and t.After then t.After(DL.CAM_WAIT, CamOutNow) else DL.CamOut() end
 end
 
-function DL.Show(state)
+-- keep (1.0.8.0): derselbe Zustand wird nur aufgefrischt (Gegenstand
+-- geladen) - Abschnitt und Bueste bleiben.
+function DL.Show(state, keep)
     if not DL.Active() then return false end
     if state ~= "complete" then DL.choice = nil end
     DL.state = state
+    -- Neu angesprochen: neuer Anfang (auch derselbe Text laeuft neu ein).
+    if not keep then DL.page, DL.shownKey = 1, nil end
     DL.CamIn()                         -- sofort, vor dem Aufbau
     DL.FadeOut()
+    DL.StageIn()
     DL.Watch()
-    local ok, err = pcall(function() DL.Draw(DL.Collect(state)) end)
+    local ok, err = pcall(function()
+        local c = DL.Collect(state)
+        if not keep then DL.Build() DL.ShowBust() end
+        DL.Draw(c)
+    end)
     if not ok then DL.Fail(err) return false end
     stats.shown = stats.shown + 1
     return true
@@ -1155,7 +1437,9 @@ function DL.Choose(n)
     return true
 end
 
-function DL.Primary()
+-- Weiter im Gespraech, ohne zu handeln: erst den Text ganz zeigen, dann
+-- den naechsten Abschnitt (1.0.8.0). true, wenn etwas geschah.
+function DL.Advance()
     local c = DL.current
     if not (c and win and win:IsShown()) then return false end
     if reveal then                     -- erst den Text ganz zeigen
@@ -1165,12 +1449,40 @@ function DL.Primary()
         DL.revealAt = nil
         if body then body:SetAlpha(1) end
         DL.ShowAll()
+        DL.Rest()
         return true
     end
+    local pages = c.pages or { c.text }
+    if (DL.page or 1) < #pages then
+        DL.page = (DL.page or 1) + 1
+        DL.Sound("page")
+        DL.Draw(c)
+        return true
+    end
+    return false
+end
+
+-- Einen Abschnitt zurueck (Ruecktaste, Rechtsklick in den Text).
+function DL.Back()
+    local c = DL.current
+    if not (c and win and win:IsShown()) or (DL.page or 1) <= 1 then return false end
+    DL.page = DL.page - 1
+    DL.Sound("page")
+    DL.Draw(c)
+    return true
+end
+
+function DL.Primary()
+    local c = DL.current
+    if not (c and win and win:IsShown()) then return false end
+    if DL.Advance() then return true end
     if not (c.primary and c.canPrimary) then return false end
-    if c.state == "detail" then Call("AcceptQuest")
+    if c.state == "detail" then DL.Sound("accept") Call("AcceptQuest")
     elseif c.state == "progress" then Call("CompleteQuest")
-    elseif c.state == "complete" then Call("GetQuestReward", c.choices and c.choices > 1 and DL.choice or 1) end
+    elseif c.state == "complete" then
+        DL.Sound("finish")
+        Call("GetQuestReward", c.choices and c.choices > 1 and DL.choice or 1)
+    end
     return true
 end
 
@@ -1342,6 +1654,7 @@ watch:SetScript("OnUpdate", WeintCodex.Measured("Gespräche", function(self, el)
     if not DL.fade.on and not (win and win:IsShown()) then self:Hide() return end
     if not (win and win:IsShown()) then
         if not fader:IsShown() then DL.FadeBack(false) end
+        if DL.stage.to > 0 then DL.StageOut(false) end
         return
     end
     if NpcThere() then
@@ -1364,6 +1677,78 @@ end
 DL.watch = watch
 
 --------------------------------------------------
+-- Buehne (1.0.8.0, ab Werk aus): Kinobalken oben und unten
+--------------------------------------------------
+-- Zwei schwarze Balken fahren weich herein, solange gesprochen wird, und
+-- wieder hinaus. Ohne Elternteil (wie das Fenster) - sie bleiben, wenn die
+-- Oberflaeche ausblendet. Keine Maus: Klicks gehen durch. Nicht im Kampf;
+-- beginnt einer, sind sie sofort weg.
+DL.stage = { k = 0, to = 0, bars = nil }
+local stageRun = CreateFrame("Frame")
+stageRun:Hide()
+local function StageBars()
+    local st = DL.stage
+    if st.bars then return st.bars end
+    local deep = C.bgPanel
+    local bars = {}
+    for i, side in ipairs({ "TOP", "BOTTOM" }) do
+        local f = CreateFrame("Frame", nil, nil)
+        f:SetFrameStrata("BACKGROUND")
+        f:EnableMouse(false)
+        f:SetPoint(side .. "LEFT", _G.UIParent, side .. "LEFT", 0, 0)
+        f:SetPoint(side .. "RIGHT", _G.UIParent, side .. "RIGHT", 0, 0)
+        f:SetHeight(1)
+        f.t = f:CreateTexture(nil, "BACKGROUND")
+        f.t:SetAllPoints(f)
+        f.t:SetColorTexture(deep[1], deep[2], deep[3], 1)
+        f:Hide()
+        bars[i] = f
+    end
+    st.bars = bars
+    return bars
+end
+local function StagePaint()
+    local st = DL.stage
+    local k = st.k * st.k * (3 - 2 * st.k)
+    -- Hoehe in Einheiten eines Rahmens ohne Elternteil (Bild = 768 hoch).
+    local h = math.max(1, 768 * DL.STAGE_FRAC * k)
+    for _, f in ipairs(st.bars or {}) do
+        f:SetHeight(h)
+        f:SetAlpha(math.min(1, k * 1.5))
+        f:SetShown(st.k > 0)
+    end
+end
+stageRun:SetScript("OnUpdate", WeintCodex.Measured("Gespräche", function(self, el)
+    local st = DL.stage
+    local step = (el or 0) / DL.STAGE_TIME
+    if st.k < st.to then st.k = math.min(st.to, st.k + step) else st.k = math.max(st.to, st.k - step) end
+    StagePaint()
+    if st.k == st.to then self:Hide() end
+end))
+DL.stageRun = stageRun
+
+function DL.StageIn()
+    if not K.Get(KEY, "dlgStage") then return false end
+    if _G.InCombatLockdown and K.Bool(_G.InCombatLockdown(), false) then return false end
+    StageBars()
+    DL.stage.to = 1
+    stageRun:Show()
+    return true
+end
+function DL.StageOut(now)
+    local st = DL.stage
+    st.to = 0
+    if now then st.k = 0 StagePaint() stageRun:Hide() return end
+    if st.k > 0 then stageRun:Show() end
+end
+local function StageOutSoft() if not (win and win:IsShown()) then DL.StageOut(false) end end
+function DL.StageLater()
+    if DL.stage.to == 0 and DL.stage.k == 0 then return end
+    local t = _G.C_Timer
+    if t and t.After then t.After(DL.CAM_WAIT, StageOutSoft) else StageOutSoft() end
+end
+
+--------------------------------------------------
 -- Ereignisse
 --------------------------------------------------
 
@@ -1374,12 +1759,12 @@ local STATE = {
 
 local ev = CreateFrame("Frame")
 ev:SetScript("OnEvent", WeintCodex.Measured("Gespräche", function(_, event)
-    if event == "PLAYER_REGEN_DISABLED" then DL.FadeBack(true) return end
+    if event == "PLAYER_REGEN_DISABLED" then DL.FadeBack(true) DL.StageOut(true) return end
     if not DL.Active() then return end
     local st = STATE[event]
     if st then DL.Show(st) return end
     if event == "QUEST_ITEM_UPDATE" then
-        if DL.state and DL.state ~= "gossip" and DL.state ~= "greeting" then DL.Show(DL.state) end
+        if DL.state and DL.state ~= "gossip" and DL.state ~= "greeting" then DL.Show(DL.state, true) end
     elseif event == "GOSSIP_CLOSED" then
         if DL.state == "gossip" then DL.state = nil if win then win:Hide() end end
     elseif event == "QUEST_FINISHED" then
@@ -1398,6 +1783,7 @@ local function Apply()
     if on then pcall(ev.RegisterEvent, ev, "PLAYER_REGEN_DISABLED") end
     if on then DL.TakeOver() else
         DL.FadeBack(true)
+        DL.StageOut(true)
         DL.Release()
         if win then win:Hide() end
         DL.state = nil
@@ -1457,44 +1843,52 @@ end
 
 local function Build(B)
     local off = function() return not K.Get(KEY, "dlgOn") end
-    B:Section("Gespräche", "Gespräche mit NPCs und Questtexte in einem ruhigen Fenster neben der Mitte statt in den Fenstern des Spiels – mit Tasten und Belohnungen auf einen Blick.")
+    B:Section("Gespräche", "Gespräche mit NPCs und Questtexte wie eine Szene: dein Gegenüber spricht, der Text kommt in Abschnitten, deine Antworten stehen als eigene Worte da – mit Tasten und Belohnungen auf einen Blick.")
     B:Row({ type = "toggle", label = "Gespräche im Codex-Stil", key = "dlgOn",
             description = "Ausschalten gibt die Fenster des Spiels sofort zurück." },
           { type = "toggle", label = "Tasten 1–9, Leertaste, Esc", key = "dlgKeys", disabled = off,
-            description = "Nicht im Kampf – dort sperrt das Spiel die Tasten." })
+            description = "Leertaste: weiter, Rücktaste: zurück. Nicht im Kampf – dort sperrt das Spiel die Tasten." })
+    B:Section("Szene")
+    B:Row({ type = "toggle", label = "Gegenüber spricht (3D)", key = "dlgModel", disabled = off,
+            description = "Statt des Bildes dein Gegenüber als Büste, die spricht, fragt oder ruft, solange der Text kommt." },
+          { type = "toggle", label = "Text in Abschnitten", key = "dlgPages", disabled = off,
+            description = "Langer Text kommt Stück für Stück wie gesprochen – Leertaste oder ein Klick in den Text blättert weiter." })
     B:Row({ type = "toggle", label = "Text läuft ein", key = "dlgType", disabled = off,
             description = "Erst wenn die Kamera da ist. Leertaste zeigt ihn sofort ganz." },
           { type = "slider", label = "Tempo des Textes", key = "dlgSpeed", min = 10, max = 120, step = 5,
             disabled = function() return off() or not K.Get(KEY, "dlgType") end,
             format = function(v) return string.format("%d Zeichen/s", v) end })
-    B:Row({ type = "toggle", label = "Oberfläche ausblenden", key = "dlgFade", disabled = off,
-            description = "Leisten, Rahmen und Chat blenden langsam aus und danach wieder ein. Nicht im Kampf." },
+    B:Row({ type = "toggle", label = "Bühne wie im Kino", key = "dlgStage", disabled = off,
+            description = "Schwarze Balken oben und unten, solange gesprochen wird. Nicht im Kampf." },
+          { type = "toggle", label = "Oberfläche ausblenden", key = "dlgFade", disabled = off,
+            description = "Leisten, Rahmen und Chat blenden langsam aus und danach wieder ein. Nicht im Kampf." })
+    B:Row({ type = "toggle", label = "Leises Blättern", key = "dlgSound", disabled = off,
+            description = "Klänge des Spiels beim Weiterblättern, Annehmen und Abschließen." },
           { type = "slider", label = "Größe", key = "dlgScale", min = 80, max = 130, step = 5, disabled = off,
             format = function(v) return string.format("%d %%", v) end })
     local camOff = function() return off() or not K.Get(KEY, "dlgCam") end
     B:Row({ type = "toggle", label = "Kamera heranholen", key = "dlgCam", disabled = off,
             description = "Beim Gespräch näher heran, danach zurück auf deinen Abstand." },
-          { type = "slider", label = "Abstand im Gespräch", key = "dlgCamDist", min = 2, max = 10, step = 1, disabled = camOff,
-            format = function(v) return string.format("%d m", v) end })
-    B:Row({ type = "toggle", label = "NPC zur Seite rücken", key = "dlgShoulder", disabled = camOff,
-            description = "Nutzt eine Testeinstellung des Spiels (Schulterkamera); danach zurück auf deinen Wert." },
-          { type = "button", label = "Platz", text = "Zurück an den Platz des Questfensters", disabled = off,
-            onClick = function() K.Set(KEY, "dlgPos", nil) DL.Place() end })
-    B:Row({ type = "toggle", label = "Kamera auf den NPC richten", key = "dlgFocus", disabled = camOff,
-            description = "Die Kamera des Spiels schwenkt auf dein Gegenüber. Nutzt Testeinstellungen des Spiels und schaltet dafür kurz „Charakter zentriert halten“ aus; danach alles zurück." },
-          { type = "empty" })
+          { type = "toggle", label = "Kamera auf den NPC richten", key = "dlgFocus", disabled = camOff,
+            description = "Die Kamera des Spiels schwenkt auf dein Gegenüber. Nutzt Testeinstellungen des Spiels und schaltet dafür kurz „Charakter zentriert halten“ aus; danach alles zurück." })
+    B:Advanced()
+    B:Row({ type = "slider", label = "Abstand im Gespräch", key = "dlgCamDist", min = 2, max = 10, step = 1, disabled = camOff,
+            format = function(v) return string.format("%d m", v) end },
+          { type = "toggle", label = "NPC zur Seite rücken", key = "dlgShoulder", disabled = camOff,
+            description = "Nutzt eine Testeinstellung des Spiels (Schulterkamera); danach zurück auf deinen Wert." })
     B:Row({ type = "toggle", label = "Gemerkten Blick nutzen", key = "dlgView",
             disabled = function() return camOff() or K.Get(KEY, "dlgFocus") end,
             description = "Nur ohne „Kamera auf den NPC richten“: die Kamera gleitet in den Blick, den du gemerkt hast. Belegt die Ansichten 4 und 5 des Spiels." },
           { type = "button", label = "Blick", text = "Diesen Blick merken", disabled = camOff,
             onClick = function() DL.RememberView() end })
-    B:Row({ type = "button", label = "Kamera", text = "Kamera zurücksetzen",
+    B:Row({ type = "button", label = "Platz", text = "Zurück an den Platz des Questfensters", disabled = off,
+            onClick = function() K.Set(KEY, "dlgPos", nil) DL.Place() end },
+          { type = "button", label = "Kamera", text = "Kamera zurücksetzen",
             onClick = function()
                 local n = DL.RepairCamera(true)
                 Say(n == nil and "Erst das Gespräch schließen." or
                     ("Kamera zurückgesetzt – " .. n .. " Einstellungen wieder ab Werk."))
-            end },
-          { type = "empty" })
+            end })
     B:Note("Folgt die Kamera beim Laufen nicht mehr wie eingestellt, setzt „Kamera zurücksetzen“ die Kamera-Einstellungen, die das Folgen steuern, auf den Wert ab Werk – auch „Charakter zentriert halten“ und den Kamera-Verfolgungsstil.")
 end
 

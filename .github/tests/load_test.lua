@@ -2572,6 +2572,148 @@ do
         .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 1.0.8.0: Rollenspiel - Abschnitte, Erzaehlung, sprechende Bueste,
+-- Blaettern, Buehne, Titel, eigene Worte kursiv, Knoepfe.
+do
+    local G = _G
+    local names = { "C_GossipInfo", "UnitName", "UnitExists", "C_Timer", "InCombatLockdown", "C_TooltipInfo",
+        "SOUNDKIT", "PlaySound", "GetTitleText", "GetQuestText", "GetObjectiveText", "GetNumQuestRewards",
+        "GetNumQuestChoices", "GetRewardMoney", "GetRewardXP", "AcceptQuest", "GetTime" }
+    local saved = {}
+    for i, n in ipairs(names) do saved[i] = G[n] end
+    local DL = WeintCodex.UIDialogue
+    local keep = {}
+    for _, k in ipairs({ "dlgOn", "dlgType", "dlgPages", "dlgStage", "dlgSound", "dlgModel", "dlgFade", "dlgCam" }) do keep[k] = K.Get("comfort", k) end
+    local ok, err = pcall(function()
+        -- Abschnitte: kurz = einer; lang nach Absaetzen, je hoechstens PAGE_CHARS.
+        assert(#DL.Paginate("Kurz.") == 1, "kurzer Text geteilt")
+        local para = string.rep("Wort ", 60)          -- 300 Zeichen
+        local pages = DL.Paginate(para .. "\n\n" .. para .. "\n\n" .. para)
+        assert(#pages == 3, "drei lange Absaetze: " .. #pages)
+        for _, pg in ipairs(pages) do assert(#pg <= DL.PAGE_CHARS, "Abschnitt zu lang") end
+        local long = string.rep("Ein Satz hier. ", 60)  -- ein Absatz, 900 Zeichen
+        pages = DL.Paginate(long)
+        assert(#pages >= 3 and pages[1]:sub(-1) == ".", "langer Absatz nicht am Satzende geteilt")
+        -- Erzaehlung: <...> gedaempft, ohne Klammern; Laenge ohne Farbcodes.
+        local n = DL.Narrate("Hallo. <Er seufzt.> Na gut.")
+        assert(not n:find("<", 1, true) and n:find("Er seufzt.", 1, true) and n:find("|c", 1, true), "Erzaehlung nicht abgesetzt: " .. n)
+        assert(DL.VisibleLen(n) == #"Hallo. Er seufzt. Na gut.", "sichtbare Laenge zaehlt Farbcodes")
+        -- Stimmung der Bueste nach dem Satzende.
+        assert(DL.Mood("Wer da?") == DL.ANIM.ask and DL.Mood("Halt!") == DL.ANIM.exclaim
+            and DL.Mood("Guten Tag.") == DL.ANIM.talk, "Frage/Ausruf nicht erkannt")
+        -- Ganzes Gespraech: Quest mit drei Abschnitten.
+        local calls, queue, now = {}, {}, 10
+        G.GetTime = function() return now end
+        G.C_Timer = { After = function(_, fn) queue[#queue + 1] = fn end }
+        G.InCombatLockdown = function() return false end
+        G.UnitName = function() return "Raene" end
+        G.UnitExists = function(u) return u == "npc" end
+        G.SOUNDKIT = { IG_ABILITY_PAGE_TURN = 1, IG_QUEST_LIST_OPEN = 2, IG_QUEST_LIST_COMPLETE = 3 }
+        G.PlaySound = function(id) calls[#calls + 1] = "sound" .. id end
+        G.GetTitleText = function() return "Wölfe" end
+        G.GetQuestText = function() return para .. "\n\n" .. para .. "\n\n" .. para .. " <Sie zeigt nach Norden.> Geht!" end
+        G.GetObjectiveText = function() return "Tötet 8 Wölfe." end
+        G.GetNumQuestRewards = function() return 0 end
+        G.GetNumQuestChoices = function() return 0 end
+        G.GetRewardMoney = function() return 0 end
+        G.GetRewardXP = function() return 0 end
+        G.AcceptQuest = function() calls[#calls + 1] = "accept" end
+        K.Set("comfort", "dlgCam", false)
+        K.Set("comfort", "dlgFade", false)
+        K.Set("comfort", "dlgType", false)
+        K.Set("comfort", "dlgPages", true)
+        K.Set("comfort", "dlgSound", true)
+        K.Set("comfort", "dlgModel", true)
+        K.Set("comfort", "dlgOn", true)
+        stub.FireEvent("QUEST_DETAIL")
+        local c = DL.current
+        assert(#c.pages == 3 and DL.page == 1, "Questtext nicht in Abschnitten: " .. #c.pages)
+        assert(c.pages[3]:find("Euer Auftrag", 1, true) and not c.pages[1]:find("Euer Auftrag", 1, true),
+            "Auftrag nicht am Ende")
+        assert(c.primary == "Auftrag annehmen" and c.secondary == "Nicht jetzt", "Knoepfe nicht in der Sprache des Spiels")
+        assert(DL.bustModel == true, "Bueste nicht gezeigt")
+        -- Laedt der Client kein Modell (Gegenstand als Gegenueber): das Bild.
+        do
+            local m = DL.Model and DL.Model()
+            if m then
+                local oF = m.GetModelFileID
+                m.GetModelFileID = function() return nil end
+                for _, fn in ipairs(queue) do fn() end
+                queue = {}
+                assert(DL.bustModel == false, "leerer Rahmen statt Bild")
+                m.GetModelFileID = oF
+                DL.SetBust(true)
+            end
+        end
+        -- Leertaste blaettert, nimmt erst nach dem letzten an.
+        DL.win:GetScript("OnKeyDown")(DL.win, "SPACE")
+        assert(DL.page == 2 and calls[#calls] == "sound1", "Leertaste blaettert nicht (mit Klang)")
+        DL.win:GetScript("OnKeyDown")(DL.win, "BACKSPACE")
+        assert(DL.page == 1, "Ruecktaste blaettert nicht zurueck")
+        assert(DL.Advance() and DL.Advance() and DL.page == 3, "nicht bis zum letzten Abschnitt")
+        assert(not DL.Advance(), "hinter dem letzten Abschnitt weitergeblaettert")
+        local before = #calls
+        DL.Primary()
+        assert(calls[#calls] == "accept" and calls[#calls - 1] == "sound2" and #calls == before + 2, "nach dem letzten nicht angenommen")
+        -- Ohne Abschnitte: ein Abschnitt, Leertaste nimmt sofort an.
+        K.Set("comfort", "dlgPages", false)
+        stub.FireEvent("QUEST_DETAIL")
+        assert(#DL.current.pages == 1, "Abschnitte trotz aus")
+        K.Set("comfort", "dlgPages", true)
+        -- Ohne Gegenueber (Quest aus Gegenstand): das Bild statt der Bueste.
+        G.UnitExists = function() return false end
+        stub.FireEvent("QUEST_DETAIL")
+        assert(DL.bustModel == false, "Bueste ohne Gegenueber")
+        G.UnitExists = function(u) return u == "npc" end
+        DL.Close()
+        -- Gespraech: Titel des NPCs, Antworten kursiv, Abschied in der Sprache des Spiels.
+        G.C_TooltipInfo = { GetUnit = function() return { lines = { { leftText = "Raene" }, { leftText = "Gastwirtin" } } } end }
+        G.C_GossipInfo = { GetText = function() return "Willkommen!" end,
+            GetOptions = function() return { { name = "Ich möchte hier rasten.", gossipOptionID = 3, orderIndex = 1 } } end,
+            GetActiveQuests = function() return {} end, GetAvailableQuests = function() return {} end,
+            SelectOption = function() end, CloseGossip = function() end }
+        stub.FireEvent("GOSSIP_SHOW")
+        assert(DL.current.role == "Gastwirtin" and DL.current.secondary == "Lebt wohl", "Titel/Abschied")
+        assert(DL.talk.mood == DL.ANIM.exclaim, "Bueste ruft nicht bei '!'")
+        G.C_TooltipInfo = { GetUnit = function() return { lines = { { leftText = "Wolf" }, { leftText = "Stufe 12 Wildtier" } } } end }
+        assert(DL.NpcRole() == nil, "Stufe als Titel genommen")
+        -- Bueste ruht, wenn die Lesezeit um ist.
+        now = now + DL.TALK_MAX + 1
+        DL.win:GetScript("OnUpdate")(DL.win, 0.1)
+        assert(not DL.talk.on, "Bueste spricht ewig")
+        DL.Close()
+        -- Buehne: ab Werk aus; an faehrt sie herein, im Kampf sofort weg.
+        assert(DL.DEFAULTS.dlgStage == false, "neues Element ab Werk an")
+        K.Set("comfort", "dlgStage", true)
+        stub.FireEvent("GOSSIP_SHOW")
+        local run = DL.stageRun:GetScript("OnUpdate")
+        run(DL.stageRun, DL.STAGE_TIME / 2)
+        local bars = DL.stage.bars
+        assert(bars and bars[1]:IsShown() and DL.stage.k > 0 and DL.stage.k < 1, "Buehne faehrt nicht weich herein")
+        run(DL.stageRun, DL.STAGE_TIME)
+        assert(DL.stage.k == 1, "Buehne nicht ganz da")
+        stub.FireEvent("PLAYER_REGEN_DISABLED")
+        assert(DL.stage.k == 0 and not bars[1]:IsShown(), "Buehne bleibt im Kampf")
+        stub.FireEvent("GOSSIP_SHOW")
+        run(DL.stageRun, 5)
+        queue = {}
+        DL.Close()
+        DL.win:GetScript("OnHide")(DL.win)       -- die Attrappe ruft OnHide nicht selbst
+        for _, fn in ipairs(queue) do fn() end
+        run(DL.stageRun, 5)
+        assert(DL.stage.k == 0 and not bars[1]:IsShown(), "Buehne bleibt nach dem Gespraech")
+        K.Set("comfort", "dlgStage", false)
+        stub.FireEvent("GOSSIP_SHOW")
+        assert(DL.stage.to == 0, "Buehne trotz aus")
+        DL.Close()
+    end)
+    for i, n in ipairs(names) do G[n] = saved[i] end
+    for k, v in pairs(keep) do K.Set("comfort", k, v) end
+    DL.stage.k, DL.stage.to = 0, 0
+    Check(ok, "Gespraeche als Szene: Abschnitte, Erzaehlung, sprechende Bueste, Blaettern mit Klang, Buehne, Titel, Knoepfe"
+        .. (ok and "" or (": " .. tostring(err))))
+end
+
 -- 6.23.3.0: gemerkter Blick ueber die Ansichten des Spiels.
 do
     local G = _G

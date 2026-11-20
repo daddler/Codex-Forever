@@ -12,6 +12,12 @@ nicht zusammen.
 ## [1.0.8.0] – 2026-11-19
 
 ### Neu
+- Gespräche als Szene (`ui/dialogue.lua`): sprechende Büste (`PlayerModel`,
+  Animation nach Satzende, Rückfall aufs Bild), Sprechabschnitte
+  (`DL.Paginate`, `DL.Advance`/`DL.Back`), Erzählung in `<…>` gedämpft,
+  Antworten kursiv, Titel des NPCs, Knöpfe in der Sprache des Spiels,
+  Klänge des Spiels, Bühne mit Kinobalken (`dlgStage`, ab Werk aus).
+  Kamera-Feinheiten unter „Erweitert“.
 - Wildtierkunde: Spawnkarte im Detailbereich (`BL.MapBlock`, eigener
   Inspector-Block): `BP.MapWidget`/`BP.PaintMap` aus der Bücherseite, Punkte
   aus `BL.Spots` (höchstens `BL.MAP_DOTS_MAX`), Gebietswahl über Knöpfe

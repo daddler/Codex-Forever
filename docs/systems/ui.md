@@ -1708,6 +1708,33 @@ beide ab Werk aus.
 
 ### Gespräche im Codex-Stil (`ui/dialogue.lua`, 6.23.0.0)
 
+**Als Szene (1.0.8.0, Wunsch: „mehr Rollenspiel“).** Verhalten angelehnt
+an Immersion/DialogueUI, eigener Code und Entwurf:
+- **Sprechende Büste** (`dlgModel`, an): `PlayerModel` mit `SetUnit("npc")`
+  im Rahmen oben links; spricht (`DL.ANIM.talk`), fragt (`?`) oder ruft
+  (`!`) nach dem Satzende (`DL.Mood`), solange der Text einläuft, sonst
+  `DL.TALK_MAX` s; danach ruht sie. Ohne Gegenüber oder ohne geladenes
+  Modell (0,4 s nachgesehen, `GetModelFileID`) das 2D-Bild im Ring.
+- **Sprechabschnitte** (`dlgPages`, an): `DL.Paginate` nach Absätzen, je
+  höchstens `DL.PAGE_CHARS`, zu lange Absätze am Satzende. Leertaste/Klick in
+  den Text: weiter (`DL.Advance` – zeigt erst den Text ganz, handelt nie),
+  Rücktaste/Rechtsklick: zurück; erst nach dem letzten Abschnitt handelt
+  die Leertaste. Antworten und Belohnungen stehen unter dem letzten.
+  Derselbe Abschnitt neu gezeichnet (Belohnung gewählt) läuft nicht neu ein
+  (`DL.shownKey`); ein neues Ansprechen schon.
+- **Erzählung** in spitzen Klammern gedämpft (`DL.Narrate`); das Einlaufen
+  zählt nur sichtbare Zeichen (`DL.VisibleLen`).
+- **Eigene Worte**: Gesprächsoptionen kursiv (Newsreader Italic).
+- **Knöpfe**: „Auftrag annehmen“/„Nicht jetzt“, „Übergeben“, „Belohnung
+  nehmen“, „Lebt wohl“/„Später“; der Auftrag als „Euer Auftrag“ am Ende.
+- **Titel** des NPCs („<Gastwirtin>“) aus der zweiten Tooltipzeile
+  (`DL.NpcRole`), nie eine Zeile mit Stufe.
+- **Klang** (`dlgSound`, an): Klänge des Spiels über `SOUNDKIT`.
+- **Bühne** (`dlgStage`, ab Werk aus – neues Element): zwei Balken ohne
+  Elternteil, weich herein/hinaus, sofort weg im Kampf.
+Einstellungsseite: Szene oben, Kamera-Feinheiten unter „Erweitert“
+(höchstens 15 sichtbar).
+
 - Nach dem Verhalten von DialogueUI (keine Lizenz angegeben → nur Verhalten,
   kein Code, keine Medien). Seite „Gespräche“ im Komfort, ab Werk aus.
 - `DL.TakeOver` meldet `GossipFrame` (`GOSSIP_SHOW/CLOSED`) und `QuestFrame`
