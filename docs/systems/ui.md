@@ -110,6 +110,15 @@ unten), Balken des Spiels aus, Spielerrahmen da – mit „Noch einmal
 einrichten“. Ein Ergebnis, das der Client nicht hergibt, ist ein ✗, nie ein
 stilles ✓.
 
+**1.0.8.0 (Durchlauf des ganzen Wegs):** `LS.Prepare` setzt für ein Design
+mit Anordnung `actionbars.layout = "wc"` (Größe/Reihen der Konsole gelten nur
+dort), `LS.Check` prüft es. Die Karte kommt in der Konsole auch ohne
+`minimap.atTop` in den Ring (`MM.Places`). Ein Charakter ohne Eintrag in
+`ui.lookSwitch`, der ein Design mit Anordnung über ein geteiltes Profil erbt
+und dessen Layout nicht aktiv hat, bekommt einmal `LS.Ask(…, hereOnly)`:
+nur Modus `"layout"` (`ES.Apply`, kein `Prepare` – vom anderen Charakter
+gezogene Plätze bleiben). Test: „Designwechsel auf Konsole, ganzer Weg“.
+
 ### Verweise zu Codex *(1.0.8.0, `ui/codexlinks.lua`)*
 
 Ein Knopf „Codex: …“ unter Fenstern des Spiels öffnet Codex auf dem
