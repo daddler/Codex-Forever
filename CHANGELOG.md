@@ -9,6 +9,24 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.0.8.2] – 2026-11-20
+
+### Behoben
+- Nach dem Patch des Clients (Build 71037) „Oberfläche aus“ (Bericht: Bestand
+  nennt „Shooty“, Rahmen „Shooty Peng“): `K.CharKey` las nur
+  `UnitName-GetRealmName`; liefert der Client das anders, fehlte der Stand
+  (`ui.chars`, `profileOf`) und ein neuer, leerer entstand. Jetzt alle
+  Schreibweisen (`UnitName`, `GetUnitName`, `UnitFullName`, `GetRealmName`,
+  `GetNormalizedRealmName`), sonst ein eindeutiger gespeicherter Charakter
+  mit gleichem Vornamen und Realm (oder gleichem Namen, Realm anders
+  geschrieben); gewichtet nach Profil/Oberflaeche an, nie geraten bei
+  mehreren. `/wcui prüfen` zeigt Name, Realm und gespeicherte Schluessel
+  (`K.CharKeyReport`). Andere Bestaende je Charakter (Bestand, Berufe …)
+  lesen weiter `UnitName` – offen, bis der Bericht zeigt, was sich aenderte.
+- Abklingzeitmanager: Eintraege liessen sich nicht mehr in eine andere
+  Spalte ziehen. `CooldownViewerSettings` aus `MW.WINDOWS` (`MW.NEVER`):
+  das Fenster wird nicht mehr zum Verschieben angemeldet.
+
 ## [1.0.8.1] – 2026-11-20
 
 ### Behoben

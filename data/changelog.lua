@@ -22,6 +22,14 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.0.8.2",
+        date    = "20.11.2026",
+        notes   = {
+            "|cff7C6CFFOberfläche nach dem Patch wieder da|r – seit dem letzten Update des Spiels nennt der Client deinen Charakter teils anders. WeintCodex hielt ihn dann für einen neuen Charakter: Oberfläche aus, Leisten und Rahmen des Spiels, eigenes Profil weg. Jetzt erkennt WeintCodex deinen Charakter auch unter der neuen Schreibweise wieder.",
+            "|cff7C6CFFAbklingzeitmanager: Ziehen geht wieder|r – Fähigkeiten lassen sich wieder in eine andere Spalte ziehen. Das Fenster verschiebt WeintCodex dafür nicht mehr.",
+        },
+    },
+    {
         version = "1.0.8.1",
         date    = "20.11.2026",
         notes   = {

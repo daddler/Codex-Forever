@@ -57,8 +57,14 @@ MW.WINDOWS = {
     "TaxiFrame", "FlightMapFrame", "DressUpFrame", "TabardFrame", "InspectFrame", "TimeManagerFrame",
     "CalendarFrame", "ChannelFrame", "AchievementFrame", "EncounterJournal", "ItemSocketingFrame",
     "PetStableFrame", "StableFrame", "HelpFrame", "ChatConfigFrame", "KeyBindingFrame", "QuickKeybindFrame",
-    "ClickBindingFrame", "CooldownViewerSettings",
+    "ClickBindingFrame",
+    -- 1.0.8.2 (Meldung nach einem Patch des Clients: "Faehigkeiten im
+    -- Abklingzeitmanager lassen sich nicht mehr in eine andere Spalte
+    -- ziehen"): ohne CooldownViewerSettings. Das Fenster zieht seine
+    -- Eintraege selbst mit der linken Maustaste; als verschiebbares Fenster
+    -- (RegisterForDrag, StartMoving) nahm WeintCodex ihm das Ziehen weg.
 }
+MW.NEVER = { CooldownViewerSettings = true }
 MW.CONFLICTS = { "MoveAny", "BlizzMove" }
 -- 6.29.8.0 (Beta-Test: "Das Beutefenster ... muss auch frei verschiebbar
 -- sein"): Beute behaelt ihren Platz dauerhaft (je Profil), sonst stuende
@@ -243,6 +249,7 @@ local function OnDragStop(f) StopMove(f) end
 function MW.Hook(f, name)
     if type(f) ~= "table" or hooked[f] or not f.HookScript or not f.SetMovable then return false end
     if f.IsForbidden and f:IsForbidden() then return false end
+    if name and MW.NEVER[name] then return false end
     if f.GetParent and f:GetParent() ~= _G.UIParent and not MW.KEEP[name] then return false end
     if Blocked(f) then pending[f] = name return false end
     pending[f] = nil

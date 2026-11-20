@@ -27641,6 +27641,64 @@ do
     Check(ok, "Kampfhilfen: Verlauf, Heiler unter Kontrolle, Gegner" .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 1.0.8.2: der Abklingzeitmanager zieht seine Eintraege selbst - nie
+-- als verschiebbares Fenster anmelden.
+do
+    local ok, err = pcall(function()
+        local MW = WeintCodex.UIMoveWindows
+        for _, n in ipairs(MW.WINDOWS) do assert(n ~= "CooldownViewerSettings", "Abklingzeitmanager verschiebbar") end
+        local f = CreateFrame("Frame", nil, UIParent)
+        local reg = 0
+        f.RegisterForDrag = function() reg = reg + 1 end
+        assert(MW.Hook(f, "CooldownViewerSettings") == false and reg == 0, "Ziehen des Abklingzeitmanagers abgefangen")
+    end)
+    Check(ok, "Abklingzeitmanager: Eintraege ziehen bleibt beim Spiel" .. (ok and "" or (": " .. tostring(err))))
+end
+
+-- 1.0.8.2: nach einem Patch liefert der Client den Namen anders - der
+-- gespeicherte Stand (Oberflaeche an, Profil) wird trotzdem gefunden.
+do
+    local G = _G
+    local ok, err = pcall(function()
+        local ui = WeintCodex.SavedData.ui
+        local keep = { chars = ui.chars, profileOf = ui.profileOf, welcomed = ui.welcomed }
+        local oN, oR, oG, oF, oNR = G.UnitName, G.GetRealmName, G.GetUnitName, G.UnitFullName, G.GetNormalizedRealmName
+        local function setup(chars, profileOf)
+            ui.chars, ui.profileOf, ui.welcomed = chars, profileOf or {}, {}
+            K.ForgetCharKey()
+        end
+        G.UnitName = function() return "Shooty" end
+        G.GetRealmName = function() return "Test Realm" end
+        G.GetUnitName, G.UnitFullName, G.GetNormalizedRealmName = nil, nil, nil
+        -- Vorher "Shooty Peng", jetzt "Shooty": derselbe Charakter.
+        setup({ ["Shooty Peng-Test Realm"] = { enabled = true } }, { ["Shooty Peng-Test Realm"] = "Konsole" })
+        assert(K.CharKey() == "Shooty Peng-Test Realm", "alter Stand nicht gefunden: " .. tostring(K.CharKey()))
+        assert(K.UIEnabled() == true, "Oberflaeche nach dem Patch aus")
+        -- Ein eben leer angelegter Stand verliert gegen den alten.
+        setup({ ["Shooty Peng-Test Realm"] = { enabled = true }, ["Shooty-Test Realm"] = { enabled = false } })
+        assert(K.CharKey() == "Shooty Peng-Test Realm", "leerer neuer Stand gewinnt")
+        -- Zwei mit demselben Vornamen: nicht raten.
+        setup({ ["Shooty Peng-Test Realm"] = { enabled = true }, ["Shooty Pong-Test Realm"] = { enabled = true } })
+        assert(K.CharKey() == "Shooty-Test Realm", "zwischen zwei Charakteren geraten")
+        -- Anderer Realm mit demselben Vornamen: nicht derselbe.
+        setup({ ["Shooty Peng-Anderer"] = { enabled = true } })
+        assert(K.CharKey() == "Shooty-Test Realm", "fremder Realm uebernommen")
+        -- Realm anders geschrieben, Name gleich: derselbe.
+        G.UnitName = function() return "Shooty Peng" end
+        G.GetRealmName = function() return "TestRealm" end
+        setup({ ["Shooty Peng-Test Realm"] = { enabled = true } })
+        assert(K.CharKey() == "Shooty Peng-Test Realm", "Realm in anderer Schreibweise nicht erkannt")
+        -- Nichts gespeichert: bisheriger Schluessel.
+        setup({})
+        assert(K.CharKey() == "Shooty Peng-TestRealm", "ohne Stand nicht der bisherige Schluessel")
+        assert(K.CharKeyReport():find("Shooty Peng", 1, true), "Bericht ohne Namen")
+        G.UnitName, G.GetRealmName, G.GetUnitName, G.UnitFullName, G.GetNormalizedRealmName = oN, oR, oG, oF, oNR
+        ui.chars, ui.profileOf, ui.welcomed = keep.chars, keep.profileOf, keep.welcomed
+        K.ForgetCharKey()
+    end)
+    Check(ok, "Charakter nach einem Patch wiedererkannt (Oberflaeche, Profil)" .. (ok and "" or (": " .. tostring(err))))
+end
+
 -- 1.0.8.1: ein Takt fuer alles stille Senden (Bild: viermal "Die Anzahl der
 -- Nachrichten ... ist begrenzt").
 do

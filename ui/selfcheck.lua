@@ -55,6 +55,15 @@ Check("Speichern", function(add)
     end
 end)
 
+-- 1.0.8.2: unter welchem Namen WeintCodex diesen Charakter fuehrt - nach
+-- einem Patch des Clients kann sich die Schreibweise aendern.
+Check("Charakter", function(add)
+    if not K.CharKeyReport then return end
+    local changed = K.RawCharKey() ~= K.CharKey()
+    add(SC.OK, K.CharKeyReport())
+    if changed then add("", "   Gespeicherter Stand unter anderer Schreibweise gefunden und übernommen.") end
+end)
+
 Check("Fehler", function(add)
     local errs = K.errors or {}
     if #errs == 0 then

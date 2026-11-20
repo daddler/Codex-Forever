@@ -367,13 +367,133 @@ end
 function K.Root() return Root() end
 
 -- "Name-Realm" des Spielers; nil, solange der Client ihn nicht nennt.
-function K.CharKey()
+-- Der Schluessel, wie er bis 1.0.8.1 allein galt: UnitName-GetRealmName.
+function K.RawCharKey()
     local okN, name = pcall(_G.UnitName, "player")
     local okR, realm = pcall(_G.GetRealmName)
-    if okN and okR and type(name) == "string" and name ~= "" and type(realm) == "string" and realm ~= "" then
+    name, realm = okN and K.Plain(name) or nil, okR and K.Plain(realm) or nil
+    if type(name) == "string" and name ~= "" and type(realm) == "string" and realm ~= "" then
         return name .. "-" .. realm
     end
     return nil
+end
+
+-- Alle Schreibweisen von Name und Realm, die der Client gerade anbietet.
+local function Add(list, v)
+    v = K.Plain(v)
+    if type(v) ~= "string" or v == "" then return end
+    for _, x in ipairs(list) do if x == v then return end end
+    list[#list + 1] = v
+end
+function K.CharNames()
+    local names, realms = {}, {}
+    local function call(fn, ...)
+        if type(fn) ~= "function" then return nil end
+        local r = { pcall(fn, ...) }
+        if not r[1] then return nil end
+        return r[2], r[3]
+    end
+    Add(names, (call(_G.UnitName, "player")))
+    Add(names, (call(_G.GetUnitName, "player", false)))
+    local full = call(_G.GetUnitName, "player", true)
+    full = K.Plain(full)
+    if type(full) == "string" then Add(names, (full:gsub("%-[^%-]*$", ""))) Add(names, full) end
+    local fn, fr = call(_G.UnitFullName, "player")
+    Add(names, fn)
+    Add(realms, (call(_G.GetRealmName)))
+    Add(realms, (call(_G.GetNormalizedRealmName)))
+    Add(realms, fr)
+    return names, realms
+end
+
+-- Vergleichsform: klein, ohne Leerzeichen, Bindestriche und Apostrophe.
+local function Flat(v) return (tostring(v or ""):lower():gsub("[%s%-']", "")) end
+local function FirstWord(v) return (tostring(v or ""):match("^(%S+)") or ""):lower() end
+
+-- 1.0.8.2 (Bericht nach einem Patch des Forever-Clients: "Oberflaeche aus",
+-- Bestand nennt "Shooty", der Rahmen "Shooty Peng"): liefert der Client
+-- nach einem Patch Name oder Realm anders, fand WeintCodex den Stand des
+-- Charakters (Hauptschalter, Profil, Design) nicht mehr und legte einen
+-- neuen an - Oberflaeche aus. Jetzt wird unter allen Schreibweisen
+-- gesucht, die der Client anbietet; findet sich keine, ein EINDEUTIGER
+-- gespeicherter Charakter mit demselben Vornamen auf demselben Realm
+-- (oder demselben ganzen Namen auf einem anders geschriebenen Realm).
+-- Mehrere Treffer: nicht raten. Gibt es nichts, gilt der bisherige
+-- Schluessel. Bewertet wird, was ein Charakter schon hatte (Profil,
+-- Oberflaeche an, Willkommen) - ein eben leer angelegter Stand verliert
+-- gegen den alten.
+local cachedFrom, cachedKey
+function K.CharKey()
+    local base = K.RawCharKey()
+    if not base then return nil end
+    if cachedFrom == base and cachedKey then return cachedKey end
+    local ui = WeintCodex.SavedData and WeintCodex.SavedData.ui
+    if type(ui) ~= "table" then return base end
+    local chars, profileOf, welcomed = ui.chars or {}, ui.profileOf or {}, ui.welcomed or {}
+    local function Weight(key, exact)
+        local st = chars[key]
+        local w = exact and 0.5 or 0
+        if profileOf[key] then w = w + 2 end
+        if type(st) == "table" and st.enabled == true then w = w + 2 end
+        if welcomed[key] then w = w + 1 end
+        if type(st) == "table" or profileOf[key] then w = w + 0.25 end
+        return w
+    end
+    local names, realms = K.CharNames()
+    local best, bestW = base, Weight(base, true)
+    local seen = { [base] = true }
+    for _, n in ipairs(names) do
+        for _, r in ipairs(realms) do
+            local key = n .. "-" .. r
+            if not seen[key] then
+                seen[key] = true
+                local w = Weight(key, true)
+                if w > bestW then best, bestW = key, w end
+            end
+        end
+    end
+    -- Eindeutig ueber Vorname + Realm oder ganzen Namen + Realm (flach).
+    local flatRealms, flatNames, firsts = {}, {}, {}
+    for _, r in ipairs(realms) do flatRealms[Flat(r)] = true end
+    for _, n in ipairs(names) do flatNames[Flat(n)] = true firsts[FirstWord(n)] = true end
+    local hit, count = nil, 0
+    local all = {}
+    for k in pairs(chars) do all[k] = true end
+    for k in pairs(profileOf) do all[k] = true end
+    for key in pairs(all) do
+        if type(key) == "string" and not seen[key] then
+            local n, r = key:match("^(.-)%-([^%-]+)$")
+            if n and ((flatRealms[Flat(r)] and firsts[FirstWord(n)]) or flatNames[Flat(n)]) then
+                hit, count = key, count + 1
+            end
+        end
+    end
+    if count == 1 then
+        local w = Weight(hit, false)
+        if w > bestW then best, bestW = hit, w end
+    end
+    -- Nur merken, wenn der Name schon da ist (frueh beim Laden kann er fehlen).
+    cachedFrom, cachedKey = base, best
+    return best
+end
+
+function K.ForgetCharKey() cachedFrom, cachedKey = nil, nil end
+
+-- Fuer /wcui pruefen: was der Client sagt und was gespeichert ist.
+function K.CharKeyReport()
+    local names, realms = K.CharNames()
+    local ui = WeintCodex.SavedData and WeintCodex.SavedData.ui or {}
+    local keys = {}
+    for k in pairs(ui.chars or {}) do keys[#keys + 1] = k end
+    table.sort(keys)
+    local shown = {}
+    for i = 1, math.min(#keys, 12) do
+        local st = ui.chars[keys[i]]
+        shown[#shown + 1] = keys[i] .. ((type(st) == "table" and st.enabled == true) and " (an)" or "")
+    end
+    return string.format("Name: %s · Realm: %s · Schlüssel bisher %s · jetzt %s · gespeichert (%d): %s",
+        table.concat(names, " / "), table.concat(realms, " / "), tostring(K.RawCharKey()), tostring(K.CharKey()),
+        #keys, table.concat(shown, ", ") .. (#keys > 12 and ", …" or ""))
 end
 
 -- Das Profil, das dieser Charakter gewaehlt hat; ohne Wahl (oder wenn
