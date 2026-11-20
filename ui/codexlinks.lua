@@ -30,6 +30,9 @@ CL.H = 22
 CL.TITLE_H = 20       -- Knopf in der Titelleiste (where = "title")
 CL.TITLE_GAP = 6      -- Abstand zum Kreuz
 CL.TITLE_ICON = 14
+-- Naechsthoehere Schicht fuer Knoepfe, die auf dem Fenster liegen.
+CL.ABOVE = { BACKGROUND = "LOW", LOW = "MEDIUM", MEDIUM = "HIGH", HIGH = "DIALOG",
+             DIALOG = "FULLSCREEN", FULLSCREEN = "FULLSCREEN_DIALOG" }
 
 local function Plain(v) return K.Plain(v) end
 
@@ -253,7 +256,12 @@ function CL.Refresh(link)
         and (not link.when or link.when()) and true or false
     if show then
         b:SetText(link.label())   -- passt die Breite an
-        b:SetFrameStrata(host.GetFrameStrata and host:GetFrameStrata() or "HIGH")
+        local strata = Plain(host.GetFrameStrata and host:GetFrameStrata()) or "HIGH"
+        -- 1.0.8.0 (Bild: Knopf in der Titelleiste blass, nicht anklickbar):
+        -- die Titelleiste des Spiels liegt ueber Fensterebene + 20. Auf dem
+        -- Fenster selbst eine Schicht hoeher - darunter bleibt er unsichtbar.
+        if link.where == "title" then strata = CL.ABOVE[strata] or strata end
+        b:SetFrameStrata(strata)
         b:SetFrameLevel((Plain(host.GetFrameLevel and host:GetFrameLevel()) or 1) + 20)
     end
     b:SetShown(show)

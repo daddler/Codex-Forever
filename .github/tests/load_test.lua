@@ -27637,6 +27637,15 @@ do
         assert(pt and pt[1] == "RIGHT" and pt[2] == th.CloseButton and pt[3] == "LEFT", "nicht neben dem Kreuz")
         assert(tb._gold and tb._icon, "Titelknopf ohne Gold und Logo")
         assert(tb:GetHeight() == CL.TITLE_H, "Titelknopf zu hoch fuer die Leiste")
+        -- Ueber der Titelleiste des Spiels: eine Schicht hoeher als das Fenster.
+        th.GetFrameStrata = function() return "MEDIUM" end
+        local strata
+        local oS = tb.SetFrameStrata
+        tb.SetFrameStrata = function(self, v) strata = v return oS(self, v) end
+        th.IsShown = function() return true end
+        CL.Refresh(tl)
+        tb.SetFrameStrata = oS
+        assert(strata == "HIGH", "Titelknopf liegt unter der Titelleiste: " .. tostring(strata))
     end)
     Check(ok, "Verweise zu Codex: Knopf am Fenster, Bereich oeffnet" .. (ok and "" or (": " .. tostring(err))))
 end
