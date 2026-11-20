@@ -27,9 +27,9 @@ local K  = WeintCodex.UIKit
 local KEY = "comfort"
 
 CL.H = 22
-CL.TITLE_H = 20       -- Knopf in der Titelleiste (where = "title")
+CL.TITLE_H = 22       -- Knopf in der Titelleiste (where = "title")
 CL.TITLE_GAP = 6      -- Abstand zum Kreuz
-CL.TITLE_ICON = 14
+CL.TITLE_ICON = 16
 -- Naechsthoehere Schicht fuer Knoepfe, die auf dem Fenster liegen.
 CL.ABOVE = { BACKGROUND = "LOW", LOW = "MEDIUM", MEDIUM = "HIGH", HIGH = "DIALOG",
              DIALOG = "FULLSCREEN", FULLSCREEN = "FULLSCREEN_DIALOG" }
@@ -50,13 +50,81 @@ end
 -- Was gerade offen ist
 --------------------------------------------------
 -- Der offene Beruf (Schluessel aus data/professions.lua) oder nil.
-function CL.Profession()
-    local PT = WeintCodex.ProfTools
-    if PT and PT.OpenProfession then
-        local ok, key = pcall(PT.OpenProfession)
-        if ok and type(key) == "string" then return key end
+-- 1.0.8.0 (Bild: "Erste Hilfe gewaehlt, Codex oeffnet den ersten Beruf"):
+-- zuerst das Fenster selbst fragen - was es ueber den Beruf weiss, sonst
+-- sein Titel ("Erste Hilfe") -, erst dann die allgemeine Suche. Deren
+-- letzter Ausweg (irgendein gescannter Beruf) wird hier nie genommen.
+local function KeyByName(name)
+    local PRO = WeintCodex.Professions
+    name = Plain(name)
+    if type(name) ~= "string" or name == "" or not (PRO and PRO.KeyByName) then return nil end
+    return PRO.KeyByName(name)
+end
+
+local function KeyByLine(id)
+    local PRO = WeintCodex.Professions
+    id = Plain(id)
+    if type(id) ~= "number" or not (PRO and PRO.byKey) then return nil end
+    for key, p in pairs(PRO.byKey) do if p.line == id then return key end end
+    return nil
+end
+
+function CL.ProfessionOfWindow(host)
+    if type(host) ~= "table" then return nil end
+    local info
+    if type(host.GetProfessionInfo) == "function" then
+        local ok, v = pcall(host.GetProfessionInfo, host)
+        if ok and type(v) == "table" then info = v end
+    end
+    if not info and type(host.professionInfo) == "table" then info = host.professionInfo end
+    if info then
+        local key = KeyByLine(info.parentProfessionID) or KeyByLine(info.professionID)
+            or KeyByName(info.parentProfessionName) or KeyByName(info.professionName)
+        if key then return key end
+    end
+    local title
+    if type(host.GetTitleText) == "function" then
+        local ok, fs = pcall(host.GetTitleText, host)
+        if ok and type(fs) == "table" then title = fs end
+    end
+    title = title or (type(host.TitleContainer) == "table" and host.TitleContainer.TitleText) or host.TitleText
+    if type(title) == "table" and title.GetText then
+        local key = KeyByName(title:GetText())
+        if key then return key end
     end
     return nil
+end
+
+function CL.Profession(host)
+    local key = CL.ProfessionOfWindow(host)
+    if key then return key end
+    local ts = _G.C_TradeSkillUI
+    if ts and ts.GetBaseProfessionInfo then
+        local ok, info = pcall(ts.GetBaseProfessionInfo)
+        if ok and type(info) == "table" then
+            key = KeyByLine(info.professionID) or KeyByName(info.professionName)
+            if key then return key end
+        end
+    end
+    if _G.GetTradeSkillLine then
+        local ok, name = pcall(_G.GetTradeSkillLine)
+        key = ok and KeyByName(name) or nil
+        if key then return key end
+    end
+    return nil
+end
+
+-- Codex auf genau diesem Beruf: Rezepte, keine Suche, kein Werkzeug-Reiter.
+-- Nach dem Wechsel noch einmal zeichnen - war "Berufe" schon offen, tat
+-- der Klick auf den Bereich nichts, und die Vorauswahl ging verloren.
+function CL.OpenProfession(key)
+    local ok = CL.Open("berufe")
+    local PRO = WeintCodex.Professions
+    if not (ok and key and PRO and PRO.Select and PRO.Show) then return ok end
+    PRO.view, PRO.query, PRO.campAll, PRO.selRecipe = nil, "", false, nil
+    PRO.Select(key)
+    PRO.Show()
+    return true
 end
 
 -- Der Dungeon, in dem der Spieler steht (Kennung aus data/dungeons.lua)
@@ -94,22 +162,10 @@ CL.LINKS = {
     -- Titelleiste links neben dem Kreuz, in Gold mit Logo (where = "title").
     { host = "ProfessionsFrame", where = "title", label = function() return "Codex: Berufe" end,
       tip = "Rezepte nach deiner Fertigkeit, Lehrer und Herkunft der Rezepte – für den offenen Beruf.",
-      go = function()
-          local key = CL.Profession()
-          return CL.Open("berufe", function()
-              local PRO = WeintCodex.Professions
-              if key and PRO and PRO.Select then PRO.Select(key) end
-          end)
-      end },
+      go = function() return CL.OpenProfession(CL.Profession(_G.ProfessionsFrame)) end },
     { host = "TradeSkillFrame", where = "title", label = function() return "Codex: Berufe" end,
       tip = "Rezepte nach deiner Fertigkeit, Lehrer und Herkunft der Rezepte – für den offenen Beruf.",
-      go = function()
-          local key = CL.Profession()
-          return CL.Open("berufe", function()
-              local PRO = WeintCodex.Professions
-              if key and PRO and PRO.Select then PRO.Select(key) end
-          end)
-      end },
+      go = function() return CL.OpenProfession(CL.Profession(_G.TradeSkillFrame)) end },
     { host = "ClassTrainerFrame",
       label = function() return IsTradeTrainer() and "Codex: Berufe" or "Codex: Lehrer" end,
       tip = "Was du hier lernen kannst, was es kostet und was als Nächstes kommt.",
@@ -230,21 +286,57 @@ function CL.Place(b, host, where)
     end
 end
 
--- Gold wie das Fenster (GameColors.frameAccent, Stil S.CALM): Rand und
--- Schrift in Gold, das Logo davor - in der Titelleiste soll der Knopf
--- auffallen, nicht wie ein Teil des Fensters aussehen.
+-- Gold wie das Fenster (GameColors.frameAccent, Stil S.CALM). 1.0.8.0
+-- (Rueckmeldung: "muss noch etwas schoener aussehen"): rechteckig - die
+-- abgeschnittenen Ecken waren in der Flaeche von Codex gefuellt, nicht in
+-- der des Fensters -, Flaeche leicht golden getoent, Rand in Gold, Logo
+-- davor; mit der Maus darueber heller, Schrift hell.
+CL.GOLD_FILL, CL.GOLD_FILL_HOT = 0.14, 0.30
+CL.GOLD_EDGE, CL.GOLD_EDGE_HOT = 0.70, 1.00
 function CL.Gold(b)
     local g = WeintCodex.GameColors.frameAccent
-    if WeintCodex.DrawBorder then WeintCodex.DrawBorder(b, g[1], g[2], g[3], 0.85, 1) end
-    b._label:SetTextColor(g[1], g[2], g[3], 1)
+    local base = WeintCodex.Colors.bgDark or WeintCodex.Colors.surface3
+    local hi = WeintCodex.Colors.textBright
+    local function paint(hot)
+        local k = hot and CL.GOLD_FILL_HOT or CL.GOLD_FILL
+        b._bg:SetColorTexture(base[1] + (g[1] - base[1]) * k, base[2] + (g[2] - base[2]) * k,
+            base[3] + (g[3] - base[3]) * k, 0.95)
+        local e = hot and CL.GOLD_EDGE_HOT or CL.GOLD_EDGE
+        for _, t in ipairs(b._edges) do t:SetColorTexture(g[1], g[2], g[3], e) end
+        local c = hot and hi or g
+        b._label:SetTextColor(c[1], c[2], c[3], 1)
+        if b._icon then b._icon:SetAlpha(hot and 1 or 0.9) end
+    end
+    -- Rand: vier Linien von 1 px (eigene, damit sie mit der Maus heller werden).
+    b._edges = {}
+    for i, pt in ipairs({ { "TOPLEFT", "TOPRIGHT" }, { "BOTTOMLEFT", "BOTTOMRIGHT" },
+                          { "TOPLEFT", "BOTTOMLEFT" }, { "TOPRIGHT", "BOTTOMRIGHT" } }) do
+        local t = b:CreateTexture(nil, "BORDER")
+        t:SetPoint(pt[1], b, pt[1], 0, 0)
+        t:SetPoint(pt[2], b, pt[2], 0, 0)
+        if i <= 2 then t:SetHeight(1) else t:SetWidth(1) end
+        b._edges[i] = t
+    end
     b._label:ClearAllPoints()
     b._label:SetPoint("CENTER", b, "CENTER", (CL.TITLE_ICON + 4) / 2, 0)
     local icon = b:CreateTexture(nil, "OVERLAY")
     icon:SetSize(CL.TITLE_ICON, CL.TITLE_ICON)
     icon:SetTexture(K.MEDIA .. "logo_32")
-    icon:SetPoint("RIGHT", b._label, "LEFT", -4, 0)
+    icon:SetPoint("RIGHT", b._label, "LEFT", -5, 0)
     b._icon = icon
+    local tip = b._tip
+    b:SetScript("OnEnter", function(self)
+        paint(true)
+        if tip then
+            GameTooltip:SetOwner(self, "ANCHOR_BOTTOM")
+            GameTooltip:SetText(tip, 1, 1, 1, 1, true)
+            GameTooltip:Show()
+        end
+    end)
+    b:SetScript("OnLeave", function() paint(false) GameTooltip:Hide() end)
+    paint(false)
     b._gold = true
+    b._paintGold = paint
     return b
 end
 
@@ -274,9 +366,10 @@ function CL.Attach(link)
     if host.IsForbidden and host:IsForbidden() then return nil end
     local title = link.where == "title"
     local b = WeintCodex.CreateButton(UIParent, { text = link.label(), kind = "secondary",
-        height = title and CL.TITLE_H or CL.H, size = 11, padding = title and (36 + CL.TITLE_ICON) or nil,
+        height = title and CL.TITLE_H or CL.H, size = 11, padding = title and (30 + CL.TITLE_ICON) or nil,
+        radius = title and 0 or nil,
         backdrop = "surface2", tooltip = link.tip, onClick = function() link.go() end })
-    if title then CL.Gold(b) end
+    if title then b._tip = link.tip CL.Gold(b) end
     b:SetText(link.label())
     CL.Place(b, host, link.where)
     b:Hide()

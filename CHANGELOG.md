@@ -70,6 +70,11 @@ nicht zusammen.
   „jetzt“ (`t.queue`, `BM.QUEUE_MAX` 30 s); Schalter `bossGameWarnOff`
   (`encounterWarningsEnabled` ueber `PF.SetCVar`, ab Werk aus).
 - Codex-Knopf in der Titelleiste eine Schicht ueber dem Fenster (`CL.ABOVE`).
+  Beruf aus dem Fenster (`CL.ProfessionOfWindow`: Nummer, Name, Titel), nie
+  „irgendein gescannter Beruf“; `CL.OpenProfession` setzt Werkzeug-Reiter,
+  Suche und Lagerfeuer zurueck und zeichnet nach dem Wechsel neu (war
+  „Berufe“ offen, tat der Klick auf den Bereich nichts). Aussehen: eckig,
+  goldgetoente Flaeche, eigener Rand, hell mit der Maus.
 - Bequem: nach `AcceptQuest` blieb das leere Questfenster offen (Client schliesst
   nicht selbst) – `EV.CloseDetail` nach 0,1 s, nur solange `QuestFrameDetailPanel` steht.
 - `K.HeldSize`: geheime Schluessel uebersprungen („cannot be indexed with

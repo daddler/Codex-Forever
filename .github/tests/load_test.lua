@@ -27687,6 +27687,23 @@ do
         CL.Refresh(tl)
         tb.SetFrameStrata = oS
         assert(strata == "HIGH", "Titelknopf liegt unter der Titelleiste: " .. tostring(strata))
+        -- Beruf aus dem Fenster (Titel "Erste Hilfe"), auch ohne Abfrage des
+        -- Spiels; Codex landet genau dort, auch wenn vorher ein anderer Beruf
+        -- oder ein Werkzeug-Reiter offen war.
+        local PRO = WeintCodex.Professions
+        local win = { GetTitleText = function() return { GetText = function() return "Erste Hilfe" end } end }
+        assert(CL.ProfessionOfWindow(win) == "first-aid", "Beruf aus dem Titel nicht erkannt")
+        assert(CL.ProfessionOfWindow({ professionInfo = { professionID = 186 } }) == "mining", "Beruf aus der Nummer nicht erkannt")
+        assert(CL.ProfessionOfWindow({}) == nil, "Beruf geraten")
+        PRO.Select("mining")
+        PRO.view = "gilde"
+        local oG2 = WeintCodex.Navigation.GoToTab
+        WeintCodex.Navigation.GoToTab = function() end   -- Bereich war schon offen: Klick tut nichts
+        CL.OpenProfession("first-aid")
+        WeintCodex.Navigation.GoToTab = oG2
+        assert(PRO.Selected() == "first-aid" and PRO.view == nil, "Codex nicht auf Erste Hilfe")
+        assert(PRO.lastDraw and PRO.lastDraw.key == "first-aid", "Erste Hilfe nicht gezeichnet")
+        WeintCodex.MainFrame:Hide()
     end)
     Check(ok, "Verweise zu Codex: Knopf am Fenster, Bereich oeffnet" .. (ok and "" or (": " .. tostring(err))))
 end
