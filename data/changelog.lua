@@ -23,7 +23,7 @@
 WeintCodex_ChangelogData = {
     {
         version = "1.0.8.0",
-        date    = "19.11.2026",
+        date    = "20.11.2026",
         notes   = {
             "|cff7C6CFFDirekt zu Codex|r – unter vielen Fenstern des Spiels sitzt jetzt ein Knopf, der Codex genau an der passenden Stelle öffnet – gut sichtbar in Gold oben in der Titelleiste neben dem Kreuz (wo der Platz neben dem Titel nicht reicht, unter dem Fenster): Berufsfenster → Berufe mit dem offenen Beruf, Lehrer → Lehrer bzw. Berufe, Charakter → Charakter, Zauberbuch → Lehrer, Bank und Taschen → Taschen, Gruppensuche und Kompendium → Dungeons.",
             "|cff7C6CFFIm Dungeon|r – auf der Weltkarte führt „Codex: dieser Dungeon“ zu Bossen, Beute und Quests der Instanz, in der du stehst; am Beutefenster geht es zur Beute.",
