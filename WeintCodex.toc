@@ -125,6 +125,7 @@ data/beasts.lua
 data/beasts_ofa.lua
 # Beute je Boss, Ruf, PvP, Sets (erzeugt); gelesen von modules/lootbook.lua.
 data/loot.lua
+data/loot_ofa.lua
 # NPC-Nummer und deutscher Name je Boss des Kompendiums (erzeugt, 1.10.10.0)
 data/boss_npcs.lua
 # Bosse der neuen Forever-Dungeons (1.0.5.43); gelesen von ui/nameplates.lua.

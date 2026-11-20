@@ -131,6 +131,14 @@ function LB.BossName(b)
     return b.name
 end
 
+-- 1.0.8.0 (Reiter Sets auf Forever-Stand, data/loot_ofa.lua): ob es ein
+-- Set in Forever schon gibt. Ohne Angabe nichts - unbekannt ist kein "nein".
+LB.SET_NOTES = { [0] = " · noch nicht in Forever", [2] = " · Quelle noch unbekannt" }
+function LB.SetNote(b)
+    local st = b and b.set and D and D.SET_STATUS and D.SET_STATUS[b.set]
+    return st and LB.SET_NOTES[st] or ""
+end
+
 function LB.FindInstance(key)
     for n = 1, LB.Count() do
         local inst = LB.Instance(n)
@@ -433,8 +441,23 @@ function LB.Sections(cat, instIndex, query)
     end
     if instIndex then
         local inst = LB.Instance(instIndex)
-        for _, b in ipairs(LB.Bosses(instIndex)) do
-            Push(LB.BossName(b), inst, b, b.items)
+        local list = LB.Bosses(instIndex)
+        -- Sets: erhaeltliche zuerst, unbekannte dazwischen, "noch nicht in
+        -- Forever" zuletzt - sonst wie im Bestand.
+        if inst and inst.cat == "s" and D and D.SET_STATUS then
+            local RANK = { [1] = 1, [2] = 3, [0] = 4 }
+            local sorted = {}
+            for i, b in ipairs(list) do sorted[i] = b end
+            table.sort(sorted, function(a, c)
+                local ra = RANK[a.set and D.SET_STATUS[a.set]] or 2
+                local rc = RANK[c.set and D.SET_STATUS[c.set]] or 2
+                if ra ~= rc then return ra < rc end
+                return a.index < c.index
+            end)
+            list = sorted
+        end
+        for _, b in ipairs(list) do
+            Push(LB.BossName(b) .. LB.SetNote(b), inst, b, b.items)
         end
     end
     return out, total

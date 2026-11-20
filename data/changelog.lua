@@ -48,6 +48,7 @@ WeintCodex_ChangelogData = {
             "|cff7C6CFFKlassenquests|r – die neue Totem-Reihe der Schamanen („Call of Air“, „Storm, Earth, and Fire“) und weitere fehlende Klassenquests, mit Geber und Lage.",
             "|cff7C6CFFQuestketten|r – auf der Dungeonseite steht bei 134 Quests die ganze Kette davor, freiwillige Vorquests als solche gekennzeichnet.",
             "|cff7C6CFFKarte|r – fehlende Flugmeister am Berg Hyjal, in den Riverglades und (für Druiden) in Mondlichtung, dazu sieben Übergänge zwischen Gebieten.",
+            "|cff7C6CFFBeute → Sets auf Forever-Stand|r – neuer Bereich „Sets aus Forever“ mit 28 Sets, darunter Forever Tier 1 und Sets aus Dalaran, Krol'dok und den Ruinen von Lordaeron. Bei jedem Set steht, ob es in Forever schon zu bekommen ist; erhältliche stehen oben, „noch nicht in Forever“ unten.",
             "|cff7C6CFFStall in Gold|r – das Stallfenster des Jägers trägt jetzt das Codex-Design: flache Plätze, dunkle Fläche, Rahmen in Gold.",
         },
     },

@@ -784,3 +784,66 @@ fh = assert(io.open(CDX .. "/data/maps_ofa.lua", "w"))
 fh:write(table.concat(out, "\n"), "\n")
 fh:close()
 print(string.format("Karte: %d Flugmeister, %d Uebergaenge", #flights, #crossings))
+
+--------------------------------------------------
+-- Sets (Beute -> Sets)
+--------------------------------------------------
+-- Aus der Armory von OneForAll (Forever-Client ueber wago.tools, Wowhead
+-- Forever): je Set, ob es in Forever zu bekommen ist (st 1), die Quelle noch
+-- unbekannt ist (st 2) oder es Forever noch nicht gibt (st 0). Neue Sets
+-- (nicht in data/loot.lua, st 1/2) als eigener Bereich "Sets aus Forever".
+local FA = {}
+assert(loadfile(OFA .. "/Data/Armory.lua"))("OneForAll", FA)
+dofile(CDX .. "/data/loot.lua")
+local LD = WeintCodex.LootData
+local haveSet = {}
+for _, list in pairs(LD.b) do
+    for _, s in ipairs(list) do
+        local id = s:match("\ts(%d+)\t")
+        if id then haveSet[tonumber(id)] = true end
+    end
+end
+local status, rows = {}, {}
+local GROUP = { raid = 1, dungeon = 2, crafted = 3, pvp = 4, world = 5 }
+local sets = {}
+for _, s in ipairs(FA.ARMORY_SETS) do
+    status[#status + 1] = string.format("[%d] = %d", s.id, s.st)
+    if not haveSet[s.id] and s.st ~= 0 then sets[#sets + 1] = s end
+end
+table.sort(sets, function(a, b)
+    if (GROUP[a.g] or 9) ~= (GROUP[b.g] or 9) then return (GROUP[a.g] or 9) < (GROUP[b.g] or 9) end
+    if (a.lv or 0) ~= (b.lv or 0) then return (a.lv or 0) < (b.lv or 0) end
+    return a.n < b.n
+end)
+for _, s in ipairs(sets) do
+    local only = s.side == "A" and "a" or s.side == "H" and "h" or ""
+    local items = {}
+    for _, it in ipairs(s.i or {}) do items[#items + 1] = tostring(it[1]) .. only end
+    rows[#rows + 1] = string.format("        %q,", table.concat({ s.n, "s" .. s.id, table.concat(items, ",") }, "\t"))
+end
+out = {}
+W("--------------------------------------------------")
+W("-- WeintCodex :: Beute - Sets, Abgleich mit OneForAll (1.0.8.0)")
+W("--------------------------------------------------")
+W("-- ERZEUGT von .github/scripts/import_oneforall.lua - nicht von Hand aendern.")
+W("-- Herkunft (nur fuer Betreuer): Armory von OneForAll 6.2.12 (GPL-3.0, nur")
+W("-- Daten; dort aus dem Forever-Client ueber wago.tools und Wowhead Forever).")
+W("--   SET_STATUS[Set] = 1 in Forever zu bekommen, 2 Quelle noch unbekannt,")
+W("--                     0 in Forever noch nicht da; fehlt: unbekannt")
+W("--   Bereich \"Sets aus Forever\": Sets, die data/loot.lua nicht kennt (1 und 2).")
+W("-- Art `community`. Namen der Sets und Teile nennt der Client; der englische")
+W("-- Name ist nur Rueckfall.")
+W("--------------------------------------------------")
+W("")
+W("local D = WeintCodex and WeintCodex.LootData")
+W("if not D then return end")
+W("D.SET_STATUS = { " .. table.concat(status, ", ") .. " }")
+W("local n = #D.i + 1")
+W("D.i[n] = \"ForeverSets\\ts\\tcommunity\\t0\\tSets aus Forever\\t\"")
+W("D.b[n] = {")
+for _, r in ipairs(rows) do W(r) end
+W("}")
+fh = assert(io.open(CDX .. "/data/loot_ofa.lua", "w"))
+fh:write(table.concat(out, "\n"), "\n")
+fh:close()
+print(string.format("Sets: %d neu, Stand fuer %d", #rows, #status))

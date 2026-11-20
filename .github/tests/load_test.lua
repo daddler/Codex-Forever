@@ -27038,6 +27038,19 @@ do
             for _, it in ipairs(list) do if it[1] == 276732 then wrex = it.chance end end
         end
         assert(wrex == 32, "in Forever gemessene Dropchance nicht gesetzt (" .. tostring(wrex) .. ")")
+        -- Sets: Forever-Bereich da, Stand je Set, erhaeltliche zuerst.
+        local LB, LD = WeintCodex.LootBook, WeintCodex.LootData
+        assert(LD.SET_STATUS and LD.SET_STATUS[2102] == 2, "Stand der Sets fehlt")
+        local fs = LB.FindInstance("ForeverSets")
+        assert(fs and #LB.Bosses(fs) >= 20, "Sets aus Forever fehlen")
+        local tier = LB.FindInstance("TierSets")
+        local secs = LB.Sections("s", tier, "")
+        local sawNot, order = false, true
+        for _, sc in ipairs(secs) do
+            local st = sc.boss.set and LD.SET_STATUS[sc.boss.set]
+            if st == 0 then sawNot = true elseif sawNot and st == 1 then order = false end
+        end
+        assert(order, "erhaeltliche Sets nicht vor den nicht erhaeltlichen")
         local BD = WeintCodex.BeastData
         assert(BD.b[260157] and BD.b[253282]:match("^(%d+)") == "3", "Tiere aus dem Abgleich fehlen")
     end)

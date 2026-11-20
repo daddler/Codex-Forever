@@ -75,6 +75,9 @@ nicht zusammen.
   `Q.OFA_NPCS`, negativer Schlüssel, `CQ.Npc`). `J.OFA_CHAIN` – 134 ganze
   Questketten mit freiwilligen Vorquests („Kette davor“ auf der Dungeonseite).
   `data/maps_ofa.lua` – 5 Flugmeister, 7 Übergänge (Richtung aus der Lage).
+  `data/loot_ofa.lua` – Beute → Sets: Bereich „Sets aus Forever“ (28 Sets,
+  Stand 1/2), `D.SET_STATUS` für 214 Sets (`LB.SetNote`, Sortierung
+  erhältlich → unbekannt → Quelle unbekannt → noch nicht in Forever).
   Verglichen ohne Übernahme: Einstimmung Onyxia (deckungsgleich), Ruf-
   Belohnungen (alle 270 vorhanden), Flugrouten (fehlend nur Transporte/
   Questflüge/Schlachtfelder), Rang-Kosten (im Spiel gemessen gilt).
