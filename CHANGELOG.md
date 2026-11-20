@@ -55,6 +55,18 @@ nicht zusammen.
   `WCFG`; Fenster 620 hoch, Karten 72, Reiter der Bestenliste 72 breit.
 - Berufe · Gilde: Suchfeld verlor nach jedem Buchstaben den Fokus (`PT.Draw`
   versteckt die Seite kurz); danach `SetFocus` + Zeiger ans Ende.
+  Danach ersetzte jeder Buchstabe den alten: `InputBoxTemplate` markiert beim
+  Fokus den ganzen Text. `PT.Draw` versteckt die eigene Seite nicht mehr,
+  `PT.KeepTyping` hebt die Markierung auf.
+- Codex-Knopf am Berufsfenster in der Titelleiste neben dem Kreuz
+  (`where = "title"`, `CL.Gold`: Rand und Schrift `frameAccent`, Logo).
+- Questhilfe: `QUEST_LOG_UPDATE` warf den Kartenspeicher (`forMap`) jedes Mal
+  weg (Bericht: 501 + 462 KB/s, Einzelaufrufe 69 ms). `QH.ReadLog` vergleicht
+  jetzt in wiederverwendeten Tabellen, `Refresh(force)` rechnet nur bei
+  Aenderung (Stufe/Questreihen erzwingen); Minikarte 10 statt 20 Takte und
+  ohne Bewegung kein Neusetzen (`QH.mmLast`).
+- `K.HeldSize`: geheime Schluessel uebersprungen („cannot be indexed with
+  secret keys“).
 - `ui/everyday.lua` (Seite „Bequem“, nach OneForAll, nur Verhalten): Quests
   annehmen/abgeben (nie bei mehr als einer Belohnung, zweimal gezählt),
   Gespräch: erst abgeben, dann annehmen; Flugkarte sofort (eine Wahl, Symbol

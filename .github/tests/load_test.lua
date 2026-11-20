@@ -1496,6 +1496,18 @@ do
         for _, e in ipairs(QH.ForMap(1429)) do if e.kind == "avail" then giver = e end end
         assert(#giver.quests == 2, "graue Quest nicht dazu")
         assert(#QH.ForMap(1411) == 1, "Abgabe auf zweiter Karte fehlt")
+        -- 1.0.8.0 (Speicherbericht: 500 KB/s): ein Log ohne Aenderung rechnet
+        -- nichts neu; eine Aenderung (Quest fertig) schon.
+        do
+            local before = QH.ForMap(1429)
+            assert(QH.RefreshIfChanged() == false and QH.ForMap(1429) == before, "unveraendertes Log neu gerechnet")
+            local oIC = G.C_QuestLog.IsComplete
+            G.C_QuestLog.IsComplete = function() return true end
+            assert(QH.RefreshIfChanged() == true and QH.ForMap(1429) ~= before, "fertige Quest nicht neu gerechnet")
+            G.C_QuestLog.IsComplete = oIC
+            assert(QH.RefreshIfChanged() == true, "zurueck nicht erkannt")
+            assert(QH.RefreshIfChanged(true) == true, "erzwungen nicht neu gerechnet")
+        end
         -- 1.0.5.25: Angebote des Spiels (C_QuestLine) kommen dazu, nie doppelt.
         do
             local oQL = G.C_QuestLine
@@ -2005,9 +2017,19 @@ do
         QH.MinimapActive = function() return true end
         local done = { kind = "turnin", faint = false, quests = { 1 }, x = 0.5, y = 0.5, wc = 0, wn = 140, ww = 100 }
         local open = { kind = "turnin", faint = true, quests = { 2 }, x = 0.5, y = 0.5, wc = 0, wn = 120, ww = 100 }
-        QH.ForMap = function() return { done, open } end
+        local fixed = { done, open }
+        QH.ForMap = function() return fixed end
         _G.Minimap.GetWidth = function() return 200 end
         assert(QH.PlaceMinimap() == 1, "graues ? auf der Minikarte")
+        -- 1.0.8.0: steht alles still, wird nichts neu gesetzt; bewegt sich der
+        -- Spieler, schon.
+        local pin, moved = QH.mmPins[1], 0
+        local oSP = pin.SetPoint
+        pin.SetPoint = function(self, ...) moved = moved + 1 return oSP(self, ...) end
+        assert(QH.PlaceMinimap() == 1 and moved == 0, "Symbole ohne Bewegung neu gesetzt")
+        K.PlayerWorld = function() return 0, 101, 100 end
+        assert(QH.PlaceMinimap() == 1 and moved == 1, "Bewegung nicht nachgezogen")
+        pin.SetPoint = oSP
     end)
     K.BestMap, K.PlayerWorld, QH.MinimapYards, QH.ForMap, QH.MinimapActive = oBM, oPW, oY, oFM, oA
     Check(ok, "Questhilfe: Minikarte ohne graues ?" .. (ok and "" or (": " .. tostring(err))))

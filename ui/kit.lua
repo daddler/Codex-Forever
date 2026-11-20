@@ -906,6 +906,10 @@ function K.HeldSize(root, seen, budget)
             if not (type(k) == "number" and k >= 1 and k <= n and k % 1 == 0) then bytes = bytes + 40 end
             local x = k
             for _ = 1, 2 do
+                -- 1.0.8.0 (Bericht: "attempted to index a table that cannot
+                -- be indexed with secret keys"): geheime Werte nie als
+                -- Schluessel in `seen` - auslassen.
+                if K.IsSecret(x) then x = nil end
                 local tx = type(x)
                 if tx == "string" then
                     if not seen[x] then seen[x] = true bytes = bytes + 25 + #x end

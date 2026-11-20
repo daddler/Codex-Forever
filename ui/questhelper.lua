@@ -81,25 +81,41 @@ local function QM() return WeintCodex.QuestMap end
 local log, logDone = {}, {}     -- Quest im Log / dort fertig
 QH.log, QH.logDone = log, logDone
 
+-- 1.0.8.0 (Speicherbericht: "Karte: Questhilfe 501 KB/s, Minikarte 462 KB/s,
+-- Einzelaufrufe 69 ms"): QUEST_LOG_UPDATE kommt staendig, auch ohne dass
+-- sich am Log etwas aendert - und jedes Mal wurde alles neu gerechnet.
+-- Jetzt erst in Zwischentabellen lesen (wiederverwendet, nichts Neues
+-- angelegt) und vergleichen. Zweiter Rueckgabewert: hat sich etwas geaendert.
+local nextLog, nextDone = {}, {}
+local function Same(a, b)
+    for k in pairs(a) do if not b[k] then return false end end
+    for k in pairs(b) do if not a[k] then return false end end
+    return true
+end
 function QH.ReadLog()
-    for k in pairs(log) do log[k] = nil end
-    for k in pairs(logDone) do logDone[k] = nil end
+    for k in pairs(nextLog) do nextLog[k] = nil end
+    for k in pairs(nextDone) do nextDone[k] = nil end
     local ql = _G.C_QuestLog
-    if not (ql and ql.GetNumQuestLogEntries and ql.GetInfo) then return false end
+    if not (ql and ql.GetNumQuestLogEntries and ql.GetInfo) then return false, false end
     local n = K.Plain(ql.GetNumQuestLogEntries())
-    if type(n) ~= "number" then return false end
+    if type(n) ~= "number" then return false, false end
     for i = 1, n do
         local ok, info = pcall(ql.GetInfo, i)
         if ok and type(info) == "table" and not K.Plain(info.isHeader) then
             local id = K.Plain(info.questID)
             if type(id) == "number" and id > 0 then
-                log[id] = true
+                nextLog[id] = true
                 local done = ql.IsComplete and K.Plain(ql.IsComplete(id))
-                if done == true then logDone[id] = true end
+                if done == true then nextDone[id] = true end
             end
         end
     end
-    return true
+    if Same(log, nextLog) and Same(logDone, nextDone) then return true, false end
+    for k in pairs(log) do log[k] = nil end
+    for k in pairs(logDone) do logDone[k] = nil end
+    for k in pairs(nextLog) do log[k] = true end
+    for k in pairs(nextDone) do logDone[k] = true end
+    return true, true
 end
 
 -- true erledigt, false nicht, nil weiss nicht.
@@ -1226,11 +1242,15 @@ QH.MM_RADIUS = {
     inside  = { [0] = 150, 120, 90, 60, 40, 25 },
 }
 QH.MM_SCALE = 0.75
-QH.MM_TICK = 0.05
+QH.MM_TICK = 0.1     -- 1.0.8.0: 10 mal je Sekunde reicht (vorher 20)
 
 local mmPins = {}
 QH.mmPins = mmPins
-local function MMHide(from) for i = from or 1, #mmPins do mmPins[i]:Hide() end end
+QH.mmLast = {}     -- Lage beim letzten Setzen (QH.PlaceMinimap)
+local function MMHide(from)
+    if not from then QH.mmKey = nil end
+    for i = from or 1, #mmPins do mmPins[i]:Hide() end
+end
 
 function QH.MinimapActive() return QH.Active() and Get("qhMinimap") and true or false end
 
@@ -1294,8 +1314,20 @@ function QH.PlaceMinimap()
     end
     local square = K.IsActive("minimap") and K.Get("minimap", "square") and true or false
     local half = w / 2
+    local list = QH.ForMap(mapID)
+    -- 1.0.8.0: steht alles still (Spieler auf 0,1 m, Blick, Zoom, Karte,
+    -- Liste), bleibt jedes Symbol, wo es ist - nichts zu tun.
+    local L = QH.mmLast
+    if QH.mmKey and L.list == list and L.map == mapID and L.yards == yards and L.w == w
+        and L.square == square and L.c == pc and L.facing == facing and L.focus == QH.focus
+        and math.abs(L.n - pn) < 0.1 and math.abs(L.wx - pw) < 0.1 then
+        return QH.mmShown or 0
+    end
+    L.list, L.map, L.yards, L.w, L.square, L.c, L.n, L.wx, L.facing = list, mapID, yards, w, square, pc, pn, pw, facing
+    L.focus = QH.focus
+    QH.mmKey = true
     local n = 0
-    for _, e in ipairs(QH.ForMap(mapID)) do
+    for _, e in ipairs(list) do
         -- 6.30.19.0 (Beta-Test: "graues Fragezeichen beim Questgeber auf der
         -- Minimap irritiert - grau heisst dort sonst Abgabe im Gebaeude"):
         -- auf der Minikarte nur abgabebereite Quests, kein graues "?".
@@ -1325,6 +1357,7 @@ function QH.PlaceMinimap()
         end
     end
     MMHide(n + 1)
+    QH.mmShown = n
     return n
 end
 
@@ -1339,13 +1372,19 @@ mmTicker:SetScript("OnUpdate", K.Measured("Minikarte: Questhilfe", function(_, e
 end))
 QH.mmTicker = mmTicker
 
-local function Refresh()
-    QH.ReadLog()
+-- force: auch ohne Aenderung im Log neu rechnen (Stufe, Questreihen des
+-- Spiels, Einschalten). Sonst nur, wenn das Log anders ist.
+local function Refresh(force)
+    local _, changed = QH.ReadLog()
+    if not (force or changed) then QH.stats.kept = (QH.stats.kept or 0) + 1 return false end
     QH.Forget()
     for _, p in ipairs(pins) do p.entry = nil end
     for _, p in ipairs(mmPins) do p.entry = nil end
+    QH.mmKey = nil
+    return true
 end
-QH.Refresh = Refresh
+QH.Refresh = function() return Refresh(true) end   -- von aussen: immer neu
+QH.RefreshIfChanged = Refresh
 
 local REFRESH = { "QUESTLINE_UPDATE", "QUEST_LOG_UPDATE", "QUEST_ACCEPTED", "QUEST_TURNED_IN", "QUEST_REMOVED", "PLAYER_LEVEL_UP",
                   "SUPER_TRACKING_CHANGED" }
@@ -1365,21 +1404,22 @@ ev:SetScript("OnEvent", WeintCodex.Measured("questhelper", function(_, event, na
         -- Der Kalender liefert erst nach einer Anfrage (CALENDAR_UPDATE_EVENT_LIST).
         local cal = _G.C_Calendar
         if QH.Active() and cal and cal.OpenCalendar then pcall(cal.OpenCalendar) end
-        if QH.Active() then Refresh() EnsureDriver() mmTicker:SetShown(QH.MinimapActive()) end
+        if QH.Active() then Refresh(true) EnsureDriver() mmTicker:SetShown(QH.MinimapActive()) end
         return
     end
     -- QUEST_LOG_UPDATE kommt in Schauern - einmal je Bild genuegt.
+    if event == "PLAYER_LEVEL_UP" or event == "QUESTLINE_UPDATE" then QH.forceNext = true end
     if pending then return end
     pending = true
     local t = _G.C_Timer
-    local function run() pending = false Refresh() end
+    local function run() pending = false local f = QH.forceNext QH.forceNext = nil Refresh(f) end
     if t and t.After then t.After(0.2, run) else run() end
 end))
 ev:RegisterEvent("PLAYER_LOGIN")
 QH.events = ev
 
 local function Apply()
-    Refresh()
+    Refresh(true)
     if QH.Active() then
         pcall(ev.RegisterEvent, ev, "ADDON_LOADED")
         for _, e in ipairs(REFRESH) do pcall(ev.RegisterEvent, ev, e) end
