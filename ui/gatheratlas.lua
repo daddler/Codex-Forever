@@ -883,7 +883,7 @@ function GA.SendNext(now)
             for i = #backlog, 1, -1 do backlog[i] = nil end
             return true
         end
-        local ok, res = pcall(cc.SendAddonMessage, GA.PREFIX, backlog[#backlog], "GUILD")
+        local ok, res = WeintCodex.Comm.Send(GA.PREFIX, backlog[#backlog], "GUILD")
         if ok and (res == nil or res == true or res == 0) then
             backlog[#backlog] = nil
             GA.stats.sent = GA.stats.sent + 1
@@ -900,7 +900,7 @@ function GA.SendNext(now)
         for i = #queue, 1, -1 do queue[i] = nil end
         return true
     end
-    local ok, res = pcall(cc.SendAddonMessage, GA.PREFIX, queue[1], "GUILD")
+    local ok, res = WeintCodex.Comm.Send(GA.PREFIX, queue[1], "GUILD")
     if ok and (res == nil or res == true or res == 0) then
         table.remove(queue, 1)
         GA.stats.sent = GA.stats.sent + 1

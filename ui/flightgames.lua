@@ -1395,7 +1395,7 @@ function FG.SendNext(now)
         for i = #bqueue, 1, -1 do bqueue[i] = nil end
         return true
     end
-    local ok, res = pcall(cc.SendAddonMessage, FG.PREFIX, bqueue[1], "GUILD")
+    local ok, res = WeintCodex.Comm.Send(FG.PREFIX, bqueue[1], "GUILD")
     if ok and (res == nil or res == true or res == 0) then
         table.remove(bqueue, 1)
         FG.stats.sent = FG.stats.sent + 1

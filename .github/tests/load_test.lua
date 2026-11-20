@@ -24418,12 +24418,15 @@ do
         local rk = FG.Ranking("jewels", nil)
         Check(rk[1].name == "Bert-Testrealm" and rk[2].own and rk[3].name == "Anna-Testrealm" and not rk[1].own, "Bestenliste: Reihenfolge absteigend, eigener markiert")
         sent = {}
+        local oCan = WeintCodex.Comm.Can
+        WeintCodex.Comm.Can = function() return true end   -- hier gilt der eigene Takt (core/comm.lua eigens geprueft)
         FG.Push("q")
         Check(not FG.SendNext(100) and #sent == 1 and sent[1][3] == "GUILD" and sent[1][1] == "WCFG", "Bestenliste: eine Nachricht, an GUILD")
         FG.SendNext(100.5)
         Check(#sent == 1, "Bestenliste: zweite Nachricht erst nach einer Sekunde")
         FG.SendNext(101.1)
         Check(#sent == 2 and #FG.queue == 0, "Bestenliste: Warteschlange leer")
+        WeintCodex.Comm.Can = oCan
         -- Antwort: hoechstens einmal je 10 min, hoechstens 20 Zeilen
         for i = 1, 30 do FG.Enter("hunt", "Ich-Testrealm", 10 + i, (100 + i) .. ">" .. (200 + i)) end
         local lines = FG.AnswerLines()
@@ -26066,6 +26069,8 @@ do
         assert(dists.GUILD == "1|S|lower_blackrock_spire/highlord_omokk|15589|80|120|" .. st.Wirbelwind.n, "Nachricht: " .. dists.GUILD)
         st.Wirbelwind.edit = nil
         -- Nie im Kampf, nie im Bosskampf.
+        local oCan = WeintCodex.Comm.Can
+        WeintCodex.Comm.Can = function() return true end   -- eigener Takt hier; core/comm.lua eigens geprueft
         _G.InCombatLockdown = function() return true end
         assert(BS.SendNext(now + 100) == nil and #sent == 0, "im Kampf gesendet")
         _G.InCombatLockdown = function() return false end
@@ -26074,6 +26079,7 @@ do
         for _ = 1, 10 do BS.SendNext(now + 300 + _ * 10) end
         for _, m in ipairs(sent) do if m[3] == "CHANNEL" then lastCh = m end end
         assert(lastCh and lastCh[4] == "5", "Kanal ohne Nummer")
+        WeintCodex.Comm.Can = oCan
         -- Empfangen: gepruefte Daten anderer, Median, nie von mir, nie Unsinn.
         assert(BS.OnMessage("WCBM", "1|S|lower_blackrock_spire/highlord_omokk|16856|50|200|3", "GUILD", "Lena-Testrealm"), "nicht uebernommen")
         assert(BS.OnMessage("WCBM", "1|S|lower_blackrock_spire/highlord_omokk|16856|60|220|2", "CHANNEL", "Ole-Anderswo"), "Kanal nicht uebernommen")
@@ -27633,6 +27639,58 @@ do
         assert(found.helfer and found.pvp, "Seiten fehlen")
     end)
     Check(ok, "Kampfhilfen: Verlauf, Heiler unter Kontrolle, Gegner" .. (ok and "" or (": " .. tostring(err))))
+end
+
+-- 1.0.8.1: ein Takt fuer alles stille Senden (Bild: viermal "Die Anzahl der
+-- Nachrichten ... ist begrenzt").
+do
+    local G = _G
+    local ok, err = pcall(function()
+        local COMM = WeintCodex.Comm
+        assert(COMM and COMM.Send, "Takt fehlt")
+        local oT, oC = G.GetTime, G.C_ChatInfo
+        local now, out, answer = 1000, {}, 0
+        G.GetTime = function() return now end
+        G.C_ChatInfo = { SendAddonMessage = function(p, m, d, t) out[#out + 1] = { p, m, d, t } return answer end }
+        COMM.Reset()
+        local msg = string.rep("x", 200)
+        assert(select(2, COMM.Send("A", msg, "GUILD")) == 0 and #out == 1, "erste Nachricht nicht gesendet")
+        local _, r = COMM.Send("B", msg, "GUILD")
+        assert(r == "wait" and #out == 1, "zwei Teile senden ohne Abstand")
+        -- Sechs Teile wollen je eine Nachricht je Sekunde: zusammen nie mehr
+        -- als der Takt erlaubt.
+        local n0 = #out
+        for i = 1, 120 do
+            now = now + 0.25
+            COMM.Send("P" .. (i % 6), msg, "GUILD")
+        end
+        local rate = (#out - n0) / 30
+        assert(rate <= (COMM.RATE / (200 + COMM.OVERHEAD)) + 0.1 and rate <= 1 / COMM.GAP + 0.01,
+            "zu viele Nachrichten je Sekunde: " .. rate)
+        -- Kanal nur alle CHANNEL_GAP Sekunden.
+        COMM.Reset() out = {}
+        COMM.Send("C", "a", "CHANNEL", "5")
+        now = now + 1
+        assert(select(2, COMM.Send("C", "b", "CHANNEL", "5")) == "wait", "Kanal zu dicht")
+        -- Drosselt das Spiel, schweigt alles.
+        COMM.Reset() out = {}
+        answer = 8
+        COMM.Send("A", "a", "GUILD")
+        answer = 0
+        now = now + 5
+        assert(select(2, COMM.Send("A", "b", "GUILD")) == "wait", "nach Drosselung weiter gesendet")
+        now = now + COMM.PAUSE + 1
+        assert(select(2, COMM.Send("A", "c", "GUILD")) == 0, "nach der Pause still")
+        -- Meldung des Spiels im Chat: ebenso still.
+        COMM.Reset()
+        G.ERR_CHAT_THROTTLED = "Die Anzahl der Nachrichten ist begrenzt."
+        COMM.events:GetScript("OnEvent")(COMM.events, "CHAT_MSG_SYSTEM", G.ERR_CHAT_THROTTLED)
+        assert(select(2, COMM.Send("A", "d", "GUILD")) == "wait", "Meldung im Chat ueberhoert")
+        G.ERR_CHAT_THROTTLED = nil
+        COMM.Reset()
+        G.GetTime, G.C_ChatInfo = oT, oC
+    end)
+    Check(ok, "Stilles Senden: ein Takt fuer alle Teile, still nach Drosselung" .. (ok and "" or (": " .. tostring(err))))
 end
 
 -- 1.0.8.0: Verweise zu Codex an Fenstern des Spiels.

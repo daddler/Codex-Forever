@@ -218,7 +218,7 @@ local function SendNext(now)
         qHead = 1
         return
     end
-    local ok, res = pcall(cc.SendAddonMessage, AS.PREFIX, queue[qHead], "GUILD")
+    local ok, res = WeintCodex.Comm.Send(AS.PREFIX, queue[qHead], "GUILD")
     -- Aeltere Clients antworten nichts oder true, neuere mit einer Zahl
     -- (0 = angenommen).
     if ok and (res == nil or res == true or res == 0) then

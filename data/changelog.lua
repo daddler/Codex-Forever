@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.0.8.1",
+        date    = "20.11.2026",
+        notes   = {
+            "|cff7C6CFFKeine Meldung „Die Anzahl der Nachrichten ist begrenzt“ mehr|r – was WeintCodex still mit der Gilde teilt (Berufe, Auktionspreise, Sammelorte, Bestenlisten, Abfahrtszeiten, Bossdaten), ging bisher in mehreren Schlangen gleichzeitig hinaus. Kurz nach dem Anmelden war das zu viel auf einmal, und das Spiel meldete es gelb im Chat. Jetzt teilen sich alle einen gemeinsamen, ruhigeren Takt; meldet das Spiel trotzdem „zu viel“, wartet WeintCodex eine Weile ganz.",
+        },
+    },
+    {
         version = "1.0.8.0",
         date    = "20.11.2026",
         notes   = {

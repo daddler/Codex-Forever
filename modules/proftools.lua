@@ -236,7 +236,7 @@ function PT.SendNext(now)
         for i = #queue, 1, -1 do queue[i] = nil end
         return true
     end
-    local ok, res = pcall(cc.SendAddonMessage, PT.PREFIX, queue[1], "GUILD")
+    local ok, res = WeintCodex.Comm.Send(PT.PREFIX, queue[1], "GUILD")
     if ok and (res == nil or res == true or res == 0) then
         table.remove(queue, 1)
         nextSend = now + PT.SEND_GAP

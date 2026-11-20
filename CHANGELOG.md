@@ -9,6 +9,19 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.0.8.1] – 2026-11-20
+
+### Behoben
+- Meldung des Spiels „Die Anzahl der Nachrichten, die versendet werden
+  können, ist begrenzt“ (Bild eines Spielers, viermal): sechs stille Sender
+  (`WCPR`, `WCAH`, `WCGA`, `WCFG`, `WCRT`, `WCBM`) hatten je eine eigene
+  Schlange mit etwa 1/s – zusammen mehr, als der Server annimmt. Neu
+  `core/comm.lua` (`WeintCodex.Comm.Send`): gemeinsamer Takt (500 B/s,
+  Vorrat 1000 B, mindestens 0,75 s Abstand, Kanal 4 s), nach Drosselung
+  (Rueckgabe 3/8/9 oder `ERR_CHAT_THROTTLED` im Systemchat) 20 s Stille;
+  „wait“ laesst die Nachricht in der Schlange (`RT.SendNext` nahm sie
+  vorher heraus). Zeile in `/wcui prüfen`.
+
 ## [1.0.8.0] – 2026-11-20
 
 ### Neu

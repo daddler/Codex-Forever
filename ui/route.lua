@@ -1203,12 +1203,20 @@ RT._queue = function() return queue, qHead, qTail end
 function RT.SendNext()
     if qHead > qTail then return false end
     local item = queue[qHead]
-    queue[qHead] = nil
-    qHead = qHead + 1
     local text, channel = item:match("^(.*)\001(%u+)$")
     local cc = _G.C_ChatInfo
-    if not (cc and cc.SendAddonMessage and text and RT.Sharing()) then return false end
-    return pcall(cc.SendAddonMessage, RT.PREFIX, text, channel)
+    if not (cc and cc.SendAddonMessage and text and RT.Sharing()) then
+        queue[qHead] = nil
+        qHead = qHead + 1
+        return false
+    end
+    -- 1.0.8.1: ueber den gemeinsamen Takt (core/comm.lua). "warten" laesst
+    -- die Nachricht in der Schlange - beim naechsten Takt geht sie.
+    local ok, res = WeintCodex.Comm.Send(RT.PREFIX, text, channel)
+    if ok and res == "wait" then return false end
+    queue[qHead] = nil
+    qHead = qHead + 1
+    return ok, res
 end
 
 local function Channels(fn)

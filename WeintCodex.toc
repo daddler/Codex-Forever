@@ -2,7 +2,7 @@
 ## Title: |cff7C6CFFWeintCodex|r
 ## Notes: Raid Guide & Intelligence System — Forever Edition
 ## Author: Fabian
-## Version: 1.0.8.0
+## Version: 1.0.8.1
 ## SavedVariables: WeintCodex_SavedData, WeintCompanionDB, WeintCompanionInboxDB, WeintCodex_WhispersAccount
 ## SavedVariablesPerCharacter: WeintCodex_Whispers, WeintCodex_Backup
 
@@ -56,6 +56,7 @@ libs/LibDBIcon-1.0/lib.xml
 # Fassung hin, und die steht dort.
 #
 core/main.lua
+core/comm.lua
 core/names.lua
 core/ui.lua
 core/access.lua

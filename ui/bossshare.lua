@@ -365,9 +365,9 @@ function BS.SendNext(now)
     local ok, res
     if item.dist == "CHANNEL" then
         local id = ChannelId()
-        if id then ok, res = pcall(send, BS.PREFIX, item.msg, "CHANNEL", tostring(id)) else ok, res = true, 0 end
+        if id then ok, res = WeintCodex.Comm.Send(BS.PREFIX, item.msg, "CHANNEL", tostring(id)) else ok, res = true, 0 end
     else
-        ok, res = pcall(send, BS.PREFIX, item.msg, item.dist)
+        ok, res = WeintCodex.Comm.Send(BS.PREFIX, item.msg, item.dist)
     end
     if ok and (res == nil or res == true or res == 0) then
         queue[qHead] = false
