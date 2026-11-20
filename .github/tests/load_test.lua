@@ -7927,6 +7927,32 @@ do
             K.Set(R.KEY or "reminders", "remindInCombat", oIC)
         end
         R.fighting = false
+        -- 1.0.8.0: verpasstes PLAYER_REGEN_ENABLED (Ladebildschirm) - das
+        -- Ereignis zaehlt nur kurz, danach allein die Sperre; Laden setzt zurueck.
+        do
+            local oGT, oIC2 = _G.GetTime, K.InCombat
+            local t0 = 500
+            _G.GetTime = function() return t0 end
+            K.InCombat = function() return false end
+            R.SetFighting(true)
+            assert(R.Fighting(), "Kampfbeginn (Ereignis vor der Sperre) nicht als Kampf")
+            t0 = t0 + R.FIGHT_LAG + 1
+            assert(not R.Fighting() and R.fighting == false, "Kampf blieb ohne Sperre haengen")
+            K.InCombat = function() return true end
+            assert(R.Fighting(), "Sperre zaehlt nicht")
+            K.InCombat = oIC2
+            R.SetFighting(true)
+            R.SetFighting(false)
+            assert(not R.Fighting(), "Ende nicht uebernommen")
+            local BTm = WeintCodex.UIBuffTimes
+            K.InCombat = function() return false end
+            BTm.fighting, BTm.fightingAt = true, t0
+            assert(BTm.Fighting(), "Buffzeiten: Kampfbeginn")
+            t0 = t0 + 10
+            assert(not BTm.Fighting(), "Buffzeiten: Kampf blieb haengen - kein Abgleich mehr")
+            K.InCombat = oIC2
+            _G.GetTime = oGT
+        end
         -- Mit Frist: erst nach 2 s gemeldet (Wechsel eines Aspekts).
         R.BUFF_GRACE = oGrace
         local oT = _G.GetTime
@@ -24104,6 +24130,14 @@ do
             -- Abgleich: im Kampf nichts, ausserhalb entfernt.
             G.C_UnitAuras = { GetPlayerAuraBySpellID = function() return nil end }
             assert(BT.Reconcile(302, true) == false and BT.active.seal, "Abgleich im Kampf")
+            -- 1.0.8.0: nennt der Client gar keine Buffs (direkt nach dem
+            -- Kampf), bleibt die Uhr - "nichts" ist nicht "weg".
+            G.C_UnitAuras = { GetPlayerAuraBySpellID = function() return nil end,
+                              GetAuraDataByIndex = function() return nil end }
+            BT.Reconcile(302, false)
+            assert(BT.active.seal, "Uhr weg, obwohl der Client keine Auren nannte")
+            G.C_UnitAuras = { GetPlayerAuraBySpellID = function() return nil end,
+                              GetAuraDataByIndex = function(_, i) if i == 1 then return { name = "Ausdauer", spellId = 1 } end end }
             BT.Reconcile(302, false)
             assert(BT.active.seal == nil, "Abgleich entfernte fehlende Aura nicht")
             G.C_UnitAuras = { GetPlayerAuraBySpellID = function(id)

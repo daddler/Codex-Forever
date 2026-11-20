@@ -245,14 +245,20 @@ end
 -- ausserhalb des Kampfes, wie jeder Abgleich). Fuellt `found` je Gruppe.
 local byNameFound = {}
 local EMPTY = {}
+-- BT.readable: wie viele eigene Buffs die Abfrage ueberhaupt nannte. Null
+-- heisst "der Client sagt nichts" (gesperrt), nicht "alles weg".
+BT.readable = 0
 function BT.ScanAuraNames()
     for k in pairs(byNameFound) do byNameFound[k] = nil end
+    BT.readable = 0
     local ua = _G.C_UnitAuras
-    if not (ua and ua.GetAuraDataByIndex) then return byNameFound end
+    -- Ohne die Abfrage nach Index weiss niemand, ob der Client schweigt.
+    if not (ua and ua.GetAuraDataByIndex) then BT.readable = nil return byNameFound end
     local map = NameMap()
     for i = 1, 40 do
         local ok, d = pcall(ua.GetAuraDataByIndex, "player", i, "HELPFUL")
         if not ok or type(d) ~= "table" then break end
+        BT.readable = i
         local n, sid = K.Plain(d.name), K.Plain(d.spellId)
         local g = type(n) == "string" and map[n]
         if g and not byNameFound[g.key] then
@@ -468,7 +474,13 @@ function BT.Reconcile(now, fighting)
                 BT.active[g.key] = a
                 if a.spell then BT.last[g.key] = a.spell end
                 st.reconciled = st.reconciled + 1
-            elseif a and not unknown then
+            elseif a and not unknown and BT.readable ~= 0 then
+                -- 1.0.8.0 (Meldung: "Mal der Wildnis fehlt" in jedem Kampf,
+                -- obwohl er da war): direkt nach dem Kampf nennt der Client
+                -- noch keine Auren - die Abfrage sagt "nichts", nicht
+                -- "geheim". Das nahm die Uhr weg, und im naechsten Kampf
+                -- hiess es "abgelaufen". Weg nur, wenn der Client ueberhaupt
+                -- Buffs nennt und dieser nicht darunter ist.
                 BT.active[g.key] = nil
                 st.removed = st.removed + 1
             end
@@ -539,6 +551,15 @@ end
 
 local row
 BT.fighting = false
+-- 1.0.8.0: wie R.Fighting - das Ereignis gilt nur kurz, danach die Sperre
+-- (ein verpasstes PLAYER_REGEN_ENABLED liess den Abgleich sonst ruhen).
+function BT.Fighting()
+    if K.InCombat() then return true end
+    if not BT.fighting then return false end
+    local now = K.Plain(Now())
+    if BT.fightingAt and type(now) == "number" and now - BT.fightingAt >= 3 then BT.fighting = false return false end
+    return true
+end
 
 local function Texture(id)
     local cs = _G.C_Spell
@@ -591,7 +612,7 @@ local function Draw(row, own)
     end
     local on = Opt("castTimes") ~= false
     -- Im Gestaltungsmodus zeigt jede Gruppe ein Symbol (wo die Reihe steht).
-    local list = BT.Entries(Now(), BT.fighting or K.InCombat(), Opt("castMissing") ~= false, row._unlock, own)
+    local list = BT.Entries(Now(), BT.Fighting(), Opt("castMissing") ~= false, row._unlock, own)
     if not on and not row._unlock then for i = #list, 1, -1 do list[i] = nil end end
     local s = tonumber(Opt("castSize")) or 28
     local gap = 4
@@ -700,19 +721,32 @@ end
 local function OnEvent(_, event, unit, _, spellID)
     if event == "UNIT_SPELLCAST_SUCCEEDED" then
         if K.IsSecret(unit) or unit ~= "player" then return end
-        BT.OnCast(spellID, Now(), BT.fighting or K.InCombat())
+        BT.OnCast(spellID, Now(), BT.Fighting())
     elseif event == "PLAYER_REGEN_DISABLED" then
-        BT.fighting = true
+        BT.fighting, BT.fightingAt = true, K.Plain(Now())
     elseif event == "PLAYER_REGEN_ENABLED" then
         BT.fighting = false
         BT.Reconcile(Now(), false)
+        -- Die Auren kommen oft erst einen Augenblick nach dem Kampf zurueck.
+        if _G.C_Timer and _G.C_Timer.After then
+            _G.C_Timer.After(1.5, function()
+                if BT.Fighting() then return end
+                BT.Reconcile(Now(), false)
+                BT.Update()
+                local R = WeintCodex.UIReminders
+                if R and R.Schedule then pcall(R.Schedule, true, false, false) end
+            end)
+        end
+    elseif event == "PLAYER_ENTERING_WORLD" then
+        BT.fighting = false
+        BT.Reconcile(Now(), BT.Fighting())
     elseif event == "PLAYER_DEAD" then
         BT.Clear()
     elseif event == "UNIT_AURA" or event == "UNIT_INVENTORY_CHANGED" then
         if K.IsSecret(unit) or unit ~= "player" then return end
-        BT.Reconcile(Now(), BT.fighting or K.InCombat())
+        BT.Reconcile(Now(), BT.Fighting())
     else
-        BT.Reconcile(Now(), BT.fighting or K.InCombat())
+        BT.Reconcile(Now(), BT.Fighting())
     end
     BT.Update()
 end

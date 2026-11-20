@@ -93,6 +93,16 @@ nicht zusammen.
 ## [1.0.7.64] – 2026-11-19
 
 ### Behoben
+- Erinnerungen/Buffzeiten (`ui/reminders.lua`, `ui/bufftimes.lua`):
+  (1) `BT.Reconcile` direkt bei `PLAYER_REGEN_ENABLED` – der Client nannte
+  noch keine Auren („nichts“, nicht geheim), die Uhr wurde entfernt,
+  `ClockState` sagte im nächsten Kampf „expired“ → „Mal der Wildnis fehlt“
+  in jedem Kampf. Entfernen jetzt nur, wenn `GetAuraDataByIndex` überhaupt
+  Buffs nennt (`BT.readable`); zweiter Abgleich 1,5 s nach dem Kampf.
+  (2) `R.fighting`/`BT.fighting` blieben stehen, wenn `PLAYER_REGEN_ENABLED`
+  ausblieb (Kampfende hinter dem Ladebildschirm) – im Dungeon nur noch die
+  Uhr, keine Auren, bis zum Neuanmelden. Das Ereignis zählt jetzt nur
+  `FIGHT_LAG` (3 s) bis zur Sperre; `PLAYER_ENTERING_WORLD` setzt zurück.
 - Designwechsel auf „Konsole“ (`ui/lookswitch.lua`, `ui/minimap.lua`):
   (1) `MM.PlaceMap` setzte die Karte nur mit `minimap.atTop` – aus, blieb
   der Ring leer; jetzt `MM.Places()` (oder Konsole). (2) `LS.Prepare` setzt

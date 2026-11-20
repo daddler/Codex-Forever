@@ -1686,9 +1686,29 @@ R.Alpha = Alpha
 -- bevor InCombatLockdown "ja" sagt. Kampf ist deshalb: Sperre ODER das
 -- Ereignis. Im Kampf wird
 -- kein Buff als fehlend gemeldet - "weiss nicht" ist nicht "fehlt".
+-- 1.0.8.0 (Meldung: "im Dungeon keine Erinnerung mehr, nach Logout geht
+-- es wieder"): kam PLAYER_REGEN_ENABLED nicht an (Ende des Kampfes hinter
+-- einem Ladebildschirm), galt R.fighting fuer immer - nur noch die Uhr,
+-- keine Auren. Das Ereignis zaehlt deshalb nur die ersten Sekunden, bis die
+-- Sperre selbst "Kampf" sagt (R.FIGHT_LAG); danach allein die Sperre. Und
+-- ein Ladebildschirm setzt es zurueck.
 R.fighting = false
+R.FIGHT_LAG = 3
 function R.Fighting()
-    return (R.fighting or K.InCombat()) and true or false
+    if K.InCombat() then return true end
+    if not R.fighting then return false end
+    local at = R.fightingAt
+    if at == nil then return true end
+    local now = _G.GetTime and K.Plain(_G.GetTime()) or 0
+    if type(now) == "number" and now - at < R.FIGHT_LAG then return true end
+    R.fighting = false
+    return false
+end
+function R.SetFighting(on)
+    R.fighting = on and true or false
+    R.fightingAt = on and (_G.GetTime and K.Plain(_G.GetTime()) or 0) or nil
+    -- Nach Ablauf der Frist noch einmal ansehen (kein Ereignis sagt es).
+    if on then R.Recheck(R.FIGHT_LAG) end
 end
 R.BLIND_IN_COMBAT = { buff = true }
 
@@ -2150,8 +2170,8 @@ local function Enable()
         if event == "UNIT_AURA" or event == "UNIT_INVENTORY_CHANGED" or event == "UNIT_PET" then
             if unit ~= "player" then return end
         end
-        if event == "PLAYER_REGEN_DISABLED" then R.fighting = true
-        elseif event == "PLAYER_REGEN_ENABLED" then R.fighting = false end
+        if event == "PLAYER_REGEN_DISABLED" then R.SetFighting(true)
+        elseif event == "PLAYER_REGEN_ENABLED" or event == "PLAYER_ENTERING_WORLD" then R.SetFighting(false) end
         if event == "SPELLS_CHANGED" or event == "PLAYER_ENTERING_WORLD" then R.ClearCache() end
         if event == "PLAYER_ENTERING_WORLD" and not R.seededNow then
             R.seededNow = true
@@ -2620,9 +2640,9 @@ talentEv:SetScript("OnEvent", WeintCodex.Measured("Erinnerungen", function(_, ev
         local lvl = K.Plain(arg1)
         if type(lvl) == "number" then R.levelHint = lvl end
     elseif event == "PLAYER_REGEN_DISABLED" then
-        R.fighting = true
+        R.SetFighting(true)
     elseif event == "PLAYER_REGEN_ENABLED" then
-        R.fighting = false
+        R.SetFighting(false)
     end
     pcall(R.UpdateTalentNote)
     -- Der Client reicht Stufe und Punkte manchmal erst kurz danach nach.
