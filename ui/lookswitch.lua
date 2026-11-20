@@ -81,6 +81,10 @@ function LS.Prepare(p, from, to)
         for _, mod in ipairs(LS.NEEDS) do M(mod).enabled = true end
         local ab = M("actionbars")
         ab.xpEnabled, ab.xpHideGame = true, true
+        -- 1.0.8.0: Groesse und Reihen der Konsole setzt nur die Anordnung
+        -- von WeintCodex - mit "Bearbeitungsmodus des Spiels" ragten die
+        -- Leisten in den Ring.
+        if Arranged(to) then ab.layout = "wc" end
         local uf = M("unitframes")
         for _, k in ipairs(LS.UNIT_KEYS) do uf[k] = nil end
     end
@@ -100,7 +104,7 @@ local function State()
 end
 
 -- Die Wahl im Dialog: "profile" (neues Profil), "here" (dieses Profil),
--- "back" (zurueck zum vorherigen Profil). Laeuft im Klick VOR dem
+-- "back" (zurueck zum vorherigen Profil), "layout" (nur das Layout). Laeuft im Klick VOR dem
 -- Neuladen (K.ReloadButton).
 function LS.Run(mode, from, to)
     local PR = WeintCodex.UIProfiles
@@ -125,9 +129,11 @@ function LS.Run(mode, from, to)
         if not made then return false end
         target = made
         LS.Prepare(root.profiles[target], from, to)
-    else
+    elseif mode == "here" then
         LS.Prepare(root.profiles[before], from, to)
     end
+    -- "layout" (1.0.8.0): nur das Layout dieses Charakters - das Profil
+    -- (Plaetze, die ein anderer Charakter darin gezogen hat) bleibt.
     if st and key then
         local back = (mode == "profile") and before or (mode == "back" and from == "konsole" and before)
             or (st[key] and st[key].back)
@@ -186,6 +192,9 @@ function LS.Check(look)
     end
     Add(not game, "Erfahrungsbalken des Spiels ausgeblendet")
     Add(Visible(_G.WeintCodexUF_player), "Spielerrahmen sichtbar")
+    if Arranged(look) then
+        Add(K.Get("actionbars", "layout") == "wc", "Aktionsleisten von WeintCodex angeordnet")
+    end
     return out
 end
 
@@ -259,7 +268,9 @@ function LS.Busy() return (dlg and dlg:IsShown()) and true or false end
 
 -- afterReload: schon mit dem neuen Design geladen (ohne den Dialog) -
 -- "Abbrechen" heisst dann "so lassen".
-function LS.Ask(from, to, afterReload)
+-- hereOnly (1.0.8.0): das Profil traegt das Design schon fuer andere
+-- Charaktere - nur hier einrichten, das Profil nie zuruecksetzen.
+function LS.Ask(from, to, afterReload, hereOnly)
     local f = Build()
     Clear()
     local PR = WeintCodex.UIProfiles
@@ -267,7 +278,7 @@ function LS.Ask(from, to, afterReload)
     local st, key = State()
     local back = st and key and st[key] and st[key].back
     local root = K.Root()
-    if not (back and root and root.profiles[back]) or back == cur then back = nil end
+    if not (back and root and root.profiles[back]) or back == cur or hereOnly then back = nil end
     f.title:SetText("Design „" .. LS.LookName(to) .. "“ einrichten")
     local lines = {}
     if Arranged(to) then
@@ -280,7 +291,10 @@ function LS.Ask(from, to, afterReload)
             .. " im Bearbeitungsmodus für dieses Design ein und lädt neu. Danach prüft es, ob alles steht."
     end
     lines[#lines + 1] = ""
-    if back then
+    if hereOnly then
+        lines[#lines + 1] = "Dein Profil „" .. cur .. "“ nutzt dieses Design schon – auf einem anderen Charakter eingestellt."
+            .. " Für diesen Charakter fehlt nur noch das Layout im Bearbeitungsmodus."
+    elseif back then
         lines[#lines + 1] = "Empfohlen: zurück zu deinem Profil „" .. back .. "“ – dort ist alles noch so, wie es vorher war."
     elseif Arranged(to) then
         lines[#lines + 1] = "Empfohlen: ein eigenes Profil „" .. PR.FreeName(LS.LookName(to)) .. "“. Dein Profil „" .. cur
@@ -289,7 +303,9 @@ function LS.Ask(from, to, afterReload)
         lines[#lines + 1] = "Plätze, die das bisherige Design vorgab, stehen danach wieder an ihrem Standardplatz."
     end
     f.body:SetText(table.concat(lines, "\n"))
-    if back then
+    if hereOnly then
+        Reload(f, "Einrichten & neu laden", "primary", function() LS.Run("layout", to, to) end)
+    elseif back then
         Reload(f, "Zurück zu „" .. back .. "“", "primary", function() LS.Run("back", from, to) end)
         Reload(f, "In „" .. cur .. "“ umstellen", "secondary", function() LS.Run("here", from, to) end)
     elseif Arranged(to) then
@@ -380,7 +396,17 @@ do
             -- /reload): steht ein anderes Design als zuletzt eingerichtet,
             -- jetzt durch den Wechsel fuehren - einmal, ausserhalb des Kampfes.
             if not (st and key) or not K.UIEnabled() then return end
-            if not rec then st[key] = { look = look } return end
+            if not rec then
+                st[key] = { look = look }
+                -- 1.0.8.0: ein Charakter, der das Design mit dem Profil
+                -- geerbt hat (ein anderer hat umgestellt): das Layout des
+                -- Designs ist hier nicht aktiv - einmal anbieten.
+                local ES = WeintCodex.UISetup
+                if Arranged(look) and ES and ES.LayoutActive and ES.LayoutActive() == false then
+                    K.AfterCombat(function() LS.Ask(look, look, true, true) end)
+                end
+                return
+            end
             local was = rec.look or "schwarz"
             if was ~= look and (Arranged(was) or Arranged(look)) then
                 K.AfterCombat(function() LS.Ask(was, look, true) end)

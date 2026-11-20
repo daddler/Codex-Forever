@@ -832,11 +832,16 @@ end
 -- holt sie einen Takt spaeter zurueck.
 
 local placingMap = false
+function MM.Places()
+    return Opt("atTop") or (K.LookKey and K.LookKey() == "konsole") or false
+end
 MM.CONSOLE_Y = 6
 MM.CONSOLE_TEXT_Y = 24
 function MM.PlaceMap()
     local mm, cl = _G.Minimap, _G.MinimapCluster
-    if placingMap or type(mm) ~= "table" or type(cl) ~= "table" or not Opt("atTop") or MM.GameEditing() then return end
+    -- 1.0.8.0: in der Konsole immer in den Ring - auch wenn "Karte oben im
+    -- Bereich" aus ist (sonst blieb der Ring leer, die Karte oben rechts).
+    if placingMap or type(mm) ~= "table" or type(cl) ~= "table" or not MM.Places() or MM.GameEditing() then return end
     placingMap = true
     -- Steht das Gebiet ueber der Karte, braucht es seine Zeile.
     local top = (Opt("zoneText") and not Opt("zoneInside")) and 22 or 6
@@ -857,7 +862,7 @@ local function HookMap()
     if mapHooked or type(mm) ~= "table" or not _G.hooksecurefunc then return end
     mapHooked = true
     _G.hooksecurefunc(mm, "SetPoint", function()
-        if placingMap or not Opt("atTop") or MM.GameEditing() then return end
+        if placingMap or not MM.Places() or MM.GameEditing() then return end
         MM.Later(MM.PlaceMap)
     end)
 end

@@ -27460,6 +27460,98 @@ do
     Check(ok, "Designwechsel gefuehrt" .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 1.0.8.0: der ganze Weg - Codex mit Oberflaeche schon eingerichtet, im
+-- Nachhinein auf "Konsole": Dialog, eigenes Profil, Layout, Neuladen,
+-- Pruefung; ein zweiter Charakter mit demselben Profil; zurueck.
+do
+    local sd = WeintCodex.SavedData
+    local savedUI, oName, oUIE, oInC = sd.ui, _G.UnitName, K.UIEnabled, K.InCombat
+    local ES = WeintCodex.UISetup
+    local oApply, oHas, oAct, oLA = ES.Apply, ES.HasLayout, ES.ActivateExisting, ES.LayoutActive
+    local oT = _G.C_Timer
+    local me = "Alt"
+    local ok, err = pcall(function()
+        local LS, PR, MM = WeintCodex.UILookSwitch, WeintCodex.UIProfiles, WeintCodex.UIMinimap
+        _G.UnitName = function(u) if u == "player" then return me end return oName(u) end
+        K.UIEnabled = function() return true end
+        K.InCombat = function() return false end
+        _G.C_Timer = { After = function(_, fn) fn() end }
+        -- Bestehende Einrichtung: Schwarz, Leisten vom Spiel angeordnet,
+        -- Karte nicht oben, eigene Groesse und Plaetze.
+        sd.ui = { enabled = true, asked = true, profiles = { Standard = {
+            modules = { general = { look = "schwarz" }, actionbars = { layout = "game", xpEnabled = false },
+                        minimap = { atTop = false }, unitframes = { player_width = 260 } },
+            positions = { uf_player = { point = "CENTER", x = 5, y = 5 }, damagemeter = { point = "TOPLEFT", x = 1, y = 1 } } } },
+            profileOf = {}, chars = {} }
+        K._SetActiveProfile(nil)
+        local ui = K.Root()
+        local layouts, applied = {}, {}
+        ES.Apply = function() applied[#applied + 1] = ES.LayoutName() layouts[ES.LayoutName()] = true return true end
+        ES.HasLayout = function() return layouts[ES.LayoutName()] == true end
+        ES.ActivateExisting = function() applied[#applied + 1] = "aktiv:" .. ES.LayoutName() return true end
+        ES.LayoutActive = function() return false end
+        layouts["WeintCodex"] = true
+        LS.last = "schwarz"
+        -- 1) Wahl im Dropdown -> Dialog
+        K.Set("general", "look", "konsole")
+        assert(LS.Busy(), "kein Dialog nach der Wahl")
+        -- 2) "Eigenes Profil & einrichten"
+        assert(LS.Run("profile", "schwarz", "konsole"), "Wechsel gescheitert")
+        local std, kon = ui.profiles.Standard, ui.profiles.Konsole
+        assert(kon and ui.profileOf["Alt-Testrealm"] == "Konsole", "eigenes Profil nicht gewaehlt")
+        assert(std.modules.general.look == "schwarz" and std.positions.uf_player and std.modules.actionbars.layout == "game"
+            and std.modules.unitframes.player_width == 260, "altes Profil veraendert")
+        assert(kon.modules.general.look == "konsole" and kon.positions.uf_player == nil and kon.positions.damagemeter,
+            "Plaetze der Konsole nicht frei / fremde geloescht")
+        assert(kon.modules.actionbars.layout == "wc", "Leisten bleiben beim Spiel - ragten in den Ring")
+        assert(kon.modules.unitframes.player_width == nil and kon.modules.minimap.enabled == true, "Groesse/Module")
+        assert(applied[1] == "WeintCodex-Konsole", "Layout nicht fuer die Konsole gebaut: " .. tostring(applied[1]))
+        -- 3) Neuladen: neue Sitzung im Profil "Konsole", danach die Pruefung
+        K._SetActiveProfile(nil)
+        assert(K.ActiveProfile() == "Konsole" and K.LookKey() == "konsole", "nach dem Neuladen nicht Konsole")
+        assert(MM.Places(), "Karte kaeme nicht in den Ring (Karte oben im Bereich aus)")
+        LS.events:GetScript("OnEvent")(LS.events, "PLAYER_ENTERING_WORLD")
+        local st = ui.lookSwitch["Alt-Testrealm"]
+        assert(st and st.verify == false and st.back == "Standard", "Pruefung nach dem Neuladen")
+        local labels = {}
+        for _, r in ipairs(LS.Check("konsole")) do labels[#labels + 1] = r.text end
+        assert(table.concat(labels, "|"):find("Aktionsleisten von WeintCodex", 1, true), "Pruefung ohne Leisten")
+        -- 4) Zweiter Charakter mit Profil "Konsole" (geteilt), ohne Layout
+        me = "Twink"
+        ui.profileOf["Twink-Testrealm"] = "Konsole"
+        kon.positions.uf_target = { point = "CENTER", x = 9, y = 9 }   -- gezogen vom ersten
+        K._SetActiveProfile(nil)
+        local dlg = _G.WeintCodexLookSwitch
+        dlg:Hide()
+        assert(not LS.Busy(), "Dialog bleibt offen")
+        LS.events:GetScript("OnEvent")(LS.events, "PLAYER_ENTERING_WORLD")
+        assert(LS.Busy() and #LS.buttons == 2 and tostring(dlg.body:GetText()):find("nutzt dieses Design schon", 1, true),
+            "Twink ohne Angebot fuer das Layout")
+        assert(LS.Run("layout", "konsole", "konsole"), "nur Layout gescheitert")
+        assert(kon.positions.uf_target and kon.modules.general.look == "konsole", "Twink hat das Profil veraendert")
+        assert(applied[#applied] == "WeintCodex-Konsole", "Twink: Layout nicht gebaut")
+        -- 5) Zurueck (erster Charakter): Profil Standard, Layout nur aktiv
+        me = "Alt"
+        K._SetActiveProfile(nil)
+        LS.last = "konsole"
+        dlg:Hide()
+        K.Set("general", "look", "schwarz")
+        assert(LS.Busy() and #LS.buttons == 3 and tostring(dlg.body:GetText()):find("zurück zu deinem Profil „Standard“", 1, true),
+            "kein Weg zurueck angeboten")
+        assert(LS.Run("back", "konsole", "schwarz"), "zurueck gescheitert")
+        assert(ui.profileOf["Alt-Testrealm"] == nil and kon.modules.general.look == "konsole", "zurueck: Profile")
+        assert(applied[#applied] == "aktiv:WeintCodex", "zurueck: altes Layout nicht nur aktiv geschaltet: " .. tostring(applied[#applied]))
+    end)
+    local d = WeintCodex.UILookSwitch.Busy and _G.WeintCodexLookSwitch
+    if d and d.Hide then d:Hide() end
+    sd.ui, _G.UnitName, K.UIEnabled, K.InCombat = savedUI, oName, oUIE, oInC
+    ES.Apply, ES.HasLayout, ES.ActivateExisting, ES.LayoutActive = oApply, oHas, oAct, oLA
+    _G.C_Timer = oT
+    K._SetActiveProfile(nil)
+    WeintCodex.UILookSwitch.last = nil
+    Check(ok, "Designwechsel auf Konsole, ganzer Weg: Profil, Leisten, Karte, Layout, Twink, zurueck" .. (ok and "" or (": " .. tostring(err))))
+end
+
 -- 1.0.7.44: stiller Berufslink - Besitzer erkannt, Ersatz ohne Fenster.
 do
     local ok, err = pcall(function()

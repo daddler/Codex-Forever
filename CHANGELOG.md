@@ -93,6 +93,16 @@ nicht zusammen.
 ## [1.0.7.64] – 2026-11-19
 
 ### Behoben
+- Designwechsel auf „Konsole“ (`ui/lookswitch.lua`, `ui/minimap.lua`):
+  (1) `MM.PlaceMap` setzte die Karte nur mit `minimap.atTop` – aus, blieb
+  der Ring leer; jetzt `MM.Places()` (oder Konsole). (2) `LS.Prepare` setzt
+  `actionbars.layout = "wc"` – Größe/Reihen der Konsole (`K.ConsoleBar`)
+  gelten nur mit der Anordnung von WeintCodex; `LS.Check` prüft es.
+  (3) Ein Charakter, der das Design über ein geteiltes Profil erbt, hatte
+  das Layout „WeintCodex-Konsole“ nicht aktiv und bekam nichts angeboten –
+  jetzt einmal `LS.Ask(…, hereOnly)` mit Modus `"layout"` (nur das Layout,
+  Profil und gezogene Plätze bleiben). Text am Dropdown ohne
+  „/wcui einrichten“. Ganzer Weg als Test (`load_test.lua`).
 - Bosskämpfe (`ui/bossmod.lua`): Boss oft nicht erkannt. (1) Elf Bosse ohne
   NPC-Nummer im Bestand – auf dem deutschen Client griff der englische Name
   nie. `data/boss_npcs_ofa.lua` (erzeugt von `import_oneforall.lua`, Nummern
