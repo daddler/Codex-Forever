@@ -146,7 +146,7 @@ end
 function RA.Memory()
     local sd = WeintCodex.SavedData
     if type(sd) ~= "table" then return nil end
-    local realm = _G.GetRealmName and K.Plain(_G.GetRealmName())
+    local realm = WeintCodex.RealmName()
     realm = type(realm) == "string" and realm or "?"
     sd.rares = sd.rares or {}
     sd.rares[realm] = sd.rares[realm] or {}

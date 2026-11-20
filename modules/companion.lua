@@ -687,7 +687,7 @@ function WeintCodex.Companion.ReportCharacter()
     local playerName = UnitName("player")
     local _, classFileName = UnitClass("player")
     local level = UnitLevel("player")
-    local realm = (GetRealmName() or ""):gsub("%s+", "")
+    local realm = (WeintCodex.RealmName() or ""):gsub("%s+", "")
 
     if playerName then
 

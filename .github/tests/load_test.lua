@@ -27641,6 +27641,34 @@ do
     Check(ok, "Kampfhilfen: Verlauf, Heiler unter Kontrolle, Gegner" .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 1.0.8.3: Mana (Kraft) als Zahl in der Kraftleiste, ab Werk aus.
+do
+    local G = _G
+    local ok, err = pcall(function()
+        local UF = WeintCodex.UIUnitFrames
+        assert(UF.FillPower and K.Get("unitframes", "player_powerText") == "none", "ab Werk an oder fehlt")
+        local oP, oM, oA, oS = G.UnitPower, G.UnitPowerMax, G.AbbreviateNumbers, G.issecretvalue
+        G.UnitPower = function() return 1234 end
+        G.UnitPowerMax = function() return 2000 end
+        G.AbbreviateNumbers = function(v) return tostring(v) end
+        local fs = { t = nil, shown = true }
+        function fs:SetText(t) self.t = t end
+        function fs:SetFormattedText(f, ...) self.t = string.format(f, ...) end
+        function fs:Show() self.shown = true end
+        function fs:Hide() self.shown = false end
+        UF.FillPower(fs, "player", "number")   assert(fs.t == "1234", "Zahl: " .. tostring(fs.t))
+        UF.FillPower(fs, "player", "both")     assert(fs.t == "1234 / 2000", "Zahl/Max: " .. tostring(fs.t))
+        UF.FillPower(fs, "player", "percent")  assert(fs.t == "62%", "Prozent: " .. tostring(fs.t))
+        -- Im Kampf geheim: keine Rechnung, dann die Zahl.
+        G.issecretvalue = function(v) return v == 1234 end
+        UF.FillPower(fs, "player", "percent")  assert(fs.t == "1234", "geheimer Wert gerechnet: " .. tostring(fs.t))
+        G.issecretvalue = oS
+        UF.FillPower(fs, "player", "none")     assert(fs.t == "" and not fs.shown, "Nichts zeigt trotzdem etwas")
+        G.UnitPower, G.UnitPowerMax, G.AbbreviateNumbers = oP, oM, oA
+    end)
+    Check(ok, "Einheitenrahmen: Mana als Zahl in der Kraftleiste" .. (ok and "" or (": " .. tostring(err))))
+end
+
 -- 1.0.8.2: der Abklingzeitmanager zieht seine Eintraege selbst - nie
 -- als verschiebbares Fenster anmelden.
 do
@@ -27688,6 +27716,36 @@ do
         G.GetRealmName = function() return "TestRealm" end
         setup({ ["Shooty Peng-Test Realm"] = { enabled = true } })
         assert(K.CharKey() == "Shooty Peng-Test Realm", "Realm in anderer Schreibweise nicht erkannt")
+        -- 1.0.8.3 (Bericht nach dem Patch): GetRealmName liefert nichts,
+        -- UnitFullName nennt den Nachnamen ("Peng"). Der gespeicherte Realm
+        -- dieses Namens gilt - und wird gemerkt.
+        local sd = WeintCodex.SavedData
+        local keepLast, keepInv = sd.lastRealm, sd.inventory
+        sd.lastRealm, sd.inventory = nil, nil
+        G.UnitName = function() return "Shooty" end
+        G.GetUnitName = function() return "Shooty Peng" end
+        G.UnitFullName = function() return "Shooty", "Peng" end
+        G.GetRealmName = function() return nil end
+        setup({ ["Shooty-CAMWOW EU4 Realm 3 PvE"] = { enabled = true },
+                ["Bet-CAMWOW EU5 Realm 3 PvE"] = { enabled = true } })
+        assert(WeintCodex.RealmName() == "CAMWOW EU4 Realm 3 PvE", "Realm nicht aus dem Gespeicherten: " .. tostring(WeintCodex.RealmName()))
+        assert(K.CharKey() == "Shooty-CAMWOW EU4 Realm 3 PvE", "Schluessel ohne Realm vom Client: " .. tostring(K.CharKey()))
+        assert(K.UIEnabled() == true, "Oberflaeche ohne Realm vom Client aus")
+        local _, realms = K.CharNames()
+        for _, r in ipairs(realms) do assert(r ~= "Peng", "Nachname als Realm genommen") end
+        -- Derselbe Name auf zwei Realms: nicht raten.
+        setup({ ["Shooty-A"] = { enabled = true }, ["Shooty-B"] = { enabled = true } })
+        assert(WeintCodex.RealmName() == nil, "zwischen zwei Realms geraten")
+        -- Sagt der Client den Realm, wird er gemerkt und gilt danach.
+        G.GetRealmName = function() return "B" end
+        assert(WeintCodex.RealmName() == "B" and sd.lastRealm.Shooty == "B", "Realm nicht gemerkt")
+        G.GetRealmName = function() return nil end
+        K.ForgetCharKey()
+        assert(WeintCodex.RealmName() == "B", "gemerkter Realm nicht genommen")
+        sd.lastRealm, sd.inventory = keepLast, keepInv
+        G.GetUnitName, G.UnitFullName = nil, nil
+        G.UnitName = function() return "Shooty Peng" end
+        G.GetRealmName = function() return "TestRealm" end
         -- Nichts gespeichert: bisheriger Schluessel.
         setup({})
         assert(K.CharKey() == "Shooty Peng-TestRealm", "ohne Stand nicht der bisherige Schluessel")
@@ -27744,6 +27802,15 @@ do
         G.ERR_CHAT_THROTTLED = "Die Anzahl der Nachrichten ist begrenzt."
         COMM.events:GetScript("OnEvent")(COMM.events, "CHAT_MSG_SYSTEM", G.ERR_CHAT_THROTTLED)
         assert(select(2, COMM.Send("A", "d", "GUILD")) == "wait", "Meldung im Chat ueberhoert")
+        -- Im Kampf ist der Text geheim: nie vergleichen (Fehlerbericht 1.0.8.1).
+        COMM.Reset()
+        G.ERR_CHAT_THROTTLED = "Zu viel."
+        local oS = G.issecretvalue
+        G.issecretvalue = function(v) return v == "Zu viel." end
+        local okS = pcall(COMM.events:GetScript("OnEvent"), COMM.events, "CHAT_MSG_SYSTEM", "Zu viel.")
+        G.issecretvalue = oS
+        G.ERR_CHAT_THROTTLED = nil
+        assert(okS and select(2, COMM.Send("A", "e", "GUILD")) == 0, "geheimer Systemtext verglichen")
         G.ERR_CHAT_THROTTLED = nil
         COMM.Reset()
         G.GetTime, G.C_ChatInfo = oT, oC

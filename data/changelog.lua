@@ -22,6 +22,15 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.0.8.3",
+        date    = "20.11.2026",
+        notes   = {
+            "|cff7C6CFFOberfläche nach dem Patch wieder da – wirklich|r – seit dem letzten Update des Spiels nennt der Client keinen Realm mehr. Ohne Realm fand WeintCodex weder deine Einstellungen noch Bestand, Preise und Berufe dieses Charakters. Jetzt nimmt WeintCodex den Realm, unter dem dein Charakter schon gespeichert ist, und merkt ihn sich für später.",
+            "|cff7C6CFFMana als Zahl in der Kraftleiste|r – auf Wunsch steht mitten in der Kraftleiste, wie viel Mana (oder Wut, Energie) du hast: als Zahl, als Zahl mit Maximum oder in Prozent. Einheitenrahmen → Spieler (und jeder andere Rahmen) → Texte → „In der Kraftleiste“, ab Werk aus. Die Farbe der Kraftleiste steht jetzt einmal für alle Rahmen unter Einheitenrahmen → Allgemein.",
+            "|cff7C6CFFKein Fehler mehr zu Beginn eines Bosskampfes|r – eine Meldung des Spiels im Chat konnte im Kampf einen Lua-Fehler auslösen.",
+        },
+    },
+    {
         version = "1.0.8.2",
         date    = "20.11.2026",
         notes   = {

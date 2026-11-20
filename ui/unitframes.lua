@@ -120,6 +120,7 @@ for _, u in ipairs(UNITS) do
     defaults[u .. "_height"]  = s.h
     defaults[u .. "_power"]   = s.power
     defaults[u .. "_powerHeight"] = math.max(4, s.p)
+    defaults[u .. "_powerText"] = "none"   -- 1.0.8.3: Zahl in der Kraftleiste, ab Werk aus
     defaults[u .. "_left"]    = s.left
     defaults[u .. "_right"]   = s.right
     defaults[u .. "_portrait"] = s.portrait or "none"
@@ -361,6 +362,43 @@ local function Fill(fs, unit, kind)
     end
 end
 
+-- 1.0.8.3 (Wunsch: "optional anzeigen lassen, wie viel Mana man genau hat
+-- in der Kraftleiste"): ein Text mitten in der Kraftleiste. Wie Fill: der
+-- Client formatiert, WeintCodex rechnet nur mit offenen Werten (Prozent).
+UF.POWER_TEXT = {
+    { value = "none",    text = "Nichts" },
+    { value = "number",  text = "Zahl" },
+    { value = "both",    text = "Zahl / Maximum" },
+    { value = "percent", text = "Prozent" },
+}
+UF.POWER_TEXT_MIN_H = 8   -- darunter passt keine Schrift in die Leiste
+local function FillPower(fs, unit, mode)
+    if not fs then return end
+    if mode == nil or mode == "none" then fs:SetText("") fs:Hide() return end
+    fs:Show()
+    local cur = _G.UnitPower and _G.UnitPower(unit)
+    local max = _G.UnitPowerMax and _G.UnitPowerMax(unit)
+    if type(cur) == "nil" then fs:SetText("") return end
+    if mode == "percent" then
+        local c, m = K.Plain(cur), K.Plain(max)
+        if type(c) == "number" and type(m) == "number" and m > 0 then
+            fs:SetFormattedText("%d%%", math.floor(c / m * 100 + 0.5))
+            return
+        end
+        mode = "number"   -- geheim im Kampf: dann die Zahl, nie geraten
+    end
+    local abbr = _G.AbbreviateNumbers
+    if mode == "both" and type(max) ~= "nil" then
+        if abbr then fs:SetFormattedText("%s / %s", abbr(cur), abbr(max))
+        else fs:SetFormattedText("%s / %s", cur, max) end
+    elseif abbr then
+        fs:SetText(abbr(cur))
+    else
+        fs:SetFormattedText("%s", cur)
+    end
+end
+UF.FillPower = FillPower
+
 local Frame = {}
 
 -- Eigene Plaetze im Cockpit (ui/layout.lua) fuer den Zauberbalken des
@@ -438,6 +476,9 @@ local function Create(unit)
     local pbg = power:CreateTexture(nil, "BACKGROUND")
     pbg:SetAllPoints(power)
     f.powerBg = pbg
+    f.powerText = K.NewText(power, 10, "OVERLAY")
+    f.powerText:SetPoint("CENTER", power, "CENTER", 0, 0)
+    f.powerText:Hide()
 
     f.border = K.Border(f, 1, 0, 0, 0, 1, "BORDER")
     f._shadow = K.Glow(f, { spread = 6, shadow = true })
@@ -957,6 +998,13 @@ function Frame:Layout()
     self.power:SetPoint("TOPRIGHT", self.health, "BOTTOMRIGHT", 0, -1)
     self.power:SetHeight(math.max(1, ph))
     if showPower then self.power:Show() else self.power:Hide() end
+    if self.powerText then
+        local fsz = math.max(7, math.min(11, ph - 1))
+        local font = self.powerText.GetFont and self.powerText:GetFont()
+        if font then self.powerText:SetFont(font, fsz, "OUTLINE") end
+        self._powerTextOn = showPower and ph >= UF.POWER_TEXT_MIN_H and Opt(u .. "_powerText") ~= "none" or false
+        if not self._powerTextOn then self.powerText:Hide() end
+    end
 
     local bg = K.GetColor(KEY, "bgColor")
     local fade = WeintCodex.GameColors.lookFade or 1
@@ -1103,6 +1151,7 @@ function Frame:Refresh()
         local p = _G.UnitPower and _G.UnitPower(u)
         if type(p) ~= "nil" then GZ.Set(self.power, p, snap) end
         K.PaintBar(self.power, PowerColor(u))
+        if self._powerTextOn then FillPower(self.powerText, u, Opt(u .. "_powerText")) end
     end
 
     -- NAME BEIM EINLOGGEN (6.6.0.1, Beta-Test: "manchmal ist mein Name
@@ -1935,6 +1984,7 @@ local function OnEvent(_, event, unit, ...)
             local p = _G.UnitPower and _G.UnitPower(unit)
             if type(p) ~= "nil" then WeintCodex.UIGlanz.Set(f.power, p) end
             if event == "UNIT_DISPLAYPOWER" then K.PaintBar(f.power, PowerColor(unit)) end
+            if f._powerTextOn then FillPower(f.powerText, unit, Opt(unit .. "_powerText")) end
         end
         if Opt(unit .. "_left") == "power" or Opt(unit .. "_right") == "power" then
             Fill(f.left, unit, Opt(unit .. "_left"))
@@ -2141,17 +2191,13 @@ local function UnitPage(u)
         B:Row({ type = "toggle", label = "Kraftleiste", key = u .. "_power", disabled = off },
               { type = "slider", label = "Höhe der Kraftleiste", key = u .. "_powerHeight", min = 2, max = 20, step = 1, format = px,
                 disabled = function() return off() or not K.Get(KEY, u .. "_power") end })
-        B:Row({ type = "dropdown", label = "Farbe der Kraftleiste", key = "powerColorMode", disabled = off,
-                description = "Gilt für alle Rahmen. Heller: Mana als klares Hellblau, auch auf dunklem Grund gut lesbar.",
-                items = {
-                    { value = "game",   text = "Wie im Spiel" },
-                    { value = "bright", text = "Heller" },
-                    { value = "custom", text = "Eigene Farbe" } } },
-              { type = "color", label = "Eigene Farbe", key = "powerCustom",
-                disabled = function() return off() or K.Get(KEY, "powerColorMode") ~= "custom" end })
         B:Section("Texte")
         B:Row({ type = "dropdown", label = "Links", key = u .. "_left", items = TEXT_ITEMS, disabled = off },
               { type = "dropdown", label = "Rechts", key = u .. "_right", items = TEXT_ITEMS, disabled = off })
+        B:Row({ type = "dropdown", label = "In der Kraftleiste", key = u .. "_powerText", items = UF.POWER_TEXT,
+                description = "Mana, Wut oder Energie als Zahl mitten in der Leiste. Braucht eine Kraftleiste von mindestens 8 px Höhe.",
+                disabled = function() return off() or not K.Get(KEY, u .. "_power") end },
+              { type = "empty" })
         if SHAPE[u].cast then
             B:Section("Zauberbalken")
             B:Row({ type = "toggle", label = "Zauberbalken", key = u .. "_cast", disabled = off },
@@ -2233,6 +2279,15 @@ local pages = {
         B:Row({ type = "toggle", label = "Spieler in Klassenfarbe", key = "classColor" },
               { type = "toggle", label = "NPCs nach Gesinnung", key = "reactionColor",
                 description = "Feindlich rot, neutral gelb, freundlich grün." })
+        -- 1.0.8.3: gilt fuer alle Rahmen - darum hier, nicht auf jedem Reiter.
+        B:Row({ type = "dropdown", label = "Farbe der Kraftleiste", key = "powerColorMode",
+                description = "Gilt für alle Rahmen. Heller: Mana als klares Hellblau, auch auf dunklem Grund gut lesbar.",
+                items = {
+                    { value = "game",   text = "Wie im Spiel" },
+                    { value = "bright", text = "Heller" },
+                    { value = "custom", text = "Eigene Farbe" } } },
+              { type = "color", label = "Eigene Farbe", key = "powerCustom",
+                disabled = function() return K.Get(KEY, "powerColorMode") ~= "custom" end })
         B:Row({ type = "toggle", label = "Klassenfarben heller", key = "classBright",
                 disabled = function() return not K.Get(KEY, "classColor") end,
                 description = "Dunkle Klassenfarben (Hexer, Schamane) lesen sich auf dunklem Grund besser." },

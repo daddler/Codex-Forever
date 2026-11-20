@@ -1166,7 +1166,7 @@ local function FGInGuild() return _G.IsInGuild and K.Bool(_G.IsInGuild(), false)
 local function FGInCombat() return _G.InCombatLockdown and K.Bool(_G.InCombatLockdown(), true) or false end
 
 local function Realm()
-    local r = _G.GetNormalizedRealmName and K.Plain(_G.GetNormalizedRealmName())
+    local r = WeintCodex.RealmNameNormalized()
     return (type(r) == "string" and r ~= "") and r or nil
 end
 -- "Name-Realm" wie das Absenderfeld; nil ohne Antwort des Clients.

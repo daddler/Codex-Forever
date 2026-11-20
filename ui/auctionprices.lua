@@ -144,8 +144,8 @@ end
 --------------------------------------------------
 
 function AP.Realm()
-    local r = _G.GetNormalizedRealmName and K.Plain(_G.GetNormalizedRealmName())
-    if type(r) ~= "string" or r == "" then r = _G.GetRealmName and K.Plain(_G.GetRealmName()) end
+    local r = WeintCodex.RealmNameNormalized()
+    if type(r) ~= "string" or r == "" then r = WeintCodex.RealmName() end
     return (type(r) == "string" and r ~= "") and r or "?"
 end
 

@@ -95,11 +95,126 @@ function WeintCodex.Names.Equal(a, b)
 
 end
 
+--------------------------------------------------
+-- Der Realm (1.0.8.3)
+--------------------------------------------------
+-- Bericht nach dem Patch des Forever-Clients (Build 71037): GetRealmName()
+-- liefert nichts mehr. Ohne Realm bildete WeintCodex keinen Schluessel fuer
+-- den Charakter - die Oberflaeche blieb aus, Bestand, Preise und Berufe
+-- fanden ihre Eintraege nicht. Hier ist die EINE Stelle, die den Realm
+-- nennt:
+--   1. was der Client sagt (GetRealmName, GetNormalizedRealmName) - und
+--      dann gemerkt (SavedData.lastRealm, je Name);
+--   2. sonst der zuletzt gemerkte Realm dieses Charakters;
+--   3. sonst der EINE Realm, unter dem dieser Name schon gespeichert ist
+--      (Oberflaeche, Bestand). Mehrere: nicht raten - nil.
+-- UnitFullName nennt auf Forever als zweiten Wert den Nachnamen
+-- ("Shooty", "Peng") - nie als Realm nehmen.
+
+local function Open(v)
+    local f = _G.issecretvalue
+    if f and f(v) then return nil end
+    if type(v) ~= "string" or v == "" then return nil end
+    return v
+end
+
+local function ClientRealm()
+    local fn = _G.GetRealmName
+    if type(fn) == "function" then
+        local ok, v = pcall(fn)
+        v = ok and Open(v) or nil
+        if v then return v end
+    end
+    return nil
+end
+
+local function PlayerNames()
+    local out = {}
+    local function add(v) v = Open(v) if v then out[#out + 1] = v end end
+    if type(_G.UnitName) == "function" then local ok, v = pcall(_G.UnitName, "player") if ok then add(v) end end
+    if type(_G.GetUnitName) == "function" then local ok, v = pcall(_G.GetUnitName, "player", false) if ok then add(v) end end
+    return out
+end
+
+-- Realms, unter denen ein Name gespeichert ist (Schluessel "Name-Realm" der
+-- Oberflaeche, Bestand). Liste ohne Doppelte.
+function WeintCodex.Names.StoredRealms(names)
+    local sd = WeintCodex.SavedData
+    local found, list = {}, {}
+    local function add(r) if r and r ~= "" and not found[r] then found[r] = true list[#list + 1] = r end end
+    if type(sd) ~= "table" then return list end
+    local want = {}
+    for _, n in ipairs(names) do want[n] = true end
+    local ui = sd.ui
+    for _, t in ipairs({ type(ui) == "table" and ui.chars or nil, type(ui) == "table" and ui.profileOf or nil }) do
+        for key in pairs(t or {}) do
+            if type(key) == "string" then
+                local n, r = key:match("^(.-)%-([^%-]+)$")
+                if n and want[n] then add(r) end
+            end
+        end
+    end
+    local inv = sd.inventory
+    for _, c in pairs(type(inv) == "table" and inv.chars or {}) do
+        if type(c) == "table" and want[c.name] then add(c.realm) end
+    end
+    return list
+end
+
+-- Wird sehr oft gefragt (jeder Schluessel je Charakter): ohne neue Tabelle,
+-- solange der Client antwortet; der Rueckfall wird einmal gerechnet.
+local savedRealm, fallback = nil, nil
+function WeintCodex.Names.Realm()
+    local r = ClientRealm()
+    local sd = WeintCodex.SavedData
+    if r then
+        if r ~= savedRealm and type(sd) == "table" then
+            local names = PlayerNames()
+            if names[1] then
+                sd.lastRealm = type(sd.lastRealm) == "table" and sd.lastRealm or {}
+                sd.lastRealm[names[1]] = r
+                savedRealm = r
+            end
+        end
+        return r
+    end
+    if fallback ~= nil then return fallback or nil end
+    local names = PlayerNames()
+    if not names[1] then return nil end   -- Name noch nicht da: spaeter noch einmal
+    if type(sd) == "table" and type(sd.lastRealm) == "table" then
+        for _, n in ipairs(names) do
+            if type(sd.lastRealm[n]) == "string" then fallback = sd.lastRealm[n] return fallback end
+        end
+    end
+    local list = WeintCodex.Names.StoredRealms(names)
+    fallback = (#list == 1) and list[1] or false
+    return fallback or nil
+end
+
+-- Fuer Pruefungen und nach einer Anmeldung: neu bestimmen.
+function WeintCodex.Names.ForgetRealm() savedRealm, fallback = nil, nil end
+
+-- Wie GetNormalizedRealmName: ohne Leerzeichen und Bindestriche.
+function WeintCodex.Names.RealmNormalized()
+    local fn = _G.GetNormalizedRealmName
+    if type(fn) == "function" then
+        local ok, v = pcall(fn)
+        v = ok and Open(v) or nil
+        if v then return v end
+    end
+    local r = WeintCodex.Names.Realm()
+    return r and (r:gsub("[%s%-]", "")) or nil
+end
+
+-- Kurz: WeintCodex.RealmName() / RealmNameNormalized()
+WeintCodex.RealmName = function() return WeintCodex.Names.Realm() end
+WeintCodex.RealmNameNormalized = function() return WeintCodex.Names.RealmNormalized() end
+
 -- Der eingeloggte Charakter: Basis, Realm, "Name-Realm".
 function WeintCodex.Names.Me()
 
     local base  = UnitName("player") or ""
-    local realm = (GetRealmName() or ""):gsub("%s+", "")
+    local realm = (WeintCodex.RealmName() or ""):gsub("%s+", "")
 
     if base == "" then
         return "", realm, ""

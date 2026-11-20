@@ -110,6 +110,11 @@ do
     local ev = CreateFrame("Frame")
     pcall(ev.RegisterEvent, ev, "CHAT_MSG_SYSTEM")
     ev:SetScript("OnEvent", function(_, _, text)
+        -- 1.0.8.2 (Fehlerbericht eines Spielers, Bosskampf): im Kampf ist der
+        -- Text geheim - vergleichen verboten. Dann nichts tun.
+        local secret = _G.issecretvalue
+        if secret and secret(text) then return end
+        if type(text) ~= "string" then return end
         local want = _G.ERR_CHAT_THROTTLED
         if type(want) == "string" and want ~= "" and text == want then COMM.Quiet() end
     end)

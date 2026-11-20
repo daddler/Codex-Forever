@@ -214,7 +214,7 @@ end
 
 local function CharKey()
     local n = _G.UnitName and Plain(_G.UnitName("player"))
-    local r = _G.GetRealmName and Plain(_G.GetRealmName())
+    local r = WeintCodex.RealmName()
     if type(n) ~= "string" then return nil end
     return n .. "-" .. (type(r) == "string" and r or "")
 end

@@ -370,8 +370,8 @@ function K.Root() return Root() end
 -- Der Schluessel, wie er bis 1.0.8.1 allein galt: UnitName-GetRealmName.
 function K.RawCharKey()
     local okN, name = pcall(_G.UnitName, "player")
-    local okR, realm = pcall(_G.GetRealmName)
-    name, realm = okN and K.Plain(name) or nil, okR and K.Plain(realm) or nil
+    local realm = WeintCodex.RealmName and WeintCodex.RealmName() or nil
+    name = okN and K.Plain(name) or nil
     if type(name) == "string" and name ~= "" and type(realm) == "string" and realm ~= "" then
         return name .. "-" .. realm
     end
@@ -398,11 +398,11 @@ function K.CharNames()
     local full = call(_G.GetUnitName, "player", true)
     full = K.Plain(full)
     if type(full) == "string" then Add(names, (full:gsub("%-[^%-]*$", ""))) Add(names, full) end
-    local fn, fr = call(_G.UnitFullName, "player")
-    Add(names, fn)
+    -- UnitFullName: zweiter Wert ist auf Forever der Nachname, kein Realm.
+    Add(names, (call(_G.UnitFullName, "player")))
     Add(realms, (call(_G.GetRealmName)))
     Add(realms, (call(_G.GetNormalizedRealmName)))
-    Add(realms, fr)
+    if WeintCodex.RealmName then Add(realms, WeintCodex.RealmName()) end
     return names, realms
 end
 
@@ -477,7 +477,10 @@ function K.CharKey()
     return best
 end
 
-function K.ForgetCharKey() cachedFrom, cachedKey = nil, nil end
+function K.ForgetCharKey()
+    cachedFrom, cachedKey = nil, nil
+    if WeintCodex.Names and WeintCodex.Names.ForgetRealm then WeintCodex.Names.ForgetRealm() end
+end
 
 -- Fuer /wcui pruefen: was der Client sagt und was gespeichert ist.
 function K.CharKeyReport()

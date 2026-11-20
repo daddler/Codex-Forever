@@ -45,7 +45,7 @@ local function Str(v) v = Plain(v) return type(v) == "string" and v or nil end
 
 function IV.Me()
     local name = _G.UnitName and Str(_G.UnitName("player"))
-    local realm = _G.GetRealmName and Str(_G.GetRealmName())
+    local realm = Str(WeintCodex.RealmName())
     if not (name and realm) then return nil end
     return realm .. "|" .. name, name, realm
 end

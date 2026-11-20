@@ -597,7 +597,7 @@ function WeintCodex.Calendar.Dump()
 
     local _, myRealm = WeintCodex.Names.Me()
 
-    say("Realm laut Client: |cffffffff" .. tostring(GetRealmName())
+    say("Realm laut Client: |cffffffff" .. tostring(WeintCodex.RealmName())
         .. "|r, zum Vergleich benutzt: |cffffffff" .. myRealm .. "|r")
 
     local _, inviteFnName = ResolveInviteFunc()

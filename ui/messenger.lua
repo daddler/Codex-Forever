@@ -139,7 +139,7 @@ MS.conv, MS.order = conv, order
 MS.locked = 0             -- geheim gebliebene Nachrichten (nur im Chat)
 
 local function MyRealm()
-    local r = _G.GetNormalizedRealmName and K.Plain(_G.GetNormalizedRealmName())
+    local r = WeintCodex.RealmNameNormalized()
     return type(r) == "string" and r or nil
 end
 

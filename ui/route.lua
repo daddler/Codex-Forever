@@ -91,7 +91,7 @@ end
 
 function RT.Anchors()
     local root = RT.Root()
-    local okR, realm = pcall(_G.GetRealmName)
+    local okR, realm = pcall(WeintCodex.RealmName)
     if not (root and okR and type(realm) == "string") then return nil end
     root.anchors[realm] = root.anchors[realm] or {}
     return root.anchors[realm]

@@ -9,6 +9,28 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.0.8.3] – 2026-11-20
+
+### Behoben
+- Oberflaeche weiter aus nach dem Patch (Bericht 1.0.8.2: „Realm: Peng ·
+  Schlüssel nil“): `GetRealmName()` liefert seit Build 71037 nichts,
+  `UnitFullName` nennt als zweiten Wert den Nachnamen. Neu
+  `WeintCodex.Names.Realm()` / `WeintCodex.RealmName()` (+ `…Normalized`):
+  Client, sonst gemerkter Realm (`SavedData.lastRealm[Name]`), sonst der
+  eine Realm, unter dem der Name gespeichert ist (Oberflaeche, Bestand);
+  mehrere: nil. Alle 17 Aufrufe von `GetRealmName`/`GetNormalizedRealmName`
+  umgestellt (Bestand, Auktionspreise, Berufe, Post, Seltene, Fluestern,
+  Flugspiele, Routen, Companion, Kalender). Ohne neue Tabelle je Aufruf.
+- `core/comm.lua:114`: geheimer Text in `CHAT_MSG_SYSTEM` (Kampf) verglichen
+  – jetzt vorher `issecretvalue`.
+
+### Neu
+- Einheitenrahmen: Kraft als Zahl in der Kraftleiste (`<u>_powerText`:
+  Nichts/Zahl/Zahl / Maximum/Prozent, ab Werk Nichts, `UF.FillPower`;
+  Prozent nur aus offenen Werten, sonst die Zahl; ab 8 px Leiste).
+  „Farbe der Kraftleiste“ von jedem Reiter nach „Allgemein“ (gilt fuer alle,
+  15 sichtbare Einstellungen je Seite).
+
 ## [1.0.8.2] – 2026-11-20
 
 ### Behoben

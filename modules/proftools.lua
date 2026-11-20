@@ -39,7 +39,7 @@ local function Now() return (_G.time and _G.time()) or 0 end
 
 local function Me()
     local n = _G.UnitName and Plain(_G.UnitName("player"))
-    local r = _G.GetRealmName and Plain(_G.GetRealmName())
+    local r = WeintCodex.RealmName()
     if type(n) ~= "string" then return nil end
     return n .. "-" .. (type(r) == "string" and r or ""), n
 end
@@ -353,7 +353,7 @@ local function OnItem(tt, data)
         local g = C.goldBright or C.accent
         tt:AddLine("Merkliste: dir fehlen noch " .. w, g[1], g[2], g[3])
     end
-    local bs = PT.BookStatus(id, (Plain(_G.UnitName and _G.UnitName("player")) or "") .. "-" .. (Plain(_G.GetRealmName and _G.GetRealmName()) or ""))
+    local bs = PT.BookStatus(id, (Plain(_G.UnitName and _G.UnitName("player")) or "") .. "-" .. (WeintCodex.RealmName() or ""))
     if bs then
         for _, b in ipairs(bs) do
             local c = C[b.color] or C.textMuted

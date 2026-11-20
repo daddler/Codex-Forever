@@ -687,7 +687,7 @@ end
 --------------------------------------------------
 
 local function MyRealm()
-    local r = _G.GetRealmName and Plain(_G.GetRealmName())
+    local r = WeintCodex.RealmName()
     return type(r) == "string" and r or nil
 end
 
