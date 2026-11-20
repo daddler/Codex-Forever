@@ -65,6 +65,8 @@ nicht zusammen.
   jetzt in wiederverwendeten Tabellen, `Refresh(force)` rechnet nur bei
   Aenderung (Stufe/Questreihen erzwingen); Minikarte 10 statt 20 Takte und
   ohne Bewegung kein Neusetzen (`QH.mmLast`).
+- Bequem: nach `AcceptQuest` blieb das leere Questfenster offen (Client schliesst
+  nicht selbst) – `EV.CloseDetail` nach 0,1 s, nur solange `QuestFrameDetailPanel` steht.
 - `K.HeldSize`: geheime Schluessel uebersprungen („cannot be indexed with
   secret keys“).
 - `ui/everyday.lua` (Seite „Bequem“, nach OneForAll, nur Verhalten): Quests

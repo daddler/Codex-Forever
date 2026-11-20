@@ -61,8 +61,28 @@ EV.quest = { accepted = 0, turned = 0, left = 0 }
 
 function EV.OnQuestDetail()
     if not Opt("questAccept") or Shift() then return false end
-    if _G.AcceptQuest then pcall(_G.AcceptQuest) EV.quest.accepted = EV.quest.accepted + 1 return true end
+    if _G.AcceptQuest then
+        pcall(_G.AcceptQuest)
+        EV.quest.accepted = EV.quest.accepted + 1
+        -- 1.0.8.0 (Bild: leeres Questfenster mit "Annehmen/Ablehnen" bleibt
+        -- offen): der Client schliesst nach AcceptQuest nicht selbst. Kurz
+        -- danach zu - aber nur, wenn noch die Detailseite steht; hat das
+        -- Spiel schon das naechste Gespraech geoeffnet, bleibt es.
+        Later(EV.CLOSE_DELAY, EV.CloseDetail)
+        return true
+    end
     return false
+end
+
+EV.CLOSE_DELAY = 0.1
+local function Shown(f) return type(f) == "table" and f.IsShown and K.Bool(P(f:IsShown()), false) or false end
+function EV.CloseDetail()
+    local qf, detail = _G.QuestFrame, _G.QuestFrameDetailPanel
+    if not (Shown(qf) and Shown(detail)) then return false end
+    if _G.CloseQuest then pcall(_G.CloseQuest) end
+    if Shown(qf) and _G.HideUIPanel then pcall(_G.HideUIPanel, qf) end
+    EV.quest.closed = (EV.quest.closed or 0) + 1
+    return true
 end
 
 function EV.OnQuestProgress()

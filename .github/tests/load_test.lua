@@ -27361,6 +27361,20 @@ do
         K.Set("comfort", "questAccept", true)
         K.Set("comfort", "questTurnIn", true)
         assert(EV.OnQuestDetail() and accepted == 1, "nicht angenommen")
+        -- 1.0.8.0: danach blieb das leere Questfenster offen - jetzt zu, aber
+        -- nur, solange die Detailseite steht (nicht das naechste Gespraech).
+        do
+            local oQF, oDP, oCQ = G.QuestFrame, G.QuestFrameDetailPanel, G.CloseQuest
+            local open, detail, closed = true, true, 0
+            G.QuestFrame = { IsShown = function() return open end }
+            G.QuestFrameDetailPanel = { IsShown = function() return detail end }
+            G.CloseQuest = function() closed = closed + 1 open = false end
+            assert(EV.OnQuestDetail() and closed == 1 and not open, "leeres Questfenster bleibt offen")
+            open, detail = true, false
+            EV.OnQuestDetail()
+            assert(closed == 1, "naechstes Gespraech geschlossen")
+            G.QuestFrame, G.QuestFrameDetailPanel, G.CloseQuest = oQF, oDP, oCQ
+        end
         G.GetNumQuestChoices = function() return 3 end
         assert(not EV.OnQuestComplete() and rewarded == nil, "Belohnung gewaehlt, obwohl drei zur Wahl")
         G.GetNumQuestChoices = function() return 0 end
