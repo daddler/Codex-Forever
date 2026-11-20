@@ -25,6 +25,9 @@ WeintCodex_ChangelogData = {
         version = "1.0.8.4",
         date    = "20.11.2026",
         notes   = {
+            "|cff7C6CFFHoTs im Gruppenfenster, auch im Kampf|r – die eigenen HoTs an den Gruppenrahmen verschwanden wieder. Hatte ein Mitspieler nur Buffs, die das Feld mit Absicht ausblendet (z. B. Aufspüren), hielt WeintCodex die Anzeige des Spiels für kaputt und las ab da alles selbst – im Kampf gibt das Spiel dafür nichts heraus. Das passiert nicht mehr, und die HoT-Felder bleiben in jedem Fall bei der Anzeige des Spiels.",
+            "|cff7C6CFFKlickzauber: Scrollen geht wieder|r – beim Scrollen der Seite schnappte sich das Feld „Taste zuweisen“ das Mausrad, sobald es unter den Mauszeiger kam. Das Mausrad zählt dort jetzt erst, nachdem du ins Feld geklickt hast.",
+            "|cff7C6CFFTaschen ohne Lücken|r – alle Taschen zusammen (ohne Kategorien, ohne „Taschen einzeln“): belegte Plätze stehen oben in der Reihenfolge der Sortierung, leere unten – keine Lücken mehr durch Köcher, Berufs- oder halbvolle Taschen. Abschaltbar: Taschen → „Leere Plätze ans Ende“.",
             "|cff7C6CFFRunenfolge mit Tönen|r – jede Rune hat jetzt ihren eigenen Glockenton, beim Aufleuchten und beim Anklicken. So lässt sich die Folge auch mit dem Ohr merken. Eine geschaffte Runde klingt hell aufwärts, ein Fehler tief. „Ton: aus“ schaltet alles ab.",
         },
     },

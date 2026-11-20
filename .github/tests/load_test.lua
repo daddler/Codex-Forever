@@ -27700,6 +27700,23 @@ do
     Check(ok, "Kampfhilfen: Verlauf, Heiler unter Kontrolle, Gegner" .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 1.0.8.4: Taschen, gemeinsame Ansicht - belegte Plaetze oben in der
+-- Reihenfolge der Sortierung, leere am Ende (keine Luecken).
+do
+    local ok, err = pcall(function()
+        local BG = WeintCodex.UIBags
+        local list = { "a", "x1", "b", "x2", "c" }
+        local full = { true, false, true, false, true }
+        local o = BG.Order(list, full, true, false)
+        assert(table.concat(o, ",") == "a,b,c,x1,x2", "von links: " .. table.concat(o, ","))
+        o = BG.Order(list, full, true, true)
+        assert(table.concat(o, ",") == "c,b,a,x1,x2", "von rechts nicht umgedreht: " .. table.concat(o, ","))
+        o = BG.Order(list, full, false, true)
+        assert(table.concat(o, ",") == "a,x1,b,x2,c", "ohne Schalter nicht wie in den Taschen")
+    end)
+    Check(ok, "Taschen: leere Plaetze ans Ende, Sortierrichtung beachtet" .. (ok and "" or (": " .. tostring(err))))
+end
+
 -- 1.0.8.4: Klickzauber - das Feld "Taste zuweisen" nimmt das Mausrad erst
 -- nach einem Klick; beim Scrollen der Seite darueber hinweg nicht.
 do

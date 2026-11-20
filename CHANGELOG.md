@@ -12,6 +12,20 @@ nicht zusammen.
 ## [1.0.8.4] – 2026-11-20
 
 ### Behoben
+- HoTs an den Gruppenrahmen wieder weg (Meldung): `Obj:AutoCheck` zaehlte
+  Auren mit, die das Feld mit Absicht ausblendet (`exclude`, z. B.
+  `GF.NOISE` an den Buff-Feldern) – „Spiel nennt 1, gezeigt 0“ hiess
+  „Container kaputt“, `engineBroken` schickte ALLE Felder auf den alten Weg,
+  im Kampf geheim, HoT-Felder leer. `ApiCount(unit, filter, exclude)` zaehlt
+  sie nicht mehr; Felder mit Zauberliste (`spells`) folgen dem allgemeinen
+  Rueckfall nie (nur ihrem eigenen `SpellCheck`).
+- Klickzauber: Feld „Taste zuweisen“ nahm beim Scrollen der Seite das
+  Mausrad (`OnMouseWheel` bei blossem Darueberfahren). `CC.ArmWheel`: erst
+  nach einem Klick ins Feld, beim Verlassen wieder aus.
+- Taschen, gemeinsame Ansicht: Luecken nach „Sortieren“ (Spezialtaschen,
+  Sortierung von rechts). Schalter `compact` (ab Werk an): `BG.Order` stellt
+  belegte Plaetze nach vorn, leere ans Ende, bei
+  `GetSortBagsRightToLeft` umgedreht; Plaetze bleiben an ihrer Taschenstelle.
 - Runenfolge ohne Toene (Rueckmeldung): `R.Sound` spielt je Rune einen
   eigenen Glockenton (C5, E5, G5, C6) beim Abspielen und Klicken,
   `rune_ok` nach einer Runde, `rune_fail` beim Fehler; Schalter

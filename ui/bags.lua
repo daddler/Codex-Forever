@@ -50,6 +50,10 @@ local defaults = {
     -- 6.125.1.0 (Wunsch: "fuer jetzt optional einschaltbar - nach der
     -- Beta wird alles aktiviert"): ab Werk aus.
     categories = false,
+    -- 1.0.8.4 (Rueckmeldung: "Sortieren ohne Kategorien und ohne einzelne
+    -- Taschen: nicht von oben nach unten, viele Luecken dazwischen"): in der
+    -- gemeinsamen Ansicht stehen belegte Plaetze oben, leere am Ende.
+    compact    = true,
     -- 1.0.5.23 (Wunsch: "Taschen transparenter im Hintergrund einstellen,
     -- mehr Optionen"): Deckkraft von Fenster und Plaetzen, Rand, Schatten.
     bgAlpha    = 100,
@@ -523,6 +527,37 @@ function BG.TaintReport()
     end
     if n == 0 then out[#out + 1] = "   keine" elseif n > 80 then out[#out + 1] = "   … und " .. (n - 80) .. " weitere" end
     return out
+end
+
+-- Gemeinsame Ansicht (1.0.8.4): Reihenfolge der Plaetze. compact: belegte
+-- zuerst, leere am Ende. Sortiert das Spiel von rechts nach links (vom Ende
+-- der letzten Tasche her), steht das erste sortierte Stueck ganz hinten -
+-- dann werden die belegten umgedreht, damit die Liste oben beginnt. Jeder
+-- Platz bleibt seine Tasche/Stelle: Ziehen und Ablegen wie bisher.
+local flat, flatFull, orderOut = {}, {}, {}
+function BG.Order(list, full, compact, rtl)
+    for i = #orderOut, 1, -1 do orderOut[i] = nil end
+    if not compact then
+        for i = 1, #list do orderOut[i] = list[i] end
+        return orderOut
+    end
+    if rtl then
+        for i = #list, 1, -1 do if full[i] then orderOut[#orderOut + 1] = list[i] end end
+    else
+        for i = 1, #list do if full[i] then orderOut[#orderOut + 1] = list[i] end end
+    end
+    for i = 1, #list do if not full[i] then orderOut[#orderOut + 1] = list[i] end end
+    return orderOut
+end
+
+-- Sortiert das Spiel von rechts nach links? (Einstellung des Spiels; ohne
+-- Antwort: nein.)
+function BG.RightToLeft()
+    local cc = _G.C_Container
+    local fn = (cc and cc.GetSortBagsRightToLeft) or _G.GetSortBagsRightToLeft
+    if type(fn) ~= "function" then return false end
+    local ok, v = pcall(fn)
+    return ok and K.Bool(K.Plain(v), false) or false
 end
 
 local function PaintSlot(s, bag, slot)
@@ -1068,6 +1103,7 @@ function BG.Refresh()
     local y = 0          -- Oberkante des naechsten Blocks (einzeln)
     local h = 0
     BG.blocks = {}
+    for i = #flat, 1, -1 do flat[i] = nil flatFull[i] = nil end
     for _, bag in ipairs(BagIDs()) do
         local count = NumSlots(bag)
         local first = n
@@ -1076,7 +1112,15 @@ function BG.Refresh()
         for slot = 1, count do
             n = n + 1
             local s = slots[n]
-            if s then
+            if s and not split then
+                -- Gemeinsame Ansicht: erst malen, gesetzt wird danach (BG.Order).
+                s.holder:SetSize(size, size)
+                K.SetFont(s.d.ilvl, math.max(8, math.floor(size * 0.3)))
+                local full = PaintSlot(s, bag, slot) and true or false
+                if full then filled = filled + 1 bagFilled = bagFilled + 1 end
+                flat[#flat + 1] = s
+                flatFull[#flat] = full
+            elseif s then
                 s.holder:SetSize(size, size)
                 s.holder:ClearAllPoints()
                 local i = split and (n - first - 1) or (n - 1)
@@ -1105,6 +1149,14 @@ function BG.Refresh()
             hd:SetTextColor(unpack(free == 0 and C.warningBright or C.textMuted))
             hd:Show()
             y = y + rows * (size + sp) - sp + BG.BAG_GAP
+        end
+    end
+    if not split then
+        local order = BG.Order(flat, flatFull, Opt("compact"), BG.RightToLeft())
+        for i, s in ipairs(order) do
+            local col, row = (i - 1) % cols, math.floor((i - 1) / cols)
+            s.holder:ClearAllPoints()
+            s.holder:SetPoint("TOPLEFT", grid, "TOPLEFT", col * (size + sp), -row * (size + sp))
         end
     end
     for i = n + 1, #slots do slots[i].holder:Hide() end
@@ -1505,7 +1557,9 @@ K.Register({
             B:Row({ type = "toggle", label = "Taschen einzeln", key = "split",
                     disabled = function() return Opt("categories") end,
                     description = "Jede Tasche ein eigener Block mit Namen und „frei von Plätze“ – Köcher, Munitions- und Seelentaschen auf einen Blick." },
-                  { type = "empty" })
+                  { type = "toggle", label = "Leere Plätze ans Ende", key = "compact",
+                    disabled = function() return Opt("categories") or Opt("split") end,
+                    description = "Alle Taschen zusammen: belegte Plätze oben in der Reihenfolge der Sortierung, leere unten – keine Lücken durch Köcher, Berufs- oder halbvolle Taschen." })
             B:Section("Anzeigen")
             B:Row({ type = "toggle", label = "Gegenstandsstufe auf Ausrüstung", key = "itemLevel",
                     description = "Nennt das Spiel keine Stufe, bleibt das Feld leer – nie 0." },
