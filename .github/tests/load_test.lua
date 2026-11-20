@@ -27538,6 +27538,36 @@ do
         R.playing = false
         local wrong = R.seq[1] % 4 + 1
         assert(R.Press(wrong) == "miss" and #R.seq == R.START, "Fehler setzt nicht zurueck")
+        -- 1.0.8.4: Toene - je Rune einer, Aufstieg nach der Runde, tiefer Ton
+        -- beim Fehler; mit "Ton aus" keiner. Die Dateien liegen im Addon.
+        do
+            local oPF, oT = G.PlaySoundFile, G.C_Timer
+            local heard = {}
+            G.PlaySoundFile = function(path) heard[#heard + 1] = path:match("rune_(%w+)%.ogg$") return true end
+            G.C_Timer = nil
+            K.Set("comfort", "flightGamesSound", true)
+            R.playing = false R.NewSeq(2)
+            local s1, s2 = R.seq[1], R.seq[2]
+            R.Press(s1) R.playing = false R.Press(s2)
+            assert(heard[1] == tostring(s1) and heard[2] == tostring(s2) and heard[3] == "ok", "Runde ohne Toene: " .. table.concat(heard, ","))
+            heard = {}
+            R.playing = false
+            R.Press(R.seq[1] % 4 + 1)
+            assert(heard[1] == "fail", "Fehler ohne Ton: " .. table.concat(heard, ","))
+            heard = {}
+            K.Set("comfort", "flightGamesSound", false)
+            R.playing = false
+            R.Press(R.seq[1])
+            assert(#heard == 0, "Ton trotz aus")
+            K.Set("comfort", "flightGamesSound", nil)
+            for _, n in ipairs({ "1", "2", "3", "4", "ok", "fail" }) do
+                local fh = io.open(ROOT .. "/media/sounds/rune_" .. n .. ".ogg", "rb")
+                assert(fh, "Ton fehlt im Addon: rune_" .. n .. ".ogg")
+                fh:close()
+            end
+            G.PlaySoundFile, G.C_Timer = oPF, oT
+            R.playing = false
+        end
         -- Neustart mitten in der Wiedergabe: die alte Folge hoert auf
         local queue = {}
         G.C_Timer = { After = function(_, fn) queue[#queue + 1] = fn end }

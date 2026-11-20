@@ -1031,6 +1031,20 @@ local R = { runes = {}, seq = {}, pos = 0, playing = false, START = 3, ON = 0.45
 R.COLORS = { 1, 3, 4, 6 }
 FG.R = R
 
+-- 1.0.8.4 (Rueckmeldung: "Beim Spiel Runenfolge gibt es keine Toene"): jede
+-- Rune ein eigener Glockenton (C, E, G, hohes C - .github/scripts/
+-- make_rune_sounds.py, eigene Dateien), dazu Aufstieg fuer eine geschaffte
+-- Runde und ein tiefer Ton fuer einen Fehler. Schalter "Ton" wie die
+-- anderen Spiele (flightGamesSound).
+R.SOUND_PATH = "Interface\\AddOns\\WeintCodex\\media\\sounds\\rune_"
+R.played = 0
+function R.Sound(name)
+    if K.Get(KEY, "flightGamesSound") == false or not _G.PlaySoundFile then return false end
+    local ok = pcall(_G.PlaySoundFile, R.SOUND_PATH .. name .. ".ogg", "Master")
+    if ok then R.played = R.played + 1 end
+    return ok
+end
+
 function R.Light(i, on)
     local b = R.runes[i]
     if not b then return end
@@ -1053,6 +1067,7 @@ function R.Play()
         if step > #R.seq then R.playing = false return end
         local i = R.seq[step]
         R.Light(i, true)
+        R.Sound(tostring(i))
         _G.C_Timer.After(R.ON, function()
             if gen ~= R.gen then return end
             R.Light(i, false)
@@ -1073,14 +1088,21 @@ function R.Press(i)
     if R.playing or #R.seq == 0 then return nil end
     R.pos = R.pos + 1
     if R.seq[R.pos] == i then
+        R.Sound(tostring(i))
         if R.pos == #R.seq then
             FG.AddScore(30 * #R.seq)
+            if _G.C_Timer and _G.C_Timer.After then
+                _G.C_Timer.After(0.2, function() R.Sound("ok") end)
+            else
+                R.Sound("ok")
+            end
             R.NewSeq(#R.seq + 1)
             R.Play()
             return "round"
         end
         return "ok"
     end
+    R.Sound("fail")
     for j = 1, 4 do R.Light(j, true) end
     if _G.C_Timer and _G.C_Timer.After then
         _G.C_Timer.After(0.35, function() for j = 1, 4 do R.Light(j, false) end end)

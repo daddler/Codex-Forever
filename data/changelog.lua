@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.0.8.4",
+        date    = "20.11.2026",
+        notes   = {
+            "|cff7C6CFFRunenfolge mit Tönen|r – jede Rune hat jetzt ihren eigenen Glockenton, beim Aufleuchten und beim Anklicken. So lässt sich die Folge auch mit dem Ohr merken. Eine geschaffte Runde klingt hell aufwärts, ein Fehler tief. „Ton: aus“ schaltet alles ab.",
+        },
+    },
+    {
         version = "1.0.8.3",
         date    = "20.11.2026",
         notes   = {

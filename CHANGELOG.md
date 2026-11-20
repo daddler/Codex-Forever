@@ -9,6 +9,15 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.0.8.4] – 2026-11-20
+
+### Behoben
+- Runenfolge ohne Toene (Rueckmeldung): `R.Sound` spielt je Rune einen
+  eigenen Glockenton (C5, E5, G5, C6) beim Abspielen und Klicken,
+  `rune_ok` nach einer Runde, `rune_fail` beim Fehler; Schalter
+  `flightGamesSound`. Toene gerechnet mit `.github/scripts/make_rune_sounds.py`
+  (`media/sounds/rune_*.ogg`, eigene Dateien).
+
 ## [1.0.8.3] – 2026-11-20
 
 ### Behoben
