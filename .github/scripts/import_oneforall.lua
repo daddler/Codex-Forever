@@ -459,3 +459,328 @@ fh = assert(io.open(CDX .. "/data/dungeon_journal_ofa.lua", "w"))
 fh:write(table.concat(out, "\n"), "\n")
 fh:close()
 print(string.format("Dungeons: %d Chancen gemessen gesetzt, %d Chancen gefuellt, %d Quests neu", dstat.set, dstat.fill, qn))
+
+--------------------------------------------------
+-- Berufe: Lehrer, Gebuehren, Raenge, Haendler fuer Reagenzien
+--------------------------------------------------
+-- Haengt an data/professions_ofa.lua an (traegt beim Laden in die Tabellen
+-- des Naowh-Abgleichs ein, nur was dort fehlt - Gemessenes bleibt):
+--   Lehrer, die der Bestand nicht kennt (QuestieDB Forever)
+--   Lerngebuehr eines Rezepts, wo keine bekannt ist (CMaNGOS classic-db)
+--   Kosten eines Rangs, wo keine bekannt sind
+--   Haendler fuer Reagenzien, wo keiner bekannt ist (QuestieDB Forever)
+local FP = {}
+for _, f in ipairs({ "ProfessionTrainers", "ProfessionFees", "VendorReagents", "ReagentSources" }) do
+    assert(loadfile(OFA .. "/Data/" .. f .. ".lua"))("OneForAll", FP)
+end
+local MAPALL = { Alchemy = "alchemy", Blacksmithing = "blacksmithing", Cooking = "cooking", Enchanting = "enchanting",
+    Engineering = "engineering", ["First Aid"] = "first-aid", Leatherworking = "leatherworking", Tailoring = "tailoring",
+    Mining = "mining", Herbalism = "herbalism", Skinning = "skinning", Fishing = "fishing" }
+out = {}
+W("")
+W("-- Berufe: Lehrer, Gebuehren, Raenge, Haendler (Abgleich 1.0.8.0, nur Luecken)")
+W("local SIDE = { A = \"Alliance\", H = \"Horde\" }")
+W("P.OFA_TRAINERS = {")
+local tnames = {}
+for n in pairs(FP.PROFESSION_TRAINERS) do tnames[#tnames + 1] = n end
+table.sort(tnames)
+local tn = 0
+for _, name in ipairs(tnames) do
+    local key = MAPALL[name]
+    local have = {}
+    for _, t in ipairs((P.TRAINERS or {})[key] or {}) do have[t[1]] = true end
+    for _, t in ipairs((P.NF_TRAINERS or {})[key] or {}) do have[t[1]] = true end
+    local rows = {}
+    for _, t in ipairs(FP.PROFESSION_TRAINERS[name]) do
+        if key and not have[t[1]] and t[5] then
+            local side = (t[4] == "A" or t[4] == "H") and string.format("SIDE.%s", t[4]) or "false"
+            rows[#rows + 1] = string.format("{ %d, %q, %s, %d, %g, %g }", t[1], t[2], side, t[5], t[6], t[7])
+            have[t[1]] = true
+            tn = tn + 1
+        end
+    end
+    if #rows > 0 then W(string.format("    [%q] = { %s },", key, table.concat(rows, ", "))) end
+end
+W("}")
+W("P.OFA_FEES = {")
+local fn = 0
+local fees = {}
+for _, d in pairs(FP.PROFESSION_FEES) do
+    for spell, f in pairs(d.fees or {}) do
+        local src = (P.NF_SRC or {})[spell]
+        if not (type(src) == "string" and src:find("^k\t") or (type(src) == "string" and src:find("\nk\t"))) and type(f[1]) == "number" and f[1] > 0 then
+            fees[#fees + 1] = { spell, f[1] }
+        end
+    end
+end
+table.sort(fees, function(a, b) return a[1] < b[1] end)
+for _, e in ipairs(fees) do W(string.format("    [%d] = %d,", e[1], e[2])) fn = fn + 1 end
+W("}")
+W("P.OFA_RANK_COST = {")
+local rn = 0
+for name, d in pairs(FP.PROFESSION_FEES) do
+    local key = MAPALL[name]
+    for _, r in ipairs(d.ranks or {}) do
+        for _, x in ipairs((P.NF_RANKS or {})[key] or {}) do
+            if x.cap == r[3] and x.cost == nil and type(r[4]) == "number" and r[4] > 0 then
+                W(string.format("    { %q, %d, %d },", key, r[3], r[4]))
+                rn = rn + 1
+            end
+        end
+    end
+end
+W("}")
+W("P.OFA_REAGENT_VENDORS = {")
+local vn = 0
+local vitems = {}
+for item in pairs(FP.VENDOR_REAGENTS) do vitems[#vitems + 1] = item end
+table.sort(vitems)
+for _, item in ipairs(vitems) do
+    if not (P.NF_REAGENT_VENDORS or {})[item] then
+        local names, seen = {}, {}
+        for _, npc in ipairs(FP.VENDOR_REAGENTS[item]) do
+            local v = FP.REAGENT_VENDORS and FP.REAGENT_VENDORS[npc]
+            local nm = v and v[1]
+            if type(nm) == "string" and not seen[nm] and #names < 40 then seen[nm] = true names[#names + 1] = string.format("%q", nm) end
+        end
+        if #names > 0 then
+            table.sort(names)
+            W(string.format("    [%d] = { false, %s },", item, table.concat(names, ", ")))
+            vn = vn + 1
+        end
+    end
+end
+W("}")
+W("for key, list in pairs(P.OFA_TRAINERS) do")
+W("    P.NF_TRAINERS = P.NF_TRAINERS or {}")
+W("    P.NF_TRAINERS[key] = P.NF_TRAINERS[key] or {}")
+W("    for _, t in ipairs(list) do table.insert(P.NF_TRAINERS[key], t) end")
+W("end")
+W("P.NF_SRC = P.NF_SRC or {}")
+W("for spell, copper in pairs(P.OFA_FEES) do")
+W("    local s = P.NF_SRC[spell]")
+W("    P.NF_SRC[spell] = (type(s) == \"string\" and (s .. \"\\n\") or \"\") .. \"k\\t\" .. copper")
+W("end")
+W("for _, e in ipairs(P.OFA_RANK_COST) do")
+W("    for _, r in ipairs(P.NF_RANKS and P.NF_RANKS[e[1]] or {}) do")
+W("        if r.cap == e[2] and r.cost == nil then r.cost = e[3] end")
+W("    end")
+W("end")
+W("P.NF_REAGENT_VENDORS = P.NF_REAGENT_VENDORS or {}")
+W("for item, v in pairs(P.OFA_REAGENT_VENDORS) do")
+W("    if not P.NF_REAGENT_VENDORS[item] then P.NF_REAGENT_VENDORS[item] = v end")
+W("end")
+fh = assert(io.open(CDX .. "/data/professions_ofa.lua", "a"))
+fh:write(table.concat(out, "\n"), "\n")
+fh:close()
+print(string.format("Berufe: %d Lehrer, %d Gebuehren, %d Rangkosten, %d Reagenzien mit Haendler", tn, fn, rn, vn))
+
+--------------------------------------------------
+-- Klassenquests: was dem Bestand fehlt
+--------------------------------------------------
+-- Klasse aus den Meilensteinen von OneForAll (welche Kette zu welcher
+-- Klasse gehoert); Geber mit Name und Lage (keine NPC-Nummer bekannt -
+-- eigener Schluessel, negativ, damit er nie eine echte Nummer trifft).
+local FC = {}
+assert(loadfile(OFA .. "/Data/ClassQuests.lua"))("OneForAll", FC)
+dofile(CDX .. "/data/classquests.lua")
+local Q = WeintCodex.ClassQuestData
+local CLS = { "WARRIOR", "PALADIN", "HUNTER", "ROGUE", "PRIEST", "SHAMAN", "MAGE", "WARLOCK", "DRUID" }
+local known = {}
+for _, c in ipairs(CLS) do for _, q in ipairs(Q.CLASSES[c] or {}) do known[q.id] = true end end
+local classOf = {}
+for c, list in pairs(FC.CLASS_QUESTS.milestones or {}) do
+    for _, m in ipairs(list) do
+        for id in tostring(m[4]):gmatch("%d+") do classOf[tonumber(id)] = classOf[tonumber(id)] or c end
+    end
+end
+local function Side(mask)
+    mask = tonumber(mask) or 0
+    if mask == 0 then return "AH" end
+    local a, h = mask % 2 == 1 or math.floor(mask / 4) % 2 == 1 or math.floor(mask / 8) % 2 == 1 or math.floor(mask / 64) % 2 == 1,
+        math.floor(mask / 2) % 2 == 1 or math.floor(mask / 16) % 2 == 1 or math.floor(mask / 32) % 2 == 1 or math.floor(mask / 128) % 2 == 1
+    return (a and not h) and "A" or (h and not a) and "H" or "AH"
+end
+local cadd, cn = {}, 0
+local qids = {}
+for id in pairs(FC.CLASS_QUESTS.quests or {}) do qids[#qids + 1] = id end
+table.sort(qids)
+for _, id in ipairs(qids) do
+    local c = classOf[id]
+    if c and not known[id] then
+        local s = FC.CLASS_QUESTS.quests[id]
+        local f = {}
+        for part in (s .. "|"):gmatch("([^|]*)|") do f[#f + 1] = part end
+        local pre = {}
+        for p in (f[4] or ""):gmatch("%d+") do pre[#pre + 1] = p end
+        for p in (f[5] or ""):gmatch("%d+") do pre[#pre + 1] = p end
+        local map, x, y = tonumber(f[7]), tonumber(f[8]), tonumber(f[9])
+        -- Geber, den der Bestand schon kennt: seine echte Nummer.
+        local gid = -id
+        for nid, n in pairs(Q.NPCS) do if n[1] == f[6] then gid = nid break end end
+        cadd[c] = cadd[c] or {}
+        cadd[c][#cadd[c] + 1] = string.format(
+            "        { id = %d, name = %q, lv = %s, rl = %s,%s giver = %d, pre = { %s }, ofa = true },",
+            id, f[1], f[2] ~= "" and f[2] or "nil", f[2] ~= "" and f[2] or "nil",
+            (tonumber(f[3]) or 0) > 0 and (" ra = " .. f[3] .. ",") or "", gid, table.concat(pre, ", "))
+        cadd[c].npcs = cadd[c].npcs or {}
+        if gid < 0 then cadd[c].npcs[#cadd[c].npcs + 1] = string.format("Q.OFA_NPCS[%d] = { %q, %s, %s, %s, %q }", -id, f[6] or "?",
+            map and tostring(map) or "nil", x and tostring(x) or "nil", y and tostring(y) or "nil", Side(f[3])) end
+        cn = cn + 1
+    end
+end
+out = {}
+W("--------------------------------------------------")
+W("-- WeintCodex :: Klassenquests - Abgleich mit OneForAll (1.0.8.0)")
+W("--------------------------------------------------")
+W("-- ERZEUGT von .github/scripts/import_oneforall.lua - nicht von Hand aendern.")
+W("-- Herkunft (nur fuer Betreuer): OneForAll 6.2.12 (GPL-3.0, nur Daten),")
+W("-- dort aus QuestieDB Forever (18.11.2026). Nur Quests, die dem Bestand")
+W("-- fehlen; Geber unter eigenem, negativem Schluessel. Art `community`.")
+W("--------------------------------------------------")
+W("")
+W("local Q = WeintCodex and WeintCodex.ClassQuestData")
+W("if not Q then return end")
+W("-- Geber ohne bekannte NPC-Nummer: eigener, negativer Schluessel (CQ.Npc).")
+W("Q.OFA_NPCS = Q.OFA_NPCS or {}")
+W("local ADD = {")
+local cs = {}
+for c in pairs(cadd) do cs[#cs + 1] = c end
+table.sort(cs)
+for _, c in ipairs(cs) do
+    W("    " .. c .. " = {")
+    for _, l in ipairs(cadd[c]) do W(l) end
+    W("    },")
+end
+W("}")
+for _, c in ipairs(cs) do
+    for _, l in ipairs(cadd[c].npcs) do W(l) end
+end
+W("local mt = getmetatable(Q.CLASSES)")
+W("local build = mt and mt.__index")
+W("if type(build) == \"function\" then")
+W("    mt.__index = function(t, class)")
+W("        local list = build(t, class)")
+W("        if type(list) == \"table\" and ADD[class] then")
+W("            for _, q in ipairs(ADD[class]) do list[#list + 1] = q end")
+W("            ADD[class] = nil")
+W("        end")
+W("        return list")
+W("    end")
+W("end")
+W("Q.OFA_ADDED = " .. cn)
+fh = assert(io.open(CDX .. "/data/classquests_ofa.lua", "w"))
+fh:write(table.concat(out, "\n"), "\n")
+fh:close()
+print(string.format("Klassenquests: %d neu", cn))
+
+--------------------------------------------------
+-- Questketten der Dungeons
+--------------------------------------------------
+-- Ganze Kette vor einer Dungeonquest, mit freiwilligen Vorquests
+-- (optional = true: Brotkrumen, zaehlen nicht als Voraussetzung). Nur fuer
+-- Quests des Journals, und nur wo der Bestand keine oder eine kuerzere hat.
+local FQ = {}
+assert(loadfile(OFA .. "/Data/DungeonQuestChains.lua"))("OneForAll", FQ)
+dofile(CDX .. "/data/dungeon_journal_ofa.lua")
+local inJ = {}
+for _, d in pairs(J.DATA) do for _, q in ipairs(d.quests or {}) do inJ[q.id] = true end end
+local chains, chn = {}, 0
+for qid, steps in pairs(FQ.QUEST_PREREQ_CHAINS) do
+    local c = J.CHAIN and J.CHAIN[qid]
+    local mine = c and c.prev and #c.prev or 0
+    if inJ[qid] and #steps > mine then
+        local parts = {}
+        for _, st in ipairs(steps) do
+            if type(st.id) == "number" then
+                parts[#parts + 1] = string.format("{ %d, %q%s }", st.id, st.name or "", st.optional and ", true" or "")
+            end
+        end
+        if #parts > 0 then chains[#chains + 1] = { qid, table.concat(parts, ", ") } chn = chn + 1 end
+    end
+end
+table.sort(chains, function(a, b) return a[1] < b[1] end)
+out = {}
+W("")
+W("-- Ganze Kette vor einer Dungeonquest (QuestieDB Forever, auf Wowhead geprueft):")
+W("-- { Nummer, englischer Name, freiwillig } - Name nur als Rueckfall, gezeigt wird der des Clients.")
+W("J.OFA_CHAIN = {")
+for _, e in ipairs(chains) do W(string.format("    [%d] = { %s },", e[1], e[2])) end
+W("}")
+fh = assert(io.open(CDX .. "/data/dungeon_journal_ofa.lua", "a"))
+fh:write(table.concat(out, "\n"), "\n")
+fh:close()
+print(string.format("Questketten: %d", chn))
+
+--------------------------------------------------
+-- Karte: fehlende Flugmeister und Uebergaenge
+--------------------------------------------------
+-- Flugmeister (QuestieDB Forever) und Uebergaenge zwischen Gebieten
+-- (Carbonite, GPL-3.0 - nur Lagen), die der Bestand nicht kennt. Die
+-- Richtung des Pfeils zeigt vom Kartenmittelpunkt zum Uebergang (Bogenmass,
+-- gegen den Uhrzeigersinn, 0 = oben - wie data/mapmarks.lua).
+local FM = {}
+assert(loadfile(OFA .. "/Data/MapLandmarks.lua"))("OneForAll", FM)
+assert(loadfile(OFA .. "/Data/ZoneTransitions.lua"))("OneForAll", FM)
+dofile(CDX .. "/data/towns.lua")
+dofile(CDX .. "/data/mapmarks.lua")
+local TD, MD = WeintCodex.TownData, WeintCodex.MapMarksData
+-- Nur fuer Druiden (Mondlichtung).
+local DRUID_ONLY = { ["Bunthen Plainswind"] = true, ["Silva Fil'naveth"] = true }
+local flights, crossings = {}, {}
+for _, f in ipairs(FM.MAP_LANDMARKS.flight) do
+    local found = false
+    for _, h in ipairs(TD.maps[f[1]] or {}) do
+        if h[3] == "flight" and math.abs(h[1] - f[2]) < 2 and math.abs(h[2] - f[3]) < 2 then found = true end
+    end
+    if not found then
+        flights[#flights + 1] = string.format("    { %d, %g, %g, %q%s },   -- %s", f[1], f[2], f[3], f[4],
+            DRUID_ONLY[f[5]] and ", \"DRUID\"" or "", f[5])
+    end
+end
+local haveC = {}
+for map, l in pairs(MD.crossings) do for i = 1, #l, 4 do haveC[map .. ">" .. l[i + 3]] = true end end
+for _, t in ipairs(FM.ZONE_TRANSITIONS) do
+    local k = t[1] .. ">" .. t[4]
+    if not haveC[k] then
+        haveC[k] = true
+        local x, y = t[2] / 100, t[3] / 100
+        local ang = math.atan2(-(x - 0.5), -(y - 0.5))
+        crossings[#crossings + 1] = string.format("    { %d, %.3f, %.3f, %.3f, %d },", t[1], x, y, ang, t[4])
+    end
+end
+out = {}
+W("--------------------------------------------------")
+W("-- WeintCodex :: Karte - Abgleich mit OneForAll (1.0.8.0)")
+W("--------------------------------------------------")
+W("-- ERZEUGT von .github/scripts/import_oneforall.lua - nicht von Hand aendern.")
+W("-- Herkunft (nur fuer Betreuer): Flugmeister aus QuestieDB Forever, Uebergaenge")
+W("-- aus Carbonite (beides ueber OneForAll 6.2.12, GPL-3.0 - nur Lagen).")
+W("-- Traegt beim Laden in WeintCodex.TownData und WeintCodex.MapMarksData ein,")
+W("-- nur was dort fehlt. Art `community`.")
+W("--------------------------------------------------")
+W("")
+W("local TD, MD = WeintCodex and WeintCodex.TownData, WeintCodex and WeintCodex.MapMarksData")
+W("local FLIGHT = {   -- { Karte, x, y, Fraktion, Klasse }")
+for _, l in ipairs(flights) do W(l) end
+W("}")
+W("local CROSS = {    -- { Karte, x, y, Richtung, Zielkarte }")
+for _, l in ipairs(crossings) do W(l) end
+W("}")
+W("if TD and TD.maps then")
+W("    for _, f in ipairs(FLIGHT) do")
+W("        TD.maps[f[1]] = TD.maps[f[1]] or {}")
+W("        table.insert(TD.maps[f[1]], { f[2], f[3], \"flight\", f[4], f[5] })")
+W("    end")
+W("end")
+W("if MD and MD.crossings then")
+W("    for _, c in ipairs(CROSS) do")
+W("        local l = MD.crossings[c[1]] or {}")
+W("        MD.crossings[c[1]] = l")
+W("        l[#l + 1], l[#l + 2], l[#l + 3], l[#l + 4] = c[2], c[3], c[4], c[5]")
+W("    end")
+W("end")
+fh = assert(io.open(CDX .. "/data/maps_ofa.lua", "w"))
+fh:write(table.concat(out, "\n"), "\n")
+fh:close()
+print(string.format("Karte: %d Flugmeister, %d Uebergaenge", #flights, #crossings))

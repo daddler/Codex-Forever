@@ -64,6 +64,8 @@ end
 -- NPC: { name, map, x, y, faction } oder nil.
 function CQ.Npc(id)
     local n = id and Q and Q.NPCS and Q.NPCS[id]
+    -- 1.0.8.0: Geber aus dem Abgleich mit OneForAll ohne NPC-Nummer.
+    if not n and type(id) == "number" and id < 0 then n = Q.OFA_NPCS and Q.OFA_NPCS[id] end
     if not n then return nil end
     return { id = id, name = n[1], map = n[2], x = n[3], y = n[4], faction = n[5] }
 end

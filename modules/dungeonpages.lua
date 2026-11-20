@@ -2039,6 +2039,22 @@ local function DrawQuestBody(inner, y, w, q)
     if turnin then y = BodyText(inner, y, "Abgabe: " .. turnin, w, { size = 11, color = "textMuted" }) end
     -- Kette (6.14.0.0): was davor kommt, was danach.
     local chain = J.Chain and J.Chain(q.id)
+    -- 1.0.8.0: die ganze Kette davor (Abgleich mit OneForAll), wo sie
+    -- laenger ist als die bekannte - freiwillige Vorquests als solche.
+    local full = J.OFA_CHAIN and J.OFA_CHAIN[q.id]
+    if full and #full > (chain and chain.prev and #chain.prev or 0) then
+        local names = {}
+        for _, st in ipairs(full) do
+            local t = QuestTitleById(st[1])
+            if t == nil or t == "" or t:find("^Quest %d+$") then t = st[2] ~= "" and st[2] or t end
+            names[#names + 1] = "„" .. tostring(t) .. "“" .. (st[3] and " (freiwillig)" or "")
+        end
+        y = BodyText(inner, y, "Kette davor: " .. table.concat(names, " → "), w, { size = 11, color = "textMuted" })
+        if chain and chain.next then
+            y = BodyText(inner, y, "Danach: „" .. QuestTitleById(chain.next) .. "“", w, { size = 11, color = "textMuted" })
+        end
+        chain = nil
+    end
     if chain then
         if chain.prev and #chain.prev > 0 then
             local names = {}

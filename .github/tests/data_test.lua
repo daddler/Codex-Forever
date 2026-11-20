@@ -1214,7 +1214,9 @@ do
             if q.spell then spells = spells + 1 end
             if not (IsId(q.id) and type(q.name) == "string" and q.name ~= "") then bad = bad + 1 end
             if not (type(q.lv) == "number" and q.lv >= 1 and q.lv <= 63 and type(q.rl) == "number" and q.rl >= 1 and q.rl <= 60) then bad = bad + 1 end
-            if not (IsId(q.giver) or q.start == "item" or q.start == "object") then bad = bad + 1 end
+            -- 1.0.8.0: Geber aus dem Abgleich mit OneForAll ohne Nummer (Q.OFA_NPCS).
+            local ofaGiver = q.ofa and type(q.giver) == "number" and q.giver < 0 and Q.OFA_NPCS and Q.OFA_NPCS[q.giver]
+            if not (IsId(q.giver) or ofaGiver or q.start == "item" or q.start == "object") then bad = bad + 1 end
             for _, k in ipairs({ "turnin", "next", "spell", "money", "ra" }) do
                 if q[k] ~= nil and not IsId(q[k]) then bad = bad + 1 end
             end

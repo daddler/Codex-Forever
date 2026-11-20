@@ -10176,7 +10176,8 @@ do
             end
             na = na + #l / 4
         end
-        assert(ns == 103 and na == 110, "Bestand: " .. ns .. " Geistheiler, " .. na .. " Uebergaenge")
+        -- 1.0.8.0: dazu 7 Uebergaenge aus dem Abgleich mit OneForAll (data/maps_ofa.lua).
+        assert(ns == 103 and na == 117, "Bestand: " .. ns .. " Geistheiler, " .. na .. " Uebergaenge")
         assert(K.Module("comfort").defaults.mapSpirit == false and K.Module("comfort").defaults.mapCrossings == false,
             "nicht von Haus aus aus")
 
@@ -10348,7 +10349,7 @@ do
         assert(MK.Place() == 0 and not MK.pins[1]:IsShown(), "Symbole bei geschlossener Karte")
         assert(wrote == 0, "in die Weltkarte geschrieben")
         local sc = table.concat(MK.StatusLines(), "\n")
-        assert(sc:find("Geistheiler im Bestand: 103 auf", 1, true) and sc:find("Übergänge: 110 auf", 1, true), "Selbstpruefung: " .. sc)
+        assert(sc:find("Geistheiler im Bestand: 103 auf", 1, true) and sc:find("Übergänge: 117 auf", 1, true), "Selbstpruefung: " .. sc)
     end)
     for i, n in ipairs(names) do G[n] = saved[i] end
     G.UnitFactionGroup = nil

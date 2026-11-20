@@ -68,6 +68,16 @@ nicht zusammen.
   vor dem Bestand), 95 Classic-Chancen, wo keine Zahl stand (ganze Prozent ≥ 1),
   42 fehlende Dungeon-Quests (`J.MergeOneForAll`, `J.ApplyOfaDrop` auch nach
   dem späten Classic-Abgleich). Nur für Beute, die der Bestand führt.
+  Berufe (an `data/professions_ofa.lua` angehängt, nur Lücken): 23 Lehrer
+  (`OFA_TRAINERS` → `NF_TRAINERS`), 65 Lerngebühren (`OFA_FEES` → `NF_SRC` k,
+  CMaNGOS), 2 Rangkosten, 53 Reagenzien mit Händler (`OFA_REAGENT_VENDORS`).
+  `data/classquests_ofa.lua` – 12 Klassenquests (Geber ohne NPC-Nummer in
+  `Q.OFA_NPCS`, negativer Schlüssel, `CQ.Npc`). `J.OFA_CHAIN` – 134 ganze
+  Questketten mit freiwilligen Vorquests („Kette davor“ auf der Dungeonseite).
+  `data/maps_ofa.lua` – 5 Flugmeister, 7 Übergänge (Richtung aus der Lage).
+  Verglichen ohne Übernahme: Einstimmung Onyxia (deckungsgleich), Ruf-
+  Belohnungen (alle 270 vorhanden), Flugrouten (fehlend nur Transporte/
+  Questflüge/Schlachtfelder), Rang-Kosten (im Spiel gemessen gilt).
   Lehrerzauber verglichen: keine Stufe anders, Unterschiede sind Talente,
   Start-/Volkszauber und Buchränge – nicht übernommen.
 - `ui/petstable.lua`: `PetStableFrame` in Gold (W.WINDOWS + CalmParts,

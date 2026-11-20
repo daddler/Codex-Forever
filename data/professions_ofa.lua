@@ -464,3 +464,160 @@ P.OFA_REAG = {
     [1301455] = "2318:7,2320:2",
     [1301461] = "2318:7,2320:2",
 }
+
+-- Berufe: Lehrer, Gebuehren, Raenge, Haendler (Abgleich 1.0.8.0, nur Luecken)
+local SIDE = { A = "Alliance", H = "Horde" }
+P.OFA_TRAINERS = {
+    ["engineering"] = { { 0, "Strange Hermit", false, 2521, 54, 39 } },
+    ["first-aid"] = { { 0, "Melasa Fairmend", false, 2521, 63, 72.6 } },
+    ["fishing"] = { { 0, "Baelann Swiftcurrent", false, 2521, 63.2, 75.6 } },
+    ["herbalism"] = { { 275321, "Edward Egan", SIDE.A, 1416, 18.4, 63.2 }, { 267338, "Emrys Flintbeard", SIDE.A, 1426, 29, 66.6 }, { 267329, "Zor'la", SIDE.H, 1411, 42.7, 67.4 }, { 247223, "Nancy Songflower", SIDE.A, 1429, 52.4, 43.9 }, { 267332, "Garan Sunstrider", SIDE.H, 1412, 44.1, 78 }, { 267335, "Eleyna Duskbreeze", SIDE.A, 1438, 59.9, 41.3 }, { 267326, "Florence Nightshade", SIDE.H, 1420, 32.5, 65.1 }, { 257021, "Halassa Fernbreeze", false, 2521, 43, 43.5 }, { 254345, "Syriel Nightrain", false, 2521, 57.9, 75.5 } },
+    ["leatherworking"] = { { 7870, "Caryssia Moonhunter", SIDE.A, 1444, 89.4, 46.6 }, { 0, "Emerii Tallgust", false, 2521, 63.8, 80.6 } },
+    ["skinning"] = { { 267336, "Brighid Stormflayer", SIDE.A, 1426, 29.2, 67.7 }, { 267327, "Kagil", SIDE.H, 1411, 40.8, 67.9 }, { 247227, "Riley Peltskinner", SIDE.A, 1429, 47, 39.9 }, { 267330, "Nawka Wildsong", SIDE.H, 1412, 44.5, 76.7 }, { 267333, "Terunne Bearshaper", SIDE.A, 1438, 59.4, 38.6 }, { 267324, "Margaret Weaver", SIDE.H, 1420, 32.6, 65.8 }, { 257003, "Ishlee Breezewhisper", false, 2521, 59.6, 76.1 }, { 257024, "Mendalass Tattermend", false, 2521, 43.3, 43.4 } },
+    ["tailoring"] = { { 0, "Othesia Evengale", false, 2521, 64.4, 81 } },
+}
+P.OFA_FEES = {
+    [2337] = 250,
+    [3447] = 3600,
+    [3451] = 2880,
+    [3915] = 25,
+    [3964] = 920,
+    [4094] = 500,
+    [7181] = 4500,
+    [7428] = 100,
+    [8895] = 2200,
+    [9954] = 10000,
+    [9974] = 10000,
+    [10003] = 15000,
+    [10007] = 15000,
+    [10011] = 10000,
+    [10015] = 10000,
+    [10619] = 4000,
+    [10621] = 4000,
+    [10630] = 4300,
+    [10632] = 5500,
+    [10647] = 5500,
+    [10650] = 12000,
+    [10841] = 100000,
+    [11457] = 9000,
+    [12044] = 30,
+    [12052] = 4500,
+    [12055] = 4950,
+    [12071] = 5400,
+    [12076] = 5850,
+    [12082] = 6300,
+    [12715] = 1000,
+    [12716] = 1500,
+    [12717] = 1500,
+    [12718] = 1500,
+    [12754] = 2600,
+    [12755] = 2400,
+    [12758] = 3000,
+    [12759] = 2800,
+    [12760] = 1500,
+    [12895] = 1350,
+    [12897] = 1500,
+    [12899] = 1500,
+    [12902] = 1800,
+    [12903] = 2000,
+    [12905] = 2200,
+    [12906] = 2400,
+    [12907] = 2600,
+    [12908] = 2800,
+    [13905] = 5400,
+    [13917] = 5400,
+    [13935] = 5800,
+    [13937] = 6200,
+    [13939] = 6200,
+    [13941] = 6200,
+    [13943] = 6200,
+    [13948] = 6500,
+    [17180] = 10000,
+    [17181] = 10000,
+    [18629] = 125000,
+    [18630] = 150000,
+    [19669] = 10000,
+    [19790] = 9000,
+    [19791] = 4500,
+    [20201] = 10000,
+    [24654] = 50000,
+    [24655] = 30000,
+}
+P.OFA_RANK_COST = {
+    { "cooking", 225, 10000 },
+    { "first-aid", 225, 10000 },
+}
+P.OFA_REAGENT_VENDORS = {
+    [765] = { false, "Hula'mahi", "Maria Lumere", "Selina Weston" },
+    [785] = { false, "Antonio Perelli", "Hula'mahi", "Kixxle", "Maria Lumere", "Montarr", "Selina Weston" },
+    [929] = { false, "Balai Lok'Wein", "Bliztik", "Charys Yserian", "Deneb Walker", "Dewin Shimmerdawn", "Harklan Moongrove", "Jeeda", "Kixxle", "Kzixx", "Montarr", "Samor Festivus", "Wallace the Blind" },
+    [1205] = { false, "Asoran", "Bale", "Barkeep Dobbins", "Barkeep Hann", "Barkeep Kelly", "Bernie Heisten", "Corporal Bluth", "Dalaran Brewmaster", "Denni'ka", "Elly Langston", "Gabrielle Chase", "Graud", "Grawl", "Gretchen Vogel", "Gruham Rumdnul", "Innkeeper Anderson", "Innkeeper Belm", "Innkeeper Farley", "Innkeeper Helbrek", "Innkeeper Shay", "Jazzik", "Joshua Maclure", "Kayren Soothallow", "Kazan Mogosh", "Keeg Gibn", "Lindsay Ashlock", "Lyranne Feathersong", "Mabel Solaj", "Malygen", "Natheril Raincaller", "Neal Allen", "Neema", "Nixxrax Fillamug", "Sarah Raycroft", "Sergeant De Vries", "Thultash", "Thurman Mullby", "Trak'gen", "Uthok", "Vikki Lonsav" },
+    [1645] = { false, "Asoran", "Bale", "Barkeep Dobbins", "Barkeep Hann", "Barkeep Kelly", "Bernie Heisten", "Corporal Bluth", "Dalaran Brewmaster", "Denni'ka", "Elly Langston", "Gabrielle Chase", "Graud", "Grawl", "Gretchen Vogel", "Grimtak", "Gruna", "Innkeeper Anderson", "Innkeeper Belm", "Innkeeper Farley", "Innkeeper Helbrek", "Innkeeper Shay", "Joshua Maclure", "Kayren Soothallow", "Kazan Mogosh", "Keeg Gibn", "Kurll", "Laer Stepperunner", "Lyranne Feathersong", "Malygen", "Natheril Raincaller", "Neema", "Nixxrax Fillamug", "Sarah Raycroft", "Sergeant De Vries", "Thultash", "Thurman Mullby", "Trak'gen", "Uthok", "Vikki Lonsav", "Zlagk" },
+    [1708] = { false, "Asoran", "Bale", "Barkeep Dobbins", "Barkeep Hann", "Barkeep Kelly", "Bernie Heisten", "Corporal Bluth", "Dalaran Brewmaster", "Denni'ka", "Elly Langston", "Gabrielle Chase", "Graud", "Grawl", "Gretchen Vogel", "Grimtak", "Gruna", "Innkeeper Anderson", "Innkeeper Belm", "Innkeeper Farley", "Innkeeper Helbrek", "Innkeeper Shay", "Joshua Maclure", "Kayren Soothallow", "Kazan Mogosh", "Keeg Gibn", "Kurll", "Laer Stepperunner", "Lyranne Feathersong", "Malygen", "Natheril Raincaller", "Neema", "Nixxrax Fillamug", "Sarah Raycroft", "Sergeant De Vries", "Thultash", "Thurman Mullby", "Trak'gen", "Uthok", "Vikki Lonsav", "Zlagk" },
+    [2289] = { false, "Professor Thaddeus Paleo", "Super-Seller 680" },
+    [2447] = { false, "Hula'mahi", "Maria Lumere", "Selina Weston" },
+    [2449] = { false, "Antonio Perelli", "Hula'mahi", "Jeeda", "Kixxle", "Maria Lumere" },
+    [2453] = { false, "Antonio Perelli", "Hula'mahi", "Jeeda", "Kixxle", "Maria Lumere" },
+    [2455] = { false, "Dawn Brightstar" },
+    [2594] = { false, "Alfred Copperworth", "Arille Azuregaze", "Aurian Highgrove", "Barkeep Dobbins", "Barkeep Morag", "Bruuk Barleybeard", "Edris Barleybeard", "Elly Langston", "Gwenna Firebrew", "Innkeeper Firebrew", "Innkeeper Helbrek", "Jarel Moor", "Joachim Brenlow", "Joshua Maclure", "Julia Gallina", "Keeg Gibn", "Laire Brewgold", "Malgin Barleybrew", "Nixxrax Fillamug", "Roberto Pupellyverbos", "Sandra Bartan", "Sergeant De Vries" },
+    [2596] = { false, "Alfred Copperworth", "Arille Azuregaze", "Aurian Highgrove", "Barkeep Dobbins", "Barkeep Morag", "Bruuk Barleybeard", "Edris Barleybeard", "Elly Langston", "Gwenna Firebrew", "Innkeeper Firebrew", "Jarel Moor", "Joachim Brenlow", "Joshua Maclure", "Julia Gallina", "Keeg Gibn", "Laire Brewgold", "Malgin Barleybrew", "Nixxrax Fillamug", "Roberto Pupellyverbos", "Sandra Bartan", "Sergeant De Vries" },
+    [2605] = { false, "Alexandra Bolero", "Androd Fadran", "Blixrez Goodstitch", "Bombus Finespindle", "Borya", "Captured Servant of Azora", "Clyde Ranthal", "Cowardly Crosby", "Danielle Zipstitch", "Drac Roughcut", "Elynna", "Franklin Hamar", "George Candarte", "Ghok'kah", "Gina MacGregor", "Gorbold Steelhand", "Jennabink Powerseam", "Jillian Tanner", "Joseph Moore", "Kalldan Felmoon", "Lardan", "Lohgan Eva", "Mahu", "Mallen Swain", "Millie Gregorian", "Poranna Snowbraid", "Rann Flamespinner", "Rikqiz", "Saenorion", "Sheri Zipstitch", "Shimra", "Tamar", "Tari'qa", "Tunkk", "Ullanna", "Valdaron", "Vizzklick", "Wrahk", "Xizk Goodstitch", "Yonada" },
+    [2686] = { false, "Innkeeper Belm", "Innkeeper Thulfram", "Yanni Stoutheart" },
+    [2723] = { false, "Alfred Copperworth", "Arille Azuregaze", "Aurian Highgrove", "Barkeep Dobbins", "Barkeep Morag", "Bruuk Barleybeard", "Edris Barleybeard", "Elly Langston", "Gwenna Firebrew", "Innkeeper Firebrew", "Jarel Moor", "Joachim Brenlow", "Joshua Maclure", "Julia Gallina", "Keeg Gibn", "Laire Brewgold", "Malgin Barleybrew", "Nixxrax Fillamug", "Roberto Pupellyverbos", "Sandra Bartan", "Sergeant De Vries" },
+    [2894] = { false, "Innkeeper Belm", "Innkeeper Thulfram", "Yanni Stoutheart" },
+    [3013] = { false, "Adair Gilroy", "Dawn Brightstar", "Professor Thaddeus Paleo", "Salazar Bloch" },
+    [3030] = { false, "Abigail Sawyer", "Asoran", "Avette Fellwood", "Bale", "Benijah Fenner", "Bryllia Ironbrand", "Burkrum", "Charity Mipsy", "Corporal Bluth", "Edwina Monzor", "Eleanor Rusk", "Ellandrieth", "Faralorn", "Frederick Stover", "Graud", "Grawl", "Gruham Rumdnul", "Haljan Oakheart", "Haren Kanmae", "Jawn Highmesa", "Jensen Farran", "Jin'sora", "Kayren Soothallow", "Kimberly Hiett", "Kuna Thunderhorn", "Landria", "Lina Stover", "Mabel Solaj", "Malygen", "Marda Weller", "Mydrannul", "Naela Trance", "Natheril Raincaller", "Neal Allen", "Sarah Raycroft", "Skolmin Goldfury", "Thurman Mullby", "Trak'gen", "Uthok", "Vikki Lonsav" },
+    [3355] = { false, "Antonio Perelli", "Kixxle", "Maria Lumere" },
+    [3356] = { false, "Antonio Perelli", "Jeeda", "Kixxle", "Maria Lumere", "Montarr" },
+    [3357] = { false, "Antonio Perelli", "Kixxle", "Maria Lumere", "Montarr" },
+    [3385] = { false, "Bliztik", "Bro'kin", "Charys Yserian", "Darahir", "Deneb Walker", "Dewin Shimmerdawn", "Drovnar Strongbrew", "Harklan Moongrove", "Jeeda", "Kzixx", "Logannas", "Nandar Branson", "Nina Lightbrew", "Professor Thaddeus Paleo", "Rartar", "Soolie Berryfizz", "Ulthir" },
+    [3827] = { false, "Bro'kin", "Darahir", "Drovnar Strongbrew", "Glyx Brewright", "Nandar Branson", "Uma Bartulm", "Vendor-Tron 1000" },
+    [4357] = { false, "Kor'gar", "Wizzle Brassbolts" },
+    [4361] = { false, "Kor'gar", "Wizzle Brassbolts" },
+    [4363] = { false, "Kor'gar", "Wizzle Brassbolts" },
+    [4364] = { false, "Kor'gar", "Wizzle Brassbolts" },
+    [4371] = { false, "Billibub Cogspinner", "Elizabeth Van Talen", "Fradd Swiftgear", "Gagsprocket", "Gearcutter Cogspinner", "Gnaz Blunderflame", "Herble Baubbletump", "Jinky Twizzlefixxit", "Jubie Gadgetspring", "Knaz Blunderflame", "Kor'gar", "Loslor Rudge", "Mazk Snipeshot", "Namdo Bizzfizzle", "Neal Allen", "Rizz Loosebolt", "Ruppo Zipcoil", "Sovik", "Xizzer Fizzbolt", "Yuka Screwspigot", "Zan Shivsproket", "Zorbin Fandazzle" },
+    [4382] = { false, "Kor'gar", "Wizzle Brassbolts" },
+    [4389] = { false, "Billibub Cogspinner", "Elizabeth Van Talen", "Fradd Swiftgear", "Gagsprocket", "Gearcutter Cogspinner", "Gnaz Blunderflame", "Herble Baubbletump", "Jinky Twizzlefixxit", "Jubie Gadgetspring", "Knaz Blunderflame", "Kor'gar", "Loslor Rudge", "Mazk Snipeshot", "Namdo Bizzfizzle", "Neal Allen", "Rizz Loosebolt", "Sovik", "Xizzer Fizzbolt", "Yuka Screwspigot", "Zan Shivsproket", "Zorbin Fandazzle" },
+    [4404] = { false, "Kor'gar", "Wizzle Brassbolts" },
+    [4536] = { false, "Abigail Shiel", "Allyndia", "Bimble Longberry", "Corporal Bluth", "Daniel Bartlett", "Derak Nightfall", "Drake Lindgren", "Dwane Wertle", "Edna Mullby", "Emrul Riknussun", "Erika Tate", "Felicia Doan", "Felika", "Flakk", "Fyldan", "Gloria Femmel", "Golorn Frostbeard", "Homer Stonefield", "Innkeeper Boorand Plainswind", "Innkeeper Byula", "Innkeeper Saelienne", "Innkeeper Shyria", "Innkeeper Thulbek", "Kelsey Yance", "Lamar Veisilli", "Maliynn", "Micha Yance", "Naal Mistrunner", "Nan Mistrunner", "Narret Shadowgrove", "Nyoma", "Ronald Burch", "Shan'ti", "Shimra", "Tai'tasi", "Tarban Hearthgrain", "Tharynn Bouden", "Tiyani", "Wunna Darkmane", "Xen'to" },
+    [4605] = { false, "Augustus the Touched", "Caretaker Alen", "Coriella Calmbreeze", "Donaal Downbreeze", "Gwyn Farrow", "Hamlin Atkins", "Harnor", "Innkeeper Bates", "Innkeeper Norman", "Innkeeper Renee", "Janet Hommers", "Jason Lemieux", "Kor'jus", "Malygen", "Morley Bates", "Scott Carevin", "Tawny Grisette" },
+    [6530] = { false, "Amy Davenport", "Andrew Hilbert", "Banalash", "Burbik Gearspanner", "Christoph Jeffcoat", "Dalria", "Daniel Bartlett", "Drac Roughcut", "Edna Mullby", "Felicia Doan", "Felika", "Fillius Fizzlespinner", "Gina MacGregor", "Gunder Thornbush", "Hammon Karwn", "Helenia Olden", "Jandia", "Keena", "Kersok Prond", "Khara Deepwater", "Kilxx", "Lindea Rabonne", "Lizbeth Cromwell", "Martine Tramblay", "Micha Yance", "Mythrin'dir", "Nerrist", "Old Man Heming", "Ranik", "Sewa Mistrunner", "Shandrina", "Shankys", "Stuart Fleming", "Syurana", "Tansy Puddlefizz", "Tari'qa", "Ullanna", "Vernon Hale", "Voloren", "Zizzek" },
+    [8766] = { false, "Allyndia", "Barkeep Dobbins", "Barkeep Hann", "Barkeep Kelly", "Bernie Heisten", "Corporal Bluth", "Dalaran Brewmaster", "Dendrythis", "Denni'ka", "Elly Langston", "Fyrenna", "Gabrielle Chase", "Gretchen Vogel", "Grimtak", "Gruna", "Innkeeper Anderson", "Innkeeper Belm", "Innkeeper Boorand Plainswind", "Innkeeper Farley", "Innkeeper Helbrek", "Innkeeper Shay", "Jaeana", "Jhawna Oatwind", "Joshua Maclure", "Kazan Mogosh", "Keeg Gibn", "Kira Songshine", "Kurll", "Kyndri", "Laer Stepperunner", "Lyranne Feathersong", "Maliynn", "Malygen", "Moodan Sungrain", "Nantar", "Neema", "Nixxrax Fillamug", "Sergeant De Vries", "Thultash", "Zlagk" },
+    [8846] = { false, "Vi'el" },
+    [10284] = { false, "Aza'bek", "Derak Nightfall", "Derek Odds", "Emrul Riknussun", "Erika Tate", "Fimbo Greasemitz", "Fyldan", "Gloria Femmel", "Kalsey Sanden", "Kelsey Yance", "Micha Yance", "Miranda Turner", "Naal Mistrunner", "Nyoma", "Otho Moji'ko", "Paige", "Ronald Burch", "Tarban Hearthgrain", "Wulan", "Xen'to", "Zerril Softbreeze" },
+    [10308] = { false, "Professor Thaddeus Paleo" },
+    [10647] = { false, "Adair Gilroy", "Billibub Cogspinner", "Elizabeth Van Talen", "Fradd Swiftgear", "Gagsprocket", "Gearcutter Cogspinner", "Gnaz Blunderflame", "Herble Baubbletump", "Jinky Twizzlefixxit", "Jubie Gadgetspring", "Knaz Blunderflame", "Kor'gar", "Loslor Rudge", "Mazk Snipeshot", "Namdo Bizzfizzle", "Neal Allen", "Rizz Loosebolt", "Ruppo Zipcoil", "Salazar Bloch", "Sovik", "Wizzle Brassbolts", "Xizzer Fizzbolt", "Yuka Screwspigot", "Zan Shivsproket", "Zorbin Fandazzle" },
+    [10648] = { false, "Adair Gilroy", "Billibub Cogspinner", "Elizabeth Van Talen", "Fradd Swiftgear", "Gagsprocket", "Gearcutter Cogspinner", "Gnaz Blunderflame", "Herble Baubbletump", "Jinky Twizzlefixxit", "Jubie Gadgetspring", "Knaz Blunderflame", "Kor'gar", "Loslor Rudge", "Mazk Snipeshot", "Namdo Bizzfizzle", "Neal Allen", "Rizz Loosebolt", "Ruppo Zipcoil", "Salazar Bloch", "Sovik", "Wizzle Brassbolts", "Xizzer Fizzbolt", "Yuka Screwspigot", "Zan Shivsproket", "Zorbin Fandazzle" },
+    [10938] = { false, "Eaysaa Brightgust", "Jessara Cordell", "Kania", "Kithas", "Leo Sarn", "Lilly", "Nasalanna Windsinger", "Nata Dawnstrider", "Thaddeus Webb", "Tilli Thistlefuzz", "Vaean", "Vance Undergloom" },
+    [10940] = { false, "Eaysaa Brightgust", "Jessara Cordell", "Kania", "Kithas", "Leo Sarn", "Lilly", "Nasalanna Windsinger", "Nata Dawnstrider", "Thaddeus Webb", "Tilli Thistlefuzz", "Vaean" },
+    [11291] = { false, "Asoran", "Bale", "Charity Mipsy", "Chylina", "Corporal Bluth", "Derak Nightfall", "Eleanor Rusk", "Ellandrieth", "Fyldan", "Gloria Femmel", "Graud", "Grawl", "Grawnal", "Gruham Rumdnul", "Haljan Oakheart", "Jawn Highmesa", "Jazzik", "Jessara Cordell", "Kayren Soothallow", "Kelsey Yance", "Kithas", "Lindsay Ashlock", "Mabel Solaj", "Malygen", "Micha Yance", "Naal Mistrunner", "Nata Dawnstrider", "Natheril Raincaller", "Neal Allen", "Nyoma", "Ronald Burch", "Sarah Raycroft", "Terry Palin", "Thaddeus Webb", "Thurman Mullby", "Trak'gen", "Uthok", "Vaean", "Vikki Lonsav", "Xen'to" },
+    [14256] = { false, "Vi'el" },
+    [17034] = { false, "Alaindia", "Alyssa Eva", "Balai Lok'Wein", "Barim Jurgenstaad", "Brother Cassius", "Charys Yserian", "Chepi", "Cyroen", "Darahir", "Dawn Brightstar", "Deneb Walker", "Falkan Armonis", "Ginny Longberry", "Hagatha Moorehead", "Hagrus", "Hannah Akeley", "Horthus", "Hula'mahi", "Jadenvis Seawatcher", "Jaysin Lanyda", "Jeeda", "Keldric Boucher", "Khur Hornstriker", "Kyra Boucher", "Llana", "Magenius", "Marla Bell", "Montarr", "Mystic Yayo'jin", "Owen Vaughn", "Tarhus", "Thomas Mordan", "Thultazor", "Vi'el" },
+    [17035] = { false, "Alaindia", "Alyssa Eva", "Balai Lok'Wein", "Barim Jurgenstaad", "Brother Cassius", "Charys Yserian", "Chepi", "Cyroen", "Darahir", "Dawn Brightstar", "Deneb Walker", "Falkan Armonis", "Ginny Longberry", "Hagatha Moorehead", "Hagrus", "Hannah Akeley", "Horthus", "Hula'mahi", "Jadenvis Seawatcher", "Jaysin Lanyda", "Jeeda", "Keldric Boucher", "Khur Hornstriker", "Kyra Boucher", "Llana", "Magenius", "Marla Bell", "Montarr", "Mystic Yayo'jin", "Owen Vaughn", "Tarhus", "Thomas Mordan", "Thultazor", "Vi'el" },
+    [17194] = { false, "Khole Jinglepocket", "Nardstrum Copperpinch", "Penney Copperpinch", "Seersa Copperpinch", "Wulmort Jinglepocket" },
+    [17196] = { false, "Khole Jinglepocket", "Nardstrum Copperpinch", "Penney Copperpinch", "Seersa Copperpinch", "Wulmort Jinglepocket" },
+    [17202] = { false, "Khole Jinglepocket", "Nardstrum Copperpinch", "Penney Copperpinch", "Seersa Copperpinch", "Wulmort Jinglepocket" },
+    [18567] = { false, "Aedi Thriceforged", "Craftsman Wilhelm", "Elisa Steelhand", "Gharash", "Harggan", "Hraq", "Hurklor", "Jansen Underwood", "Jazzrik", "Kaita Deepforge", "Karen Taylor", "Krinkle Goodsteel", "Master Smith Burninate", "Mika Darby", "Samuel Van Brunt", "Smith Slagtree", "Sumi", "Taur Stonehoof", "Thrawn Boltar", "Thurgrum Deepforge", "Toron Rockhoof", "Vargus" },
+    [247786] = { false, "Eaysaa Brightgust", "Jessara Cordell", "Kania", "Kithas", "Leo Sarn", "Lilly", "Nasalanna Windsinger", "Nata Dawnstrider", "Thaddeus Webb", "Tilli Thistlefuzz", "Vaean" },
+    [272941] = { false, "Aza'bek", "Derak Nightfall", "Derek Odds", "Emrul Riknussun", "Erika Tate", "Fimbo Greasemitz", "Fyldan", "Gloria Femmel", "Kalsey Sanden", "Kelsey Yance", "Micha Yance", "Miranda Turner", "Naal Mistrunner", "Nyoma", "Otho Moji'ko", "Paige", "Ronald Burch", "Tarban Hearthgrain", "Terry Palin", "Wulan", "Xen'to", "Zerril Softbreeze" },
+}
+for key, list in pairs(P.OFA_TRAINERS) do
+    P.NF_TRAINERS = P.NF_TRAINERS or {}
+    P.NF_TRAINERS[key] = P.NF_TRAINERS[key] or {}
+    for _, t in ipairs(list) do table.insert(P.NF_TRAINERS[key], t) end
+end
+P.NF_SRC = P.NF_SRC or {}
+for spell, copper in pairs(P.OFA_FEES) do
+    local s = P.NF_SRC[spell]
+    P.NF_SRC[spell] = (type(s) == "string" and (s .. "\n") or "") .. "k\t" .. copper
+end
+for _, e in ipairs(P.OFA_RANK_COST) do
+    for _, r in ipairs(P.NF_RANKS and P.NF_RANKS[e[1]] or {}) do
+        if r.cap == e[2] and r.cost == nil then r.cost = e[3] end
+    end
+end
+P.NF_REAGENT_VENDORS = P.NF_REAGENT_VENDORS or {}
+for item, v in pairs(P.OFA_REAGENT_VENDORS) do
+    if not P.NF_REAGENT_VENDORS[item] then P.NF_REAGENT_VENDORS[item] = v end
+end

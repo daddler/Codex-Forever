@@ -118,6 +118,7 @@ data/professions_ofa.lua
 data/proftrainers_nf.lua
 # Klassenquests und Klassenlehrer (6.15.0.0, erzeugt); gelesen von modules/classquests.lua.
 data/classquests.lua
+data/classquests_ofa.lua
 data/questspell_map.lua
 # Wildtierkunde des Jaegers (erzeugt); gelesen von modules/beasts.lua.
 data/beasts.lua
@@ -174,6 +175,7 @@ data/fieldjournal.lua
 data/reprewards.lua
 data/talenttrees.lua
 data/towns.lua
+data/maps_ofa.lua
 data/debuffids_nf.lua
 data/lockboxes.lua
 data/questevents.lua
