@@ -6330,6 +6330,35 @@ do
         _G.C_Timer.After = oldAfter
         assert(h.engine and not A.stats.autoFallback, "HoT-Feld erklaert den Container fuer kaputt")
         A._ResetVerdict()
+        -- 1.0.8.4 (Meldung: "HoTs im Gruppenfenster gehen wieder nicht"): ein
+        -- Feld, das bestimmte Auren mit Absicht ausblendet (Aufspueren,
+        -- GF.NOISE), darf nicht "kaputt" heissen, wenn nur solche da sind.
+        local oAuras = _G.C_UnitAuras
+        _G.C_UnitAuras = { GetAuraDataByIndex = function(_, i)
+            if i <= 2 then return { spellId = 5225, icon = 1, duration = 0, expirationTime = 0, auraInstanceID = i } end
+        end }
+        local nb = A.Create(UIParent, { filter = "HELPFUL", max = 4, size = 14, spacing = 1, exclude = { [5225] = true } })
+        nb:SetPoint("BOTTOMLEFT", UIParent, "TOPLEFT", 0, 3)
+        _G.C_Timer.After = function(_, fn) fn() end
+        nb:SetUnit("target")
+        nb:Refresh()
+        _G.C_Timer.After = oldAfter
+        assert(nb.engine and not A.stats.autoFallback, "nur ausgeblendete Auren: Container fuer kaputt erklaert")
+        -- Und ist das allgemeine Urteil doch "kaputt": HoT-Felder bleiben beim
+        -- Container (selbst lesen hiesse im Kampf: leer).
+        _G.C_UnitAuras = { GetAuraDataByIndex = function(_, i)
+            if i <= 3 then return { spellId = 1, icon = 1, duration = 0, expirationTime = 0, auraInstanceID = i } end
+        end }
+        _G.C_Timer.After = function(_, fn) fn() end
+        o:Refresh()
+        _G.C_Timer.After = oldAfter
+        assert(A.stats.autoFallback and not o.engine, "Rueckfall fuer gewoehnliche Felder fehlt")
+        local h2 = A.Create(UIParent, { filter = "HELPFUL|PLAYER", max = 1, size = 14, spacing = 1, spells = { [774] = true } })
+        h.frame:Show()
+        h:Build()
+        assert(h2.engine and h.engine, "HoT-Feld folgt dem allgemeinen Rueckfall - im Kampf leer")
+        _G.C_UnitAuras = oAuras
+        A._ResetVerdict()
     end)
     Check(ok, "Auren: Weg umschaltbar, Container in voller Groesse, /wcui auren gibt Auskunft"
         .. (ok and "" or (": " .. tostring(err))))

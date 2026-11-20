@@ -104,7 +104,12 @@ function A._ResetEngineProbe() engine = nil end
 
 -- Wie viele Auren nennt das Spiel fuer diese Einheit? Nur gezaehlt, kein
 -- Feld gelesen - so beruehrt es keinen geheimen Wert. nil = nicht lesbar.
-local function ApiCount(unit, filter)
+-- exclude (1.0.8.4): Auren, die das Feld mit Absicht nicht zeigt (Aufspueren
+-- u. ae., GF.NOISE), zaehlen nicht mit - sonst hiess "Spiel nennt 1, gezeigt
+-- 0" faelschlich "Container kaputt", und ALLE Felder lasen ab da selbst (im
+-- Kampf geheim, die HoT-Felder blieben leer). Eine Aura, deren Nummer nicht
+-- lesbar ist, zaehlt nicht: dann kein Urteil.
+local function ApiCount(unit, filter, exclude)
     local cu = _G.C_UnitAuras
     if not (cu and cu.GetAuraDataByIndex) then return nil, "keine Schnittstelle" end
     local n = 0
@@ -112,7 +117,12 @@ local function ApiCount(unit, filter)
         for i = 1, 40 do
             local a = cu.GetAuraDataByIndex(unit, i, filter)
             if type(a) == "nil" then break end
-            n = n + 1
+            if exclude then
+                local sid = K.Plain(a.spellId)
+                if type(sid) == "number" and not exclude[sid] then n = n + 1 end
+            else
+                n = n + 1
+            end
         end
     end)
     if not ok then
@@ -476,7 +486,11 @@ function Obj:Build()
         end
     end
     self.buttons, self.events, self.ticker = nil, nil, nil
-    self.engine = UseEngine() and not self.legacy
+    -- 1.0.8.4: Felder mit Zauberliste (HoT-Felder) folgen dem allgemeinen
+    -- Urteil "Container kaputt" nicht - selbst lesen hiesse fuer sie: im
+    -- Kampf leer. Sie pruefen sich selbst (Obj:SpellCheck -> self.legacy).
+    local spellsOwn = self.opts and self.opts.spells and A.mode ~= "legacy" and A.EngineAvailable()
+    self.engine = (UseEngine() or spellsOwn) and not self.legacy and true or false
     if self.engine then
         local ok, c = pcall(BuildEngine, self)
         if not (ok and c) then
@@ -620,7 +634,7 @@ function Obj:AutoCheck()
         pending[self] = nil
         if A.mode ~= "auto" or verdict or not self.engine or not self.unit then return end
         if not self.frame:IsVisible() then return end
-        local n = ApiCount(self.unit, self.opts.filter)
+        local n = ApiCount(self.unit, self.opts.filter, self.opts.exclude)
         if type(n) ~= "number" or n == 0 then return end
         local _, shown = Visible(self)
         if type(shown) ~= "number" then return end   -- nicht messbar: kein Urteil
