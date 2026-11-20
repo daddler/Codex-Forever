@@ -1730,7 +1730,8 @@ an Immersion/DialogueUI, eigener Code und Entwurf:
 - **Titel** des NPCs („<Gastwirtin>“) aus der zweiten Tooltipzeile
   (`DL.NpcRole`), nie eine Zeile mit Stufe.
 - **Klang** (`dlgSound`, an): Klänge des Spiels über `SOUNDKIT`.
-- **Bühne** (`dlgStage`, ab Werk aus – neues Element): zwei Balken ohne
+- **Bühne** (`dlgStage`, ab Werk **an** – Entscheidung des Besitzers: alles
+  auf der Seite „Gespräche“ an; wer abschaltet, behält aus): zwei Balken ohne
   Elternteil, weich herein/hinaus, sofort weg im Kampf.
 Einstellungsseite: Szene oben, Kamera-Feinheiten unter „Erweitert“
 (höchstens 15 sichtbar).

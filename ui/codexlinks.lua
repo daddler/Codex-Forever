@@ -27,6 +27,9 @@ local K  = WeintCodex.UIKit
 local KEY = "comfort"
 
 CL.H = 22
+CL.TITLE_H = 20       -- Knopf in der Titelleiste (where = "title")
+CL.TITLE_GAP = 6      -- Abstand zum Kreuz
+CL.TITLE_ICON = 14
 
 local function Plain(v) return K.Plain(v) end
 
@@ -80,9 +83,13 @@ end
 -- Welche Fenster wohin
 --------------------------------------------------
 -- host: Name des Fensters; label(): Beschriftung; go(): oeffnen;
--- where: "below" (unter dem Fenster, rechts) oder "above".
+-- where: "below" (unter dem Fenster, rechts), "belowleft", "above" oder
+-- "title" (Titelleiste neben dem Kreuz, in Gold mit Logo).
 CL.LINKS = {
-    { host = "ProfessionsFrame", label = function() return "Codex: Berufe" end,
+    -- 1.0.8.0 (Rueckmeldung: "Der Button unten beim Berufefenster ist zu
+    -- unscheinbar. Lieber oben im Reiter und besser zu sehen"): in der
+    -- Titelleiste links neben dem Kreuz, in Gold mit Logo (where = "title").
+    { host = "ProfessionsFrame", where = "title", label = function() return "Codex: Berufe" end,
       tip = "Rezepte nach deiner Fertigkeit, Lehrer und Herkunft der Rezepte – für den offenen Beruf.",
       go = function()
           local key = CL.Profession()
@@ -91,7 +98,7 @@ CL.LINKS = {
               if key and PRO and PRO.Select then PRO.Select(key) end
           end)
       end },
-    { host = "TradeSkillFrame", label = function() return "Codex: Berufe" end,
+    { host = "TradeSkillFrame", where = "title", label = function() return "Codex: Berufe" end,
       tip = "Rezepte nach deiner Fertigkeit, Lehrer und Herkunft der Rezepte – für den offenen Beruf.",
       go = function()
           local key = CL.Profession()
@@ -200,15 +207,42 @@ CL.buttons = {}   -- [Eintrag aus CL.LINKS] = Knopf (ein Fenster kann mehrere tr
 
 function CL.On() return K.IsActive(KEY) and K.Get(KEY, "codexLinks") ~= false end
 
-local function Place(b, host, where)
+function CL.Place(b, host, where)
     b:ClearAllPoints()
-    if where == "above" then
+    if where == "title" then
+        -- Links neben dem Kreuz des Fensters, auf seiner Mitte; ohne Kreuz
+        -- oben rechts in der Titelleiste.
+        local close = type(host.CloseButton) == "table" and host.CloseButton or nil
+        if close and close.GetObjectType then
+            b:SetPoint("RIGHT", close, "LEFT", -CL.TITLE_GAP, 0)
+        else
+            b:SetPoint("TOPRIGHT", host, "TOPRIGHT", -34, -4)
+        end
+    elseif where == "above" then
         b:SetPoint("BOTTOMRIGHT", host, "TOPRIGHT", 0, 4)
     elseif where == "belowleft" then
         b:SetPoint("TOPLEFT", host, "BOTTOMLEFT", 0, -4)
     else
         b:SetPoint("TOPRIGHT", host, "BOTTOMRIGHT", 0, -4)
     end
+end
+
+-- Gold wie das Fenster (GameColors.frameAccent, Stil S.CALM): Rand und
+-- Schrift in Gold, das Logo davor - in der Titelleiste soll der Knopf
+-- auffallen, nicht wie ein Teil des Fensters aussehen.
+function CL.Gold(b)
+    local g = WeintCodex.GameColors.frameAccent
+    if WeintCodex.DrawBorder then WeintCodex.DrawBorder(b, g[1], g[2], g[3], 0.85, 1) end
+    b._label:SetTextColor(g[1], g[2], g[3], 1)
+    b._label:ClearAllPoints()
+    b._label:SetPoint("CENTER", b, "CENTER", (CL.TITLE_ICON + 4) / 2, 0)
+    local icon = b:CreateTexture(nil, "OVERLAY")
+    icon:SetSize(CL.TITLE_ICON, CL.TITLE_ICON)
+    icon:SetTexture(K.MEDIA .. "logo_32")
+    icon:SetPoint("RIGHT", b._label, "LEFT", -4, 0)
+    b._icon = icon
+    b._gold = true
+    return b
 end
 
 function CL.Refresh(link)
@@ -230,10 +264,13 @@ function CL.Attach(link)
     local host = _G[link.host]
     if type(host) ~= "table" or not host.HookScript then return nil end
     if host.IsForbidden and host:IsForbidden() then return nil end
-    local b = WeintCodex.CreateButton(UIParent, { text = link.label(), kind = "secondary", height = CL.H, size = 11,
+    local title = link.where == "title"
+    local b = WeintCodex.CreateButton(UIParent, { text = link.label(), kind = "secondary",
+        height = title and CL.TITLE_H or CL.H, size = 11, padding = title and (36 + CL.TITLE_ICON) or nil,
         backdrop = "surface2", tooltip = link.tip, onClick = function() link.go() end })
+    if title then CL.Gold(b) end
     b:SetText(link.label())
-    Place(b, host, link.where)
+    CL.Place(b, host, link.where)
     b:Hide()
     CL.buttons[link] = b
     host:HookScript("OnShow", function() CL.Refresh(link) end)

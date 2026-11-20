@@ -2682,8 +2682,17 @@ do
         DL.win:GetScript("OnUpdate")(DL.win, 0.1)
         assert(not DL.talk.on, "Bueste spricht ewig")
         DL.Close()
-        -- Buehne: ab Werk aus; an faehrt sie herein, im Kampf sofort weg.
-        assert(DL.DEFAULTS.dlgStage == false, "neues Element ab Werk an")
+        -- Ab Werk ist alles an, was die Seite "Gespraeche" zeigt (Wunsch:
+        -- "Alle, die Gespraeche im Codex-Stil aktiviert haben, sollen die
+        -- Optionen aktiviert haben") - auch die Buehne. Wer etwas abgeschaltet
+        -- hat, behaelt es: ein Wert ungleich dem Standard bleibt gespeichert.
+        for _, k in ipairs({ "dlgOn", "dlgKeys", "dlgModel", "dlgPages", "dlgType", "dlgStage",
+                             "dlgFade", "dlgSound", "dlgCam", "dlgFocus" }) do
+            assert(DL.DEFAULTS[k] == true, "ab Werk aus: " .. k)
+        end
+        K.Set("comfort", "dlgStage", false)
+        assert(K.Get("comfort", "dlgStage") == false, "abgeschaltete Buehne kam zurueck")
+        -- An faehrt sie herein, im Kampf sofort weg.
         K.Set("comfort", "dlgStage", true)
         stub.FireEvent("GOSSIP_SHOW")
         local run = DL.stageRun:GetScript("OnUpdate")
@@ -26457,6 +26466,29 @@ do
         PT.bookQuery = (a.name or ""):sub(1, 6)
         PT.Draw("gilde")
         assert(PT.lastSearch and PT.lastSearch.rows >= 1, "Übersichtssuche zeichnet nichts")
+        -- Tippen: die Seite wird beim Neuzeichnen nie versteckt (sonst verliert
+        -- das Feld den Fokus), und beim Zurueckholen bleibt nichts markiert.
+        local eb = PT.bookSearch
+        local pg = eb:GetParent()
+        while pg and pg:GetParent() ~= WeintCodex.ContentPanel do pg = pg:GetParent() end
+        assert(pg, "Seite der Berufe nicht gefunden")
+        local hid, oHide = 0, pg.Hide
+        pg.Hide = function(self, ...) hid = hid + 1 return oHide(self, ...) end
+        local cp = WeintCodex.ContentPanel
+        local other = CreateFrame("Frame", nil, cp)
+        local oKids = cp.GetChildren
+        cp.GetChildren = function() return pg, other end   -- die Attrappe fuehrt keine Kinder
+        eb:SetText("ab")
+        eb:GetScript("OnTextChanged")(eb, true)
+        cp.GetChildren, pg.Hide = oKids, oHide
+        assert(not (other.IsShown and other:IsShown() == true), "andere Seite blieb sichtbar")
+        assert(hid == 0, "Seite beim Tippen kurz versteckt - Feld verliert den Fokus")
+        local mark
+        local fake = { HasFocus = function() return false end, SetFocus = function() end,
+                       HighlightText = function(_, a1, b1) mark = { a1, b1 } end,
+                       SetCursorPosition = function() end, GetText = function() return "abc" end }
+        PT.KeepTyping(fake)
+        assert(mark and mark[1] == 0 and mark[2] == 0, "Text bleibt markiert - naechster Buchstabe ersetzt ihn")
         PT.bookQuery = ""
         g.Testa = keep
     end)
@@ -27554,6 +27586,21 @@ do
         WeintCodex.Navigation.GoToTab = oG
         assert(went == "berufe", "Codex nicht auf dem Bereich geoeffnet")
         WeintCodex.MainFrame:Hide()
+        -- Berufsfenster: Knopf oben in der Titelleiste neben dem Kreuz, in Gold.
+        local prof
+        for _, l in ipairs(CL.LINKS) do if l.host == "ProfessionsFrame" then prof = l end end
+        assert(prof and prof.where == "title", "Berufe-Knopf nicht in der Titelleiste")
+        local th = CreateFrame("Frame", "WeintCodexTestTitleHost", UIParent)
+        th.CloseButton = CreateFrame("Button", nil, th)
+        local tl = { host = "WeintCodexTestTitleHost", where = "title", label = function() return "Codex: Berufe" end,
+                     tip = "x", go = function() end }
+        local tb = CL.Attach(tl)
+        local pt
+        local probe = { ClearAllPoints = function() end, SetPoint = function(_, ...) pt = { ... } end }
+        CL.Place(probe, th, "title")
+        assert(pt and pt[1] == "RIGHT" and pt[2] == th.CloseButton and pt[3] == "LEFT", "nicht neben dem Kreuz")
+        assert(tb._gold and tb._icon, "Titelknopf ohne Gold und Logo")
+        assert(tb:GetHeight() == CL.TITLE_H, "Titelknopf zu hoch fuer die Leiste")
     end)
     Check(ok, "Verweise zu Codex: Knopf am Fenster, Bereich oeffnet" .. (ok and "" or (": " .. tostring(err))))
 end

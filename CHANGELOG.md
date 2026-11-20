@@ -16,7 +16,8 @@ nicht zusammen.
   Animation nach Satzende, Rückfall aufs Bild), Sprechabschnitte
   (`DL.Paginate`, `DL.Advance`/`DL.Back`), Erzählung in `<…>` gedämpft,
   Antworten kursiv, Titel des NPCs, Knöpfe in der Sprache des Spiels,
-  Klänge des Spiels, Bühne mit Kinobalken (`dlgStage`, ab Werk aus).
+  Klänge des Spiels, Bühne mit Kinobalken (`dlgStage`, ab Werk an – wie alles auf der Seite;
+  wer etwas abgeschaltet hat, behält es).
   Kamera-Feinheiten unter „Erweitert“.
 - Wildtierkunde: Spawnkarte im Detailbereich (`BL.MapBlock`, eigener
   Inspector-Block): `BP.MapWidget`/`BP.PaintMap` aus der Bücherseite, Punkte

@@ -1352,6 +1352,15 @@ function PT.OpenBook(b)
     PT.Draw("gilde")
 end
 
+-- Weiter tippen koennen: Fokus nur zurueckholen, wenn er fehlt, dann die
+-- Markierung der Vorlage aufheben und den Zeiger ans Ende setzen.
+function PT.KeepTyping(eb)
+    local has = eb.HasFocus and eb:HasFocus() == true
+    if not has and eb.SetFocus then eb:SetFocus() end
+    if eb.HighlightText then pcall(eb.HighlightText, eb, 0, 0) end
+    if eb.SetCursorPosition then pcall(eb.SetCursorPosition, eb, #(eb:GetText() or "")) end
+end
+
 local function SearchBox(f)
     if bookSearch then return bookSearch end
     local eb = CreateFrame("EditBox", nil, f.Card, "InputBoxTemplate")
@@ -1365,8 +1374,7 @@ local function SearchBox(f)
         -- weg"): PT.Draw versteckt kurz die ganze Seite - ein verstecktes
         -- Feld verliert den Fokus. Danach zurueck ins Feld, Zeiger ans Ende.
         PT.Draw("gilde")
-        if self.SetFocus then self:SetFocus() end
-        if self.SetCursorPosition then pcall(self.SetCursorPosition, self, #(self:GetText() or "")) end
+        PT.KeepTyping(self)
     end)
     eb:SetScript("OnEscapePressed", function(self) self:ClearFocus() end)
     bookSearch = eb
@@ -2155,7 +2163,13 @@ function PT.Draw(key)
     PT.view = key
     PRO.view = key
     local cp = WeintCodex.ContentPanel
-    for _, child in pairs({ cp:GetChildren() }) do child:Hide() end
+    -- 1.0.8.0 (Meldung: "im Suchfeld der Gilde ersetzt jeder neue Buchstabe
+    -- den alten"): die eigene Seite nicht kurz verstecken - ein verstecktes
+    -- Suchfeld verliert den Fokus, und beim Zurueckholen markiert die Vorlage
+    -- (InputBoxTemplate) den ganzen Text; der naechste Buchstabe ersetzte ihn.
+    for _, child in pairs({ cp:GetChildren() }) do
+        if child ~= page then child:Hide() end
+    end
     local f = BuildPage()
     f:Show()
     local label = key

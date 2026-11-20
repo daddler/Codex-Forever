@@ -67,7 +67,9 @@ DL.DEFAULTS = {
     dlgModel = true,     -- sprechende Bueste (3D) statt Bild
     dlgPages = true,     -- Text in Sprechabschnitten
     dlgSound = true,     -- leises Blaettern
-    dlgStage = false,    -- Kinobalken oben und unten (neues Element: ab Werk aus)
+    dlgStage = true,     -- Kinobalken oben und unten. Ab Werk an (Wunsch des
+                         -- Besitzers: alles auf der Seite an); wer abschaltet,
+                         -- behaelt aus - K.Set speichert nur Abweichungen.
 }
 DL.W = 560
 DL.TEXT_SIZE = 17        -- Erzaehltext (6.23.4.0: groesser, Serife)
