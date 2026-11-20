@@ -63,6 +63,9 @@ function PRO.Recipes(key)
     -- 1.0.5.54: und was nur Naowh Forever kennt (data/professions_nf.lua).
     local nfAdd = P and P.NF_ADD and P.NF_ADD[key]
     if nfAdd then raw = (raw or "") .. "\n" .. nfAdd end
+    -- 1.0.8.0: und was nur OneForAll kennt (data/professions_ofa.lua).
+    local ofaAdd = P and P.OFA_ADD and P.OFA_ADD[key]
+    if ofaAdd then raw = (raw or "") .. "\n" .. ofaAdd end
     local out = {}
     for line in (raw or ""):gmatch("[^\n]+") do
         local head, reag, name = line:match("^([^|]*)|([^|]*)|(.*)$")
@@ -92,6 +95,20 @@ function PRO.Recipes(key)
                 if nf.t == 0 then r.trainer = false elseif nf.t == 1 then r.trainer = true end
                 if r.learn == nil and nf.l then r.learn = nf.l end
             end
+            -- 1.0.8.0 (Abgleich mit OneForAll, Forever-Client taeglich
+            -- geprueft): Lernstufe und Farben, wo sie anders sind - vor allem
+            -- die Lernstufe, die bisher oft gleich "orange" stand (Kupfer-
+            -- streitkolben 55 statt 15). Der neueste Stand gilt.
+            local of = r.spell and P.OFA_FIX and P.OFA_FIX[r.spell]
+            if of then
+                local l, y, g, gr = of:match("^(%S+) (%d+) (%d+) (%d+)$")
+                if l then
+                    if l ~= "-" then r.learn = tonumber(l) end
+                    r.yellow, r.green, r.grey = tonumber(y), tonumber(g), tonumber(gr)
+                end
+            end
+            local oreag = r.spell and P.OFA_REAG and P.OFA_REAG[r.spell]
+            if oreag then reag = oreag end
             for id, n in reag:gmatch("(%d+):(%d+)") do
                 r.reagents[#r.reagents + 1] = { tonumber(id), tonumber(n) }
             end

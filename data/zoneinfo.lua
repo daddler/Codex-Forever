@@ -66,6 +66,8 @@ WeintCodex.ZoneInfoData = {
     [1458] = { fish = "1", kind = "classic" },
     [2482] = { lvl = { 60, 60 }, kind = "community" },
     [2521] = { lvl = { 1, 12 }, kind = "community" },
+    -- 1.0.8.0: Zephras Isle hat im Client zwei Kartennummern (Abgleich mit OneForAll).
+    [2665] = { lvl = { 1, 12 }, kind = "community" },
     [2548] = { lvl = { 35, 45 }, kind = "community" },
     [2652] = { lvl = { 35, 45 }, kind = "community" },
 }

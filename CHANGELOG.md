@@ -56,6 +56,14 @@ nicht zusammen.
 - `data/dungeonkeys.lua` (Daten aus OneForAll, GPL – nur Daten, Sätze eigen,
   `community`), Abschnitt „Schlüssel“ auf der Dungeonseite.
 - Einheitenrahmen: `classBright`.
+- Abgleich mit OneForAll (`.github/scripts/import_oneforall.lua`, nur Daten):
+  `data/professions_ofa.lua` – 425 Lern-/Farbstufen (`OFA_FIX`, vor allem
+  Lernstufe ≠ orange), 14 Reagenzien (`OFA_REAG`), 1 Rezept (`OFA_ADD`);
+  `data/zonegather.lua` – Fische (Feldbuch, mit Anteil), Kräuter und Erze
+  (Fundorte QuestieDB Forever) je Gebiet, auf der Gebietstafel (`ZI.Gather`,
+  `ZI.Names`, bis 10 Zeilen). Zephras Isle zweite Kartennummer 2665.
+  Lehrerzauber verglichen: keine Stufe anders, Unterschiede sind Talente,
+  Start-/Volkszauber und Buchränge – nicht übernommen.
 - `ui/petstable.lua`: `PetStableFrame` in Gold (W.WINDOWS + CalmParts,
   Bilder gemessen mit `/wcui fenster`).
 

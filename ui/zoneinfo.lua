@@ -51,7 +51,9 @@ function ZI.Lines(mapID, name, out)
     out = out or {}
     for i = #out, 1, -1 do out[i] = nil end
     local d = ZI.Info(mapID)
-    if not d then return out end
+    local g = ZI.Gather(mapID)
+    if not d and not g then return out end
+    d = d or { kind = "community" }
     local me = _G.UnitLevel and K.Plain(_G.UnitLevel("player"))
     local head = name or "?"
     if d.lvl then
@@ -66,8 +68,50 @@ function ZI.Lines(mapID, name, out)
     end
     if d.herbs then out[#out + 1] = { "Kräuter: " .. d.herbs, C.textNormal } end
     if d.ore then out[#out + 1] = { "Erz: " .. d.ore, C.textNormal } end
-    out[#out + 1] = { ZI.KIND[d.kind] or ZI.KIND.community, C.textMuted }
+    if d.lvl or d.fish or d.herbs or d.ore then
+        out[#out + 1] = { ZI.KIND[d.kind] or ZI.KIND.community, C.textMuted }
+    end
+    -- 1.0.8.0: was im Spiel gemeldet ist (data/zonegather.lua) - Namen vom
+    -- Client; ein noch nicht geladener Name fehlt, bis er da ist.
+    if g then
+        local any = false
+        local fish = ZI.Names(g.fish, true)
+        if fish then out[#out + 1] = { "Fische: " .. fish, C.textNormal } any = true end
+        local herbs = ZI.Names(g.herbs)
+        if herbs then out[#out + 1] = { "Kräuter: " .. herbs, C.textNormal } any = true end
+        local ore = ZI.Names(g.ore)
+        if ore then out[#out + 1] = { "Erz: " .. ore, C.textNormal } any = true end
+        if any then out[#out + 1] = { "Im Spiel gemeldet – je Sorte die ergiebigsten Gebiete", C.textMuted } end
+    end
     return out
+end
+
+-- Gemeldete Vorkommen eines Gebiets (oder nil).
+function ZI.Gather(mapID)
+    local G = WeintCodex.ZoneGather
+    return type(mapID) == "number" and G and G[mapID] or nil
+end
+
+-- Namen einer Liste von Gegenstaenden (mit Anteil: Paare Gegenstand,
+-- Prozent). Hoechstens ZI.NAMES_MAX; nil, wenn keiner bekannt ist.
+ZI.NAMES_MAX = 6
+ZI.LINES_MAX = 10
+function ZI.Names(list, shares)
+    if type(list) ~= "table" or #list == 0 then return nil end
+    local ci = _G.C_Item
+    local parts, step = {}, shares and 2 or 1
+    for i = 1, #list, step do
+        if #parts >= ZI.NAMES_MAX then break end
+        local id = list[i]
+        local n = ci and ci.GetItemNameByID and K.Plain(ci.GetItemNameByID(id))
+        if type(n) == "string" and n ~= "" then
+            local pct = shares and tonumber(list[i + 1])
+            parts[#parts + 1] = (pct and pct > 0) and string.format("%s (%d %%)", n, math.floor(pct + 0.5)) or n
+        elseif ci and ci.RequestLoadItemDataByID then
+            pcall(ci.RequestLoadItemDataByID, id)
+        end
+    end
+    return #parts > 0 and table.concat(parts, ", ") or nil
 end
 
 -- 6.26.6.0 (Beta-Test: "stoert von der Platzierung, wenn gerade dort eine
@@ -99,7 +143,8 @@ local function Build(parent)
     local s = C.surface1 or C.surface2
     bg:SetColorTexture(s[1], s[2], s[3], 0.82)
     texts = {}
-    for i = 1, 6 do
+    -- 1.0.8.0: bis zu zehn Zeilen (dazu die im Spiel gemeldeten Vorkommen).
+    for i = 1, ZI.LINES_MAX do
         local fs = K.NewText(panel, i == 1 and 12 or 10)
         fs:SetJustifyH("LEFT")
         fs:SetWidth(ZI.WIDTH - 16)

@@ -8361,6 +8361,10 @@ do
         local lines = select(2, P.RAW.tailoring:gsub("\n", ""))
         -- 1.0.5.2: dazu die Rezepte aus data/professions_su.lua.
         if P.SU_RAW and P.SU_RAW.tailoring then lines = lines + select(2, P.SU_RAW.tailoring:gsub("\n", "")) end
+        -- 1.0.8.0: und aus data/professions_ofa.lua.
+        if P.OFA_ADD and P.OFA_ADD.tailoring then
+            for l in P.OFA_ADD.tailoring:gmatch("[^\n]+") do lines = lines + 1 end
+        end
         assert(#tail == lines and #tail > 300, "Schneiderei: " .. #tail .. " Rezepte, " .. lines .. " Zeilen")
         local withReag = 0
         for _, r in ipairs(tail) do if #r.reagents > 0 then withReag = withReag + 1 end end
@@ -27003,6 +27007,29 @@ do
         assert(K.Layout("uf_player").y == base and K.ConsoleBar(4) == nil, "Grundplatz verloren")
     end)
     Check(ok, "Design Konsole" .. (ok and "" or (": " .. tostring(err))))
+end
+
+-- 1.0.8.0: Abgleich mit OneForAll - Lernstufen, Reagenzien, Vorkommen je Gebiet.
+do
+    local G = _G
+    local ok, err = pcall(function()
+        local PRO, P = WeintCodex.Professions, WeintCodex.ProfessionData
+        assert(P.OFA_FIX and P.OFA_REAG and P.OFA_ADD, "Abgleich fehlt")
+        local mace
+        for _, r in ipairs(PRO.Recipes("blacksmithing")) do if r.spell == 2737 then mace = r end end
+        assert(mace and mace.learn == 15 and mace.yellow == 55, "Kupferstreitkolben nicht ab 15 (" .. tostring(mace and mace.learn) .. ")")
+        local ZI = WeintCodex.UIZoneInfo
+        assert(ZI.Gather(2521) and ZI.Gather(2521).herbs, "Zephras Isle ohne Meldung")
+        local oC = G.C_Item
+        G.C_Item = { GetItemNameByID = function(id) return id == 2447 and "Friedensblume" or nil end, RequestLoadItemDataByID = function() end }
+        local lines = ZI.Lines(2521, "Zephras Isle", {})
+        local found = false
+        for _, l in ipairs(lines) do if l[1]:find("Friedensblume", 1, true) then found = true end end
+        assert(found, "gemeldetes Kraut nicht auf der Tafel")
+        G.C_Item = oC
+        assert(ZI.LINES_MAX >= #lines, "Tafel zu klein fuer " .. #lines .. " Zeilen")
+    end)
+    Check(ok, "Abgleich OneForAll: Lernstufen, Vorkommen je Gebiet" .. (ok and "" or (": " .. tostring(err))))
 end
 
 -- 1.0.8.0: Bequem - Quests, Einladen, Duelle, Entzaubern, Flugkarte; Dungeon-Schluessel.

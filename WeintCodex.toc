@@ -113,6 +113,7 @@ data/professions.lua
 data/professions_su.lua
 data/recipe_sources.lua
 data/professions_nf.lua
+data/professions_ofa.lua
 data/proftrainers_nf.lua
 # Klassenquests und Klassenlehrer (6.15.0.0, erzeugt); gelesen von modules/classquests.lua.
 data/classquests.lua
@@ -176,6 +177,7 @@ data/lockboxes.lua
 data/questevents.lua
 # Stufen und Sammelberufe je Gebiet (6.26.5.0); gelesen von ui/zoneinfo.lua.
 data/zoneinfo.lua
+data/zonegather.lua
 
 #
 # data/roles.lua steht NACH data/specs.lua: es liest die Talentbaeume,

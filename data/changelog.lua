@@ -40,6 +40,8 @@ WeintCodex_ChangelogData = {
             "|cff7C6CFFQuests der Gruppe im Dungeon|r – welche Quests des Dungeons du hast und wer sie noch braucht, mit „Teilen“ (Seite Bequem, auch /wcui teilen).",
             "|cff7C6CFFSchlüssel der Dungeons|r – auf der Dungeonseite, was du zum Betreten brauchst oder was eine Abkürzung öffnet, mit „hast du“.",
             "|cff7C6CFFHellere Klassenfarben|r – auf Wunsch an Spieler- und Zielrahmen (Einheitenrahmen → Allgemein).",
+            "|cff7C6CFFBerufe: richtige Lernstufen|r – über 400 Rezepte lassen sich früher lernen, als Codex bisher annahm (Kupferstreitkolben ab 15, nicht erst ab 55). Planer und Skillweg rechnen jetzt damit; dazu neue Farben und Reagenzien, wo der Forever-Client anders sagt.",
+            "|cff7C6CFFWeltkarte: im Spiel gemeldet|r – die Gebietstafel nennt zusätzlich, welche Fische (mit Anteil am Fang), Kräuter und Erze im Spiel gemeldet sind – auch für Zephras Isle.",
             "|cff7C6CFFStall in Gold|r – das Stallfenster des Jägers trägt jetzt das Codex-Design: flache Plätze, dunkle Fläche, Rahmen in Gold.",
         },
     },
