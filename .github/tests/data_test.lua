@@ -1329,6 +1329,13 @@ do
     Check(n >= 150, "Bossnummern: " .. n .. " Bosse mit NPC-Nummer")
     Check(#bad == 0, "Bossnummern zeigen auf Bosse des Kompendiums" .. (#bad > 0 and (": " .. table.concat(bad, ", ")) or ""))
     Check(#twice == 0, "Bossnummern: jeder Boss einmal" .. (#twice > 0 and (": " .. table.concat(twice, ", ")) or ""))
+    -- 1.0.8.0: weitere Gegner eines Kampfes zeigen auf einen Boss des
+    -- Kompendiums und nie auf eine Nummer, die schon ein Boss traegt.
+    local pbad = {}
+    for npc, e in pairs(WeintCodex.BossNpcParts or {}) do
+        if known[tostring(e[1]) .. "/" .. tostring(e[2])] == nil or (WeintCodex.BossNpcs or {})[npc] then pbad[#pbad + 1] = npc end
+    end
+    Check(#pbad == 0, "Teile von Kaempfen zeigen auf Bosse des Kompendiums" .. (#pbad > 0 and (": " .. table.concat(pbad, ", ")) or ""))
 end
 
 -- 1.10.14.0: gesprochene Zaehlung 1..5, je eine Ogg mit nur einer Tonspur.

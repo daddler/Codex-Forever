@@ -25544,6 +25544,46 @@ do
         assert(not BM.CodexScan() and not BM.fight, "Nicht-Boss als Boss erkannt")
         mob.name, mob.guid = "Felsspitzoger", "Creature-0-1-229-1-9583-0000ABCF"
         assert(not BM.CodexScan(), "Trash als Boss erkannt")
+        -- 1.0.8.0: Nummern aus dem Abgleich mit OneForAll (data/boss_npcs_ofa.lua)
+        local BN = WeintCodex.BossNpcs
+        local PT = WeintCodex.BossNpcParts or {}
+        assert(PT[642] and PT[642][2] == "sneeds_shredder", "Sneeds Schredder ohne Nummer")
+        assert(PT[9035] and PT[9035][2] == "the_seven" and PT[9039][2] == "the_seven", "Die Sieben: Teile fehlen")
+        assert(PT[10813] and PT[10813][2] == "balnazzar" and BN[11032] and BN[255699], "Balnazzar/Malor/Hauptmann fehlen")
+        assert(BN[9034] and BN[9034][2] == "the_seven" and BN[643], "Bestand ueberschrieben")
+        mob.name, mob.guid = "Schredder", "Creature-0-1-36-1-642-0000AAAA"
+        assert(BM.CodexScan() and BM.fight.codex.boss == "sneeds_shredder", "Sneeds Schredder nicht erkannt")
+        -- Zauber des Bosses ohne Ziel: ueber die Plakette; Teil desselben
+        -- Kampfes ueber die Nummer; dieselbe Einheit als Ziel nur einmal.
+        local plate = { guid = "Creature-0-1-36-1-643-0000AAAB" }
+        local oUE, oUG, oUIU = _G.UnitExists, _G.UnitGUID, _G.UnitIsUnit
+        _G.UnitExists = function(u) return u == "target" or u == "nameplate3" end
+        _G.UnitGUID = function(u) return (u == "target" and mob.guid) or (u == "nameplate3" and plate.guid) or nil end
+        _G.UnitIsUnit = function() return false end
+        assert(BM.IsFightUnit("nameplate3") and BM.CastUnit("nameplate3"), "Sneed (Teil des Kampfes) ueber Plakette nicht gezaehlt")
+        _G.UnitIsUnit = function(a, b) return a == "nameplate3" and b == "target" end
+        assert(not BM.CastUnit("nameplate3"), "Plakette = Ziel doppelt gezaehlt")
+        plate.guid = "Creature-0-1-36-1-9583-0000AAAC"
+        _G.UnitIsUnit = function() return false end
+        assert(not BM.IsFightUnit("nameplate3") and not BM.CastUnit("nameplate3"), "fremder Gegner als Boss gezaehlt")
+        assert(not BM.CastUnit("party1target"), "Ziel der Gruppe als Zauberquelle")
+        _G.UnitExists, _G.UnitGUID, _G.UnitIsUnit = oUE, oUG, oUIU
+        BM.fight = nil
+        -- Boss nur im Ziel eines Mitspielers (wie DBM)
+        local oIR = _G.IsInRaid
+        _G.IsInRaid = function() return false end
+        _G.UnitExists = function(u) return u == "party2target" end
+        _G.UnitAffectingCombat = function(u) return u == "party2target" end
+        _G.UnitGUID = function(u) return u == "party2target" and "Creature-0-1-229-1-9196-0000ABDD" or nil end
+        _G.UnitName = function(u) return u == "party2target" and "Hochlord Omokk" or nil end
+        assert(BM.CodexScan() and BM.fight.codex.boss == "highlord_omokk", "Boss im Ziel der Gruppe nicht erkannt")
+        BM.fight = nil
+        _G.IsInRaid = oIR
+        _G.UnitExists = function(u) return u == "target" end
+        _G.UnitAffectingCombat = function(u) return u == "target" and mob.combat end
+        _G.UnitName = function(u) return u == "target" and mob.name or nil end
+        _G.UnitGUID = function(u) return u == "target" and mob.guid or nil end
+        mob.name, mob.guid = "Felsspitzoger", "Creature-0-1-229-1-9583-0000ABCF"
         -- Unter "Bosse": Instanz, Boss, auch ohne gewirkten Zauber.
         BM.sel.inst, BM.sel.boss, BM.sel.spell = nil, nil, nil
         BM.FixSelection()

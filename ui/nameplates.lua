@@ -1246,7 +1246,8 @@ function NP.IsBossNpc(unit)
     local id = NC and NC.NpcID and NC.NpcID(guid)
     if type(id) ~= "number" then return false end
     local a, b = WeintCodex.BossNpcs, WeintCodex.ForeverBossNpcs
-    if (a and a[id]) or (b and b[id]) then return true end
+    local c = WeintCodex.BossNpcParts   -- 1.0.8.0: weitere Gegner eines Kampfes
+    if (a and a[id]) or (b and b[id]) or (c and c[id]) then return true end
     return NP.IsBossName(unit)
 end
 

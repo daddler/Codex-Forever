@@ -2358,6 +2358,16 @@ Fassung des Clients eine Antwort nicht stillschweigend überholt.
 
 ## Bosskämpfe *(1.10.0.0, `ui/bossmod.lua`)*
 
+**Erkennung (1.0.8.0):** Boss = NPC-Nummer in `WeintCodex.BossNpcs`
+(`data/boss_npcs.lua` über Beute, ergänzt von `data/boss_npcs_ofa.lua`) oder
+in `WeintCodex.BossNpcParts` (weitere Gegner desselben Kampfes – zählt für
+den Boss des Kompendiums), sonst der englische/deutsche Name. Gesucht bei
+Kampfbeginn in Ziel, Fokus, Plaketten und den Zielen der Gruppe, 0,5 s und
+2 s danach noch einmal (`BM.ScanSoon`), dann bei Zielwechsel, Bedrohung und
+neuen Plaketten. Zauber, Lernen und Leben/Energie nehmen jede Einheit des
+Kampfes (`BM.IsFightUnit`: Bossrahmen, gleicher GUID, Nummer desselben
+Bosses), eine Plakette, die zugleich Ziel oder Bossrahmen ist, nur einmal.
+
 **Wirkung einer Fähigkeit (1.0.6.11):** `BM.EFFECTS` ordnet Stichworte aus der
 Beschreibung des Zaubers (`C_Spell.GetSpellDescription`, vom Client) einer
 Wirkung zu – Furcht, Rückstoß, Übernahme, Schlaf, Verwandlung, Betäubung,

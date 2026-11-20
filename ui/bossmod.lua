@@ -1240,6 +1240,10 @@ function BM.CodexBoss(unit)
     local npc, guid = BM.NpcOf(unit)
     local e = npc and WeintCodex.BossNpcs and WeintCodex.BossNpcs[npc]
     if e then return { dungeon = e[1], boss = e[2], de = e[3], en = e[4], npc = npc }, guid end
+    -- 1.0.8.0: weiterer Gegner desselben Kampfes (data/boss_npcs_ofa.lua) -
+    -- der Kampf zaehlt fuer den Boss des Kompendiums.
+    local p = npc and WeintCodex.BossNpcParts and WeintCodex.BossNpcParts[npc]
+    if p then return { dungeon = p[1], boss = p[2], en = p[3], npc = npc, part = true }, guid end
     local n = _G.UnitName and Lower(Plain(_G.UnitName(unit)))
     local hit = n and BM.BossIndex()[n]
     return hit, guid
@@ -1275,6 +1279,11 @@ function BM.CodexEngage(unit)
 end
 
 -- Bei Kampfbeginn: Ziel, Fokus und Plaketten durchsehen.
+-- 1.0.8.0 (wie DBM): auch die Ziele der Gruppe - wer selbst nichts
+-- anvisiert und ohne Plaketten spielt, erkennt den Boss so trotzdem.
+BM.GROUP_TARGETS = {}
+for i = 1, 4 do BM.GROUP_TARGETS[#BM.GROUP_TARGETS + 1] = "party" .. i .. "target" end
+for i = 1, 40 do BM.GROUP_TARGETS[#BM.GROUP_TARGETS + 1] = "raid" .. i .. "target" end
 function BM.CodexScan()
     if BM.fight then return nil end
     if BM.CodexEngage("target") or BM.CodexEngage("focus") then return true end
@@ -1282,7 +1291,26 @@ function BM.CodexScan()
         local u = "nameplate" .. i
         if _G.UnitExists and K.Bool(_G.UnitExists(u), false) and BM.CodexEngage(u) then return true end
     end
+    local raid = _G.IsInRaid and K.Bool(Plain(_G.IsInRaid()), false)
+    for _, u in ipairs(BM.GROUP_TARGETS) do
+        if (raid == (u:sub(1, 4) == "raid")) and _G.UnitExists and K.Bool(_G.UnitExists(u), false) and BM.CodexEngage(u) then
+            return true
+        end
+    end
     return nil
+end
+
+-- 1.0.8.0 (wie DBM): beim Kampfbeginn ist der Boss oft noch nicht "im
+-- Kampf" (der Spieler war schneller) - zweimal kurz danach noch einmal sehen.
+function BM.ScanSoon()
+    local T = _G.C_Timer
+    if not (T and T.After) then return end
+    local function again()
+        if BM.fight or not K.IsActive(KEY) or not K.InCombat() then return end
+        if not BM.Engage() then BM.CodexScan() end
+    end
+    T.After(0.5, again)
+    T.After(2, again)
 end
 
 -- Tod des Bosses: an seinem GUID erkannt (Ziel, Plakette, Bossrahmen).
@@ -1426,10 +1454,52 @@ end
 -- ein feindlicher Elitegegner in einer Instanz ist. Gold = unterbrechbar.
 --------------------------------------------------
 
+-- 1.0.8.0: gehoert diese Einheit zum laufenden Kampf? Bossrahmen; sonst
+-- derselbe GUID wie der erkannte Boss oder eine NPC-Nummer, die zum selben
+-- Boss des Kompendiums gehoert (Kaempfe aus mehreren Gegnern: die Sieben,
+-- Sneed und sein Schredder). Nur offene Werte - geheim ist "nein".
+function BM.IsFightUnit(unit)
+    local f = BM.fight
+    if not f or type(unit) ~= "string" then return false end
+    if unit:match("^boss[1-5]$") then return true end
+    if not (_G.UnitExists and K.Bool(_G.UnitExists(unit), false)) then return false end
+    local npc, guid = BM.NpcOf(unit)
+    if f.guid and guid == f.guid then return true end
+    local c = f.codex
+    if not (npc and type(c) == "table") then return false end
+    local e = (WeintCodex.BossNpcs and WeintCodex.BossNpcs[npc]) or (WeintCodex.BossNpcParts and WeintCodex.BossNpcParts[npc])
+    return (e and e[1] == c.dungeon and e[2] == c.boss) and true or false
+end
+
+-- Dieselbe Einheit unter zwei Namen (Plakette = Ziel oder Bossrahmen):
+-- nur einmal - sonst stuenden zwei Leisten fuer einen Zauber da.
+local function Twin(unit)
+    if not _G.UnitIsUnit then return false end
+    if K.Bool(_G.UnitIsUnit(unit, "target"), false) then return true end
+    for i = 1, 5 do
+        local u = BM.BossUnit(i)
+        if u and K.Bool(_G.UnitIsUnit(unit, u), false) then return true end
+    end
+    return false
+end
+
 function BM.CastUnit(unit)
     if type(unit) ~= "string" then return false end
     if unit:match("^boss[1-5]$") then return true end
-    if unit ~= "target" then return false end
+    -- 1.0.8.0: der erkannte Boss auch ohne Ziel - ueber Plakette oder Fokus
+    -- (vorher nur das eigene Ziel: wer den Boss nicht anvisierte, etwa als
+    -- Heiler, sah keine Zauberleiste und lernte keine Zeiten).
+    if unit ~= "target" then
+        if not (unit:match("^nameplate%d+$") or unit == "focus") then return false end
+        return BM.IsFightUnit(unit) and not Twin(unit)
+    end
+    if BM.IsFightUnit("target") then
+        for i = 1, 5 do
+            local u = BM.BossUnit(i)
+            if u and _G.UnitIsUnit and K.Bool(_G.UnitIsUnit("target", u), false) then return false end
+        end
+        return true
+    end
     if not _G.UnitExists or not K.Bool(_G.UnitExists("target"), false) then return false end
     for i = 1, 5 do
         local u = BM.BossUnit(i)
@@ -1604,6 +1674,12 @@ function BM.BossVitals()
     local f = BM.fight
     local unit = BM.BossUnit(1)
     if not unit and f and f.name and _G.UnitName and Plain(_G.UnitName("target")) == f.name then unit = "target" end
+    -- 1.0.8.0: ohne Ziel der erkannte Boss ueber Fokus oder Plakette.
+    if not unit and f and f.guid then
+        for _, u in ipairs(BM.CODEX_UNITS) do
+            if _G.UnitGUID and Plain(_G.UnitGUID(u)) == f.guid then unit = u break end
+        end
+    end
     if not unit then return nil, nil end
     local hp, pw
     if _G.UnitHealth and _G.UnitHealthMax then
@@ -1744,7 +1820,7 @@ end
 function BM.LearnCast(unit, spell, icon, spellID, casting)
     local f = BM.fight
     if not f or not Opt("bossLearn") or type(spell) ~= "string" or spell == "" or spell:sub(1, 1) == "_" then return nil end
-    local isBoss = type(unit) == "string" and unit:match("^boss[1-5]$")
+    local isBoss = type(unit) == "string" and (unit:match("^boss[1-5]$") or BM.IsFightUnit(unit))
     if not isBoss then
         local who = _G.UnitName and Plain(_G.UnitName(unit))
         if type(who) ~= "string" or who ~= f.name then return nil end
@@ -2125,7 +2201,7 @@ ev:SetScript("OnEvent", WeintCodex.Measured("Bosskämpfe", function(_, event, a1
         -- Bossrahmen, die schon vor dem Kampf da waren: jetzt kaempft er.
         -- Sonst: ein Boss des Kompendiums im Ziel oder auf einer Plakette?
         if K.IsActive(KEY) then
-            if not BM.Engage() then BM.CodexScan() end
+            if not BM.Engage() and not BM.CodexScan() then BM.ScanSoon() end
         end
         return
     end

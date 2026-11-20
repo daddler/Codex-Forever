@@ -847,3 +847,129 @@ fh = assert(io.open(CDX .. "/data/loot_ofa.lua", "w"))
 fh:write(table.concat(out, "\n"), "\n")
 fh:close()
 print(string.format("Sets: %d neu, Stand fuer %d", #rows, #status))
+
+--------------------------------------------------
+-- Bosse: NPC-Nummern (Bosskaempfe, Namensplaketten)
+--------------------------------------------------
+-- Der Bosskampf erkennt Bosse alter Dungeons ueber die NPC-Nummer
+-- (data/boss_npcs.lua, ueber gleiche Beute zugeordnet). Ohne Nummer bleibt
+-- nur der englische Name - auf einem deutschen Client trifft der nie.
+-- OneForAll fuehrt je Boss die Nummer (QuestieDB Forever). Uebernommen wird
+-- eine Nummer nur, wenn sie data/boss_npcs.lua fehlt UND der Boss im selben
+-- Dungeon des Kompendiums denselben englischen Namen traegt - oder Teil
+-- eines Kampfes ist, den das Kompendium als einen Boss fuehrt (TEIL unten).
+-- Dazu die Nummern aus data/boss_npcs_forever.lua, die dort fehlen.
+-- Geschrieben nach data/boss_npcs_ofa.lua: fuellt WeintCodex.BossNpcs nur
+-- dort, wo keine Nummer steht.
+dofile(CDX .. "/data/boss_npcs.lua")
+dofile(CDX .. "/data/boss_npcs_forever.lua")
+local BN = WeintCodex.BossNpcs
+-- Teile eines Kampfes: [Dungeon/Boss des Kompendiums] = { englische Namen in OneForAll }
+local TEIL = {
+    ["blackrock_depths/the_seven"] = { "Anger'rel", "Doom'rel" },
+    ["stratholme/balnazzar"] = { "Balnazzar" },
+}
+local bossOf, deOf = {}, {}      -- [Dungeon][englisch, klein] = Boss; [Dungeon/Boss] = deutscher Name
+for _, list in ipairs({ WeintCodex_Dungeons or {}, WeintCodex_ClassicDungeons or {} }) do
+    for _, d in ipairs(list) do
+        bossOf[d.id] = bossOf[d.id] or {}
+        for _, b in ipairs(type(d.bosses) == "table" and d.bosses or {}) do
+            if type(b.name) == "string" then bossOf[d.id][b.name:lower()] = b end
+        end
+    end
+end
+for _, e in pairs(BN) do deOf[e[1] .. "/" .. e[2]] = deOf[e[1] .. "/" .. e[2]] or e[3] end
+for key, names in pairs(TEIL) do
+    local did, bid = key:match("^([^/]+)/(.+)$")
+    for _, n in ipairs(names) do
+        bossOf[did] = bossOf[did] or {}
+        bossOf[did][n:lower()] = bossOf[did][n:lower()] or { id = bid, name = n }
+    end
+end
+-- Ein Boss hat in BossNpcs genau eine Nummer mit seinem Namen (data_test).
+-- Jede weitere Nummer desselben Kampfes (Teil, anderer Name, oder der Boss
+-- hat schon eine) geht nach BossNpcParts.
+local add, part, nAdd, nPart = {}, {}, 0, 0
+local numbered = {}
+for _, e in pairs(BN) do numbered[e[1] .. "/" .. e[2]] = true end
+local fullName = {}
+for _, list in ipairs({ WeintCodex_Dungeons or {}, WeintCodex_ClassicDungeons or {} }) do
+    for _, d in ipairs(list) do
+        for _, b in ipairs(type(d.bosses) == "table" and d.bosses or {}) do fullName[d.id .. "/" .. b.id] = b.name end
+    end
+end
+local function Add(npc, did, b, how)
+    if BN[npc] or add[npc] or part[npc] then return end
+    local k = did .. "/" .. b.id
+    if not numbered[k] and fullName[k] == b.name then
+        add[npc] = { did, b.id, deOf[k] or b.name, b.name, how }
+        numbered[k] = true
+        nAdd = nAdd + 1
+    else
+        part[npc] = { did, b.id, b.name, how }
+        nPart = nPart + 1
+    end
+end
+for dname, reg in pairs(FLTD.DUNGEON_REGISTRY) do
+    local did = DId(dname)
+    for _, b in ipairs(did and reg.bosses or {}) do
+        if type(b.npcID) == "number" then
+            for _, n in ipairs({ b.name, unpack(b.aliases or {}) }) do
+                local hit = type(n) == "string" and bossOf[did] and bossOf[did][n:lower()]
+                if hit then Add(b.npcID, did, hit, "OneForAll") break end
+            end
+        end
+    end
+end
+for npc, e in pairs(WeintCodex.ForeverBossNpcs or {}) do
+    local hit = bossOf[e[1]] and bossOf[e[1]][e[2]:lower()]
+    if hit then Add(npc, e[1], hit, "boss_npcs_forever") end
+end
+local npcs = {}
+for npc in pairs(add) do npcs[#npcs + 1] = npc end
+table.sort(npcs, function(a, b)
+    if add[a][1] ~= add[b][1] then return add[a][1] < add[b][1] end
+    return a < b
+end)
+out = {}
+W("--------------------------------------------------")
+W("-- WeintCodex :: NPC-Nummern der Bosse, Abgleich mit OneForAll (1.0.8.0)")
+W("--------------------------------------------------")
+W("-- ERZEUGT von .github/scripts/import_oneforall.lua - nicht von Hand aendern.")
+W("-- Herkunft (nur fuer Betreuer): OneForAll 6.2.12 (GPL-3.0, nur Daten; dort")
+W("-- aus QuestieDB Forever) und data/boss_npcs_forever.lua. Nur Nummern, die")
+W("-- data/boss_npcs.lua fehlen, nur bei gleichem englischem Namen im selben")
+W("-- Dungeon oder als Teil eines Kampfes. Art `community`.")
+W("-- Gleiche Form wie data/boss_npcs.lua; fuellt nur, was dort fehlt.")
+W("--------------------------------------------------")
+W("")
+W("local B = WeintCodex and WeintCodex.BossNpcs")
+W("if not B then return end")
+W("for npc, e in pairs({")
+for _, npc in ipairs(npcs) do
+    local e = add[npc]
+    W(string.format("    [%d] = { %q, %q, %q, %q },   -- %s", npc, e[1], e[2], e[3], e[4], e[5]))
+end
+W("}) do")
+W("    if B[npc] == nil then B[npc] = e end")
+W("end")
+W("")
+W("-- Weitere Gegner desselben Kampfes: [npc] = { Dungeon, Boss, englischer Name }.")
+W("-- Gelesen von ui/bossmod.lua (Kampf erkennen, Zauber zaehlen) und")
+W("-- ui/nameplates.lua (Bossfarbe).")
+W("WeintCodex.BossNpcParts = WeintCodex.BossNpcParts or {}")
+W("for npc, e in pairs({")
+local pn = {}
+for npc in pairs(part) do pn[#pn + 1] = npc end
+table.sort(pn)
+for _, npc in ipairs(pn) do
+    local e = part[npc]
+    W(string.format("    [%d] = { %q, %q, %q },   -- %s", npc, e[1], e[2], e[3], e[4]))
+end
+W("}) do")
+W("    if B[npc] == nil and WeintCodex.BossNpcParts[npc] == nil then WeintCodex.BossNpcParts[npc] = e end")
+W("end")
+fh = assert(io.open(CDX .. "/data/boss_npcs_ofa.lua", "w"))
+fh:write(table.concat(out, "\n"), "\n")
+fh:close()
+print(string.format("Bosse: %d Nummern ergaenzt, %d Teile von Kaempfen", nAdd, nPart))

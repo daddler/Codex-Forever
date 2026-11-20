@@ -93,6 +93,18 @@ nicht zusammen.
 ## [1.0.7.64] – 2026-11-19
 
 ### Behoben
+- Bosskämpfe (`ui/bossmod.lua`): Boss oft nicht erkannt. (1) Elf Bosse ohne
+  NPC-Nummer im Bestand – auf dem deutschen Client griff der englische Name
+  nie. `data/boss_npcs_ofa.lua` (erzeugt von `import_oneforall.lua`, Nummern
+  aus QuestieDB Forever über OneForAll, nur bei gleichem Namen im selben
+  Dungeon) ergänzt sieben Bosse, `WeintCodex.BossNpcParts` vier weitere
+  Gegner desselben Kampfes (Sneeds Schredder, Anger'rel, Doom'rel,
+  Balnazzar). (2) Erkennung nur über Ziel, Fokus und Plaketten im Moment
+  von `PLAYER_REGEN_DISABLED` – jetzt auch die Ziele der Gruppe (wie DBM)
+  und zwei Nachblicke nach 0,5 s und 2 s (`BM.ScanSoon`). (3) Zauberleisten
+  und gelernte Zeiten nur vom eigenen Ziel oder Bossrahmen – jetzt auch vom
+  erkannten Boss über Plakette/Fokus (`BM.IsFightUnit`, ohne Doppel bei
+  Plakette = Ziel); Leben/Energie ebenso.
 - Aktionsleisten „nur bei Maus darüber“ (`ui/actionbars.lua`): FadeStep
   verglich nur mit der eigenen gemerkten Deckkraft – setzte das Spiel oder
   ein anderes Addon `SetAlpha(1)`, blieb die Leiste sichtbar. Jetzt hält ein
