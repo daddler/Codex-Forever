@@ -25221,6 +25221,47 @@ do
         state[5], state[6], remain[5], remain[6] = 0, 0, 8, 9
         assert(BM.CatchUp() == 2 and BM.timers.tl5 and BM.timers.tl6, "Nachholen fehlt")
         for k in pairs(BM.timers) do BM.timers[k] = nil end
+        -- 1.0.8.0 (nach BigWigs): Eintraege anderer Addons (Quelle 1) nicht
+        -- doppelt; Probe des Bearbeitungsmodus benannt; verzoegerte
+        -- Faehigkeit steht auf "jetzt", bis der Spielraum um ist.
+        assert(BM.TimelineAdded({ id = 21, duration = 10, spellName = "X", source = 1 }) == nil
+            and not BM.timers.tl21, "Leiste eines anderen Addons doppelt")
+        assert(BM.TimelineAdded({ id = 22, duration = 10, spellName = "X", source = 2 })
+            and BM.timers.tl22.label == "Probe des Spiels", "Probe nicht benannt")
+        assert(BM.TimelineAdded({ id = 23, duration = 4, spellName = "Atem", maxQueueDuration = 5 })
+            and BM.timers.tl23.queue == 5, "Spielraum nicht gemerkt")
+        BM.timers.tl22 = nil
+        now = now + 6 BM.Tick()
+        assert(BM.timers.tl23, "verzoegerte Faehigkeit bei 0 verschwunden")
+        now = now + 4 BM.Tick()
+        assert(not BM.timers.tl23, "Leiste haengt nach dem Spielraum")
+        -- Warnungen des Spiels ausblenden: nur auf Wunsch, zurueck beim Abschalten.
+        do
+            local PF = WeintCodex.UIProfile
+            local oS, oR, oRec = PF.SetCVar, PF.Release, PF.Record
+            local set, rel, rec = nil, 0, nil
+            local W = "encounterWarningsEnabled"
+            PF.SetCVar = function(n, v, ...)
+                if n ~= W then return oS(n, v, ...) end
+                set = { n, v } rec = true return true
+            end
+            PF.Release = function(n)
+                if n ~= W then return oR(n) end
+                rel = rel + 1 rec = nil return true
+            end
+            PF.Record = function(n) if n ~= W then return oRec(n) end return rec end
+            assert(K.Get("comfort", "bossGameWarnOff") == false, "ab Werk an")
+            local keepW = K.Get("comfort", "bossWarnings")
+            K.Set("comfort", "bossWarnings", true)
+            BM.ApplyGameWarnings()
+            assert(set == nil, "ohne Wunsch verstellt: " .. tostring(set and set[1]) .. "=" .. tostring(set and set[2]))
+            K.Set("comfort", "bossGameWarnOff", true)
+            assert(set and set[1] == "encounterWarningsEnabled" and set[2] == "0", "nicht ausgeblendet")
+            K.Set("comfort", "bossGameWarnOff", false)
+            assert(rel == 1, "nicht zurueckgestellt")
+            K.Set("comfort", "bossWarnings", keepW)
+            PF.SetCVar, PF.Release, PF.Record = oS, oR, oRec
+        end
         _G.C_EncounterTimeline = nil
         -- Kampf ueber die Bossrahmen (ohne ENCOUNTER_START).
         local boss = { exists = true, combat = true, dead = false }

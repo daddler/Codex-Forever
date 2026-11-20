@@ -52,6 +52,7 @@ BM.DEFAULTS = {
     bossFight    = true,    -- Kampftimer und Bestzeit
     bossTimeline = true,    -- Faehigkeiten aus der Zeitleiste des Spiels
     bossWarnings = true,    -- Warnungen des Spiels gross in der Mitte (das Spiel zeigt eigene)
+    bossGameWarnOff = false, -- 1.0.8.0: die eigene Anzeige des Spiels dafuer aus (wie BigWigs)
     bossSound    = true,    -- Hauptschalter fuer alle Toene unten
     -- Toene je Anlass (1.10.3.0): Schluessel aus FA.SOUNDS oder "none".
     -- Ab Werk wie vorher: Pull-Ende mit Bereitschaftscheck, sonst still -
@@ -91,6 +92,7 @@ BM.DEFAULTS = {
 BM.SOUND_EVENTS = { "Pull", "Break", "Soon", "Cast", "Warn", "Kill", "Wipe" }
 
 BM.MAX_ROWS, BM.EMPH_ROWS, BM.GAP = 10, 4, 3
+BM.QUEUE_MAX = 30   -- 1.0.8.0: hoechstens so lange "jetzt" fuer eine verzoegerte Faehigkeit (s)
 BM.OVERDUE = 3      -- so lange steht eine gemessene Faehigkeit auf "jetzt"
 BM.EMPH_SCALE = 1.5
 BM.stats = { timeline = 0, secret = 0, warnings = 0, encounters = 0, countdowns = 0, heard = 0,
@@ -162,7 +164,7 @@ function BM.Start(key, label, duration, icon, color)
     t.onEnd, t.soon, t.warned, t.demo, t.emph, t.forceEmph = nil, nil, nil, nil, nil, nil
     t.hold, t.total = nil, nil
     t.gap, t.overAt, t.soonSecs, t.learned, t.sound = nil, nil, nil, nil, nil
-    t.count, t.lastCount = nil, nil
+    t.count, t.lastCount, t.queue = nil, nil, nil
     t.nexts, t.nextLabels, t.seqJ = nil, nil, nil
     t._v = (t._v or 0) + 1
     t.start = Now()
@@ -489,6 +491,14 @@ local function TickRow(r)
             r.bar:SetValue(tFill and 1 or 0)
             if tText then r.time:SetText("jetzt") end
             return
+        end
+        if t.queue then
+            if not t.overAt then t.overAt = t.ends end
+            if tNow - t.overAt < t.queue then
+                r.bar:SetValue(tFill and 1 or 0)
+                if tText then r.time:SetText("jetzt") end
+                return
+            end
         end
         tDone = tDone or t
         r.bar:SetValue(tFill and 1 or 0)
@@ -1375,9 +1385,20 @@ function BM.TimelineAdded(info, remaining)
         BM.stats.secret = BM.stats.secret + 1
         return nil
     end
+    -- 1.0.8.0 (nach dem Verhalten von BigWigs): Eintraege, die ein Addon
+    -- selbst in die Zeitleiste setzt (Quelle 1, "Script"), sind dessen
+    -- Leisten - nicht noch einmal. Quelle 2 ist die Probe des Bearbeitungs-
+    -- modus: alle mit demselben Namen, darum als Probe benannt.
+    local src = Plain(info.source)
+    if src == 1 then BM.stats.script = (BM.stats.script or 0) + 1 return nil end
     local name = info.spellName
+    if src == 2 then name = "Probe des Spiels" end
     if type(name) == "nil" then name = "Fähigkeit" end
     local t = BM.Start("tl" .. id, name, dur, info.iconFileID, "blue")
+    -- Spielraum, um den der Boss die Faehigkeit verzoegern darf: so lange
+    -- steht die Leiste auf "jetzt", statt bei 0 zu verschwinden.
+    local q = Plain(info.maxQueueDuration)
+    if type(q) == "number" and q > 0 then t.queue = math.min(q, BM.QUEUE_MAX) end
     t.soon = true
     t.count = BM.Counts(false)
     if BM.EventState(id) == 1 then t.hold, t.total = dur, dur end
@@ -2136,6 +2157,21 @@ function BM.Emote(text, who)
     return true
 end
 
+-- 1.0.8.0 (nach dem Verhalten von BigWigs): die eigene Anzeige der
+-- Warnungen im Spiel aus, solange WeintCodex sie gross zeigt - ueber
+-- PF.SetCVar (alter Wert gemerkt, beim Abschalten zurueck, nur wenn noch
+-- unserer steht). Kennt der Client die Einstellung nicht: nichts.
+BM.GAME_WARN_CVAR = "encounterWarningsEnabled"
+function BM.ApplyGameWarnings()
+    local PF = WeintCodex.UIProfile
+    if not (PF and PF.SetCVar and PF.Release) then return nil end
+    if K.IsActive(KEY) and Opt("bossWarnings") and Opt("bossGameWarnOff") then
+        return PF.SetCVar(BM.GAME_WARN_CVAR, "0", KEY)
+    end
+    if PF.Record and PF.Record(BM.GAME_WARN_CVAR) then return PF.Release(BM.GAME_WARN_CVAR) end
+    return false
+end
+
 -- Der Ton kommt auch ohne die grosse Anzeige - beides ist einzeln
 -- einstellbar.
 function BM.Warning(info)
@@ -2194,6 +2230,7 @@ ev:SetScript("OnEvent", WeintCodex.Measured("Bosskämpfe", function(_, event, a1
         local CI = _G.C_ChatInfo
         local reg = (CI and CI.RegisterAddonMessagePrefix) or _G.RegisterAddonMessagePrefix
         if reg then pcall(reg, "BigWigs") pcall(reg, "D5") end
+        pcall(BM.ApplyGameWarnings)
         return
     end
     if event == "PLAYER_REGEN_DISABLED" then
@@ -2320,7 +2357,10 @@ local function BuildGeneral(B)
             description = "Warnungen und Emotes der Bosse – das Spiel zeigt sie auch selbst; das hier ist eine zweite, größere Anzeige." },
           { type = "toggle", label = "Zeiten aus eigenen Kämpfen lernen", key = "bossLearn",
             description = "Wann ein Boss was wirkt, gemessen in deinen Kämpfen. Solche Leisten tragen ein „~“. Einstellen je Boss unter „Bosse“." })
-    B:Row({ type = "toggle", label = "Wirkung nennen (Furcht, Rückstoß …)", key = "bossEffects",
+    B:Row({ type = "toggle", label = "Warnungen des Spiels ausblenden", key = "bossGameWarnOff", disabled = off("bossWarnings"),
+            set = function(v) K.Set(KEY, "bossGameWarnOff", v) BM.ApplyGameWarnings() end,
+            description = "Dann stehen sie nur einmal da – groß von WeintCodex. Ausschalten stellt die Einstellung des Spiels zurück." },
+          { type = "toggle", label = "Wirkung nennen (Furcht, Rückstoß …)", key = "bossEffects",
             description = "Hinter dem Namen einer Fähigkeit steht, was sie tut – gelesen aus der Beschreibung des Spiels. Furcht, Rückstoß, Betäubung und Ähnliches erscheinen zusätzlich groß in der Mitte, und zum Pull eine Zeile mit dem, was dieser Boss kann." })
 end
 
@@ -3109,3 +3149,11 @@ if mod then
         if type(mod.pageOrder) == "table" then mod.pageOrder[p.key] = p.rank end
     end
 end
+
+-- Warnungen des Spiels folgen den Schaltern (und dem Komfort insgesamt).
+K.Listen(function(kind, module, key)
+    if (kind == "setting" and module == KEY and (key == "bossWarnings" or key == "bossGameWarnOff"))
+        or (kind == "active" and module == KEY) then
+        pcall(BM.ApplyGameWarnings)
+    end
+end)

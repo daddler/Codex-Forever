@@ -2457,6 +2457,16 @@ lebt es von den Ereignissen des Spiels; genau die nutzt WeintCodex.
   Änderung sofort über `BM.ApplyLook()`. Nie im Kampf; Kampfbeginn
   beendet es. Werte aus dem Spielstand werden auf ihre Grenzen gezogen
   (`BM.Look`).
+- **Nach BigWigs (1.0.8.0, Verhalten, kein Code – „All Rights Reserved“):**
+  Eintraege der Zeitleiste mit Quelle 1 („Script“, von einem Addon selbst
+  gesetzt) werden nicht gezeigt – sonst doppelt neben BigWigs/DBM; Quelle 2
+  (Probe des Bearbeitungsmodus) heisst „Probe des Spiels“. `maxQueueDuration`
+  ist der Spielraum, um den der Boss verzoegern darf: so lange (hoechstens
+  `BM.QUEUE_MAX`) steht die Leiste auf „jetzt“ (`t.queue`), bis die
+  Zeitleiste sie beendet. Schalter `bossGameWarnOff` (ab Werk aus, nur mit
+  `bossWarnings`): `encounterWarningsEnabled` = 0 ueber `PF.SetCVar`, beim
+  Abschalten zurueck (`BM.ApplyGameWarnings`). BigWigs selbst enthaelt keine
+  Bossmodule fuer Forever (nur Midnight); Bossdaten kamen daher keine.
 - **Was DBM liest, auch ohne Zeitleiste (1.10.6.0):** Zeitleiste mit
   Restzeit (zweiter Wert von `…_ADDED`), Zustand über
   `C_EncounterTimeline.GetEventState` (0 läuft, 1 pausiert → `t.hold`,

@@ -65,6 +65,11 @@ nicht zusammen.
   jetzt in wiederverwendeten Tabellen, `Refresh(force)` rechnet nur bei
   Aenderung (Stufe/Questreihen erzwingen); Minikarte 10 statt 20 Takte und
   ohne Bewegung kein Neusetzen (`QH.mmLast`).
+- Bosskämpfe nach BigWigs (nur Verhalten): Zeitleiste ohne Quelle 1 (Script),
+  Quelle 2 als „Probe des Spiels“, `maxQueueDuration` haelt die Leiste auf
+  „jetzt“ (`t.queue`, `BM.QUEUE_MAX` 30 s); Schalter `bossGameWarnOff`
+  (`encounterWarningsEnabled` ueber `PF.SetCVar`, ab Werk aus).
+- Codex-Knopf in der Titelleiste eine Schicht ueber dem Fenster (`CL.ABOVE`).
 - Bequem: nach `AcceptQuest` blieb das leere Questfenster offen (Client schliesst
   nicht selbst) – `EV.CloseDetail` nach 0,1 s, nur solange `QuestFrameDetailPanel` steht.
 - `K.HeldSize`: geheime Schluessel uebersprungen („cannot be indexed with
