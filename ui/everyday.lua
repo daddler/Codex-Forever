@@ -119,6 +119,33 @@ function EV.OnGossip()
     return nil
 end
 
+-- Questgeber ohne Gespraech (mehrere Quests, eigenes Begruessungsfenster
+-- des Spiels, QUEST_GREETING): dieselbe Reihenfolge - erst abgeben, dann
+-- annehmen, je Fenster eine Handlung.
+function EV.OnGreeting()
+    if Shift() then return nil end
+    local function N(fn)
+        if type(fn) ~= "function" then return 0 end
+        local ok, n = pcall(fn)
+        n = ok and P(n) or nil
+        return type(n) == "number" and n or 0
+    end
+    if Opt("questTurnIn") and _G.SelectActiveQuest then
+        for i = 1, N(_G.GetNumActiveQuests) do
+            local ok, _, done = pcall(_G.GetActiveTitle or function() end, i)
+            if ok and K.Bool(P(done), false) then
+                pcall(_G.SelectActiveQuest, i)
+                return "turnin"
+            end
+        end
+    end
+    if Opt("questAccept") and _G.SelectAvailableQuest and N(_G.GetNumAvailableQuests) > 0 then
+        pcall(_G.SelectAvailableQuest, 1)
+        return "accept"
+    end
+    return nil
+end
+
 --------------------------------------------------
 -- Flugkarte sofort
 --------------------------------------------------
@@ -229,8 +256,11 @@ end
 local function IsFriendName(name)
     local fl = _G.C_FriendList
     if fl and fl.GetFriendInfo then
-        local ok, info = pcall(fl.GetFriendInfo, name)
-        if ok and type(info) == "table" then return true end
+        local short = tostring(name):match("^[^-]+")
+        for _, n in ipairs({ name, short }) do
+            local ok, info = pcall(fl.GetFriendInfo, n)
+            if ok and type(info) == "table" then return true end
+        end
     end
     return false
 end
@@ -292,11 +322,16 @@ function EV.SetChatHidden(hide)
         for _, n in ipairs({ "ChatFrame" .. i, "ChatFrame" .. i .. "Tab" }) do
             local f = _G[n]
             if type(f) == "table" and f.SetAlpha then pcall(f.SetAlpha, f, hide and 0 or 1) end
+            local CAm = WeintCodex.UICombatAids
+            if CAm and CAm.faded then CAm.faded[n] = hide or nil end
         end
     end
     local dm = _G.GeneralDockManager
     if type(dm) == "table" and dm.SetAlpha then pcall(dm.SetAlpha, dm, hide and 0 or 1) end
     if EV.chatBtn then EV.chatBtn:SetText(hide and "+" or "–") end
+    -- Im Kampf mit "Chat im Kampf ausblenden" bleibt er aus.
+    local CA = WeintCodex.UICombatAids
+    if not hide and CA and CA.ApplyHide and K.InCombat() then CA.ApplyHide(true) end
 end
 
 local function BuildChatButton()
@@ -314,6 +349,9 @@ end
 function EV.UpdateChatButton()
     local b = Opt("chatButton") and BuildChatButton() or EV.chatBtn
     if b then b:SetShown(Opt("chatButton")) end
+    -- Gerade eingeschaltet: die Zeit beginnt jetzt, nicht beim Anmelden.
+    if Opt("chatButton") and not EV.chatOn then EV.lastChat = P(_G.GetTime and _G.GetTime()) or 0 end
+    EV.chatOn = Opt("chatButton")
     if not Opt("chatButton") and EV.chatHidden then EV.SetChatHidden(false) end
 end
 
@@ -322,7 +360,8 @@ end
 --------------------------------------------------
 -- Gruen: Staub/Essenz/Splitter je Stufenband, Anteil (Ruestung; Waffen
 -- tauschen Staub und Essenz). Blau: ein Splitter. Episch: Splitter/Kristall.
--- { bis Gegenstandsstufe, Staub, Anzahl Staub, Essenz, Anzahl Essenz, Splitter }
+-- { bis Gegenstandsstufe, Staub, Anzahl Staub, Essenz, Anzahl Essenz, Splitter? }
+-- Splitter: nur ob einer faellt; welcher, sagt EV.DE_BLUE fuer dieselbe Stufe.
 EV.DE_GREEN = {
     { 15, 10940, 1.5, 10938, 1.5, nil },
     { 20, 10940, 2.5, 10939, 1.5, nil },
@@ -339,6 +378,11 @@ EV.DE_GREEN = {
 EV.DE_BLUE = { { 25, 10978 }, { 30, 11084 }, { 35, 11138 }, { 40, 11139 }, { 45, 11177 }, { 50, 11178 }, { 55, 14343 }, { 999, 14344 } }
 EV.DE_EPIC = { { 45, 11177, 3 }, { 50, 11178, 3 }, { 55, 14343, 3 }, { 60, 20725, 1 }, { 999, 20725, 1.5 } }
 
+function EV.BlueShard(ilvl)
+    for _, b in ipairs(EV.DE_BLUE) do if ilvl <= b[1] then return b[2] end end
+    return nil
+end
+
 local function Price(id)
     local AP = WeintCodex.UIAuctionPrices
     local f = AP and AP.Lookup and AP.Lookup(id)
@@ -351,7 +395,10 @@ function EV.DisenchantValue(quality, ilvl, weapon)
     if quality == 2 then
         for _, b in ipairs(EV.DE_GREEN) do
             if ilvl <= b[1] then
-                local dust, ess, shard = Price(b[2]), Price(b[4]), b[6] and Price(b[6])
+                -- Splitter: derselbe wie bei Blau auf dieser Stufe (1.0.8.0
+                -- korrigiert - die Spalte stand eine Stufe zu niedrig).
+                local sid = b[6] and EV.BlueShard(ilvl)
+                local dust, ess, shard = Price(b[2]), Price(b[4]), sid and Price(sid)
                 if not (dust and ess) or (b[6] and not shard) then return nil end
                 local pd, pe = weapon and 0.2 or 0.75, weapon and 0.75 or 0.2
                 local ps = b[6] and 0.05 or 0
@@ -457,6 +504,13 @@ function EV.ShowShare(force)
     local any = false
     for _, e in ipairs(list) do if #e.need > 0 then any = true end end
     if not any and not force then return false end
+    -- Einmal geschlossen, kommt dasselbe Bild nicht wieder (Gruppe aendert
+    -- sich oft); nur wenn sich etwas aendert - oder auf /wcui teilen.
+    local sig = {}
+    for _, e in ipairs(list) do sig[#sig + 1] = e.id .. ":" .. table.concat(e.need, ",") end
+    sig = did .. "|" .. table.concat(sig, ";")
+    if not force and sig == EV.shareClosed then return false end
+    EV.shareSig = sig
     if not share then
         share = CreateFrame("Frame", "WeintCodexQuestShare", UIParent)
         share:SetSize(340, 60)
@@ -472,7 +526,7 @@ function EV.ShowShare(force)
         share.title:SetPoint("TOPLEFT", share, "TOPLEFT", 14, -12)
         share.title:SetTextColor(unpack(C.textBright))
         share.close = WeintCodex.CreateButton(share, { text = "×", kind = "ghost", height = 22, size = 14, width = 24,
-            backdrop = "surface2", onClick = function() share:Hide() end })
+            backdrop = "surface2", onClick = function() EV.shareClosed = EV.shareSig share:Hide() end })
         share.close:SetPoint("TOPRIGHT", share, "TOPRIGHT", -8, -8)
         share.rows = {}
     end
@@ -497,7 +551,7 @@ function EV.ShowShare(force)
         r.text:SetPoint("TOPLEFT", share, "TOPLEFT", 14, y)
         r.text:SetWidth(240)
         r.text:SetJustifyH("LEFT")
-        r.text:SetText(e.name .. (#e.need > 0 and ("\n|cff999999fehlt: " .. table.concat(e.need, ", ") .. "|r") or ""))
+        r.text:SetText(e.name .. (#e.need > 0 and ("\n" .. WeintCodex.ColorText("textMuted", "fehlt: " .. table.concat(e.need, ", "))) or ""))
         r.text:Show()
         r.btn:ClearAllPoints()
         r.btn:SetPoint("TOPRIGHT", share, "TOPRIGHT", -12, y)
@@ -515,7 +569,7 @@ end
 --------------------------------------------------
 do
     local ev = CreateFrame("Frame")
-    for _, e in ipairs({ "PLAYER_LOGIN", "ADDON_LOADED", "QUEST_DETAIL", "QUEST_PROGRESS", "QUEST_COMPLETE", "GOSSIP_SHOW",
+    for _, e in ipairs({ "PLAYER_LOGIN", "ADDON_LOADED", "QUEST_DETAIL", "QUEST_PROGRESS", "QUEST_COMPLETE", "GOSSIP_SHOW", "QUEST_GREETING",
                          "CHAT_MSG_WHISPER", "DUEL_REQUESTED", "PLAYER_ENTERING_WORLD", "GROUP_ROSTER_UPDATE",
                          "CHAT_MSG_SAY", "CHAT_MSG_GUILD", "CHAT_MSG_PARTY", "CHAT_MSG_PARTY_LEADER", "CHAT_MSG_CHANNEL",
                          "CHAT_MSG_WHISPER_INFORM", "CHAT_MSG_RAID", "CHAT_MSG_SYSTEM" }) do
@@ -526,10 +580,12 @@ do
         elseif event == "QUEST_PROGRESS" then EV.OnQuestProgress()
         elseif event == "QUEST_COMPLETE" then EV.OnQuestComplete()
         elseif event == "GOSSIP_SHOW" then EV.OnGossip()
+        elseif event == "QUEST_GREETING" then EV.OnGreeting()
         elseif event == "CHAT_MSG_WHISPER" then
             EV.OnWhisper(a1, a2)
         elseif event == "DUEL_REQUESTED" then EV.OnDuel(a1)
         elseif event == "PLAYER_LOGIN" then
+            EV.lastChat = P(_G.GetTime and _G.GetTime()) or 0
             EV.ApplyArrows()
             EV.UpdateChatButton()
             EV.HookScale()

@@ -27126,7 +27126,29 @@ do
         local v = EV.DisenchantValue(2, 22, false)
         assert(type(v) == "number" and v > 0, "kein Wert mit Preisen")
         assert(EV.DisenchantValue(3, 30, false) == 1000 and EV.DisenchantValue(1, 30, false) == nil, "blau/grau falsch")
+        -- Splitter bei Gruen = Splitter bei Blau derselben Stufe (Stufe 28:
+        -- Grosser glaenzender Splitter 11084, nicht der kleine 10978)
+        local asked = {}
+        AP.Lookup = function(id) asked[id] = true return { price = 1000 } end
+        EV.DisenchantValue(2, 28, false)
+        assert(asked[11084] and not asked[10978], "Splitter eine Stufe zu niedrig")
+        assert(EV.BlueShard(58) == 14344 and EV.BlueShard(20) == 10978, "Splitter nach Stufe falsch")
         AP.Lookup = oL
+        -- Begruessungsfenster (QUEST_GREETING): erst abgeben, dann annehmen
+        local selA, selV
+        local oNA, oAT, oSA, oNV, oSV = G.GetNumActiveQuests, G.GetActiveTitle, G.SelectActiveQuest, G.GetNumAvailableQuests, G.SelectAvailableQuest
+        G.GetNumActiveQuests = function() return 2 end
+        G.GetActiveTitle = function(i) return "Q" .. i, i == 2 end
+        G.SelectActiveQuest = function(i) selA = i end
+        G.GetNumAvailableQuests = function() return 1 end
+        G.SelectAvailableQuest = function(i) selV = i end
+        K.Set("comfort", "questAccept", true) K.Set("comfort", "questTurnIn", true)
+        assert(EV.OnGreeting() == "turnin" and selA == 2 and selV == nil, "fertige Quest nicht zuerst abgegeben")
+        G.GetActiveTitle = function(i) return "Q" .. i, false end
+        assert(EV.OnGreeting() == "accept" and selV == 1, "neue Quest nicht angenommen")
+        K.Set("comfort", "questAccept", false) K.Set("comfort", "questTurnIn", false)
+        assert(EV.OnGreeting() == nil, "ohne Schalter gehandelt")
+        G.GetNumActiveQuests, G.GetActiveTitle, G.SelectActiveQuest, G.GetNumAvailableQuests, G.SelectAvailableQuest = oNA, oAT, oSA, oNV, oSV
         -- Flugkarte: nur bei genau einer Wahl, die der Flug ist
         local picked
         local oGI = G.C_GossipInfo
@@ -27185,6 +27207,32 @@ do
         R.playing = false
         local wrong = R.seq[1] % 4 + 1
         assert(R.Press(wrong) == "miss" and #R.seq == R.START, "Fehler setzt nicht zurueck")
+        -- Neustart mitten in der Wiedergabe: die alte Folge hoert auf
+        local queue = {}
+        G.C_Timer = { After = function(_, fn) queue[#queue + 1] = fn end }
+        R.Start()
+        local stale = table.remove(queue, 1)
+        R.Start()
+        local lit = 0
+        local oLight = R.Light
+        R.Light = function(i, on) if on then lit = lit + 1 end end
+        stale()
+        assert(lit == 0, "alte Folge leuchtet nach dem Neustart weiter")
+        R.Light = oLight
+        -- Paare: Zurueckdrehen nach neuem Tisch trifft die neuen Karten nicht
+        FG.Play("pairs")
+        queue = {}
+        local p1, p2
+        for _, c in ipairs(P.cards) do
+            if not p1 then p1 = c elseif c.kind ~= p1.kind and not p2 then p2 = c end
+        end
+        P.Flip(p1) P.Flip(p2)
+        local back = queue[#queue]
+        P.Start()
+        local busyAfter = P.busy
+        p1.up = true
+        back()
+        assert(p1.up and busyAfter == false, "altes Zurueckdrehen trifft neuen Tisch")
         G.C_Timer = oT
         FG.Close()
     end)
@@ -27240,7 +27288,20 @@ do
         G.C_UnitAuras = oUA
         assert(CA.SpecName("WARRIOR", 1) == "Waffen" and CA.SpecName("WARRIOR", 3) == "Schutz", "Baumnamen falsch")
         assert(CA.OnEnemyCast("player", 642) == nil, "eigener Zauber als Gegner")
+        -- Ohne Schalter fasst ApplyHide nichts an (vorher: alles auf 1)
+        local touched = 0
+        local oOT = G.ObjectiveTrackerFrame
+        G.ObjectiveTrackerFrame = { SetAlpha = function() touched = touched + 1 end }
         CA.ApplyHide(false)
+        CA.ApplyHide(true)
+        CA.ApplyHide(false)
+        assert(touched == 0, "Questliste ohne Schalter angefasst")
+        K.Set("comfort", "caHideQuests", true)
+        CA.ApplyHide(true)
+        CA.ApplyHide(false)
+        assert(touched == 2, "Questliste nicht aus- und wieder eingeblendet")
+        K.Set("comfort", "caHideQuests", false)
+        G.ObjectiveTrackerFrame = oOT
         local found = { helfer = false, pvp = false }
         local m = K.Module("comfort")
         for _, p in ipairs(m.pages) do if found[p.key] ~= nil then found[p.key] = true end end

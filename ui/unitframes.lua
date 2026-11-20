@@ -1419,13 +1419,27 @@ local function Learned()
     root.debuffIds = root.debuffIds or {}
     return root.debuffIds
 end
-function UF.NeverNames()
-    local out = {}
-    for tok in tostring(Opt("debuffNever") or ""):gmatch("[^,;]+") do
+-- Liste und gesuchte Namen werden nur neu gebaut, wenn sich der Text der
+-- Einstellung aendert - UpdateAuras laeuft bei jedem UNIT_AURA.
+local namesSrc, namesList, namesWant = nil, {}, {}
+local function Fold(n)
+    return WeintCodex.Search and WeintCodex.Search.Fold and WeintCodex.Search.Fold(n) or n:lower()
+end
+local function ParseNever()
+    local src = tostring(Opt("debuffNever") or "")
+    if src == namesSrc then return end
+    namesSrc, namesList, namesWant = src, {}, {}
+    for tok in src:gmatch("[^,;]+") do
         tok = tok:match("^%s*(.-)%s*$")
-        if tok ~= "" then out[#out + 1] = tok end
+        if tok ~= "" then
+            namesList[#namesList + 1] = tok
+            if not tonumber(tok) then namesWant[Fold(tok)] = true end
+        end
     end
-    return out
+end
+function UF.NeverNames()
+    ParseNever()
+    return namesList
 end
 function UF.NeverSet()
     local names = UF.NeverNames()
@@ -1436,8 +1450,7 @@ function UF.NeverSet()
         local id = tonumber(n)
         if id then parts[#parts + 1] = n
         else
-            local key = WeintCodex.Search and WeintCodex.Search.Fold and WeintCodex.Search.Fold(n) or n:lower()
-            for sid in pairs(learned[key] or {}) do parts[#parts + 1] = tostring(sid) end
+            for sid in pairs(learned[Fold(n)] or {}) do parts[#parts + 1] = tostring(sid) end
         end
     end
     table.sort(parts)
@@ -1454,14 +1467,8 @@ end
 -- true, wenn etwas Neues gelernt wurde.
 function UF.LearnNever(unit)
     if K.InCombat() then return false end
-    local names = UF.NeverNames()
-    if #names == 0 then return false end
-    local want = {}
-    for _, n in ipairs(names) do
-        if not tonumber(n) then
-            want[WeintCodex.Search and WeintCodex.Search.Fold and WeintCodex.Search.Fold(n) or n:lower()] = true
-        end
-    end
+    ParseNever()
+    local want = namesWant
     if Empty(want) then return false end
     local cu = _G.C_UnitAuras
     if not (cu and cu.GetAuraDataByIndex) then return false end
@@ -1472,7 +1479,7 @@ function UF.LearnNever(unit)
         if not ok or type(a) ~= "table" then break end
         local name, sid = K.Plain(a.name), K.Plain(a.spellId)
         if type(name) == "string" and type(sid) == "number" then
-            local key = WeintCodex.Search and WeintCodex.Search.Fold and WeintCodex.Search.Fold(name) or name:lower()
+            local key = Fold(name)
             if want[key] then
                 learned[key] = learned[key] or {}
                 if not learned[key][sid] then learned[key][sid] = true new = true end

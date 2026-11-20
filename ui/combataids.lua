@@ -379,8 +379,15 @@ end
 -- Oberflaeche im Kampf ausblenden
 --------------------------------------------------
 CA.QUEST_FRAMES = { "ObjectiveTrackerFrame", "QuestWatchFrame", "WatchFrame" }
+-- Nur Rahmen, die WeintCodex selbst ausgeblendet hat (oder jetzt
+-- ausblendet), bekommen ihre Deckkraft zurueck - sonst nichts anfassen
+-- (1.0.8.0: setzte vorher nach jedem Kampf alles auf 1, auch ganz ohne
+-- diese Schalter).
+CA.faded = {}
 function CA.ApplyHide(fighting)
     local function Fade(name, hide)
+        if not hide and not CA.faded[name] then return end
+        CA.faded[name] = hide or nil
         local f = _G[name]
         if type(f) == "table" and f.SetAlpha then pcall(f.SetAlpha, f, hide and 0 or 1) end
     end

@@ -935,7 +935,9 @@ P.ICONS = { "Spell_Fire_FlameBolt", "Spell_Frost_FrostBolt02", "Spell_Holy_HolyB
 P.BACK = GC.tileSide
 FG.P = P
 
+P.gen = 0
 function P.Deal()
+    P.gen = P.gen + 1
     local deck = {}
     for i = 1, #P.ICONS do deck[#deck + 1] = i deck[#deck + 1] = i end
     for i = #deck, 2, -1 do local j = Rand(i) deck[i], deck[j] = deck[j], deck[i] end
@@ -974,13 +976,17 @@ function P.Flip(c)
         if P.left <= 0 then
             FG.AddScore(300)
             P.busy = true
-            if _G.C_Timer and _G.C_Timer.After then _G.C_Timer.After(0.8, P.Deal) else P.Deal() end
+            local gen = P.gen
+            local function again() if gen == P.gen then P.Deal() end end
+            if _G.C_Timer and _G.C_Timer.After then _G.C_Timer.After(0.8, again) else again() end
         end
         return "pair"
     end
     P.combo = 0
     P.busy = true
+    local gen = P.gen
     local function back()
+        if gen ~= P.gen then return end   -- neuer Tisch inzwischen
         first.up, c.up = false, false
         P.PaintCard(first) P.PaintCard(c)
         P.busy = false
@@ -1033,16 +1039,22 @@ function R.Light(i, on)
     b.fill:SetColorTexture(c[1] * f, c[2] * f, c[3] * f, 1)
 end
 
+-- Jede Wiedergabe hat ihre Nummer: startet eine neue (Neustart mitten in
+-- der Folge), hoert die alte still auf, statt mitzuleuchten.
+R.gen = 0
 function R.Play()
     R.playing, R.pos = true, 0
-    local step = 0
+    R.gen = R.gen + 1
+    local gen, step = R.gen, 0
     local function nxt()
+        if gen ~= R.gen then return end
         if not FG.views.runes or not FG.views.runes:IsShown() then R.playing = false return end
         step = step + 1
         if step > #R.seq then R.playing = false return end
         local i = R.seq[step]
         R.Light(i, true)
         _G.C_Timer.After(R.ON, function()
+            if gen ~= R.gen then return end
             R.Light(i, false)
             _G.C_Timer.After(R.OFF, nxt)
         end)
