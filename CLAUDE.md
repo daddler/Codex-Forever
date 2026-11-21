@@ -58,12 +58,9 @@ it never sends there. **Second exception since 6.32.0.0, also on request:**
 departure times of boats/zeppelins/tram (`ui/route.lua`, prefix `WCRT`,
 switch `questarrow.shareTimes`, on by default) go to guild and group as
 addon messages – only the measured timetable phase, never position or name.
-**Third exception since 6.62.0.0, on request („Layer wechseln“, after the
-behaviour of LayerSwap, `ui/layer.lua`):** only on the player's click on
-„Um anderen Layer bitten“, WeintCodex joins the public channel `layer` and
-posts `inv layer <LS [zone map id] not [layer id]>` there, preceded by two
-addon messages (prefix `LayerSwap`: `zone …`, `not …`) – the format
-LayerSwap hosts read. Never by itself, no hosting, no invites sent.
+**Third exception – removed in 1.0.8.5** (owner: „Layer Swap ist nicht mehr
+möglich, nimm das raus“): „Layer wechseln“ (`ui/layer.lua`, 6.62.0.0–1.0.8.4,
+channel `layer`, prefix `LayerSwap`) is gone; nothing is sent there any more.
 **Fourth exception since 6.82.0.0, on request („stilles Teilen mit der
 Gilde“, `ui/gatheratlas.lua`):** Sammel-Atlas nodes, prefix `WCGA`, guild
 only, only map id, object id, coordinates (and the node kind), switch

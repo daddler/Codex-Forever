@@ -9,6 +9,14 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.0.8.5] – 2026-11-21
+
+### Entfernt
+- „Layer wechseln“ (`ui/layer.lua`, seit 6.62.0.0; Wunsch des Besitzers:
+  „Layer Swap ist nicht mehr möglich“): Modul, TOC-Eintrag, Hilfetext
+  `minimap/layer` und Pruefung entfernt. Damit entfaellt die dritte Ausnahme
+  nach aussen (Kanal `layer`, Praefix `LayerSwap`, CLAUDE.md).
+
 ## [1.0.8.4] – 2026-11-20
 
 ### Behoben

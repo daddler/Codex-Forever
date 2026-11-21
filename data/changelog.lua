@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.0.8.5",
+        date    = "21.11.2026",
+        notes   = {
+            "|cff7C6CFFLayer wechseln entfernt|r – auf Forever lässt sich der Layer nicht mehr auf diesem Weg wechseln. Die Anzeige an der Minikarte und die Seite „Layer“ sind deshalb weg; WeintCodex schreibt nichts mehr in den Kanal „layer“.",
+        },
+    },
+    {
         version = "1.0.8.4",
         date    = "20.11.2026",
         notes   = {
