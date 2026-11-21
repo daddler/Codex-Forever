@@ -58,55 +58,156 @@ EV.Opt = Opt
 --------------------------------------------------
 -- Quests annehmen und abgeben
 --------------------------------------------------
-EV.quest = { accepted = 0, turned = 0, left = 0 }
+EV.quest = { accepted = 0, turned = 0, left = 0, stuck = 0, closed = 0 }
+
+-- 1.0.8.8 (Rueckmeldung: "manchmal hakt die automatische Questannahme,
+-- dann geht es nicht weiter"). Bis 1.0.8.7 rief WeintCodex AcceptQuest
+-- genau einmal und schloss das Fenster 0,1 s spaeter blind - drei Wege,
+-- haengen zu bleiben:
+--   * nahm das Spiel die Annahme nicht (Quest noch nicht bereit), schloss
+--     WeintCodex das Fenster trotzdem - Quest nicht angenommen, nichts zu
+--     sehen;
+--   * mit "Gespraeche im Codex-Stil" stand die Detailseite im eigenen
+--     Fenster, nicht im QuestFrame - das Schliessen sah sie nicht, das
+--     Fenster blieb mit der schon angenommenen Quest stehen;
+--   * "Abgeben" und "Belohnung" fragten nur einmal - waren die Gegenstaende
+--     beim Ereignis noch nicht geladen, blieb es beim Spieler.
+-- Jetzt: annehmen, pruefen (Questlog oder QUEST_ACCEPTED), sonst bis zu
+-- EV.ACCEPT_TRIES mal neu; geschlossen wird erst, wenn die Quest sicher im
+-- Log ist. Klappt es nicht, bleibt das Fenster fuer den Spieler offen.
+EV.ACCEPT_TRIES, EV.ACCEPT_WAIT = 3, 0.4
+EV.RETRY = { 0.3, 1.0 }    -- Abgeben/Belohnung: noch einmal fragen nach ... s
+
+local function Shown(f) return type(f) == "table" and f.IsShown and K.Bool(P(f:IsShown()), false) or false end
+local function QuestID()
+    if not _G.GetQuestID then return nil end
+    local ok, id = pcall(_G.GetQuestID)
+    id = ok and P(id) or nil
+    return type(id) == "number" and id > 0 and id or nil
+end
+-- true/false, nil = der Client sagt es nicht
+local function InLog(id)
+    local ql = _G.C_QuestLog
+    if not (id and ql) then return nil end
+    if ql.GetLogIndexForQuestID then
+        local ok, i = pcall(ql.GetLogIndexForQuestID, id)
+        i = ok and P(i) or nil
+        if type(i) == "number" then return i > 0 end
+        if ok then return false end
+    end
+    if ql.IsOnQuest then
+        local ok, on = pcall(ql.IsOnQuest, id)
+        if ok then return K.Bool(P(on), false) end
+    end
+    return nil
+end
+-- Welche Seite des Questgebers steht gerade - im Fenster des Spiels oder im
+-- Codex-Stil?
+local PANELS = { detail = "QuestFrameDetailPanel", progress = "QuestFrameProgressPanel", complete = "QuestFrameRewardPanel" }
+function EV.QuestPage(kind)
+    if Shown(_G.QuestFrame) and Shown(_G[PANELS[kind]]) then return true end
+    local DL = WeintCodex.UIDialogue
+    return DL ~= nil and DL.state == kind
+end
+EV.InLog, EV.QuestID = InLog, QuestID
 
 function EV.OnQuestDetail()
     if not Opt("questAccept") or Shift() then return false end
-    if _G.AcceptQuest then
-        pcall(_G.AcceptQuest)
-        EV.quest.accepted = EV.quest.accepted + 1
-        -- 1.0.8.0 (Bild: leeres Questfenster mit "Annehmen/Ablehnen" bleibt
-        -- offen): der Client schliesst nach AcceptQuest nicht selbst. Kurz
-        -- danach zu - aber nur, wenn noch die Detailseite steht; hat das
-        -- Spiel schon das naechste Gespraech geoeffnet, bleibt es.
-        Later(EV.CLOSE_DELAY, EV.CloseDetail)
+    if not _G.AcceptQuest then return false end
+    EV.pending = { id = QuestID(), tries = 0 }
+    -- Quests, die das Spiel selbst annimmt: nur bestaetigen und schliessen.
+    local auto = _G.QuestGetAutoAccept and select(2, pcall(_G.QuestGetAutoAccept))
+    if K.Bool(P(auto), false) then
+        if _G.AcknowledgeAutoAcceptQuest then pcall(_G.AcknowledgeAutoAcceptQuest) end
+        EV.Accepted(EV.pending.id)
         return true
     end
-    return false
-end
-
-EV.CLOSE_DELAY = 0.1
-local function Shown(f) return type(f) == "table" and f.IsShown and K.Bool(P(f:IsShown()), false) or false end
-function EV.CloseDetail()
-    local qf, detail = _G.QuestFrame, _G.QuestFrameDetailPanel
-    if not (Shown(qf) and Shown(detail)) then return false end
-    if _G.CloseQuest then pcall(_G.CloseQuest) end
-    if Shown(qf) and _G.HideUIPanel then pcall(_G.HideUIPanel, qf) end
-    EV.quest.closed = (EV.quest.closed or 0) + 1
+    EV.TryAccept()
     return true
 end
 
-function EV.OnQuestProgress()
+function EV.TryAccept()
+    local p = EV.pending
+    if not p then return false end
+    if InLog(p.id) then return EV.Accepted(p.id) end
+    -- Spieler oder Spiel sind weiter: nichts mehr tun.
+    local now = QuestID()
+    if not EV.QuestPage("detail") or (p.id and now and now ~= p.id) then EV.pending = nil return false end
+    if p.tries >= EV.ACCEPT_TRIES then
+        EV.pending = nil
+        EV.quest.stuck = EV.quest.stuck + 1
+        return false
+    end
+    p.tries = p.tries + 1
+    pcall(_G.AcceptQuest)
+    Later(EV.ACCEPT_WAIT, EV.TryAccept)
+    return true
+end
+
+-- QUEST_ACCEPTED (questID; im alten Format Logplatz, questID) oder im Log
+-- gefunden.
+function EV.Accepted(id)
+    local p = EV.pending
+    if not p then return false end
+    if p.id and id and id ~= p.id and not InLog(p.id) then return false end
+    EV.pending = nil
+    EV.quest.accepted = EV.quest.accepted + 1
+    -- Der Client schliesst nach der Annahme nicht selbst (1.0.8.0, Bild):
+    -- kurz danach zu - aber nur, solange diese Detailseite noch steht.
+    local want = p.id
+    Later(EV.CLOSE_DELAY, function() EV.CloseDetail(want) end)
+    return true
+end
+
+EV.CLOSE_DELAY = 0.1
+function EV.CloseDetail(id)
+    if not EV.QuestPage("detail") then return false end
+    local now = QuestID()
+    if id and now and now ~= id then return false end   -- schon die naechste Quest
+    if _G.CloseQuest then pcall(_G.CloseQuest) end
+    if Shown(_G.QuestFrame) and _G.HideUIPanel then pcall(_G.HideUIPanel, _G.QuestFrame) end
+    EV.quest.closed = EV.quest.closed + 1
+    return true
+end
+
+-- Abgeben: kann die Quest (noch) nicht abgegeben werden, spaeter noch
+-- einmal fragen - die Gegenstaende laedt das Spiel manchmal erst danach.
+local function Completable()
+    if not _G.IsQuestCompletable then return false end
+    local ok, can = pcall(_G.IsQuestCompletable)
+    return ok and K.Bool(P(can), false)
+end
+function EV.OnQuestProgress(try)
     if not Opt("questTurnIn") or Shift() then return false end
-    local ok, can = pcall(_G.IsQuestCompletable or function() return false end)
-    if ok and K.Bool(P(can), false) and _G.CompleteQuest then pcall(_G.CompleteQuest) return true end
+    try = try or 0
+    if try > 0 and not EV.QuestPage("progress") then return false end
+    if Completable() and _G.CompleteQuest then pcall(_G.CompleteQuest) return true end
+    local wait = EV.RETRY[try + 1]
+    if wait then Later(wait, function() EV.OnQuestProgress(try + 1) end) end
     return false
 end
 
--- Belohnung: nur ohne Wahl. Einen Augenblick warten und noch einmal zaehlen
--- - das Spiel fuellt die Liste manchmal erst nach dem Ereignis.
+-- Belohnung: nur ohne Wahl. Das Spiel fuellt die Liste manchmal erst nach
+-- dem Ereignis - also erst nach einem Augenblick nehmen, und weiss es dann
+-- noch nichts, noch einmal fragen.
 function EV.Choices()
     local ok, n = pcall(_G.GetNumQuestChoices or function() return 0 end)
     n = ok and P(n) or nil
     return type(n) == "number" and n or nil
 end
-function EV.OnQuestComplete()
+function EV.OnQuestComplete(try)
     if not Opt("questTurnIn") or Shift() then return false end
+    try = try or 0
+    if try > 0 and not EV.QuestPage("complete") then return false end
     local n = EV.Choices()
-    if n == nil or n > 1 then EV.quest.left = EV.quest.left + 1 return false end
-    Later(0.3, function()
+    if n ~= nil and n > 1 then EV.quest.left = EV.quest.left + 1 return false end
+    local wait = EV.RETRY[try + 1]
+    if not wait then EV.quest.left = EV.quest.left + 1 return false end
+    Later(wait, function()
+        if Shift() or not EV.QuestPage("complete") then return end
         local again = EV.Choices()
-        if again == nil or again > 1 or Shift() then EV.quest.left = EV.quest.left + 1 return end
+        if again == nil then EV.OnQuestComplete(try + 1) return end
+        if again > 1 then EV.quest.left = EV.quest.left + 1 return end
         if _G.GetQuestReward then pcall(_G.GetQuestReward, again == 1 and 1 or 0) EV.quest.turned = EV.quest.turned + 1 end
     end)
     return true
@@ -701,6 +802,7 @@ end
 do
     local ev = CreateFrame("Frame")
     for _, e in ipairs({ "PLAYER_LOGIN", "ADDON_LOADED", "QUEST_DETAIL", "QUEST_PROGRESS", "QUEST_COMPLETE", "GOSSIP_SHOW", "QUEST_GREETING",
+                         "QUEST_ACCEPTED", "QUEST_ITEM_UPDATE",
                          "CHAT_MSG_WHISPER", "DUEL_REQUESTED", "PLAYER_ENTERING_WORLD", "GROUP_ROSTER_UPDATE",
                          "CHAT_MSG_SAY", "CHAT_MSG_GUILD", "CHAT_MSG_PARTY", "CHAT_MSG_PARTY_LEADER", "CHAT_MSG_CHANNEL",
                          "CHAT_MSG_WHISPER_INFORM", "CHAT_MSG_RAID", "CHAT_MSG_SYSTEM" }) do
@@ -712,6 +814,13 @@ do
         elseif event == "QUEST_COMPLETE" then EV.OnQuestComplete()
         elseif event == "GOSSIP_SHOW" then EV.OnGossip()
         elseif event == "QUEST_GREETING" then EV.OnGreeting()
+        elseif event == "QUEST_ACCEPTED" then
+            local id = P(a2)
+            if type(id) ~= "number" then id = P(a1) end
+            EV.Accepted(type(id) == "number" and id or nil)
+        elseif event == "QUEST_ITEM_UPDATE" then
+            -- Gegenstaende nachgeladen: Abgeben jetzt moeglich?
+            if EV.QuestPage("progress") then EV.OnQuestProgress(#EV.RETRY) end
         elseif event == "CHAT_MSG_WHISPER" then
             EV.OnWhisper(a1, a2)
         elseif event == "DUEL_REQUESTED" then EV.OnDuel(a1)

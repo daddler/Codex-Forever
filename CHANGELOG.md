@@ -21,6 +21,15 @@ nicht zusammen.
   `OnEditFocusGained` frei, `OnArrowPressed` holt zurueck; Befehle (`/...`)
   nicht, im Kampf nichts. Ausgeschaltet gilt wieder die Pfeil-Einstellung
   des Spiels von vorher. Verhalten wie OneForAll (GPL-3.0), eigener Code.
+- Automatische Questannahme hakte manchmal (Meldung: „dann geht es nicht
+  weiter“). Bis 1.0.8.7: `AcceptQuest` einmal, Fenster nach 0,1 s blind zu
+  (Quest evtl. nicht angenommen), Schliessen sah nur den `QuestFrame` (im
+  Codex-Stil blieb die Detailseite stehen), Abgeben/Belohnung fragten nur
+  einmal. Jetzt `EV.TryAccept`: bis `EV.ACCEPT_TRIES` Versuche, geschlossen
+  erst nach Bestaetigung (Questlog oder `QUEST_ACCEPTED`), sonst bleibt das
+  Fenster offen; `EV.QuestPage` kennt auch `DL.state`; Abgeben/Belohnung
+  fragen nach `EV.RETRY` noch einmal, `QUEST_ITEM_UPDATE` fasst nach;
+  Quests, die das Spiel selbst annimmt, nur bestaetigt.
 
 ### Daten
 - Neu abgeglichen: OneForAll 6.2.13 (Kraeuter je Gebiet, Wildtierlagen,

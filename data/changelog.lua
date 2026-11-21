@@ -26,6 +26,7 @@ WeintCodex_ChangelogData = {
         date    = "21.11.2026",
         notes   = {
             "|cff7C6CFFPfeiltasten holen Gesendetes wirklich zurück|r – mit „Pfeiltasten holen Gesendetes zurück“ (Komfort → Bequem) bringt Pfeil hoch in der Chatzeile die letzten zehn gesendeten Zeilen zurück, samt Gilde, Gruppe oder Flüsterziel. Bisher kam nichts. Gilt bis zum Ausloggen, nicht im Kampf; Befehle mit „/“ kommen nicht hinein.",
+            "|cff7C6CFFQuests automatisch: hakt nicht mehr|r – nahm das Spiel eine Quest nicht gleich an, schloss WeintCodex das Fenster trotzdem, und mit Gesprächen im Codex-Stil blieb eine angenommene Quest manchmal stehen. Jetzt fasst WeintCodex nach, schließt erst, wenn die Quest wirklich im Log ist, und lässt sonst das Fenster für dich offen. Abgeben und Belohnung warten kurz, wenn das Spiel die Gegenstände noch lädt.",
             "|cff7C6CFFDaten aufgefrischt|r – Quests mit mehr deutschen Namen und Zielen, Herkunft von Rezepten, welcher Lehrer welchen Rang lehrt, Kräuter je Gebiet, Lagen einiger Wildtiere und Händler für Reagenzien auf dem neuesten Stand der Spielergemeinschaft.",
         },
     },

@@ -27400,34 +27400,99 @@ do
         end
         assert(not EV.OnQuestDetail(), "ohne Schalter angenommen")
         local accepted, rewarded = 0, nil
-        local oA, oN, oR, oT = G.AcceptQuest, G.GetNumQuestChoices, G.GetQuestReward, G.C_Timer
-        G.AcceptQuest = function() accepted = accepted + 1 end
-        G.GetQuestReward = function(i) rewarded = i end
-        G.C_Timer = nil
+        local names = { "AcceptQuest", "GetNumQuestChoices", "GetQuestReward", "C_Timer", "QuestFrame",
+                        "QuestFrameDetailPanel", "QuestFrameProgressPanel", "QuestFrameRewardPanel", "CloseQuest",
+                        "GetQuestID", "C_QuestLog", "IsQuestCompletable", "CompleteQuest", "QuestGetAutoAccept" }
+        local saved = {}
+        for _, n in ipairs(names) do saved[n] = G[n] end
+        -- Zeitgeber von Hand: Later sammelt, Run fuehrt aus.
+        local queue = {}
+        G.C_Timer = { After = function(_, fn) queue[#queue + 1] = fn end }
+        local function Run() local q = queue queue = {} for _, fn in ipairs(q) do fn() end return #q end
+        local function RunAll() for _ = 1, 10 do if Run() == 0 then return end end end
+        local page, qid, log, closed = "detail", 101, {}, 0
+        G.QuestFrame = { IsShown = function() return page ~= nil end }
+        G.QuestFrameDetailPanel = { IsShown = function() return page == "detail" end }
+        G.QuestFrameProgressPanel = { IsShown = function() return page == "progress" end }
+        G.QuestFrameRewardPanel = { IsShown = function() return page == "complete" end }
+        G.CloseQuest = function() closed = closed + 1 page = nil end
+        G.GetQuestID = function() return qid end
+        G.C_QuestLog = { GetLogIndexForQuestID = function(id) return log[id] end }
+        local takes = 1                    -- beim wievielten Versuch nimmt das Spiel an
+        G.AcceptQuest = function() accepted = accepted + 1 if accepted >= takes then log[qid] = 1 end end
+        G.GetQuestReward = function(i) rewarded = i page = nil end
         K.Set("comfort", "questAccept", true)
         K.Set("comfort", "questTurnIn", true)
         assert(EV.OnQuestDetail() and accepted == 1, "nicht angenommen")
-        -- 1.0.8.0: danach blieb das leere Questfenster offen - jetzt zu, aber
-        -- nur, solange die Detailseite steht (nicht das naechste Gespraech).
-        do
-            local oQF, oDP, oCQ = G.QuestFrame, G.QuestFrameDetailPanel, G.CloseQuest
-            local open, detail, closed = true, true, 0
-            G.QuestFrame = { IsShown = function() return open end }
-            G.QuestFrameDetailPanel = { IsShown = function() return detail end }
-            G.CloseQuest = function() closed = closed + 1 open = false end
-            assert(EV.OnQuestDetail() and closed == 1 and not open, "leeres Questfenster bleibt offen")
-            open, detail = true, false
-            EV.OnQuestDetail()
-            assert(closed == 1, "naechstes Gespraech geschlossen")
-            G.QuestFrame, G.QuestFrameDetailPanel, G.CloseQuest = oQF, oDP, oCQ
-        end
+        RunAll()
+        assert(closed == 1 and page == nil, "angenommene Quest: Fenster bleibt offen")
+        -- 1.0.8.8: nimmt das Spiel erst beim zweiten Mal an, wird nachgefasst
+        -- und erst danach geschlossen.
+        page, qid, accepted, closed, takes = "detail", 102, 0, 0, 2
+        EV.OnQuestDetail()
+        assert(accepted == 1 and closed == 0, "vor der Annahme geschlossen")
+        RunAll()
+        assert(accepted == 2 and closed == 1, "nicht nachgefasst: " .. accepted .. "/" .. closed)
+        -- nimmt das Spiel nie an: Fenster bleibt fuer den Spieler offen
+        page, qid, accepted, closed, takes = "detail", 103, 0, 0, 99
+        local stuck = EV.quest.stuck
+        EV.OnQuestDetail() RunAll()
+        assert(accepted == EV.ACCEPT_TRIES and closed == 0 and page == "detail" and EV.quest.stuck == stuck + 1,
+               "nicht angenommen und trotzdem zu (oder endlos): " .. accepted)
+        -- angenommen, aber das Spiel zeigt schon die naechste Quest: bleibt
+        page, qid, accepted, closed, takes = "detail", 104, 0, 0, 1
+        EV.OnQuestDetail()
+        qid = 105
+        RunAll()
+        assert(closed == 0, "naechste Quest geschlossen")
+        -- Codex-Stil: die Detailseite steht im eigenen Fenster
+        local DL = WeintCodex.UIDialogue
+        local oState = DL.state
+        page, qid, accepted, closed = nil, 106, 0, 0
+        DL.state = "detail"
+        G.CloseQuest = function() closed = closed + 1 DL.state = nil end
+        EV.OnQuestDetail() RunAll()
+        assert(closed == 1 and DL.state == nil, "Codex-Stil: angenommene Quest bleibt stehen")
+        DL.state = oState
+        G.CloseQuest = function() closed = closed + 1 page = nil end
+        -- QUEST_ACCEPTED ohne Auskunft aus dem Log
+        G.C_QuestLog = nil
+        page, qid, accepted, closed, takes = "detail", 107, 0, 0, 1
+        EV.OnQuestDetail()
+        assert(EV.Accepted(107), "QUEST_ACCEPTED nicht angenommen")
+        RunAll()
+        assert(closed == 1, "nach QUEST_ACCEPTED nicht geschlossen")
+        G.C_QuestLog = { GetLogIndexForQuestID = function(id) return log[id] end }
+        -- Abgeben: erst beim zweiten Fragen moeglich
+        local done, can = 0, false
+        G.CompleteQuest = function() done = done + 1 end
+        G.IsQuestCompletable = function() return can end
+        page = "progress"
+        assert(not EV.OnQuestProgress() and done == 0, "nicht abgebbar und doch abgegeben")
+        can = true
+        RunAll()
+        assert(done == 1, "Abgeben nicht nachgefasst")
+        -- Belohnung
+        page, rewarded = "complete", nil
         G.GetNumQuestChoices = function() return 3 end
         assert(not EV.OnQuestComplete() and rewarded == nil, "Belohnung gewaehlt, obwohl drei zur Wahl")
         G.GetNumQuestChoices = function() return 0 end
-        assert(EV.OnQuestComplete() and rewarded == 0, "ohne Wahl nicht abgegeben")
+        assert(EV.OnQuestComplete() and rewarded == nil, "ohne Warten genommen")
+        RunAll()
+        assert(rewarded == 0, "ohne Wahl nicht abgegeben")
+        -- Liste erst spaeter gefuellt: noch einmal gefragt
+        page, rewarded = "complete", nil
+        local n = nil
+        G.GetNumQuestChoices = function() return n end
+        EV.OnQuestComplete()
+        Run()
+        assert(rewarded == nil, "ohne Auskunft gewaehlt")
+        n = 1
+        RunAll()
+        assert(rewarded == 1, "spaet gefuellte Liste nicht nachgefasst")
         K.Set("comfort", "questAccept", false)
         K.Set("comfort", "questTurnIn", false)
-        G.AcceptQuest, G.GetNumQuestChoices, G.GetQuestReward, G.C_Timer = oA, oN, oR, oT
+        for _, nm in ipairs(names) do G[nm] = saved[nm] end
         -- Einladen nur fuer Freunde/Gilde und genau das Wort
         local invited
         local oPI, oFL = G.C_PartyInfo, G.C_FriendList
