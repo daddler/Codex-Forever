@@ -227,8 +227,9 @@ CL.LINKS = {
     { host = "ReputationFrame", where = "title", titleHost = "CharacterFrame", fallback = "belowleft", label = function() return "WeintCodex: Ruf-Belohnungen" end,
       tip = "Was jede Fraktion bei welcher Rufstufe anbietet, mit deinem Stand.",
       go = function()
-          local FJ = WeintCodex.UIFieldJournal
-          if FJ and FJ.RepReport and K.ShowReport then K.ShowReport("Ruf-Belohnungen", FJ.RepReport()) return true end
+          -- 1.0.8.10: die Seite im Codex statt des Kopierfensters.
+          local BP = WeintCodex.BooksPage
+          if BP and BP.OpenRep then return BP.OpenRep() end
       end },
     -- 1.0.8.7 (Bild: "Codex-Knopf ueberlappt den Auktionshausscanner"):
     -- "Preise scannen" (ui/auctionprices.lua) steht schon neben dem Kreuz -

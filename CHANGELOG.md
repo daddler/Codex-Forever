@@ -9,6 +9,23 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.0.8.10] – 2026-11-21
+
+### Geaendert
+- Ruf-Belohnungen (Bild: Kopierfenster mit `#274745`, Preisen „1 10 42“,
+  „du: 1“, Fraktionen der Gegenseite): statt `K.ShowReport` eine Seite unter
+  „Entdecken“ (`modules/reppage.lua`, Eintrag „Ruf-Belohnungen“ in
+  `SidebarItems`). Fraktionen nach Ruf sortiert, Klick klappt die
+  Belohnungen auf (Symbol, Name/Qualitaet ueber `LootBook.Info`, Rufstufe,
+  Preis mit Muenzen, Tooltip, gruen = schon kaeuflich); Detailbereich mit
+  Ruestmeister, Karte, Questpfeil. Hasserfuellt (`reaction` 1) = andere
+  Seite, ausgeblendet und gezaehlt. `FJ.STANDING` kennt 1–3. Knopf am
+  Ruffenster und `/wcui ruf` oeffnen die Seite (`BP.OpenRep`).
+
+### Behoben
+- Buecher-Seite: `PaintProgress` rief `t:Hide()` auf den Marken
+  (`{ mark, text }`) – Abbruch, sobald der Client den Stand nicht nannte.
+
 ## [1.0.8.9] – 2026-11-21
 
 ### Behoben

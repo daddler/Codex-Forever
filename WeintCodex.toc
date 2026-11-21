@@ -2,7 +2,7 @@
 ## Title: |cff7C6CFFWeintCodex|r
 ## Notes: Raid Guide & Intelligence System — Forever Edition
 ## Author: Fabian
-## Version: 1.0.8.9
+## Version: 1.0.8.10
 ## SavedVariables: WeintCodex_SavedData, WeintCompanionDB, WeintCompanionInboxDB, WeintCodex_WhispersAccount
 ## SavedVariablesPerCharacter: WeintCodex_Whispers, WeintCodex_Backup
 
@@ -239,6 +239,8 @@ modules/library.lua
 modules/sleepingbag.lua
 # Seite "Buecher" im Codex (6.59.0.0).
 modules/books.lua
+# Ruf-Belohnungen auf der Seite Entdecken (1.0.8.10).
+modules/reppage.lua
 # Startseite (6.11.0.0): fragt Lehrer, Quests und Dungeons - nach ihnen.
 modules/home.lua
 

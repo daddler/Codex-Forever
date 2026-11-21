@@ -74,7 +74,7 @@ function FJ.FactionName(fid)
     return f and f.name or ("Fraktion " .. fid)
 end
 
-FJ.STANDING = { [4] = "Neutral", [5] = "Freundlich", [6] = "Wohlwollend", [7] = "Respektvoll", [8] = "Ehrfürchtig" }
+FJ.STANDING = { [1] = "Hasserfüllt", [2] = "Feindselig", [3] = "Unfreundlich", [4] = "Neutral", [5] = "Freundlich", [6] = "Wohlwollend", [7] = "Respektvoll", [8] = "Ehrfürchtig" }
 FJ.HOW = { trainer = "beim Lehrer", quest = "über eine Quest", drop = "als Beute", world = "in der Welt" }
 
 local function Money(c)

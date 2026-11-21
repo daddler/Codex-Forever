@@ -35,6 +35,7 @@ BP.sel = nil            -- Abgabequest des gewaehlten Buches
 
 local page
 local rows = {}
+BP.rows = rows
 
 local function LB() return WeintCodex.Library end
 local function Plain(v)
@@ -217,23 +218,47 @@ local function Row(i, body)
     r.go = BP.Pill(r, "Pfeil hierhin", { height = 24 })
     r.go:SetWidth(96)
     r.go:SetPoint("RIGHT", r, "RIGHT", -10, 0)
-    r:SetScript("OnEnter", function(self) self._hot = true BP.PaintRow(self) end)
-    r:SetScript("OnLeave", function(self) self._hot = nil BP.PaintRow(self) end)
+    r:SetScript("OnEnter", function(self)
+        self._hot = true
+        BP.PaintRow(self)
+        -- Ruf-Belohnungen (modules/reppage.lua): Tooltip des Gegenstands.
+        local tt = _G.GameTooltip
+        if self.repItem and tt and tt.SetItemByID then
+            tt:SetOwner(self, "ANCHOR_RIGHT")
+            pcall(tt.SetItemByID, tt, self.repItem)
+            tt:Show()
+        end
+    end)
+    r:SetScript("OnLeave", function(self)
+        self._hot = nil
+        BP.PaintRow(self)
+        if self.repItem and _G.GameTooltip then _G.GameTooltip:Hide() end
+    end)
     r:SetScript("OnClick", function(self)
-        if self.stepIndex then
+        if self.repFaction then
+            BP.repSel = (BP.repSel ~= self.repFaction) and self.repFaction or nil
+            BP.Show()
+            return
+        elseif self.repItem then
+            return
+        elseif self.stepIndex then
             BP.selStep = self.stepIndex
         else
             BP.sel = self.entry and self.entry.b[1]
         end
         BP.Show()
     end)
+    r.repFaction, r.repItem, r.wcIcon, r.indent = false, false, false, 28
     rows[i] = r
     return r
 end
+BP.Row = Row
 
 function BP.PaintRow(r)
     local on
-    if r.stepIndex then on = r.stepIndex == BP.selStep else on = r.entry and r.entry.b[1] == BP.sel end
+    if r.repFaction then on = r.repFaction == BP.repSel
+    elseif r.repItem then on = false
+    elseif r.stepIndex then on = r.stepIndex == BP.selStep else on = r.entry and r.entry.b[1] == BP.sel end
     local s = (on and C.surface3) or (r._hot and C.surface2) or C.surface1
     r.bg:SetColorTexture(s[1], s[2], s[3], (on or r._hot) and 1 or 0)
 end
@@ -292,7 +317,9 @@ local function PaintProgress(f, p)
         f.Count:SetText("Stand unbekannt")
         f.Goal:SetText("Das Spiel nennt nicht, welche Bücher abgegeben sind.")
         f.Fill:Hide()
-        for _, t in ipairs(f.Ticks) do t:Hide() end
+        -- 1.0.8.10: Marken sind { mark, text } - t:Hide() brach die Seite ab,
+        -- sobald das Spiel den Stand nicht nannte.
+        for _, t in ipairs(f.Ticks) do t.mark:Hide() t.text:Hide() end
         return
     end
     f.Count:SetText(p.done .. " von " .. p.total .. " abgegeben")
@@ -352,6 +379,17 @@ local function SidebarItems(list)
             status = { text = p and (p.done .. "/" .. p.total) or "?", color = (p and not p.current) and "success" or "textMuted" },
             onClick = function() BP.cat = "sleepingbag" BP.Show() end }
         order[#order + 1] = { key = "sleepingbag", label = "Gemütlicher Schlafsack" }
+    end
+    -- 1.0.8.10: Ruf-Belohnungen beim Ruestmeister (modules/reppage.lua).
+    if BP.ShowRep and WeintCodex.RepRewardsData then
+        local fs = BP.RepFactions()
+        local reach = 0
+        for _, e in ipairs(fs) do if e.reach > 0 then reach = reach + 1 end end
+        items[#items + 1] = { isGroup = true, label = "Ruf" }
+        items[#items + 1] = { label = "Ruf-Belohnungen",
+            status = { text = tostring(#fs), color = "textMuted" },
+            onClick = function() BP.cat = "rep" BP.Show() end }
+        order[#order + 1] = { key = "rep", label = "Ruf-Belohnungen" }
     end
     return items, order
 end
@@ -443,6 +481,14 @@ function BP.Show()
             WeintCodex.SetBreadcrumb("Entdecken", k.label)
         end
     end
+    if BP.cat == "rep" then
+        f.Head.Title:SetText("Ruf-Belohnungen")
+        if f.Head.Sub then
+            f.Head.Sub:SetText("Was jede Fraktion beim Rüstmeister anbietet – ab welcher Rufstufe, für wie viel, und was du schon kaufen kannst.")
+        end
+        BP.ShowRep(f)
+        return
+    end
     local bag = BP.cat == "sleepingbag"
     f.Head.Title:SetText(bag and "Gemütlicher Schlafsack" or "Bücher der Bibliothek")
     if f.Head.Sub then
@@ -469,6 +515,7 @@ function BP.Show()
     f.ListBody:SetWidth(w - 10)
     for i, e in ipairs(list) do
         local r = Row(i, f.ListBody)
+        if BP.RowPlain then BP.RowPlain(r) end
         r.entry, r.stepIndex = e, nil
         r:ClearAllPoints()
         r:SetPoint("TOPLEFT", f.ListBody, "TOPLEFT", 0, -(i - 1) * BP.ROW_H)
@@ -601,6 +648,7 @@ function BP.ShowBag(f)
     f.ListBody:SetWidth(w - 10)
     for i, e in ipairs(list) do
         local r = Row(i, f.ListBody)
+        if BP.RowPlain then BP.RowPlain(r) end
         r.entry, r.stepIndex = nil, e.index
         r:ClearAllPoints()
         r:SetPoint("TOPLEFT", f.ListBody, "TOPLEFT", 0, -(i - 1) * BP.ROW_H)

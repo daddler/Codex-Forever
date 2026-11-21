@@ -22,6 +22,14 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.0.8.10",
+        date    = "21.11.2026",
+        notes   = {
+            "|cff7C6CFFRuf-Belohnungen als richtige Seite|r – der Codex-Knopf am Ruffenster öffnet jetzt im Codex unter „Entdecken“ eine Liste der Fraktionen. Ein Klick klappt die Belohnungen auf: mit Symbol, Namen, Rufstufe, Preis in Münzen und Tooltip; grün, was du mit deinem Ruf schon kaufen kannst. Rechts der Rüstmeister mit Karte und Questpfeil. Fraktionen der anderen Seite sind ausgeblendet.",
+            "|cff7C6CFFBücher der Bibliothek|r – die Seite brach ab, wenn das Spiel nicht verriet, welche Bücher schon abgegeben sind.",
+        },
+    },
+    {
         version = "1.0.8.9",
         date    = "21.11.2026",
         notes   = {

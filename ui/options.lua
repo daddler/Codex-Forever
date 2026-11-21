@@ -1925,8 +1925,8 @@ SlashCmdList["WEINTCODEXUI"] = function(msg)
         return
     end
     if msg == "ruf" or msg == "reputation" then
-        local FJ = WeintCodex.UIFieldJournal
-        if FJ and FJ.RepReport then K.ShowReport("Ruf-Belohnungen", FJ.RepReport()) end
+        local BP = WeintCodex.BooksPage
+        if BP and BP.OpenRep then BP.OpenRep() end
         return
     end
     if msg == "einstimmung" or msg == "einstimmungen" or msg == "attune" then

@@ -21855,6 +21855,62 @@ do
     Check(ok, "Buecher-Seite: Bewertung nach Stufe und Lage, Karte aus dem Client, Liste" .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 1.0.8.10: Ruf-Belohnungen als Seite unter "Entdecken" statt Kopierfenster
+-- (Bild: Nummern statt Namen, Preise als nackte Zahlen, "du: 1", Fraktionen
+-- der anderen Seite).
+do
+    local G = _G
+    local ok, err = pcall(function()
+        local BP, FJ = WeintCodex.BooksPage, WeintCodex.UIFieldJournal
+        local oR, oI, oT = G.C_Reputation, G.C_Item, G.C_Timer
+        local standing = { [509] = 5, [510] = 1, [59] = 4 }
+        G.C_Reputation = { GetFactionDataByID = function(fid)
+            local r = standing[fid]
+            if r then return { name = (fid == 509 and "Der Bund von Arathor") or (fid == 510 and "Die Entweihten") or "Thoriumbruderschaft", reaction = r } end
+        end }
+        G.C_Item = { GetItemInfo = function(id) return "Teil " .. id, "|Hitem:" .. id .. "|h", 3, nil, nil, "Rüstung", "Platte", nil, "INVTYPE_CHEST", 1000 + id end,
+                     GetItemQualityByID = function() return 3 end }
+        G.C_Timer = nil
+        assert(FJ.STANDING[1] == "Hasserfüllt" and FJ.STANDING[2] == "Feindselig", "Rufstufe als Zahl")
+        local list, hidden = BP.RepFactions()
+        local seen = {}
+        for _, e in ipairs(list) do seen[e.fid] = e end
+        assert(seen[509] and not seen[510] and hidden >= 1, "Fraktion der anderen Seite in der Liste")
+        assert(list[1].fid == 509, "hoechster Ruf nicht oben: " .. tostring(list[1].fid))
+        assert(seen[509].reach > 0 and seen[509].reach < seen[509].total, "Freundlich: falsch gezaehlt")
+        BP.cat, BP.repSel = "rep", 509
+        BP.Show()
+        assert(BP.page:IsShown() and BP.page.Head.Title:GetText() == "Ruf-Belohnungen", "Seite nicht gezeigt")
+        local rows = BP.RepRows()
+        local items, greenOk = 0, true
+        for i, row in ipairs(rows) do
+            if row.item then
+                items = items + 1
+                local r = BP.rows[i]
+                assert(r.repItem == row.item and r.name:GetText() == "Teil " .. row.item, "Name statt Nummer: " .. tostring(r.name:GetText()))
+                assert(not tostring(r.sub:GetText()):find("^%d+ %d+ %d+"), "Preis als nackte Zahl")
+                if row.tier <= 5 and not row.faction.standing then greenOk = false end
+            end
+        end
+        assert(items == seen[509].total, "aufgeklappt nicht alle Belohnungen: " .. items)
+        assert(BP.page.Foot:GetText():find("anderen Seite", 1, true), "ausgeblendete nicht genannt")
+        -- Pfeil zum Ruestmeister
+        local QA = WeintCodex.UIQuestArrow
+        local custom
+        local oSet = QA.SetCustom
+        QA.SetCustom = function(t) custom = t end
+        assert(BP.RepGuide(seen[509].f, "Arathor") and custom.map == 1417 and custom.title:find("Samuel Hawke", 1, true), "Pfeil zum Ruestmeister")
+        QA.SetCustom = oSet
+        -- Buecher danach ohne Symbol/Einzug der Ruf-Zeilen
+        BP.cat, BP.repSel = "all", nil
+        BP.Show()
+        assert(not BP.rows[1].repItem and not BP.rows[1].repFaction, "Ruf-Zeile bleibt in den Buechern")
+        G.C_Reputation, G.C_Item, G.C_Timer = oR, oI, oT
+    end)
+    WeintCodex.BooksPage.cat, WeintCodex.BooksPage.repSel = "all", nil
+    Check(ok, "Ruf-Belohnungen: Seite mit Namen, Preisen, Rufstufe, ohne andere Seite, Pfeil" .. (ok and "" or (": " .. tostring(err))))
+end
+
 -- 1.4.0.0: Gemuetlicher Schlafsack - Schritte je Fraktion, Stand vom Client,
 -- unbekannt ehrlich, Seite in den Buechern, Questpfeil.
 do
