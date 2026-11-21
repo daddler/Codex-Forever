@@ -39,7 +39,7 @@ import re
 import sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-SU_VERSION = "1.0.23"
+SU_VERSION = "1.14.17"
 OUT = os.path.join(ROOT, "data", "professions_su.lua")
 
 

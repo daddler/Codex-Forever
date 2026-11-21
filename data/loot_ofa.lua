@@ -2,7 +2,7 @@
 -- WeintCodex :: Beute - Sets, Abgleich mit OneForAll (1.0.8.0)
 --------------------------------------------------
 -- ERZEUGT von .github/scripts/import_oneforall.lua - nicht von Hand aendern.
--- Herkunft (nur fuer Betreuer): Armory von OneForAll 6.2.12 (GPL-3.0, nur
+-- Herkunft (nur fuer Betreuer): Armory von OneForAll 6.2.13 (GPL-3.0, nur
 -- Daten; dort aus dem Forever-Client ueber wago.tools und Wowhead Forever).
 --   SET_STATUS[Set] = 1 in Forever zu bekommen, 2 Quelle noch unbekannt,
 --                     0 in Forever noch nicht da; fehlt: unbekannt

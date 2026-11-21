@@ -2,7 +2,7 @@
 -- WeintCodex :: Wildtierkunde - Abgleich mit OneForAll (1.0.8.0)
 --------------------------------------------------
 -- ERZEUGT von .github/scripts/import_oneforall.lua - nicht von Hand aendern.
--- Herkunft (nur fuer Betreuer): OneForAll 6.2.12 (GPL-3.0, nur Daten) -
+-- Herkunft (nur fuer Betreuer): OneForAll 6.2.13 (GPL-3.0, nur Daten) -
 -- Familien nach wow-petopia.com/forever (07.11.2026), Lagen QuestieDB Forever.
 -- Traegt beim Laden in WeintCodex.BeastData ein: neue Tiere (b, s) und
 -- die Familie, wo die neuere Quelle anders sagt. Art `community`.
@@ -22,11 +22,11 @@ local add = {
         [271336] = "12	Carnage	30	en		23	",
 }
 local spots = {
-        [260157] = "14:756565",
+        [260157] = "14:758566",
         [266851] = "30:518559",
         [269075] = "14:274629",
-        [270693] = "15:618443",
-        [271336] = "23:697291",
+        [270693] = "15:615438",
+        [271336] = "23:698301",
 }
 local family = {
         [253282] = 3,   -- Bird of Prey statt Raptor

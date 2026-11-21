@@ -2,7 +2,7 @@
 -- WeintCodex :: Berufe - Abgleich mit OneForAll (1.0.8.0)
 --------------------------------------------------
 -- ERZEUGT von .github/scripts/import_oneforall.lua - nicht von Hand aendern.
--- Nur Daten aus OneForAll 6.2.12 (GPL-3.0): Forever-Client Build 1.60.1,
+-- Nur Daten aus OneForAll 6.2.13 (GPL-3.0): Forever-Client Build 1.60.1,
 -- taeglich gegen wowtbc.gg geprueft. Art `community`. Gelesen von
 -- modules/professions.lua nach SU_THRESH und NF_FIX - der neueste Stand gilt.
 -- OFA_FIX[Zauber] "Lernen Gelb Gruen Grau" ("-" = Lernstufe unbekannt)
@@ -600,7 +600,7 @@ P.OFA_REAGENT_VENDORS = {
     [17202] = { false, "Khole Jinglepocket", "Nardstrum Copperpinch", "Penney Copperpinch", "Seersa Copperpinch", "Wulmort Jinglepocket" },
     [18567] = { false, "Aedi Thriceforged", "Craftsman Wilhelm", "Elisa Steelhand", "Gharash", "Harggan", "Hraq", "Hurklor", "Jansen Underwood", "Jazzrik", "Kaita Deepforge", "Karen Taylor", "Krinkle Goodsteel", "Master Smith Burninate", "Mika Darby", "Samuel Van Brunt", "Smith Slagtree", "Sumi", "Taur Stonehoof", "Thrawn Boltar", "Thurgrum Deepforge", "Toron Rockhoof", "Vargus" },
     [247786] = { false, "Eaysaa Brightgust", "Jessara Cordell", "Kania", "Kithas", "Leo Sarn", "Lilly", "Nasalanna Windsinger", "Nata Dawnstrider", "Thaddeus Webb", "Tilli Thistlefuzz", "Vaean" },
-    [272941] = { false, "Aza'bek", "Derak Nightfall", "Derek Odds", "Emrul Riknussun", "Erika Tate", "Fimbo Greasemitz", "Fyldan", "Gloria Femmel", "Kalsey Sanden", "Kelsey Yance", "Micha Yance", "Miranda Turner", "Naal Mistrunner", "Nyoma", "Otho Moji'ko", "Paige", "Ronald Burch", "Tarban Hearthgrain", "Terry Palin", "Wulan", "Xen'to", "Zerril Softbreeze" },
+    [272941] = { false, "Aza'bek", "Derak Nightfall", "Derek Odds", "Emrul Riknussun", "Erika Tate", "Fimbo Greasemitz", "Fyldan", "Gloria Femmel", "Kalsey Sanden", "Kelsey Yance", "Micha Yance", "Miranda Turner", "Naal Mistrunner", "Nyalah Brightfire", "Nyoma", "Otho Moji'ko", "Paige", "Ronald Burch", "Tarban Hearthgrain", "Terry Palin", "Wulan", "Xen'to", "Zerril Softbreeze" },
 }
 for key, list in pairs(P.OFA_TRAINERS) do
     P.NF_TRAINERS = P.NF_TRAINERS or {}

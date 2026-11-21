@@ -14,7 +14,8 @@
 --   EINLADEN   Fluestert ein Freund oder Gildenmitglied das Schluesselwort,
 --              laedt WeintCodex ein (nur ohne Gruppe oder als Leiter).
 --   DUELLE     ablehnen - ausser von Freunden und der Gilde.
---   CHAT       Pfeiltasten holen gesendete Zeilen zurueck (ohne Alt);
+--   CHAT       Pfeiltasten holen gesendete Zeilen zurueck (ohne Alt, eigene
+--              Liste seit 1.0.8.8, nur diese Sitzung);
 --              ein Knopf blendet den Chat aus/ein, auf Wunsch von selbst
 --              nach einer Zeit ohne neue Nachricht.
 --   ENTZAUBERN im Tooltip gruener/blauer/epischer Ruestung und Waffen, was
@@ -326,10 +327,120 @@ end
 -- Chat
 --------------------------------------------------
 local function ChatCount() return tonumber(_G.NUM_CHAT_WINDOWS) or 10 end
+
+-- Gesendetes zurueckholen. 1.0.8.8 (Rueckmeldung: "in die Gilde
+-- geschrieben, abgesendet, Chat wieder auf, Pfeiltasten - es erscheint
+-- nicht, was ich gesendet hatte"): bis 1.0.8.7 stellte WeintCodex nur beim
+-- Anmelden die Pfeiltasten um und verliess sich auf den Verlauf des Spiels.
+-- Beides traegt auf Forever nicht: der Verlauf des Spiels antwortet nicht,
+-- und die Zeile stellt die Pfeiltasten beim Schreiben wieder zurueck (so
+-- berichtet auch OneForAll, GPL-3.0 - nur das Verhalten, eigener Code).
+-- Jetzt eine eigene Liste: die letzten EV.HIST_MAX gesendeten Zeilen mit
+-- Art (Gilde, Gruppe, Fluestern an ...), nur fuer diese Sitzung, nie
+-- gespeichert - was jemand schreibt, gehoert nicht in die Datei, die die
+-- Companion liest. Befehle ("/...") kommen nicht hinein: zurueckgeholt
+-- zaehlen sie fuer das Spiel als Addon-Aufruf und werden gesperrt. Im Kampf
+-- holt WeintCodex nichts zurueck (Text und Art aus Addon-Code koennten das
+-- Senden sperren), die Liste waechst aber weiter.
+EV.HIST_MAX = 10
+EV.hist = {}          -- neueste zuerst: { text, chatType, tell, chan }
+EV.histPos = 0
+EV.arrowMode = {}     -- Pfeil-Einstellung des Spiels je Zeile, vor uns
+local histHooked, anyHooked = {}, false
+
+local function Str(v)
+    v = P(v)
+    return type(v) == "string" and v or nil
+end
+
+function EV.HistPush(text, chatType, tell, chan)
+    text = Str(text)
+    if not text or not text:find("%S") or text:find("^%s*/") then return false end
+    local h = EV.hist
+    for i = #h, 1, -1 do if h[i].text == text then table.remove(h, i) end end
+    table.insert(h, 1, { text = text, chatType = Str(chatType), tell = Str(tell), chan = Str(chan) })
+    for i = #h, EV.HIST_MAX + 1, -1 do h[i] = nil end
+    EV.histPos = 0
+    return true
+end
+
+local function UpdateHeader(eb)
+    if eb.UpdateHeader then pcall(eb.UpdateHeader, eb)
+    elseif _G.ChatEdit_UpdateHeader then pcall(_G.ChatEdit_UpdateHeader, eb) end
+end
+
+-- Pfeil hoch: aelter, runter: neuer; ganz unten wieder leer.
+function EV.HistRecall(eb, key)
+    if key ~= "UP" and key ~= "DOWN" then return false end
+    if not Opt("chatArrows") or #EV.hist == 0 or K.InCombat() then return false end
+    if key == "UP" then EV.histPos = math.min(EV.histPos + 1, #EV.hist)
+    else EV.histPos = math.max(EV.histPos - 1, 0) end
+    local e = EV.hist[EV.histPos]
+    if e and e.chatType and eb.SetAttribute then
+        pcall(eb.SetAttribute, eb, "chatType", e.chatType)
+        pcall(eb.SetAttribute, eb, "tellTarget", e.tell)
+        pcall(eb.SetAttribute, eb, "channelTarget", e.chan)
+        UpdateHeader(eb)
+    end
+    local text = e and e.text or ""
+    pcall(eb.SetText, eb, text)
+    if eb.SetCursorPosition then pcall(eb.SetCursorPosition, eb, #text) end
+    return true
+end
+
+local function Arrows(eb)
+    if not eb.SetAltArrowKeyMode then return end
+    if Opt("chatArrows") then pcall(eb.SetAltArrowKeyMode, eb, false)
+    elseif EV.arrowMode[eb] ~= nil then pcall(eb.SetAltArrowKeyMode, eb, EV.arrowMode[eb]) end
+end
+
+-- Was getippt wird, merkt sich die Zeile; nach dem Senden ist sie leer.
+function EV.HookHistory(eb)
+    if type(eb) ~= "table" or not eb.HookScript then return end
+    if not histHooked[eb] then
+        histHooked[eb], anyHooked = true, true
+        if eb.GetAltArrowKeyMode then
+            local ok, m = pcall(eb.GetAltArrowKeyMode, eb)
+            m = ok and P(m)
+            EV.arrowMode[eb] = type(m) == "boolean" and m or true
+        end
+        pcall(eb.HookScript, eb, "OnTextChanged", function(self, user)
+            if not Opt("chatArrows") then return end
+            local t = Str(self:GetText())
+            if t and t:find("%S") then
+                self.wcTyped = t
+                self.wcType = self.GetAttribute and self:GetAttribute("chatType")
+                self.wcTell = self.GetAttribute and self:GetAttribute("tellTarget")
+                self.wcChan = self.GetAttribute and self:GetAttribute("channelTarget")
+            elseif user then self.wcTyped = nil end
+        end)
+        pcall(eb.HookScript, eb, "OnEnterPressed", function(self)
+            if Opt("chatArrows") and self.wcTyped then
+                EV.HistPush(self.wcTyped, self.wcType, self.wcTell, self.wcChan)
+            end
+            self.wcTyped, EV.histPos = nil, 0
+        end)
+        pcall(eb.HookScript, eb, "OnEscapePressed", function(self) self.wcTyped, EV.histPos = nil, 0 end)
+        pcall(eb.HookScript, eb, "OnEditFocusGained", function(self)
+            self.wcTyped, EV.histPos = nil, 0
+            Arrows(self)
+        end)
+        pcall(eb.HookScript, eb, "OnArrowPressed", function(self, key) EV.HistRecall(self, key) end)
+    end
+    Arrows(eb)
+end
+
+local activateHooked = false
 function EV.ApplyArrows()
-    for i = 1, ChatCount() do
+    if not Opt("chatArrows") and not anyHooked then return end
+    for i = 1, ChatCount() + 10 do
         local eb = _G["ChatFrame" .. i .. "EditBox"]
-        if type(eb) == "table" and eb.SetAltArrowKeyMode then pcall(eb.SetAltArrowKeyMode, eb, not Opt("chatArrows")) end
+        if type(eb) == "table" then EV.HookHistory(eb) end
+    end
+    -- Fluesterfenster bekommen ihre Zeile spaeter.
+    if not activateHooked and Opt("chatArrows") and _G.hooksecurefunc and _G.ChatEdit_ActivateChat then
+        activateHooked = true
+        _G.hooksecurefunc("ChatEdit_ActivateChat", function(eb) if Opt("chatArrows") then EV.HookHistory(eb) end end)
     end
 end
 
@@ -671,7 +782,8 @@ local function Build(B)
           { type = "input", label = "Wort", key = "inviteText", disabled = off("inviteWord") })
     B:Row({ type = "toggle", label = "Duelle ablehnen", key = "duelDecline",
             description = "Außer von Freunden und deiner Gilde." },
-          { type = "toggle", label = "Pfeiltasten holen Gesendetes zurück", key = "chatArrows" })
+          { type = "toggle", label = "Pfeiltasten holen Gesendetes zurück", key = "chatArrows",
+            description = "Pfeil hoch/runter in der Chatzeile: die letzten 10 gesendeten Zeilen, mit Gilde, Gruppe oder Flüsterziel. Nur bis zum Ausloggen, nicht im Kampf." })
     B:Row({ type = "toggle", label = "Knopf zum Ausblenden des Chats", key = "chatButton" },
           { type = "slider", label = "Von selbst ausblenden nach", key = "chatAutoHide", min = 0, max = 120, step = 10,
             disabled = off("chatButton"), format = function(v) return v == 0 and "nie" or (v .. " s") end })

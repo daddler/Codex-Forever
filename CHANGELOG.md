@@ -9,6 +9,28 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.0.8.8] – 2026-11-21
+
+### Behoben
+- Pfeiltasten in der Chatzeile holten nichts zurueck (Meldung: Gilde
+  geschrieben, gesendet, Pfeil hoch - leer). `EV.ApplyArrows` stellte nur
+  beim Anmelden `SetAltArrowKeyMode(false)` und verliess sich auf den
+  Verlauf des Spiels; der antwortet auf Forever nicht, und die Zeile stellt
+  die Pfeile beim Schreiben zurueck. Jetzt eigene Liste (`EV.hist`, 10
+  Zeilen, nur Sitzung, nie gespeichert) mit Art/Ziel, Pfeile bei jedem
+  `OnEditFocusGained` frei, `OnArrowPressed` holt zurueck; Befehle (`/...`)
+  nicht, im Kampf nichts. Ausgeschaltet gilt wieder die Pfeil-Einstellung
+  des Spiels von vorher. Verhalten wie OneForAll (GPL-3.0), eigener Code.
+
+### Daten
+- Neu abgeglichen: OneForAll 6.2.13 (Kraeuter je Gebiet, Wildtierlagen,
+  eine Klassenquest-Fraktion, Reagenzhaendler, eine Dungeonquest weniger),
+  QuestieDB 1.1.3 mit Questie 12.11.1 (`data/questdb.lua`: 59 Quests neu,
+  8 weg, 234 geaendert, meist deutsche Namen und Ziele; `data/recipe_sources.lua`),
+  SkillUp Forever 1.14.17 mit Naowh Professions 1.2.30 (nur Stand der
+  Schwellen, Inhalt gleich). QuestieTrace sammelt nur Daten - nichts zu
+  uebernehmen.
+
 ## [1.0.8.7] – 2026-11-21
 
 ### Behoben

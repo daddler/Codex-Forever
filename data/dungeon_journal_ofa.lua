@@ -2,7 +2,7 @@
 -- WeintCodex :: Dungeon-Journal, Abgleich mit OneForAll (1.0.8.0)
 --------------------------------------------------
 -- ERZEUGT von .github/scripts/import_oneforall.lua - nicht von Hand aendern.
--- Herkunft (nur fuer Betreuer): OneForAll 6.2.12 (GPL-3.0, nur Daten) -
+-- Herkunft (nur fuer Betreuer): OneForAll 6.2.13 (GPL-3.0, nur Daten) -
 -- Dropchancen von Wowhead Forever (Bosse mit 100+ Kills, Stand 08.-13.11.2026),
 -- Classic-Chancen von foreverchanges.pro; Quests aus QuestieDB Forever.
 --   OFA_DROP[Dungeon][Gegenstand] = { Chance %, in Forever gemessen }
@@ -80,7 +80,6 @@ J.OFA_QUESTS = {
     scarlet_monastery = {
         { id = 79946, name = "A Brother In Need", level = 40, requires = 35, faction = "alliance", classes = { "PALADIN" } },
         { id = 78676, name = "The Eye of Bhossca", level = 35, requires = 25, faction = "both", classes = { "ROGUE" } },
-        { id = 6141, name = "Brother Anton", level = 39, requires = 34, faction = "alliance" },
     },
     scholomance = {
         { id = 7629, name = "Imp Delivery", level = 60, requires = 60, faction = "both", classes = { "WARLOCK" } },

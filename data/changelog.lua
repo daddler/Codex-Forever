@@ -22,6 +22,14 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.0.8.8",
+        date    = "21.11.2026",
+        notes   = {
+            "|cff7C6CFFPfeiltasten holen Gesendetes wirklich zurück|r – mit „Pfeiltasten holen Gesendetes zurück“ (Komfort → Bequem) bringt Pfeil hoch in der Chatzeile die letzten zehn gesendeten Zeilen zurück, samt Gilde, Gruppe oder Flüsterziel. Bisher kam nichts. Gilt bis zum Ausloggen, nicht im Kampf; Befehle mit „/“ kommen nicht hinein.",
+            "|cff7C6CFFDaten aufgefrischt|r – Quests mit mehr deutschen Namen und Zielen, Herkunft von Rezepten, Kräuter je Gebiet, Lagen einiger Wildtiere und Händler für Reagenzien auf dem neuesten Stand der Spielergemeinschaft.",
+        },
+    },
+    {
         version = "1.0.8.7",
         date    = "21.11.2026",
         notes   = {

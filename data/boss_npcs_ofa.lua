@@ -2,7 +2,7 @@
 -- WeintCodex :: NPC-Nummern der Bosse, Abgleich mit OneForAll (1.0.8.0)
 --------------------------------------------------
 -- ERZEUGT von .github/scripts/import_oneforall.lua - nicht von Hand aendern.
--- Herkunft (nur fuer Betreuer): OneForAll 6.2.12 (GPL-3.0, nur Daten; dort
+-- Herkunft (nur fuer Betreuer): OneForAll 6.2.13 (GPL-3.0, nur Daten; dort
 -- aus QuestieDB Forever) und data/boss_npcs_forever.lua. Nur Nummern, die
 -- data/boss_npcs.lua fehlen, nur bei gleichem englischem Namen im selben
 -- Dungeon oder als Teil eines Kampfes. Art `community`.

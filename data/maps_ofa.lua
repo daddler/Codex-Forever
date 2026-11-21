@@ -3,7 +3,7 @@
 --------------------------------------------------
 -- ERZEUGT von .github/scripts/import_oneforall.lua - nicht von Hand aendern.
 -- Herkunft (nur fuer Betreuer): Flugmeister aus QuestieDB Forever, Uebergaenge
--- aus Carbonite (beides ueber OneForAll 6.2.12, GPL-3.0 - nur Lagen).
+-- aus Carbonite (beides ueber OneForAll 6.2.13, GPL-3.0 - nur Lagen).
 -- Traegt beim Laden in WeintCodex.TownData und WeintCodex.MapMarksData ein,
 -- nur was dort fehlt. Art `community`.
 --------------------------------------------------

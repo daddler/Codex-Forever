@@ -3,7 +3,7 @@
 --------------------------------------------------
 -- Was ein Dungeon zum Betreten braucht (need = true) oder welche
 -- Abkuerzung ein Schluessel oeffnet. Gegenstandsnummern und Fakten aus
--- OneForAll 6.2.12 (Data/DungeonKeys.lua, GPL-3.0 - nur Daten; dort aus
+-- OneForAll 6.2.13 (Data/DungeonKeys.lua, GPL-3.0 - nur Daten; dort aus
 -- QuestieDB Forever und den Gegenstandsdaten, Stand Oktober 2026), die Saetze
 -- hier selbst geschrieben. Art `community`: von Spielern gesammelt.
 -- Namen der Gegenstaende nennt der Client - kein Name wird hier geraten.

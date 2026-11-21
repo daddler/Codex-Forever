@@ -4,8 +4,8 @@
 -- ERZEUGT von .github/scripts/import_skillup.py - nicht von Hand
 -- aendern; neu erzeugen.
 --
--- Quelle (nur fuer Betreuer): SkillUp Forever 1.0.23, nur Daten.
--- Schwellen: wago.tools DB2, wow_classic_beta 1.60.1.70938, 2026-11-13.
+-- Quelle (nur fuer Betreuer): SkillUp Forever 1.14.17, nur Daten.
+-- Schwellen: wago.tools DB2, wow_classic_beta 1.60.1.70959, 2026-11-17.
 -- Raenge: CMaNGOS classic-db (Lehrer, Buch, Quest) - Art `classic`.
 --
 -- P.SU_THRESH[Zauber] = "Lernen Gelb Gruen Grau" ersetzt die Zeile aus

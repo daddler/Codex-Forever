@@ -27497,6 +27497,82 @@ do
     Check(ok, "Bequem: Quests, Einladen, Duelle, Entzaubern, Flugkarte; Dungeon-Schluessel" .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 1.0.8.8: Pfeiltasten holen Gesendetes zurueck - eigene Liste, denn der
+-- Verlauf des Spiels antwortet auf Forever nicht, und die Zeile stellt die
+-- Pfeile beim Schreiben zurueck.
+do
+    local G = _G
+    local ok, err = pcall(function()
+        local EV = WeintCodex.UIEveryday
+        local oCF, oIC, oAct = G.ChatFrame1EditBox, G.InCombatLockdown, G.ChatEdit_ActivateChat
+        local scripts, attrs, text, alt = {}, { chatType = "SAY" }, "", true
+        local eb = {
+            HookScript = function(_, n, fn) scripts[n] = fn end,
+            SetAttribute = function(_, k, v) attrs[k] = v end,
+            GetAttribute = function(_, k) return attrs[k] end,
+            SetText = function(self, t) text = t if scripts.OnTextChanged then scripts.OnTextChanged(self, false) end end,
+            GetText = function() return text end,
+            SetCursorPosition = function() end,
+            SetAltArrowKeyMode = function(_, m) alt = m end,
+            GetAltArrowKeyMode = function() return alt end,
+        }
+        local function Type(t, kind)
+            attrs.chatType = kind
+            text = t
+            scripts.OnTextChanged(eb, true)
+            scripts.OnEnterPressed(eb)
+            text = ""                      -- das Spiel leert die Zeile nach dem Senden
+            scripts.OnTextChanged(eb, false)
+        end
+        G.ChatFrame1EditBox = eb
+        G.ChatEdit_ActivateChat = nil
+        local combat = false
+        G.InCombatLockdown = function() return combat end
+        EV.hist = {}
+        K.Set("comfort", "chatArrows", false)
+        EV.ApplyArrows()
+        assert(alt == true and not scripts.OnArrowPressed, "ohne Schalter angefasst")
+        K.Set("comfort", "chatArrows", true)
+        EV.ApplyArrows()
+        assert(alt == false and scripts.OnArrowPressed, "Pfeiltasten nicht frei")
+        alt = true                         -- das Spiel stellt beim Schreiben zurueck
+        scripts.OnEditFocusGained(eb)
+        assert(alt == false, "Pfeile beim Schreiben nicht wieder frei")
+        Type("Hallo Gilde", "GUILD")
+        Type("/focus", "SAY")
+        Type("Hallo Gruppe", "PARTY")
+        assert(#EV.hist == 2, "Befehl in der Liste oder Zeile verloren: " .. #EV.hist)
+        attrs.chatType = "SAY"
+        scripts.OnArrowPressed(eb, "UP")
+        assert(text == "Hallo Gruppe" and attrs.chatType == "PARTY", "Pfeil hoch: " .. text)
+        scripts.OnArrowPressed(eb, "UP")
+        assert(text == "Hallo Gilde" and attrs.chatType == "GUILD", "zweimal hoch: " .. text)
+        scripts.OnArrowPressed(eb, "UP")
+        assert(text == "Hallo Gilde", "ueber das Ende hinaus")
+        scripts.OnArrowPressed(eb, "DOWN")
+        scripts.OnArrowPressed(eb, "DOWN")
+        assert(text == "", "ganz unten nicht leer")
+        -- zurueckgeholt und gesendet: wieder oben, nicht doppelt
+        scripts.OnArrowPressed(eb, "UP") scripts.OnArrowPressed(eb, "UP")
+        scripts.OnEnterPressed(eb)
+        assert(#EV.hist == 2 and EV.hist[1].text == "Hallo Gilde", "Wiederholung doppelt")
+        for i = 1, EV.HIST_MAX + 5 do Type("Zeile " .. i, "SAY") end
+        assert(#EV.hist == EV.HIST_MAX, "Liste waechst: " .. #EV.hist)
+        combat = true
+        text = ""
+        assert(not EV.HistRecall(eb, "UP") and text == "", "im Kampf zurueckgeholt")
+        combat = false
+        -- Schalter aus: Pfeile wie vorher beim Spiel
+        K.Set("comfort", "chatArrows", false)
+        EV.ApplyArrows()
+        assert(alt == true, "Pfeil-Einstellung des Spiels nicht zurueck")
+        assert(not EV.HistRecall(eb, "UP"), "ohne Schalter zurueckgeholt")
+        G.ChatFrame1EditBox, G.InCombatLockdown, G.ChatEdit_ActivateChat = oCF, oIC, oAct
+        EV.hist = {}
+    end)
+    Check(ok, "Bequem: Pfeiltasten holen Gesendetes zurueck (eigene Liste)" .. (ok and "" or (": " .. tostring(err))))
+end
+
 -- 1.0.8.0: zwei neue Flugspiele - Paare und Runenfolge.
 do
     local G = _G
