@@ -230,7 +230,12 @@ CL.LINKS = {
           local FJ = WeintCodex.UIFieldJournal
           if FJ and FJ.RepReport and K.ShowReport then K.ShowReport("Ruf-Belohnungen", FJ.RepReport()) return true end
       end },
-    { host = "AuctionHouseFrame", where = "title", label = function() return "Codex: Berufe" end,
+    -- 1.0.8.7 (Bild: "Codex-Knopf ueberlappt den Auktionshausscanner"):
+    -- "Preise scannen" (ui/auctionprices.lua) steht schon neben dem Kreuz -
+    -- der Codex-Knopf reiht sich links davon ein (after).
+    { host = "AuctionHouseFrame", where = "title",
+      after = function() local AP = WeintCodex.UIAuctionPrices return AP and AP.button end,
+      label = function() return "Codex: Berufe" end,
       tip = "Rezepte auf die Einkaufsliste setzen – die Liste steht dann hier im Auktionshaus.",
       go = function() return CL.Open("berufe") end },
     -- Betrachten in einer Gruppe: der Gruppencheck zeigt alle zusammen.
@@ -346,6 +351,17 @@ function CL.Arrange(frame)
     if type(frame) ~= "table" then return end
     local close = CL.CloseOf(frame)
     local used, prev, full = 0, nil, false
+    -- Steht dort schon ein eigener Knopf (after), beginnt die Reihe links davon.
+    for _, link in ipairs(CL.order) do
+        if link.after and _G[link.titleHost or link.host] == frame then
+            local ok, lead = pcall(link.after)
+            if ok and type(lead) == "table" and lead.IsShown and lead:IsShown() then
+                prev = lead
+                used = (Plain(lead:GetWidth()) or 0)
+            end
+            break
+        end
+    end
     for _, link in ipairs(CL.order) do
         local b = CL.buttons[link]
         if b and link.where == "title" and _G[link.titleHost or link.host] == frame

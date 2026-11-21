@@ -9,6 +9,14 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.0.8.7] – 2026-11-21
+
+### Behoben
+- Codex-Knopf der Titelleiste lag im Auktionshaus ueber „Preise scannen“
+  (Bild). Neues Feld `after` je Eintrag in `CL.LINKS`: steht dort schon ein
+  eigener Knopf, beginnt `CL.Arrange` die Reihe links davon (Breite zaehlt
+  fuer `CL.TitleFits`); `AP.EnsureButton` ordnet nach dem Anlegen neu.
+
 ## [1.0.8.6] – 2026-11-21
 
 ### Behoben

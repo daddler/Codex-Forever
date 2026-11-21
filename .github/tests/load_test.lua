@@ -27992,6 +27992,25 @@ do
         CL.Arrange(ch)
         assert(b2._mode == "belowleft", "zu wenig Platz: Knopf verdeckt den Titel")
         assert(CL.CloseOf({ BorderFrame = { CloseButton = ch.CloseButton } }) == ch.CloseButton, "Kreuz der Weltkarte nicht gefunden")
+        -- 1.0.8.7: steht dort schon ein eigener Knopf (Preise scannen), reiht
+        -- sich der Codex-Knopf links davon ein, statt darueber zu liegen.
+        do
+            local ah = CreateFrame("Frame", "WeintCodexTestAH", UIParent)
+            ah.CloseButton = CreateFrame("Button", nil, ah)
+            ah.IsShown = function() return true end
+            local scanBtn = CreateFrame("Button", nil, ah)
+            scanBtn.IsShown = function() return true end
+            scanBtn.GetWidth = function() return 140 end
+            local la = { host = "WeintCodexTestAH", where = "title", after = function() return scanBtn end,
+                         label = function() return "Codex: Berufe" end, go = function() end }
+            local ba = CL.Attach(la)
+            local pt
+            ba.ClearAllPoints = function() end
+            ba.SetPoint = function(_, ...) pt = { ... } end
+            CL.Arrange(ah)
+            assert(pt and pt[1] == "RIGHT" and pt[2] == scanBtn and pt[3] == "LEFT", "Codex-Knopf liegt auf dem Scan-Knopf")
+            ba:Hide()
+        end
         b1:Hide() b2:Hide()
         -- Beruf aus dem Fenster (Titel "Erste Hilfe"), auch ohne Abfrage des
         -- Spiels; Codex landet genau dort, auch wenn vorher ein anderer Beruf

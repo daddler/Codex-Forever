@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.0.8.7",
+        date    = "21.11.2026",
+        notes   = {
+            "|cff7C6CFFAuktionshaus: Knöpfe nebeneinander|r – „Codex: Berufe“ lag oben im Auktionshaus über „Preise scannen“. Jetzt steht er links daneben.",
+        },
+    },
+    {
         version = "1.0.8.6",
         date    = "21.11.2026",
         notes   = {

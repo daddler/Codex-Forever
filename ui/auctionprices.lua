@@ -860,6 +860,9 @@ function AP.EnsureButton()
     b:SetScript("OnLeave", function() if _G.GameTooltip then _G.GameTooltip:Hide() end end)
     AP.button = b
     Progress()
+    -- 1.0.8.7: der Codex-Knopf der Titelleiste reiht sich links davon ein.
+    local CL = WeintCodex.UICodexLinks
+    if CL and CL.Arrange then pcall(CL.Arrange, host) end
     return b
 end
 
