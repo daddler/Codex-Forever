@@ -25,6 +25,7 @@ WeintCodex_ChangelogData = {
         version = "1.0.8.6",
         date    = "21.11.2026",
         notes   = {
+            "|cff7C6CFFAuktionshaus-Scan nach dem Patch|r – liefert das Spiel beim Vollscan die Angebote, gibt ihre Preise aber nicht heraus, endete der Scan mit „keine Preise erhalten“. Jetzt liest WeintCodex dann über die Suche weiter und versucht den Vollscan eine Weile nicht mehr. /wcui auktion zeigt, was passiert ist.",
             "|cff7C6CFFChat im Kampf: kein „Blockiert: SendChatMessage“ mehr|r – hatte das Flüsterfenster die Chatzeile des Spiels geöffnet oder ihr die Eingabe abgenommen, ließ das Spiel im Kampf danach nichts mehr aus dieser Zeile senden. Im Kampf rührt das Flüsterfenster die Chatzeile jetzt nicht mehr an: Enter und R gehören dann dem Spiel, und was gerade nicht gesendet werden darf, bleibt im Flüsterfenster stehen.",
         },
     },

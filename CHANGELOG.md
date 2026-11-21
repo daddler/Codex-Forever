@@ -12,6 +12,12 @@ nicht zusammen.
 ## [1.0.8.6] – 2026-11-21
 
 ### Behoben
+- Auktionshaus-Scan nach dem Patch des Clients (Meldung): kamen beim
+  Vollscan Angebote, aber kein lesbarer Wert (`GetReplicateItemInfo` geheim
+  oder Fehler), endete der Scan mit „nichts erhalten“. Jetzt zaehlt
+  `ReadBatch` geheime/fehlerhafte Zeilen, schreibt den Grund ins Protokoll,
+  setzt `store.noReplicate` und liest ueber die Suche weiter
+  (`AP.StartBrowse`). Ob das die Ursache im Spiel ist, ist nicht gemessen.
 - „Blockiert: SendChatMessage()“ aus `ChatFrameEditBox` (Kampf, Dungeon,
   Messenger offen): `MS.OnEnterKey`/`MS.OnReply` nahmen der Chatzeile den
   Fokus (`TakeFocus`/`SafeFocus`), `OpenGameReply`/`ToGameChat` oeffneten sie

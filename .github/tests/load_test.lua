@@ -9175,6 +9175,28 @@ do
         AP.Step(0) AP.Step(0) AP.Step(0)
         assert(not AP.Scanning() and calls.replicate == 2, "Vollscan ohne Ereignis nicht fertig")
         calls.replicate = 1
+        -- 1.0.8.7 (nach dem Patch: "Scan geht nicht mehr"): Angebote da, aber
+        -- geheim - nicht "keine Preise", sondern weiter mit der Suche, und
+        -- der Vollscan ruht eine Weile.
+        do
+            local oS, oInfo = G.issecretvalue, G.C_AuctionHouse.GetReplicateItemInfo
+            local oAt = st.replicateAt
+            G.issecretvalue = function(v) return v == "SECRET" end
+            G.C_AuctionHouse.GetReplicateItemInfo = function()
+                return "x", 1, 1, 1, true, 1, 0, 1, 1, "SECRET", 0, false, nil, nil, nil, 0, "SECRET", true
+            end
+            st.replicateAt, st.noReplicate = 0, nil
+            AP.Start()
+            Fire("REPLICATE_ITEM_LIST_UPDATE")
+            for _ = 1, 10 do if AP.Phase() == "read" then AP.Step(0) end end
+            assert(AP.Phase() == "browse", "geheimer Vollscan: keine Suche danach (" .. tostring(AP.Phase()) .. ")")
+            assert(table.concat(AP.log, " "):find("keines lesbar (geheim 5", 1, true), "Grund nicht im Protokoll: " .. table.concat(AP.log, " | "))
+            assert((st.noReplicate or 0) > 0, "Vollscan ruht nicht")
+            AP.Step(AP.STALL)
+            G.issecretvalue, G.C_AuctionHouse.GetReplicateItemInfo = oS, oInfo
+            st.noReplicate, st.replicateAt = nil, oAt
+            calls.replicate, calls.query, calls.more = 1, 0, 0
+        end
 
         -- Tooltip: Preis, Menge, Tag; Stapel aus der Tasche; nur, was bekannt ist.
         local tl = {}

@@ -643,17 +643,34 @@ local function ReadBatch()
     for i = s.i, last do
         local ok, name, _, count, _, _, _, _, _, _, buyout, _, _, _, _, _, _, itemID = pcall(f, i)
         if ok then
+            local rawID, rawBuy = itemID, buyout
             count, buyout, itemID, name = K.Plain(count), K.Plain(buyout), K.Plain(itemID), K.Plain(name)
             if type(itemID) == "number" and type(buyout) == "number" and buyout > 0 then
                 if type(name) == "string" and name ~= "" then s.names[itemID] = name end
                 count = (type(count) == "number" and count > 0) and count or 1
                 Record(s, itemID, math.floor(buyout / count), count)
                 s.lots = s.lots + 1
+            elseif (type(rawID) ~= "nil" and type(itemID) == "nil") or (type(rawBuy) ~= "nil" and type(buyout) == "nil") then
+                s.secret = (s.secret or 0) + 1   -- da, aber geheim
             end
+        else
+            s.errors = (s.errors or 0) + 1
         end
     end
     s.i = last + 1
-    if s.i >= s.n then return Finish(true) end
+    if s.i >= s.n then
+        -- 1.0.8.7 (Meldung nach dem Patch des Clients: "Auktionshaus-Scan geht
+        -- nicht mehr"): Angebote da, aber keines lesbar (geheim oder Fehler)
+        -- - dann nicht "keine Preise", sondern die Suche, und den Vollscan
+        -- eine Weile nicht mehr versuchen.
+        if Count(s.price) == 0 and s.n > 0 then
+            Log(string.format("Vollscan: %d Angebote, keines lesbar (geheim %d, Fehler %d) – weiter mit der Suche",
+                s.n, s.secret or 0, s.errors or 0))
+            s.store.noReplicate = Time() + AP.NO_REPLICATE
+            return AP.StartBrowse()
+        end
+        return Finish(true)
+    end
     Progress()
 end
 
