@@ -27057,6 +27057,8 @@ end
 
 -- 1.0.7.0: Berufslehrer - Raenge von Forever statt Classic. Alchemie bis
 -- 300 lehren auf Forever nur Rogvar, Kylanna Windwhisper und Shurome.
+-- 1.0.8.8: Professions 1.4.4 fuehrt Shurome nur noch bis Rang 2 - Fachmann
+-- lehren Rogvar und Kylanna Windwhisper.
 do
     local ok, err = pcall(function()
         local PRO = WeintCodex.Professions
@@ -27065,7 +27067,7 @@ do
         local art = {}
         for _, t in ipairs(list) do if t.next then art[#art + 1] = t.name end end
         table.sort(art)
-        assert(table.concat(art, ",") == "Kylanna Windwhisper,Master Mycologist Shurome,Rogvar", "Fachmann Alchemie: " .. table.concat(art, ","))
+        assert(table.concat(art, ",") == "Kylanna Windwhisper,Rogvar", "Fachmann Alchemie: " .. table.concat(art, ","))
         for _, t in ipairs(list) do
             if t.name == "Ainethil" then assert(t.rank == 3 and not t.next, "Ainethil noch als Fachmann") end
         end

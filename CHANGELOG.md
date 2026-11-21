@@ -27,9 +27,13 @@ nicht zusammen.
   eine Klassenquest-Fraktion, Reagenzhaendler, eine Dungeonquest weniger),
   QuestieDB 1.1.3 mit Questie 12.11.1 (`data/questdb.lua`: 59 Quests neu,
   8 weg, 234 geaendert, meist deutsche Namen und Ziele; `data/recipe_sources.lua`),
-  SkillUp Forever 1.14.17 mit Naowh Professions 1.2.30 (nur Stand der
-  Schwellen, Inhalt gleich). QuestieTrace sammelt nur Daten - nichts zu
-  uebernehmen.
+  SkillUp Forever 1.14.17 mit Naowh Professions 1.4.4 (25 Rezepte mehr in
+  `P.SU_RAW`). QuestieTrace sammelt nur Daten - nichts zu uebernehmen.
+- Naowh Professions 1.4.4: `data/professions_nf.lua` (15 Rezepte als vom
+  Lehrer, Herkunft weiterer Rezepte), `data/proftrainers_nf.lua` (Raenge
+  einzelner Lehrer: Shurome lehrt Alchemie nur bis Rang 2, Verzauberkunst
+  Kitta Firewind/Hgarth/Vanessa Sellers bis Rang 3). `import_naowh_prof.py`
+  liest Reagenzien jetzt auch mit dem neuen Feld `made`.
 
 ## [1.0.8.7] – 2026-11-21
 

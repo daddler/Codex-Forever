@@ -130,6 +130,11 @@ def main():
                     continue
                 parts = []
                 rr = reag.get(str(s)) or []
+                # Seit Professions 1.4.4 steht bei Rezepten, die mehr als
+                # eins herstellen, zusaetzlich `made` - die Tabelle kommt
+                # dann als Objekt statt als Liste. Nur die Paare zaehlen.
+                if isinstance(rr, dict):
+                    rr = [rr[k] for k in sorted((k for k in rr if k.isdigit()), key=int)]
                 for i in range(0, len(rr) - 1, 2):
                     parts.append("%d:%d" % (rr[i], rr[i + 1]))
                 head = " ".join([str(s), num(r["item"]), num(r.get("skill")) or "-", num(r.get("yellow")) or "-", "-",
