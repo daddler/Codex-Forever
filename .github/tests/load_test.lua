@@ -27646,6 +27646,35 @@ do
     Check(ok, "Kampfhilfen: Verlauf, Heiler unter Kontrolle, Gegner" .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 1.0.8.6 (Fehlerbericht "Blockiert: SendChatMessage()" aus der Chatzeile
+-- im Kampf): im Kampf fasst der Messenger die Chatzeile des Spiels nie an.
+do
+    local G = _G
+    local MS = WeintCodex.UIMessenger
+    local oL, oO, oU, oP = G.InCombatLockdown, G.ChatFrame_OpenChat, G.ChatFrameUtil, G.print
+    local ok, err = pcall(function()
+        local opened = 0
+        G.ChatFrame_OpenChat = function() opened = opened + 1 end
+        G.ChatFrameUtil = nil
+        G.print = function() end
+        G.InCombatLockdown = function() return true end
+        assert(MS.OpenGameReply({ target = "Anna", name = "Anna" }, "hallo") == false and opened == 0,
+            "im Kampf die Chatzeile des Spiels geoeffnet")
+        MS.ToGameChat()
+        assert(opened == 0, "im Kampf zur Chatzeile gewechselt")
+        MS.enterKey, MS.enterAt = "x", 0
+        assert(MS.OnEnterKey() == false, "Enter im Kampf vom Messenger genommen")
+        assert(MS.TakeFocus({ GetText = function() return "" end }) == false, "im Kampf Fokus aus der Chatzeile genommen")
+        G.InCombatLockdown = function() return false end
+        MS.OpenGameReply({ target = "Anna", name = "Anna" }, "hallo")
+        assert(opened == 1, "ausserhalb des Kampfes keine Chatzeile mehr")
+    end)
+    G.InCombatLockdown, G.ChatFrame_OpenChat, G.ChatFrameUtil, G.print = oL, oO, oU, oP
+    MS.enterKey = nil
+    MS.ResetNote()
+    Check(ok, "Messenger: im Kampf nie die Chatzeile des Spiels" .. (ok and "" or (": " .. tostring(err))))
+end
+
 -- 1.0.8.4: Taschen, gemeinsame Ansicht - belegte Plaetze oben in der
 -- Reihenfolge der Sortierung, leere am Ende (keine Luecken).
 do

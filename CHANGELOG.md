@@ -9,6 +9,17 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.0.8.6] – 2026-11-21
+
+### Behoben
+- „Blockiert: SendChatMessage()“ aus `ChatFrameEditBox` (Kampf, Dungeon,
+  Messenger offen): `MS.OnEnterKey`/`MS.OnReply` nahmen der Chatzeile den
+  Fokus (`TakeFocus`/`SafeFocus`), `OpenGameReply`/`ToGameChat` oeffneten sie
+  (`OpenChat`) – aus Addon-Code, die Zeile galt als verunreinigt. Im Kampf
+  (`MS.Fighting`) jetzt keiner dieser Wege; nicht Gesendetes bleibt im Feld
+  des Messengers, ein Hinweis je Kampf. Nicht im Spiel geprueft, ob auch eine
+  Beruehrung ausserhalb des Kampfes noch nachwirkt.
+
 ## [1.0.8.5] – 2026-11-21
 
 ### Entfernt

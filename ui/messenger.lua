@@ -386,7 +386,33 @@ local function NewRow(i)
     return r
 end
 
+-- 1.0.8.6 (Fehlerbericht: "Blockiert: SendChatMessage()" aus der Chatzeile
+-- des Spiels, im Kampf im Dungeon, Messenger offen): oeffnet oder verlaesst
+-- WeintCodex die Chatzeile des Spiels (OpenChat, Fokus nehmen), laeuft deren
+-- Code aus WeintCodex heraus - sie gilt als verunreinigt, und im Kampf sperrt
+-- das Spiel danach das Senden aus ihr. Im Kampf fasst der Messenger sie
+-- darum nie an: Enter und R gehoeren dann allein dem Spiel, und was nicht
+-- direkt gesendet werden darf, bleibt im Feld des Messengers stehen.
+local function Fighting()
+    return _G.InCombatLockdown and K.Bool(K.Plain(_G.InCombatLockdown()), false) or false
+end
+MS.Fighting = Fighting
+MS.stats = MS.stats or {}
+local lastNote
+function MS.Note(text)
+    if text == lastNote then return end   -- einmal je Kampf genuegt
+    lastNote = text
+    print(WeintCodex.ColorText("accent", "[WeintCodex]") .. " " .. text)
+end
+function MS.ResetNote() lastNote = nil end
+
 local function OpenGameReply(c, text)
+    if Fighting() then
+        MS.stats.combatKept = (MS.stats.combatKept or 0) + 1
+        if text and text ~= "" and input then input:SetText(text) end
+        MS.Note("Im Kampf sperrt das Spiel das Senden – nach dem Kampf mit Enter senden.")
+        return false
+    end
     if not c then return false end
     -- 1.0.2.1 (Lua-Fehler "GetAutoCompletePresenceID (Usage ...)" beim
     -- Absenden): Battle.net-Gespraeche aus dem Verlauf haben kein Ziel mehr
@@ -1159,6 +1185,7 @@ MS.ENTER_FOR = 600
 -- Zur Chatzeile des Spiels, wie ein normales Enter (1.0.7.20).
 function MS.ToGameChat()
     MS.enterKey = nil
+    if Fighting() then return end
     local open = (_G.ChatFrameUtil and _G.ChatFrameUtil.OpenChat) or _G.ChatFrame_OpenChat
     if open then pcall(open, "") end
 end
@@ -1169,7 +1196,7 @@ function MS.EnterTarget(now)
     return key
 end
 function MS.OnEnterKey()
-    if not MS.Active() then return false end
+    if not MS.Active() or Fighting() then return false end
     local key = MS.EnterTarget()
     if not key then return false end
     if input and input.HasFocus and input:HasFocus() then return false end
@@ -1568,6 +1595,7 @@ function MS.OnReply(_, src)
     -- im selben Augenblick oeffnet. Danach ersetzt "/w Name" alles darin.
     local function Hand()
         if not (MS.Active() and conv[key]) then return end
+        if Fighting() then return end   -- Fenster ja, Chatzeile des Spiels nie
         if Get("direct") then
             if input then MS.SafeFocus(input) end
             return
@@ -1613,7 +1641,7 @@ function MS.OnChatEdit(eb)
 end
 
 function MS.TakeFocus(eb)
-    if not Get("direct") or not (win and win:IsShown()) or not input then return false end
+    if not Get("direct") or not (win and win:IsShown()) or not input or Fighting() then return false end
     local function Take()
         if not (win and win:IsShown()) then return end
         local text = eb and eb.GetText and K.Plain(eb:GetText())
@@ -1704,6 +1732,7 @@ local function OnEvent(_, event, a1, a2, ...)
     elseif event == "PLAYER_REGEN_DISABLED" then
         MS.OnCombat(true)
     elseif event == "PLAYER_REGEN_ENABLED" then
+        MS.ResetNote()
         MS.OnCombat(false)
     elseif event == "ADDON_ACTION_BLOCKED" or event == "ADDON_ACTION_FORBIDDEN" then
         MS.OnBlocked(a1)
