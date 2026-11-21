@@ -22,6 +22,14 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.0.8.9",
+        date    = "21.11.2026",
+        notes   = {
+            "|cff7C6CFFKräuter- und Mineraliensuche im Wechsel: Leisten bleiben ruhig|r – jeder Wechsel löst die globale Abklingzeit aus, und das Spiel ließ dafür alle paar Sekunden eine Spirale über alle Aktionsleisten laufen. Die verbirgt WeintCodex jetzt (abschaltbar unter Komfort → Sammeln, Erweitert); lange Abklingzeiten bleiben sichtbar.",
+            "|cff7C6CFFKein Wechsel mit Gegner im Ziel|r – solange du einen lebenden Gegner im Ziel hast, bleibt die Suche, wie sie ist. So kostet dich der Wechsel beim Angreifen keine globale Abklingzeit.",
+        },
+    },
+    {
         version = "1.0.8.8",
         date    = "21.11.2026",
         notes   = {

@@ -32,6 +32,7 @@ local GT = WeintCodex.UIGatherTrack
 GT.DEFAULTS = {
     gatherSwap  = false,
     gatherEvery = 20,      -- Zehntelsekunden
+    gatherHideGcd = true,  -- 1.0.8.9: Abklingspirale des Wechsels nicht zeigen
 }
 GT.MIN = 15                -- globale Abklingzeit: 1,5 s
 GT.SPELLS = { herb = 2383, ore = 2580 }   -- Kraeutersuche, Mineraliensuche
@@ -125,6 +126,15 @@ function GT.IsOn(i)
     return active and true or false
 end
 
+function GT.HostileTarget()
+    local U = _G
+    if not (U.UnitExists and U.UnitCanAttack) then return false end
+    if not K.Bool(K.Plain(U.UnitExists("target")), false) then return false end
+    if not K.Bool(K.Plain(U.UnitCanAttack("player", "target")), false) then return false end
+    if U.UnitIsDead and K.Bool(K.Plain(U.UnitIsDead("target")), false) then return false end
+    return true
+end
+
 -- Pause: im Kampf, tot, beim Zaubern (der Wechsel wuerde unterbrechen).
 function GT.Paused()
     if _G.InCombatLockdown and K.Bool(_G.InCombatLockdown(), false) then return "Kampf" end
@@ -132,6 +142,10 @@ function GT.Paused()
     -- 1.10.28.0: kurz nach dem Wiederbeleben setzt das Spiel die Suche
     -- selbst zurueck - erst danach wieder wechseln.
     if Now() - GT.aliveAt < GT.ALIVE_GRACE then return "wiederbelebt" end
+    -- 1.0.8.9: ein Wechsel loest die globale Abklingzeit aus - wer einen
+    -- Gegner im Ziel hat, will gleich angreifen (Sturmangriff), nicht 1,5 s
+    -- warten. Solange ein lebender Gegner im Ziel ist, bleibt die Suche.
+    if GT.HostileTarget() then return "Gegner im Ziel" end
     -- Ohne Zauber geben beide GAR NICHTS zurueck (nicht einmal nil) -
     -- type() ohne Wert bricht ab (gemessen 6.22.0.0). Erst in eine Variable.
     local cast = _G.UnitCastingInfo and _G.UnitCastingInfo("player")
@@ -189,6 +203,71 @@ function GT.Swap()
     if not ok then return false end
     pending = target
     stats.swaps = stats.swaps + 1
+    GT.HideGcd()
+    return true
+end
+
+-- 1.0.8.9 (Rueckmeldung einer Kriegerin: "der Inhalt der Leisten bewegt
+-- sich die ganze Zeit, wie ein Timer, der immer wieder anspringt" - weg,
+-- sobald der Wechsel aus ist): jeder Wechsel ist ein Zauber, das Spiel
+-- zeigt seine globale Abklingzeit als Spirale auf JEDEM Knopf der
+-- Aktionsleisten, alle zwei Sekunden. Jetzt verbirgt WeintCodex nach dem
+-- eigenen Wechsel die kurzen Spiralen (hoechstens GT.GCD_MAX s) bis zum
+-- Ende der globalen Abklingzeit. Lange Abklingzeiten bleiben sichtbar.
+-- Nur ausserhalb des Kampfes (der Wechsel laeuft nie im Kampf); die
+-- Abklingzeit selbst bleibt - sie gehoert dem Spiel.
+GT.GCD_MAX = 1.6
+GT.GCD_SCAN = { 0, 0.05, 0.2 }
+GT.BUTTONS = {
+    { "ActionButton", 12 }, { "MultiBarBottomLeftButton", 12 }, { "MultiBarBottomRightButton", 12 },
+    { "MultiBarRightButton", 12 }, { "MultiBarLeftButton", 12 }, { "MultiBar5Button", 12 },
+    { "MultiBar6Button", 12 }, { "MultiBar7Button", 12 }, { "StanceButton", 10 },
+}
+local hidden = {}
+GT.hidden = hidden
+local function Later(sec, fn)
+    local t = _G.C_Timer
+    if t and t.After then t.After(sec, fn) else fn() end
+end
+local function CooldownOf(b)
+    local cd = b.cooldown or b.Cooldown
+    if type(cd) ~= "table" and b.GetName then cd = _G[(b:GetName() or "") .. "Cooldown"] end
+    return type(cd) == "table" and cd or nil
+end
+function GT.ScanGcd(now)
+    if K.InCombat() then return 0 end
+    now = now or Now()
+    local n = 0
+    for _, fam in ipairs(GT.BUTTONS) do
+        for i = 1, fam[2] do
+            local b = _G[fam[1] .. i]
+            local cd = type(b) == "table" and CooldownOf(b)
+            if cd and not hidden[cd] and cd.GetCooldownTimes and cd.SetAlpha then
+                local ok, start, dur = pcall(cd.GetCooldownTimes, cd)
+                start, dur = ok and K.Plain(start), ok and K.Plain(dur)
+                -- Millisekunden; nur, was mit dem Wechsel begann und kurz ist
+                if type(start) == "number" and type(dur) == "number" and dur > 0
+                   and dur <= GT.GCD_MAX * 1000 and math.abs(start / 1000 - swapAt) < 0.5 then
+                    local ok2, a = pcall(cd.GetAlpha, cd)
+                    hidden[cd] = (ok2 and type(K.Plain(a)) == "number") and K.Plain(a) or 1
+                    pcall(cd.SetAlpha, cd, 0)
+                    n = n + 1
+                end
+            end
+        end
+    end
+    return n
+end
+function GT.ShowGcd()
+    for cd, a in pairs(hidden) do
+        pcall(cd.SetAlpha, cd, a)
+        hidden[cd] = nil
+    end
+end
+function GT.HideGcd()
+    if not K.Get(KEY, "gatherHideGcd") then return false end
+    for _, t in ipairs(GT.GCD_SCAN) do Later(t, function() GT.ScanGcd() end) end
+    Later(GT.GCD_MAX, GT.ShowGcd)
     return true
 end
 
@@ -339,16 +418,17 @@ local function Build(B)
     local off = function() return not K.Get(KEY, "gatherSwap") end
     B:Section("Kräuter und Erz", "Das Spiel lässt nur eine Suche zugleich laufen. WeintCodex wechselt zwischen Kräuter- und Mineraliensuche – auf der Minikarte steht jede Art jeden zweiten Takt. Im Kampf wechselt nichts: dort bleibt die Suche, die gerade an ist. Schneller an und aus: unten im Aufspürmenü an der Minikarte, Eintrag „WeintCodex“.")
     B:Row({ type = "toggle", label = "Kräuter- und Mineraliensuche wechseln", key = "gatherSwap",
-            description = "Im Kampf, tot und beim Zaubern kein Wechsel." },
+            description = "Im Kampf, tot, beim Zaubern und mit einem Gegner im Ziel kein Wechsel." },
           { type = "empty" })
     -- Seit 1.3.0.0 unter "Erweitert": die Seite ist voll (Angeln mit
     -- einer Taste, ui/fishing.lua), und der Takt ist eine Feinheit.
     B:Advanced()
     B:Row({ type = "slider", label = "Wechsel alle", key = "gatherEvery", min = GT.MIN, max = 100, step = 5,
             format = function(v) return string.format("%.1f s", v / 10) end, disabled = off },
-          { type = "empty" })
+          { type = "toggle", label = "Abklingspirale des Wechsels verbergen", key = "gatherHideGcd", disabled = off,
+            description = "Jeder Wechsel löst die globale Abklingzeit aus – ohne das läuft alle paar Sekunden eine Spirale über alle Aktionsleisten." })
     B:EndAdvanced()
-    B:Note("Jeder Wechsel ist ein Zauber mit globaler Abklingzeit – darum nicht schneller als 1,5 s. Die Punkte bleiben gelb: welcher Punkt Kraut und welcher Erz ist, verrät das Spiel Addons nicht.")
+    B:Note("Jeder Wechsel ist ein Zauber mit globaler Abklingzeit – darum nicht schneller als 1,5 s, und solange ein Gegner im Ziel ist, wechselt nichts (damit du sofort angreifen kannst). Die Punkte bleiben gelb: welcher Punkt Kraut und welcher Erz ist, verrät das Spiel Addons nicht.")
 end
 
 local mod = K.Module(KEY)

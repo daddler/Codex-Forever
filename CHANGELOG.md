@@ -9,6 +9,20 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.0.8.9] – 2026-11-21
+
+### Behoben
+- Suche im Wechsel (Kraeuter/Erz): „der Inhalt der Leisten bewegt sich die
+  ganze Zeit, wie ein Timer“ (Meldung, Kriegerin; weg mit Wechsel aus).
+  Jeder Wechsel ist ein Zauber, das Spiel zeigt die globale Abklingzeit auf
+  jedem Aktionsknopf. `GT.HideGcd`: nach dem eigenen Wechsel (nie im Kampf)
+  werden Spiralen bis `GT.GCD_MAX` s, die mit dem Wechsel begannen, bis zu
+  dessen Ende auf Deckkraft 0 gesetzt, danach zurueck; Schalter
+  `gatherHideGcd` (ab Werk an, Erweitert). Die Abklingzeit selbst bleibt.
+- Kein Wechsel, solange ein lebender Gegner im Ziel ist (`GT.HostileTarget`,
+  Pause „Gegner im Ziel“) – sonst kostete der Wechsel beim Angriff die
+  globale Abklingzeit.
+
 ## [1.0.8.8] – 2026-11-21
 
 ### Behoben

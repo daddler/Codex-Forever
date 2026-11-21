@@ -1143,6 +1143,54 @@ do
         assert(K.Get("comfort", "gatherSwap") and GT.stopped == nil, "nach dem Tod als wirkungslos abgeschaltet")
         works = true
         assert(GT.Swap() and (list[2].active or list[3].active), "Suche nach dem Wiederbeleben nicht wieder an")
+        -- 1.0.8.9: Gegner im Ziel - kein Wechsel (globale Abklingzeit vor
+        -- dem Angriff).
+        do
+            local oE, oA, oD = G.UnitExists, G.UnitCanAttack, G.UnitIsDead
+            local hostile = true
+            G.UnitExists = function(u) return u == "target" end
+            G.UnitCanAttack = function() return hostile end
+            G.UnitIsDead = function() return false end
+            local n0 = #sets
+            assert(GT.Swap() == false and #sets == n0 and GT.Paused() == "Gegner im Ziel", "mit Gegner im Ziel gewechselt")
+            hostile = false
+            assert(GT.Swap() and #sets == n0 + 1, "freundliches Ziel haelt den Wechsel an")
+            G.UnitExists, G.UnitCanAttack, G.UnitIsDead = oE, oA, oD
+        end
+        -- 1.0.8.9: die Spirale des Wechsels auf den Aktionsleisten verborgen,
+        -- lange Abklingzeiten nicht; danach wieder da.
+        do
+            local function CD(start, dur)
+                local a = 1
+                return { GetCooldownTimes = function() return start, dur end,
+                         GetAlpha = function() return a end, SetAlpha = function(_, v) a = v end,
+                         Alpha = function() return a end }
+            end
+            local oB1, oB2, oT = G.ActionButton1, G.ActionButton2, G.C_Timer
+            local queue = {}
+            local delays = {}
+            G.C_Timer = { After = function(sec, fn) queue[#queue + 1] = fn delays[#queue] = sec end }
+            local gcd, long = CD(now * 1000, 1500), CD(now * 1000, 120000)   -- beide mit dem Wechsel begonnen
+            G.ActionButton1 = { cooldown = gcd }
+            G.ActionButton2 = { cooldown = long }
+            assert(GT.Swap(), "kein Wechsel")
+            local q = queue queue = {}
+            for i, fn in ipairs(q) do if delays[i] < GT.GCD_MAX then fn() end end
+            assert(gcd.Alpha() == 0, "Spirale des Wechsels sichtbar")
+            assert(long.Alpha() == 1, "lange Abklingzeit verborgen")
+            GT.ShowGcd()
+            assert(gcd.Alpha() == 1, "Spirale bleibt verborgen")
+            K.Set("comfort", "gatherHideGcd", false)
+            queue = {}
+            gcd = CD(now * 1000, 1500)
+            G.ActionButton1 = { cooldown = gcd }
+            delays = {}
+            GT.Swap()
+            for i, fn in ipairs(queue) do if delays[i] < GT.GCD_MAX then fn() end end
+            assert(gcd.Alpha() == 1, "ohne Schalter verborgen")
+            K.Set("comfort", "gatherHideGcd", true)
+            G.ActionButton1, G.ActionButton2, G.C_Timer = oB1, oB2, oT
+        end
     end)
     for i, n in ipairs(names) do G[n] = saved[i] end
     K.Set("comfort", "gatherSwap", false)
