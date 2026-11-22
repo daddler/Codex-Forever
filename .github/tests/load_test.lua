@@ -28811,6 +28811,29 @@ do
     Check(ok, "Loeschen: Questgegenstaende nie vorausgefuellt, nie im Ausmisten" .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 1.0.8.14: Ringmenues ohne Treppenkante (Wunsch: "zu pixelig") - eigene
+-- grosse Kreise statt der kleinen Maske des Spiels, und die Dateien gibt es.
+do
+    local ok, err = pcall(function()
+        local RG = WeintCodex.UIRings
+        assert(RG and RG.CIRCLE and RG.CIRCLE:find("disc_hd", 1, true) and RG.GLOW:find("glow_hd", 1, true), "Ring nicht auf eigenen Kreisen")
+        for _, f in ipairs({ "ui/rings.lua", "ui/reminderpick.lua" }) do
+            local fh = io.open(ROOT .. "/" .. f) local src = fh:read("*a") fh:close()
+            local code = src:gsub("%-%-[^\n]*", "")
+            assert(not code:find("CommonMaskCircle", 1, true), "kleine Maske des Spiels in " .. f)
+        end
+        for name, want in pairs({ disc_hd = 256, glow_hd = 128 }) do
+            local fh = io.open(ROOT .. "/media/ui/" .. name .. ".tga", "rb")
+            assert(fh, "fehlt: " .. name)
+            local head = fh:read(18) fh:close()
+            local w = head:byte(13) + head:byte(14) * 256
+            local h = head:byte(15) + head:byte(16) * 256
+            assert(w == want and h == want and head:byte(17) == 32, name .. ": " .. w .. "x" .. h)
+        end
+    end)
+    Check(ok, "Ringe: eigene Kreise mit weicher Kante, Dateien da" .. (ok and "" or (": " .. tostring(err))))
+end
+
 -- 1.0.8.14: Gold doppelt gezaehlt - derselbe Charakter unter zwei Realm-
 -- Schreibweisen ("Shooty" und "Shooty-" mit unsichtbarem Realm).
 do

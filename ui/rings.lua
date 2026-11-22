@@ -524,17 +524,26 @@ local TRIGGER = [[
 
 local function Locked() return (_G.InCombatLockdown and _G.InCombatLockdown()) and true or false end
 
-local CIRCLE = "Interface\\Common\\CommonMaskCircle"
+-- 1.0.8.14 (Wunsch: "mach die Ringe schoener, die sehen zu pixelig aus"):
+-- bis dahin aus Interface\\Common\\CommonMaskCircle gebaut - eine kleine
+-- Maske des Spiels mit harter Kante, auf ~250 px gezogen sah man Treppen.
+-- Jetzt eigene Kreise (media/ui/disc_hd.tga, 256 px, weiche Kante) und fuer
+-- Halo und Schein der Wahl ein weicher Verlauf ohne Kante (glow_hd.tga),
+-- beide aus .github/scripts/make_ui_media.py (make_ring_media).
+local CIRCLE = K.MEDIA .. "disc_hd"
+local GLOW = K.MEDIA .. "glow_hd"
+RG.CIRCLE, RG.GLOW = CIRCLE, GLOW
 
-local function Disc(parent, layer, sub, size, col, alpha)
+local function Disc(parent, layer, sub, size, col, alpha, tex)
     local t = parent:CreateTexture(nil, layer, nil, sub)
-    t:SetTexture(CIRCLE)
+    t:SetTexture(tex or CIRCLE)
     t:SetSize(size, size)
     t:SetPoint("CENTER")
     t:SetVertexColor(col[1], col[2], col[3], alpha or col[4] or 1)
     return t
 end
 
+RG.HALO = 0.35   -- weicher Verlauf: kraeftiger als die alte harte Scheibe (0.10), sonst kaum zu sehen
 local function BuildRing(i)
     local GC = WeintCodex.GameColors
     local f = { slots = {}, zones = {} }
@@ -559,7 +568,7 @@ local function BuildRing(i)
     -- Aussehen: Halo, Neonband in zwei Farben (oben Cyan, unten Magenta),
     -- dunkler Kern, Zeiger zur Wahl.
     local A, B, core = GC.ringNeonA, GC.ringNeonB, GC.ringCore
-    f.halo = Disc(ring, "BACKGROUND", -8, R * 2 + S + 46, A, 0.10)
+    f.halo = Disc(ring, "BACKGROUND", -8, R * 2 + S + 90, A, RG.HALO, GLOW)
     f.bandA = Disc(ring, "BACKGROUND", -7, R * 2 + S + 14, A, 0.55)
     f.bandA:SetTexCoord(0, 1, 0, 0.5)
     f.bandA:SetHeight((R * 2 + S + 14) / 2)
@@ -591,7 +600,7 @@ local function BuildRing(i)
         b:SetAttribute("useOnKeyDown", false)
         b.plate = Disc(b, "BACKGROUND", 0, S + 10, GC.ringSlot)
         b.edge = Disc(b, "BACKGROUND", 1, S + 4, A, 0.7)
-        b.glow = Disc(b, "BACKGROUND", -1, S + 30, A, 0.0)
+        b.glow = Disc(b, "BACKGROUND", -1, S + 44, A, 0.0, GLOW)
         b.icon = b:CreateTexture(nil, "ARTWORK")
         b.icon:SetSize(S - 4, S - 4)
         b.icon:SetPoint("CENTER")
@@ -672,7 +681,7 @@ end
 function RG.Paint(f, A, B)
     f.A, f.B = A, B
     local function Tint(t, c, a) t:SetVertexColor(c[1], c[2], c[3], a) end
-    Tint(f.halo, A, 0.10)
+    Tint(f.halo, A, RG.HALO)
     Tint(f.bandA, A, 0.55)
     Tint(f.bandB, B, 0.55)
     Tint(f.inner, A, 0.10)

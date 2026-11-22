@@ -809,9 +809,52 @@ def make_bar_styles():
         print("geschrieben:", os.path.relpath(target, ROOT))
 
 
+# --------------------------------------------------------------------
+# Ringmenues (1.0.8.14, Wunsch: "mach die Ringe schoener, die sehen zu
+# pixelig aus"): die Ringe waren aus Interface\\Common\\CommonMaskCircle
+# gebaut - eine kleine Maske des Spiels mit harter Kante, auf 250 px
+# gezogen sieht man die Treppen. Hier eigene, grosse Kreise mit weicher
+# Kante (Abdeckung aus dem Abstand, eine Kante von ~1,5 Bildpunkten bei
+# 256 px) und ein weicher Schein ohne Kante.
+# --------------------------------------------------------------------
+
+def render_disc_hd(size, edge=1.5):
+    c = size / 2.0
+    out = []
+    for py in range(size):
+        for px in range(size):
+            d = math.hypot(px + 0.5 - c, py + 0.5 - c)
+            a = max(0.0, min(1.0, (c - 1.0 - d) / edge + 0.5))
+            out.append((255, 255, 255, round(255 * a)))
+    return out
+
+
+def render_glow_hd(size):
+    """Weicher Schein: voll bis 45 % des Radius, dann sanft (smoothstep) bis 0 am Rand."""
+    c = size / 2.0
+    out = []
+    for py in range(size):
+        for px in range(size):
+            r = math.hypot(px + 0.5 - c, py + 0.5 - c) / c
+            t = max(0.0, min(1.0, (r - 0.45) / 0.55))
+            a = 1.0 - t * t * (3 - 2 * t)
+            out.append((255, 255, 255, round(255 * a)))
+    return out
+
+
+def make_ring_media():
+    os.makedirs(OUT, exist_ok=True)
+    for name, size, pixels in (("disc_hd", 256, render_disc_hd(256)),
+                               ("glow_hd", 128, render_glow_hd(128))):
+        target = os.path.join(OUT, name + ".tga")
+        write_tga(target, size, size, pixels)
+        print("geschrieben:", os.path.relpath(target, ROOT))
+
+
 def main():
     os.makedirs(OUT, exist_ok=True)
     make_home_media()
+    make_ring_media()
     target = os.path.join(OUT, "arrow.tga")
     write_tga(target, SIZE, SIZE, render(ARROW))
     print("geschrieben:", os.path.relpath(target, ROOT))

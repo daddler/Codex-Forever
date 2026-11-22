@@ -122,7 +122,7 @@ local function BuildRing()
     local hub = ring:CreateTexture(nil, "BACKGROUND")
     hub:SetSize(RP.RADIUS * 2 - 10, RP.RADIUS * 2 - 10)
     hub:SetPoint("CENTER")
-    hub:SetTexture("Interface\\Common\\CommonMaskCircle")
+    hub:SetTexture(K.MEDIA .. "disc_hd")   -- 1.0.8.14: weiche Kante statt der kleinen Maske des Spiels
     local f = WeintCodex.GameColors.kachelFill
     hub:SetVertexColor(f[1], f[2], f[3], 0.55)
     ring.hub = hub

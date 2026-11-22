@@ -20,6 +20,13 @@ nicht zusammen.
   Questgegenstaende nur noch den goldenen Rand. Schalter `questStartPulse`,
   ab Werk an (auf Wunsch).
 
+- Ringmenues (`ui/rings.lua`, `ui/reminderpick.lua`, Wunsch: „zu pixelig“):
+  statt `Interface\Common\CommonMaskCircle` (kleine Maske des Spiels, harte
+  Kante, auf ~250 px gezogen) eigene Kreise `media/ui/disc_hd.tga` (256 px,
+  weiche Kante) und fuer Halo/Schein der Wahl `glow_hd.tga` (128 px,
+  Verlauf), erzeugt von `.github/scripts/make_ui_media.py`
+  (`make_ring_media`). Halo `RG.HALO` 0.35 statt 0.10 (Verlauf statt Scheibe).
+
 ### Behoben
 - „Loeschbestaetigung ausfuellen“ (`ui/comfort.lua`, Wunsch: „beim Loeschen
   von Questgegenstaenden muss wirklich noch eine Nachfrage kommen“): fuellte

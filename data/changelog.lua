@@ -25,6 +25,7 @@ WeintCodex_ChangelogData = {
         version = "1.0.8.14",
         date    = "22.11.2026",
         notes   = {
+            "|cff7C6CFFRingmenüs mit glatten Kanten|r – die Ringe (Reittiere und eigene) und der Auswahlring der Erinnerungen hatten treppige Ränder. Sie sind jetzt aus eigenen, großen Kreisen mit weicher Kante gebaut; Schein und Hervorhebung der Wahl laufen weich aus statt mit harter Kante.",
             "|cff7C6CFFQuest-Starter leuchten|r – Gegenstände in den Taschen, die eine Quest starten (erst per Rechtsklick), pulsieren jetzt in Gold und tragen das „!“. Andere Questgegenstände haben nur noch den goldenen Rand, so sticht hervor, was noch anzunehmen ist. Abschaltbar unter Taschen → Anzeigen.",
             "|cff7C6CFFQuestgegenstände löschen fragt immer|r – „Löschbestätigung ausfüllen“ schrieb das Bestätigungswort auch bei Questgegenständen vor. Jetzt fragt das Spiel dort immer ganz nach; vorgeschrieben wird nur noch bei gewöhnlichen Gegenständen.",
             "|cff7C6CFFGold nicht mehr doppelt|r – seit der Änderung am Spielclient stand derselbe Charakter manchmal zweimal in der Goldübersicht, einmal mit leerem oder anders geschriebenem Realm. Beim Einloggen legt WeintCodex solche Einträge jetzt zusammen; Charaktere gleichen Namens auf wirklich verschiedenen Realms bleiben getrennt. /wcui bestand zeigt alle gemerkten Charaktere mit ihrem Realm.",
