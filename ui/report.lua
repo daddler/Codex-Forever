@@ -44,7 +44,8 @@ local function Build()
     f:SetScript("OnDragStart", f.StartMoving)
     f:SetScript("OnDragStop", f.StopMovingOrSizing)
     f:SetClampedToScreen(true)
-    K.Kachel(f, { shadow = 8 })
+    -- 1.0.8.13: deckend, auch im Aussehen „Transparent“ (ein Bericht wird gelesen).
+    f.kachel = K.Kachel(f, { shadow = 8, solid = true })
     -- Esc schliesst, wie jedes Fenster des Spiels.
     if type(_G.UISpecialFrames) == "table" then table.insert(_G.UISpecialFrames, "WeintCodexReport") end
 
@@ -110,6 +111,16 @@ end
 function K.ShowReport(title, lines)
     report = report or Build()
     local text = type(lines) == "table" and table.concat(lines, "\n") or tostring(lines or "")
+    -- Laeuft gerade ein Befehl (K.RunCommand), merkt er sich, dass er
+    -- schon einen Bericht hat - seine Chatzeilen kommen dann oben dazu.
+    local cap = K.capture
+    if cap then
+        cap.report = true
+        if #cap.lines > 0 then
+            text = table.concat(cap.lines, "\n") .. "\n\n" .. text
+            cap.lines = {}
+        end
+    end
     text = K.PlainText(text)
     report.text = text
     report.title:SetText(K.PlainText(title or "Bericht"))
@@ -128,4 +139,49 @@ function K.ShowReport(title, lines)
     report.edit:HighlightText()
     K.report = report
     return report
+end
+
+--------------------------------------------------
+-- Ausgabe der Befehle im Fenster (1.0.8.13)
+--------------------------------------------------
+-- Wunsch: "Alle Befehle, die es in Codex gibt, sollen nun, wenn sie eine
+-- Ausgabe geben, in einem Popup kommen wie wcui pruefen."
+--
+-- Jede Ausgabe der Befehle lief ueber das globale print (139 Stellen).
+-- Statt jede umzubauen, faengt K.RunCommand print ein, solange der Befehl
+-- LAEUFT, und zeigt das Gesammelte danach in diesem Fenster:
+--   * kein print            -> kein Fenster (Befehle, die nur etwas oeffnen)
+--   * Befehl oeffnet selbst einen Bericht -> seine Zeilen stehen oben darin
+--   * Fehler im Befehl      -> print ist wieder das des Spiels, Fehler geht weiter
+-- Was ein Befehl SPAETER schreibt (nach einem Timer, nach einer Messung),
+-- landet weiter im Chat - dann laeuft er nicht mehr.
+-- Ersetzt wird print nur fuer die Dauer des Aufrufs, und nur, wenn es noch
+-- unseres ist (ein anderes Addon, das print waehrenddessen tauscht, bleibt).
+K.COMMAND_PREFIX = "^%s*%[WeintCodex%]%s*"
+
+function K.RunCommand(title, fn, ...)
+    if K.capture then return fn(...) end          -- verschachtelt: aeusserer sammelt
+    local cap = { lines = {} }
+    local orig = _G.print
+    local function grab(...)
+        local parts = {}
+        for i = 1, select("#", ...) do parts[#parts + 1] = tostring((select(i, ...))) end
+        local line = K.PlainText(table.concat(parts, " ")):gsub(K.COMMAND_PREFIX, "")
+        cap.lines[#cap.lines + 1] = line
+    end
+    K.capture = cap
+    _G.print = grab
+    local ok, err = pcall(fn, ...)
+    if _G.print == grab then _G.print = orig end
+    K.capture = nil
+    if not ok then _G.error(err, 0) end
+    if #cap.lines > 0 then
+        if cap.report and report and report:IsShown() then
+            -- Nach dem Bericht noch geschrieben: oben anfuegen.
+            K.ShowReport(report.title:GetText(), { table.concat(cap.lines, "\n"), "", report.text or "" })
+        else
+            K.ShowReport(title, cap.lines)
+        end
+    end
+    return cap
 end

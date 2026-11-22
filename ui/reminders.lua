@@ -1141,6 +1141,18 @@ end
 
 local bagCache = {}
 R._bagCache = bagCache
+-- 1.0.8.13 (Spieler: "Buff-Essen-Erinnerung funktioniert nicht in der
+-- offenen Welt", /wcui essen zeigte die Fische aber als "xp"): ein "kein
+-- Buff" blieb die ganze Sitzung stehen. Frisch Gelootetes (Angeln!) hat
+-- im ersten Moment oft nur einen Tooltip ohne die Zeile "Benutzen:" - so
+-- wurde Buff-Essen bis zum naechsten Einloggen zu "nichts". Jetzt:
+--   * ohne Zeile "Benutzen:"/"Use:" ist das Urteil "noch unbekannt" (nil,
+--     naechster Takt fragt wieder),
+--   * jedes "nichts" aus dem Tooltip gilt nur R.BAG_NO_TTL Sekunden.
+local bagNoAt = {}
+R._bagNoAt = bagNoAt
+R.BAG_NO_TTL = 60
+R.USE_WORDS = { "benutzen:", "use:" }
 
 -- Schriftrollen (6.30.55.2, Spieler: "es muss unterschieden werden, was
 -- die Schriftrolle kann, ob es sich fuer die Klasse lohnt, ob schon eine
@@ -1253,6 +1265,13 @@ end
 -- oder false (nichts Nuetzliches). nil: der Client weiss es noch nicht.
 function R.BagItemKind(id)
     local c = bagCache[id]
+    if c == false and bagNoAt[id] then
+        local now = _G.GetTime and K.Plain(_G.GetTime())
+        if type(now) == "number" and now - bagNoAt[id] >= R.BAG_NO_TTL then
+            bagCache[id], bagNoAt[id] = nil, nil
+            c = nil
+        end
+    end
     if c ~= nil then return c end
     local ci = _G.C_Item
     local instant = (ci and ci.GetItemInfoInstant) or _G.GetItemInfoInstant
@@ -1304,7 +1323,12 @@ function R.BagItemKind(id)
         if not tip then return nil end
         if HasWord(tip, R.XP_WORDS) then entry = { kind = "xp" }
         elseif HasWord(tip, R.FED_WORDS) then entry = { kind = "food" }
-        elseif HasWord(tip, R.EAT_TIP_WORDS) and HasWord(tip, R.DURATION_WORDS) then entry = { kind = "food" } end
+        elseif HasWord(tip, R.EAT_TIP_WORDS) and HasWord(tip, R.DURATION_WORDS) then entry = { kind = "food" }
+        elseif not HasWord(tip:lower(), R.USE_WORDS) then return nil end   -- Tooltip noch unvollstaendig
+        if not entry then
+            local now = _G.GetTime and K.Plain(_G.GetTime())
+            bagNoAt[id] = type(now) == "number" and now or nil
+        end
     end
     if entry then entry.name, entry.minLevel = name, type(minLevel) == "number" and minLevel or 0 end
     bagCache[id] = entry

@@ -11,7 +11,25 @@ nicht zusammen.
 
 ## [1.0.8.13] – 2026-11-22
 
+### Geaendert
+- Befehle (Wunsch: „alle Befehle mit Ausgabe in einem Popup wie /wcui
+  pruefen“): `K.RunCommand` (`ui/report.lua`) faengt `print` ein, solange
+  `/wc` (`WeintCodex.Slash`) oder `/wcui` (`O.Slash`) laeuft, und zeigt das
+  Gesammelte im Bericht (`K.ShowReport`), Praefix `[WeintCodex]` und Farben
+  weg. Ohne Ausgabe kein Fenster; oeffnet der Befehl selbst einen Bericht,
+  stehen seine Zeilen oben darin; bei Fehler ist `print` wieder das alte.
+  Was ein Befehl spaeter (Timer) schreibt, bleibt im Chat. Berichtsfenster
+  jetzt `solid`.
+
 ### Behoben
+- Buff-Essen-Erinnerung (Spieler: „geht nicht in der offenen Welt“,
+  `/wcui essen` sah die Fische als `xp`): `R.BagItemKind` merkte sich ein
+  „kein Buff“ fuer die ganze Sitzung, auch aus einem Tooltip, der beim
+  frisch Gelooteten erst nur den Namen hat. Jetzt ohne Zeile
+  „Benutzen:“/„Use:“ unbekannt (`nil`, naechster Takt fragt wieder), und
+  jedes „kein Buff“ gilt nur `R.BAG_NO_TTL` (60 s). Dass der Spieler den
+  Zusammenhang mit der Ruhezone sah, erklaert das nicht sicher – nicht im
+  Spiel bestaetigt.
 - `K.PaintKachel`: `solid` verhinderte im Aussehen „Transparent“ nur das
   Absenken unter die Deckkraft des Aussehens – der Grundwert war aber schon
   diese Deckkraft (45 %), also blieb jede `solid`-Kachel ohne eigenes

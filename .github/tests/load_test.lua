@@ -21598,6 +21598,30 @@ do
         assert(#R.BagBuffs({}) == 1, "Sattel als Satt erkannt")
         helpful = { { name = "Wohlgenährt" } }
         assert(#R.BagBuffs({}) == 0, "Erinnerung trotz Buff")
+        -- 1.0.8.13 (Spieler: "nicht in der offenen Welt", /wcui essen sah die
+        -- Fische als xp): frisch geangelt hat der Tooltip erst nur den Namen.
+        -- Das darf kein "kein Buff" fuer die ganze Sitzung werden.
+        helpful = {}
+        local tipLines = { { leftText = "Gebratener Eber" } }
+        G.C_TooltipInfo = { GetItemByID = function() return { lines = tipLines } end }
+        for k in pairs(R._bagCache) do R._bagCache[k] = nil end
+        assert(R.BagItemKind(4242) == nil and #R.BagBuffs({}) == 0, "unvollstaendiger Tooltip als Urteil")
+        tipLines = { { leftText = "Gebratener Eber" }, { leftText = "Benutzen: Wenn Ihr 10 Sek. esst, seid Ihr wohlgenährt." } }
+        assert(#R.BagBuffs({}) == 1, "nach vollem Tooltip keine Erinnerung")
+        -- Ein "nichts" aus vollem Tooltip gilt nur eine Weile.
+        local now = 1000
+        local oGT = G.GetTime
+        G.GetTime = function() return now end
+        tipLines = { { leftText = "Brot" }, { leftText = "Benutzen: Stellt 60 Leben wieder her." } }
+        for k in pairs(R._bagCache) do R._bagCache[k] = nil end
+        assert(R.BagItemKind(4242) == false, "Brot nicht als nichts erkannt")
+        tipLines = { { leftText = "Gebratener Eber" }, { leftText = "Benutzen: Wenn Ihr 10 Sek. esst, seid Ihr wohlgenährt." } }
+        now = now + 10
+        assert(R.BagItemKind(4242) == false, "Urteil sofort verworfen")
+        now = now + R.BAG_NO_TTL
+        assert(type(R.BagItemKind(4242)) == "table", "kein Buff bleibt fuer immer")
+        G.GetTime = oGT
+        G.C_TooltipInfo = oTI2
         helpful = { { name = "Essen" } }
         assert(#R.BagBuffs({}) == 0, "Erinnerung beim Essen")
         -- 1.0.2.3: Essen, das den Buff nicht beim Namen nennt.
@@ -27697,6 +27721,50 @@ do
         end
     end)
     Check(ok, "Bequem: Quests, Einladen, Duelle, Entzaubern, Flugkarte; Dungeon-Schluessel" .. (ok and "" or (": " .. tostring(err))))
+end
+
+-- 1.0.8.13: Ausgabe der Befehle im Fenster (Wunsch: "alle Befehle, die
+-- eine Ausgabe geben, in einem Popup wie /wcui pruefen").
+do
+    local G = _G
+    local oPrint, oShow = G.print, K.ShowReport
+    local ok, err = pcall(function()
+        local chat = {}
+        G.print = function(...) chat[#chat + 1] = table.concat({ ... }, " ") end
+        local shown = {}
+        K.ShowReport = function(title, lines) shown[#shown + 1] = { title = title, lines = lines } return oShow(title, lines) end
+        -- 1) Ein Befehl mit Ausgabe: Fenster, nichts im Chat, Praefix weg.
+        local R = WeintCodex.UIReminders
+        local oFR = R.FoodReport
+        R.FoodReport = function() return { "Satt: nein", "Erinnern darf jetzt: ja" } end
+        SlashCmdList["WEINTCODEXUI"]("essen")
+        R.FoodReport = oFR
+        assert(#chat == 0, "Ausgabe im Chat: " .. tostring(chat[1]))
+        assert(#shown == 1 and shown[1].title == "/wcui essen", "kein Fenster fuer /wcui essen")
+        assert(shown[1].lines[1] == "Satt: nein" and shown[1].lines[2] == "Erinnern darf jetzt: ja",
+            "Zeilen falsch: " .. tostring(shown[1].lines[1]))
+        assert(G.print ~= nil and K.capture == nil, "print nicht zurueckgegeben")
+        -- 2) Ohne Ausgabe: kein Fenster.
+        shown = {}
+        K.RunCommand("/wc nichts", function() end)
+        assert(#shown == 0, "Fenster ohne Ausgabe")
+        -- 3) Befehl oeffnet selbst einen Bericht und schreibt dazu: ein Fenster, Zeile oben.
+        shown = {}
+        K.RunCommand("/wc abgleich", function()
+            K.ShowReport("Abgleich", { "Zeile A" })
+            print("|cff7C6CFF[WeintCodex]|r Abgleich: 3 über den Namen")
+        end)
+        assert(K.report.text:find("^Abgleich: 3 über den Namen\n\nZeile A"), "Zusammenfassung nicht oben im Bericht: " .. tostring(K.report.text))
+        assert(#chat == 0, "Zusammenfassung im Chat")
+        -- 4) Fehler im Befehl: print ist wieder das alte, Fehler geht weiter.
+        local before = G.print
+        local okE = pcall(K.RunCommand, "/wc kaputt", function() print("x") error("boom") end)
+        assert(not okE and G.print == before and K.capture == nil, "nach Fehler haengt print")
+        K.report:Hide()
+    end)
+    -- Immer zurueck - sonst verschluckt der Test jede weitere Zeile des Laufs.
+    G.print, K.ShowReport, K.capture = oPrint, oShow, nil
+    Check(ok, "Befehle: Ausgabe im Fenster, ohne Ausgabe keins, Bericht + Zeile zusammen, Fehler gibt print zurueck" .. (ok and "" or (": " .. tostring(err))))
 end
 
 -- 1.0.8.12: Wappenrock (TabardFrame) im Codex-Design, gemessen mit

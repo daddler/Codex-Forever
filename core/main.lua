@@ -45,7 +45,7 @@ local function Open(tabId)
     end
 end
 
-SlashCmdList["WEINTCODEX"] = function(msg)
+local function SlashCodex(msg)
     local ER = WeintCodex.UIErrors
     if ER and ER.Trace then ER.Trace("Befehl /wc " .. tostring(msg or "")) end
     local cmd = msg and msg:lower() or ""
@@ -237,6 +237,17 @@ SlashCmdList["WEINTCODEX"] = function(msg)
             WeintCodex.ResetToHome()
         end
         WeintCodex.MainFrame:Show()
+    end
+end
+-- 1.0.8.13: Ausgabe im Fenster statt im Chat (UIKit.RunCommand, ui/report.lua -
+-- laedt spaeter, wird erst beim Tippen gebraucht).
+WeintCodex.Slash = SlashCodex
+SlashCmdList["WEINTCODEX"] = function(msg)
+    local K = WeintCodex.UIKit
+    if K and K.RunCommand then
+        K.RunCommand("/wc " .. tostring(msg or ""), SlashCodex, msg)
+    else
+        SlashCodex(msg)
     end
 end
 

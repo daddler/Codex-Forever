@@ -1657,7 +1657,7 @@ function O.Toggle()
 end
 
 SLASH_WEINTCODEXUI1 = "/wcui"
-SlashCmdList["WEINTCODEXUI"] = function(msg)
+local function SlashUI(msg)
     local ER = WeintCodex.UIErrors
     if ER and ER.Trace then ER.Trace("Befehl /wcui " .. tostring(msg or "")) end
     local input = msg or ""
@@ -2028,6 +2028,15 @@ SlashCmdList["WEINTCODEXUI"] = function(msg)
         return
     end
     O.Toggle()
+end
+-- 1.0.8.13: Ausgabe im Fenster statt im Chat (K.RunCommand, ui/report.lua).
+O.Slash = SlashUI
+SlashCmdList["WEINTCODEXUI"] = function(msg)
+    if K.RunCommand then
+        K.RunCommand("/wcui " .. tostring(msg or ""), SlashUI, msg)
+    else
+        SlashUI(msg)
+    end
 end
 
 
