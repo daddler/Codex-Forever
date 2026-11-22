@@ -22,6 +22,14 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.0.8.15",
+        date    = "23.11.2026",
+        notes   = {
+            "|cff7C6CFFQuestgegenstände deutlicher|r – in den Taschen tragen Gegenstände, die für eine Quest gebraucht werden, wieder einen gut sichtbaren Hinweis: einen breiteren goldenen Rand und einen ruhigen goldenen Schimmer. Gegenstände, die eine Quest starten, pulsieren weiter und tragen das „!“.",
+            "|cff7C6CFFWas ist aus? vollständiger|r – „Nur Quests des Gebiets“, „Nur Quests des Dungeons“, „Chat im Kampf ausblenden“, „Questliste im Kampf ausblenden“, „Fehlermeldungen im Kampf ausblenden“ und „Knopf zum Ausblenden des Chats“ stehen jetzt in der Liste und lassen sich dort einschalten.",
+        },
+    },
+    {
         version = "1.0.8.14",
         date    = "22.11.2026",
         notes   = {

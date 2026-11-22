@@ -15,6 +15,9 @@
 -- Schalter, die etwas ABschalten ("... ausblenden", "... abschalten"),
 -- gehoeren nicht in eine Liste von Funktionen zum Einschalten; ebenso
 -- Einschraenkungen ("Nur ...", "Auch ...", "Für alle ...").
+-- 1.0.8.14 (Wunsch: "die neuen Funktionen muessen auch in Ausgeschaltetes
+-- zeigen drin sein"): ein Schalter mit `feature = true` ist eine eigene
+-- Funktion, auch wenn er mit "Nur" beginnt ("Nur Quests des Gebiets").
 --
 -- "Einschalten" setzt genau den Schalter, den die Seite auch setzt (gleiche
 -- Lese-/Schreibwege aus dem Mitschrieb der Einstellungen, O.SearchIndex);
@@ -109,7 +112,7 @@ function OL.Collect()
         for _, e in ipairs(ok and idx or {}) do
             local spec = e.spec
             if type(spec) == "table" and spec.type == "toggle" and not spec.disabled and not e.advanced
-               and (spec.key or spec.get) and not Negative(e.label)
+               and (spec.key or spec.get) and (spec.feature or not Negative(e.label))
                and e.module ~= "general" and K.ModuleEnabled(e.module)
                and not (uiOff and K.Module(e.module) and K.Module(e.module).group == "ui") then
                 local id = e.store .. "/" .. tostring(spec.key or e.label)

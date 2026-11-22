@@ -9,6 +9,22 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.0.8.15] – 2026-11-23
+
+### Geaendert
+- Taschen (`ui/bags.lua`, Rueckmeldung: „Questitems haben keinen richtigen
+  Hinweis mehr“ – seit 1.0.8.14 traegt nur der Quest-Starter das „!“):
+  Questgegenstaende mit Rand in Gold `BG.QUEST_EDGE` (2 px statt 1) und
+  ruhigem goldenem Schimmer auf dem Symbol (`BG.QUEST_TINT`, additiv);
+  Quest-Starter pulsieren weiter, ohne den Schimmer.
+- „Was ist aus?“ (`ui/offlist.lua`, Wunsch: „die neuen Funktionen muessen
+  drin sein“): Schalter mit `feature = true` gelten als Funktion, auch wenn
+  ihre Beschriftung mit „Nur“ beginnt oder „ausblenden“ enthaelt. Markiert:
+  „Nur Quests des Gebiets“, „Nur Quests des Dungeons“, „Chat/Questliste im
+  Kampf ausblenden“, „Fehlermeldungen im Kampf ausblenden“, „Knopf zum
+  Ausblenden des Chats“. Einschraenkungen anderer Funktionen bleiben draussen.
+  Test mit eingeschalteter Oberflaeche (vorher lief der Teil ohne sie).
+
 ## [1.0.8.14] – 2026-11-22
 
 ### Geaendert

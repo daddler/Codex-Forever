@@ -893,7 +893,7 @@ local function Build(B)
             description = "Außer von Freunden und deiner Gilde." },
           { type = "toggle", label = "Pfeiltasten holen Gesendetes zurück", key = "chatArrows",
             description = "Pfeil hoch/runter in der Chatzeile: die letzten 10 gesendeten Zeilen, mit Gilde, Gruppe oder Flüsterziel. Nur bis zum Ausloggen, nicht im Kampf." })
-    B:Row({ type = "toggle", label = "Knopf zum Ausblenden des Chats", key = "chatButton" },
+    B:Row({ type = "toggle", label = "Knopf zum Ausblenden des Chats", key = "chatButton", feature = true },
           { type = "slider", label = "Von selbst ausblenden nach", key = "chatAutoHide", min = 0, max = 120, step = 10,
             disabled = off("chatButton"), format = function(v) return v == 0 and "nie" or (v .. " s") end })
     B:Advanced()

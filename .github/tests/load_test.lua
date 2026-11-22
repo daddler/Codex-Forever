@@ -27899,6 +27899,26 @@ do
         assert(not find(list, "In Dungeon und PvP wie im Spiel"), "Unterschalter in der Liste")
         assert(not find(list, "Blätterpfeile ausblenden") and not find(list, "Reichweitenpunkt ausblenden"), "Abschalter in der Liste")
         assert(not find(list, "Nur volle Stapel") and not find(list, "Für alle Charaktere"), "Einschraenkung in der Liste")
+        -- 1.0.8.14: neue Funktionen stehen drin - auch mit "Nur" am Anfang,
+        -- wenn sie als Funktion markiert sind (feature = true).
+        local wasUI = K.UIEnabled()
+        K.SetUIEnabled(true)
+        local wasQT, wasBags = K.ModuleEnabled("questtracker"), K.ModuleEnabled("bags")
+        K.SetModuleEnabled("questtracker", true) K.SetModuleEnabled("bags", true)
+        K.Set("questtracker", "zoneOnly", false)
+        K.Set("bags", "questStartPulse", false)
+        local l2 = OL.Collect()
+        K.Set("bags", "questStartPulse", true)
+        K.SetModuleEnabled("questtracker", wasQT) K.SetModuleEnabled("bags", wasBags)
+        K.SetUIEnabled(wasUI)
+        assert(find(l2, "Nur Quests des Gebiets"), "Questliste nach Gebiet fehlt")
+        assert(find(l2, "Quest-Starter leuchten"), "Quest-Starter leuchten fehlt")
+        -- Abschalter, die eine eigene Funktion sind, stehen drin; Einschraenkungen nicht.
+        local wasCA = K.Get("comfort", "caHideChat")
+        K.Set("comfort", "caHideChat", false)
+        local l3 = OL.Collect()
+        K.Set("comfort", "caHideChat", wasCA)
+        assert(find(l3, "Chat im Kampf ausblenden"), "Chat im Kampf ausblenden fehlt")
         -- Einschalten setzt denselben Schalter wie die Seite.
         qa.on()
         assert(K.Get("comfort", "questAccept") == true, "Einschalten wirkt nicht")
@@ -28822,6 +28842,7 @@ do
         K.Set("bags", "questStartPulse", true)
         BG.PaintSlot(s, 0, 1)
         assert(s.d.startOn == true and s.d.startFill:IsShown() and s.d.quest:IsShown(), "Quest-Starter leuchtet nicht")
+        assert(not s.d.questTint:IsShown(), "Quest-Starter traegt zusaetzlich den ruhigen Schimmer")
         assert(played == 2, "Puls nicht gestartet: " .. played)
         BG.PaintSlot(s, 0, 1)
         assert(played == 2, "Puls bei jedem Malen neu gestartet")
@@ -28829,6 +28850,16 @@ do
         quest = { questID = 123, isActive = true, isQuestItem = true }
         BG.PaintSlot(s, 0, 1)
         assert(s.d.startOn == false and not s.d.quest:IsShown() and not s.d.startFill:IsShown(), "angenommene Quest leuchtet weiter")
+        assert(s.d.questTint:IsShown(), "Questgegenstand ohne goldenen Schimmer")
+        local sizes = {}
+        local oSize = s.d.quality.SetSize
+        s.d.quality.SetSize = function(self, n) sizes[#sizes + 1] = n return oSize(self, n) end
+        BG.PaintSlot(s, 0, 1)
+        assert(sizes[#sizes] == BG.QUEST_EDGE and BG.QUEST_EDGE >= 2, "Rand des Questgegenstands nicht breiter")
+        quest = {}
+        BG.PaintSlot(s, 0, 1)
+        assert(sizes[#sizes] == 1 and not s.d.questTint:IsShown(), "gewoehnlicher Gegenstand mit Questrand")
+        s.d.quality.SetSize = oSize
         -- Schalter aus: kein Leuchten.
         quest = { questID = 124, isActive = false }
         K.Set("bags", "questStartPulse", false)

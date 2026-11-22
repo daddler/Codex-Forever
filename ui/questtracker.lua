@@ -496,11 +496,11 @@ K.Register({
             B:Row({ type = "toggle", label = "Rand", key = "border" },
                   { type = "toggle", label = "Goldenes Banner ausblenden", key = "hideBanner", reload = true })
             B:Section("Unterwegs")
-            B:Row({ type = "toggle", label = "Nur Quests des Gebiets", key = "zoneOnly",
+            B:Row({ type = "toggle", label = "Nur Quests des Gebiets", key = "zoneOnly", feature = true,
                     description = "Die Liste zeigt immer die Quests des Gebiets, in dem du gerade bist, und wechselt mit dem Gebiet von selbst. Neue Quests kommen dazu, abgegebene gehen. Ausschalten stellt deine vorherige Auswahl wieder her." },
                   { type = "empty" })
             B:Section("Im Dungeon")
-            B:Row({ type = "toggle", label = "Nur Quests des Dungeons", key = "dungeonOnly",
+            B:Row({ type = "toggle", label = "Nur Quests des Dungeons", key = "dungeonOnly", feature = true,
                     description = "Beim Betreten verfolgt die Liste nur die Quests dieses Dungeons; beim Verlassen kommt alles zurück." },
                   { type = "empty" })
             B:Note("Deckkraft 0 % blendet die Fläche ganz aus, samt Rand und Schatten. Die Liste selbst bleibt die des Spiels: Quests anklicken, verfolgen und Questgegenstände benutzen funktionieren wie gewohnt.")

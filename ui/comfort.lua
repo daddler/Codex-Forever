@@ -521,7 +521,7 @@ K.Register({
             B:Section("Spiel")
             B:Row({ type = "toggle", label = "Filmsequenzen überspringen", key = "skipCinematics",
                     description = "Nie das Anfangsvideo eines neuen Charakters (Stufe 1)." },
-                  { type = "toggle", label = "Fehlermeldungen im Kampf ausblenden", key = "hideErrorsInCombat",
+                  { type = "toggle", label = "Fehlermeldungen im Kampf ausblenden", key = "hideErrorsInCombat", feature = true,
                     description = "„Außer Reichweite“ und Co. — außerhalb des Kampfes kommen sie wieder." })
         end },
         { key = "anzeigen", label = "Anzeigen", build = function(B)

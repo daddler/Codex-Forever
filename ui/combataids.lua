@@ -453,8 +453,8 @@ function CA.BuildHelpers(B)
     B:Section("Zauberverlauf & Ausblenden", "Deine letzten Zauber als Symbole (das neueste links, ältere verblassen nach 12 s) – zum Lernen einer Rotation und gegen Fehlklicks. Questliste und Chat im Kampf nur durchsichtig: beide tragen Knöpfe, die das Spiel im Kampf schützt.")
     B:Row({ type = "toggle", label = "Zauberverlauf zeigen", key = "caHistory" },
           { type = "slider", label = "Symbole", key = "caHistoryCount", min = 3, max = 10, step = 1, disabled = off("caHistory") })
-    B:Row({ type = "toggle", label = "Questliste im Kampf ausblenden", key = "caHideQuests" },
-          { type = "toggle", label = "Chat im Kampf ausblenden", key = "caHideChat" })
+    B:Row({ type = "toggle", label = "Questliste im Kampf ausblenden", key = "caHideQuests", feature = true },
+          { type = "toggle", label = "Chat im Kampf ausblenden", key = "caHideChat", feature = true })
 end
 function CA.BuildPvP(B)
     B:Section("Heiler unter Kontrolle", "Wird ein Heiler deiner Gruppe betäubt, verwandelt oder gefürchtet, steht oben eine Leiste mit Name, Zauber und Restzeit. Heiler ist, wen die Gruppenrolle so nennt. Liest das Spiel die Auren im Kampf nicht heraus, bleibt die Leiste leer.")

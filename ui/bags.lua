@@ -341,6 +341,16 @@ local function CreateSlot()
     d.startFill:SetColorTexture(bang[1], bang[2], bang[3], 0.35)
     if d.startFill.SetBlendMode then d.startFill:SetBlendMode("ADD") end
     d.startFill:Hide()
+    -- 1.0.8.14 (Rueckmeldung: "Die Questitems haben keinen richtigen
+    -- Hinweis mehr, dass sie fuer Quests gebraucht werden - den Rahmen
+    -- besser erkennbar"): Questgegenstaende tragen den Rand in Gold doppelt
+    -- so breit und einen ruhigen goldenen Schimmer auf dem Symbol - ohne
+    -- Pulsieren, das bleibt den Quest-Startern.
+    d.questTint = top:CreateTexture(nil, "ARTWORK", nil, -1)
+    d.questTint:SetAllPoints(btn)
+    d.questTint:SetColorTexture(bang[1], bang[2], bang[3], BG.QUEST_TINT)
+    if d.questTint.SetBlendMode then d.questTint:SetBlendMode("ADD") end
+    d.questTint:Hide()
     d.startPulse = {}
     for _, tex in ipairs({ d.startGlow.tex, d.startFill }) do
         local ag = tex:CreateAnimationGroup()
@@ -632,6 +642,8 @@ local function PaintSlot(s, bag, slot)
     if info and BG.QuestInfo then isQuest, starts = BG.QuestInfo(bag, slot) end
     d.quest:SetShown(starts and true or false)
     BG.SetStartPulse(d, starts and Opt("questStartPulse") and true or false)
+    d.questTint:SetShown((isQuest and not starts) and true or false)
+    d.quality:SetSize(isQuest and BG.QUEST_EDGE or 1)
     if isQuest then
         local g = C.gold
         d.quality:SetColor(g[1], g[2], g[3], 1)
@@ -692,6 +704,9 @@ local function ItemClass(id)
     classID = ok and K.Plain(classID) or nil
     return type(classID) == "number" and classID or nil
 end
+
+BG.QUEST_EDGE = 2       -- Rand der Questgegenstaende (Qualitaet: 1)
+BG.QUEST_TINT = 0.14    -- goldener Schimmer auf dem Symbol
 
 -- Schein um einen Gegenstand, der eine Quest startet: an/aus, Animation nur
 -- starten/stoppen, wenn sich etwas aendert (jeder Platz wird oft gemalt).
