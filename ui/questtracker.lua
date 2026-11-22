@@ -30,6 +30,10 @@ local defaults = {
     -- Im Dungeon nur die Quests dieses Dungeons verfolgen (Beta-Test
     -- 6.3.2.8: "nur noch die fuer den Dungeon, nicht alle").
     dungeonOnly = true,
+    -- 1.0.8.14 (Wunsch: "Die Liste soll sich immer mit den Quests fuellen,
+    -- die ich im Land habe, wo ich bin; wechsle ich das Land, aktualisiert
+    -- sie sich automatisch. Optional einschaltbar."):
+    zoneOnly    = false,
     bgAlpha     = 75,
     border      = true,
     hideBanner  = true,
@@ -314,29 +318,112 @@ function QT.RepairWatches()
     return added
 end
 
+--------------------------------------------------
+-- Quests des Gebiets (1.0.8.14)
+--------------------------------------------------
+-- Mit "Nur Quests des Gebiets" verfolgt die Liste genau die Quests, die zum
+-- Gebiet gehoeren, in dem man steht: Ueberschrift im Questlog = Gebiet (so
+-- ordnet das Spiel sein Log), oder das Spiel sagt, die Quest liegt auf
+-- dieser Karte (isOnMap). Beim Wechsel des Gebiets, beim Annehmen und
+-- Abgeben neu. Was vorher verfolgt war, merkt sich WeintCodex EINMAL beim
+-- Einschalten (je Charakter) und stellt es beim Ausschalten wieder her.
+-- Verfolgt wird nur ausserhalb des Kampfes; im Dungeon hat "Nur Quests des
+-- Dungeons" Vorrang.
+function QT.ZoneName()
+    local z = _G.GetRealZoneText and K.Plain(_G.GetRealZoneText())
+    if type(z) ~= "string" or z == "" then z = _G.GetZoneText and K.Plain(_G.GetZoneText()) end
+    return type(z) == "string" and z ~= "" and z or nil
+end
+
+-- Menge der questIDs des Gebiets, oder nil (Client sagt nichts).
+function QT.ZoneQuests(zone)
+    local ql = QL()
+    if not (zone and ql and ql.GetNumQuestLogEntries and ql.GetInfo) then return nil end
+    local n = K.Plain(ql.GetNumQuestLogEntries())
+    if type(n) ~= "number" then return nil end
+    local set, header = {}, nil
+    for i = 1, n do
+        local ok, info = pcall(ql.GetInfo, i)
+        if ok and type(info) == "table" then
+            if info.isHeader then
+                header = K.Plain(info.title)
+            elseif not info.isHidden and info.questID then
+                local id = K.Plain(info.questID)
+                if id and (header == zone or K.Bool(info.isOnMap, false)) then set[id] = true end
+            end
+        end
+    end
+    return set
+end
+
+function QT.ApplyZone()
+    local mem, ql = Memory(), QL()
+    if not (mem and ql and ql.AddQuestWatch and ql.RemoveQuestWatch) then return end
+    if not Opt("zoneOnly") then
+        -- Ausgeschaltet: was vorher verfolgt war, zurueck.
+        if mem.zoneBefore then
+            local keep = {}
+            for _, id in ipairs(mem.zoneBefore) do keep[id] = true end
+            for _, id in ipairs(Watched()) do
+                if not keep[id] then K.QuietMap(ql.RemoveQuestWatch, id) end
+            end
+            for _, id in ipairs(mem.zoneBefore) do K.QuietMap(ql.AddQuestWatch, id) end
+            mem.zoneBefore, mem.zone = nil, nil
+        end
+        return
+    end
+    if mem.active then return end                  -- Dungeonfilter hat Vorrang
+    local zone = QT.ZoneName()
+    local wanted = QT.ZoneQuests(zone)
+    if not wanted then return end
+    local watched = Watched()
+    if not mem.zoneBefore then mem.zoneBefore = watched end
+    local have = {}
+    for _, id in ipairs(watched) do
+        have[id] = true
+        if not wanted[id] then K.QuietMap(ql.RemoveQuestWatch, id) end
+    end
+    local ids = {}
+    for id in pairs(wanted) do if not have[id] then ids[#ids + 1] = id end end
+    table.sort(ids)
+    for _, id in ipairs(ids) do K.QuietMap(ql.AddQuestWatch, id) end
+    mem.zone = zone
+    QT.zoneCount = 0
+    for _ in pairs(wanted) do QT.zoneCount = QT.zoneCount + 1 end
+end
+
 function QT.CheckDungeon()
     local instance = InstanceName()
     local mem = Memory()
-    if not instance then QT.RepairWatches() end
+    if not instance and not Opt("zoneOnly") then QT.RepairWatches() end
     if instance and K.Get(KEY, "dungeonOnly") then
         -- In einen anderen Dungeon gewechselt: erst zurueck, dann neu.
         if mem and mem.active and mem.active ~= instance then QT.LeaveDungeon() end
         QT.EnterDungeon(instance)
-    elseif mem and mem.active then
-        QT.LeaveDungeon()
+    else
+        if mem and mem.active then QT.LeaveDungeon() end
+        QT.ApplyZone()
     end
 end
 
 local dungeonEvents = CreateFrame("Frame")
 function StartDungeonFilter()
-    for _, e in ipairs({ "PLAYER_ENTERING_WORLD", "ZONE_CHANGED_NEW_AREA" }) do
+    for _, e in ipairs({ "PLAYER_ENTERING_WORLD", "ZONE_CHANGED_NEW_AREA",
+                         -- 1.0.8.14: Quests des Gebiets - neue Quest, abgegeben, abgebrochen.
+                         "QUEST_ACCEPTED", "QUEST_REMOVED", "QUEST_TURNED_IN" }) do
         pcall(dungeonEvents.RegisterEvent, dungeonEvents, e)
     end
-    dungeonEvents:SetScript("OnEvent", K.Measured("Questliste", function()
+    local pending = false
+    dungeonEvents:SetScript("OnEvent", K.Measured("Questliste", function(_, event)
+        if event:find("^QUEST_") and not Opt("zoneOnly") then return end
         -- Das Questlog steht beim Betreten erst einen Moment spaeter; und
-        -- die Verfolgung aendert sich nicht im Kampf.
-        local function run() K.AfterCombat(QT.CheckDungeon) end
-        if _G.C_Timer and _G.C_Timer.After then _G.C_Timer.After(2, run) else run() end
+        -- die Verfolgung aendert sich nicht im Kampf. Mehrere Ereignisse
+        -- kurz hintereinander: einmal.
+        if pending then return end
+        pending = true
+        local function run() pending = false K.AfterCombat(QT.CheckDungeon) end
+        local delay = event:find("^QUEST_") and 0.5 or 2
+        if _G.C_Timer and _G.C_Timer.After then _G.C_Timer.After(delay, run) else run() end
     end))
 end
 
@@ -383,6 +470,7 @@ function QT.Report()
     add("Fläche", panel and (call(panel, "IsShown") .. " h=" .. call(panel, "GetHeight")) or "keine")
     local mem = Memory()
     add("Dungeonfilter", mem and tostring(mem.active) or "?")
+    add("Nur Quests des Gebiets", Opt("zoneOnly") and ("an – " .. tostring(mem and mem.zone) .. ", " .. tostring(QT.zoneCount or 0) .. " Quests") or "aus")
     add("Instanz", tostring(InstanceName()))
     return out
 end
@@ -397,7 +485,7 @@ K.Register({
     Enable = Enable,
     OnSetting = function(key)
         QT.Apply()
-        if key == "dungeonOnly" then K.AfterCombat(QT.CheckDungeon) end
+        if key == "dungeonOnly" or key == "zoneOnly" then K.AfterCombat(QT.CheckDungeon) end
     end,
     pages = {
         { key = "allgemein", label = "Allgemein", build = function(B)
@@ -407,6 +495,10 @@ K.Register({
                   { type = "slider", label = "Innenabstand", key = "padding", min = 0, max = 20, step = 1, format = px })
             B:Row({ type = "toggle", label = "Rand", key = "border" },
                   { type = "toggle", label = "Goldenes Banner ausblenden", key = "hideBanner", reload = true })
+            B:Section("Unterwegs")
+            B:Row({ type = "toggle", label = "Nur Quests des Gebiets", key = "zoneOnly",
+                    description = "Die Liste zeigt immer die Quests des Gebiets, in dem du gerade bist, und wechselt mit dem Gebiet von selbst. Neue Quests kommen dazu, abgegebene gehen. Ausschalten stellt deine vorherige Auswahl wieder her." },
+                  { type = "empty" })
             B:Section("Im Dungeon")
             B:Row({ type = "toggle", label = "Nur Quests des Dungeons", key = "dungeonOnly",
                     description = "Beim Betreten verfolgt die Liste nur die Quests dieses Dungeons; beim Verlassen kommt alles zurück." },

@@ -27,6 +27,14 @@ nicht zusammen.
   Verlauf), erzeugt von `.github/scripts/make_ui_media.py`
   (`make_ring_media`). Halo `RG.HALO` 0.35 statt 0.10 (Verlauf statt Scheibe).
 
+- Questliste (`ui/questtracker.lua`, Wunsch: „mit den Quests fuellen, die ich
+  im Land habe, wo ich bin; beim Wechsel automatisch – optional“): Schalter
+  `zoneOnly` (ab Werk aus). `QT.ApplyZone` verfolgt genau die Quests mit
+  Ueberschrift = Gebiet (`GetRealZoneText`) oder `isOnMap`; neu bei
+  `ZONE_CHANGED_NEW_AREA`, `PLAYER_ENTERING_WORLD`, `QUEST_ACCEPTED`,
+  `QUEST_REMOVED`, `QUEST_TURNED_IN` (gebuendelt, nach dem Kampf). Vorherige
+  Auswahl je Charakter in `zoneBefore`, beim Ausschalten zurueck. Dungeonfilter
+  hat Vorrang; die einmalige Reparatur laeuft mit dem Schalter nicht.
 - Runenfolge (`ui/flightgames.lua`, Wunsch: „Toene besser“): neu gerechnet
   von `.github/scripts/make_rune_sounds.py` – Kristallklang (Obertoene,
   Chorus, FM-Anschlag, 6 ms Einsatz) auf G4/C5/E5/G5 statt Sinus-Glocken auf

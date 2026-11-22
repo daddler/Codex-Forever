@@ -12640,6 +12640,65 @@ do
     Check(ok, "Questliste: Dungeonfilter je Charakter, keine fremden Quests" .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 1.0.8.14: "Nur Quests des Gebiets" - die Liste folgt dem Gebiet, neue
+-- Quests kommen dazu, Ausschalten stellt die alte Auswahl her.
+do
+    local QT = WeintCodex.UIQuestTracker
+    local G = _G
+    local keep = { G.C_QuestLog, G.UnitName, G.IsInInstance, G.GetRealZoneText, G.GetZoneText }
+    local oZone = K.Get("questtracker", "zoneOnly")
+    local ok, err = pcall(function()
+        local watched = { [50] = true }        -- vorher: eine Quest aus Tanaris
+        local log = {
+            { isHeader = true, title = "Brachland" }, { questID = 10 }, { questID = 11 },
+            { isHeader = true, title = "Eschental" }, { questID = 20 }, { questID = 21, isOnMap = false },
+            { isHeader = true, title = "Tanaris" }, { questID = 50 },
+            { isHeader = true, title = "Klasse" }, { questID = 60, isOnMap = true },
+        }
+        G.C_QuestLog = {
+            GetNumQuestWatches = function() local n = 0 for _ in pairs(watched) do n = n + 1 end return n end,
+            GetQuestIDForQuestWatchIndex = function(i) local l = {} for id in pairs(watched) do l[#l + 1] = id end table.sort(l) return l[i] end,
+            AddQuestWatch = function(id) watched[id] = true return true end,
+            RemoveQuestWatch = function(id) watched[id] = nil end,
+            GetNumQuestLogEntries = function() return #log end,
+            GetInfo = function(i) return log[i] end,
+        }
+        G.UnitName = function() return "Wanderer" end
+        G.IsInInstance = function() return false, "none" end
+        local zone = "Brachland"
+        G.GetRealZoneText = function() return zone end
+        local function same(want)
+            local a, b = {}, {}
+            for id in pairs(watched) do a[#a + 1] = id end
+            table.sort(a) table.sort(want)
+            return table.concat(a, ",") == table.concat(want, ","), table.concat(a, ",")
+        end
+        K.Set("questtracker", "zoneOnly", true)
+        QT.CheckDungeon()
+        local okA, got = same({ 10, 11, 60 })
+        assert(okA, "Brachland: " .. got)
+        -- Gebiet gewechselt: automatisch die Quests von dort.
+        zone = "Eschental"
+        QT.CheckDungeon()
+        okA, got = same({ 20, 21, 60 })
+        assert(okA, "Eschental: " .. got)
+        -- Neue Quest angenommen.
+        table.insert(log, 7, { questID = 22 })
+        QT.CheckDungeon()
+        okA, got = same({ 20, 21, 22, 60 })
+        assert(okA, "neue Quest fehlt: " .. got)
+        -- Ausschalten: die alte Auswahl kommt zurueck.
+        K.Set("questtracker", "zoneOnly", false)
+        QT.CheckDungeon()
+        okA, got = same({ 50 })
+        assert(okA, "alte Auswahl nicht zurueck: " .. got)
+        assert(QT.Memory().zoneBefore == nil, "Gemerktes bleibt stehen")
+    end)
+    G.C_QuestLog, G.UnitName, G.IsInInstance, G.GetRealZoneText, G.GetZoneText = keep[1], keep[2], keep[3], keep[4], keep[5]
+    K.Set("questtracker", "zoneOnly", oZone)
+    Check(ok, "Questliste: nur Quests des Gebiets, folgt dem Gebiet, Ausschalten stellt her" .. (ok and "" or (": " .. tostring(err))))
+end
+
 -- 1.0.3.5: Rezeptnamen aus dem Client (deutsch) fuer die Rezeptsuche im Discord.
 do
     local PRO = WeintCodex.Professions

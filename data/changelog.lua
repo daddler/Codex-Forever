@@ -25,6 +25,7 @@ WeintCodex_ChangelogData = {
         version = "1.0.8.14",
         date    = "22.11.2026",
         notes   = {
+            "|cff7C6CFFQuestliste folgt dem Gebiet|r – neu und abschaltbar unter /wcui → Questliste → „Nur Quests des Gebiets“: die Liste zeigt immer die Quests des Gebiets, in dem du gerade bist, und wechselt beim Gebietswechsel von selbst. Neue Quests kommen dazu, abgegebene gehen; Ausschalten stellt deine vorherige Auswahl wieder her. Im Dungeon gilt weiter „Nur Quests des Dungeons“.",
             "|cff7C6CFFNeue Töne für die Runenfolge|r – statt dünner Pieptöne klingt jede Rune jetzt wie ein Kristall, wärmer und mit etwas Raum; eine geschaffte Runde endet mit einem aufsteigenden Akkord, ein Fehler mit zwei weichen, tiefen Tönen statt eines Brummens.",
             "|cff7C6CFFRingmenüs mit glatten Kanten|r – die Ringe (Reittiere und eigene) und der Auswahlring der Erinnerungen hatten treppige Ränder. Sie sind jetzt aus eigenen, großen Kreisen mit weicher Kante gebaut; Schein und Hervorhebung der Wahl laufen weich aus statt mit harter Kante.",
             "|cff7C6CFFQuest-Starter leuchten|r – Gegenstände in den Taschen, die eine Quest starten (erst per Rechtsklick), pulsieren jetzt in Gold und tragen das „!“. Andere Questgegenstände haben nur noch den goldenen Rand, so sticht hervor, was noch anzunehmen ist. Abschaltbar unter Taschen → Anzeigen.",
