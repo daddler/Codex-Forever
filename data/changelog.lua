@@ -22,6 +22,14 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.0.8.12",
+        date    = "22.11.2026",
+        notes   = {
+            "|cff7C6CFFWas ist aus? lesbar|r – mit der Maus über einer Zeile verschwanden Name und Ort; jetzt bleibt beides stehen. Dasselbe in den Treffern der Einstellungssuche und der Hilfe. Das Fenster ist auch im Design „Transparent“ deckend.",
+            "|cff7C6CFFWappenrock im Codex-Design|r – das Fenster zum Entwerfen des Gildenwappenrocks trägt jetzt die ruhige Gestaltung in Gold wie Stall, Bank und Post; Wappen, Modell und Preis bleiben.",
+        },
+    },
+    {
         version = "1.0.8.11",
         date    = "22.11.2026",
         notes   = {

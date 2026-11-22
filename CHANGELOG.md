@@ -9,6 +9,25 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.0.8.12] – 2026-11-22
+
+### Behoben
+- „Was ist aus?“ (`ui/offlist.lua`), Treffer der Einstellungssuche
+  (`ui/options.lua`) und der Hilfe (`ui/help.lua`): die Hover-Flaeche lag
+  in der Ebene `HIGHLIGHT` – die liegt ueber `OVERLAY`, also ueber dem Text –
+  und war deckend (`surface2`), Name und Pfad verschwanden unter der Maus.
+  Jetzt `BACKGROUND` mit OnEnter/OnLeave. Neuer Test sucht deckende
+  HIGHLIGHT-Flaechen im ganzen Code.
+- „Was ist aus?“ und Hilfe: Kachel `solid`, im Aussehen „Transparent“ nicht
+  mehr durchscheinend.
+
+### Hinzugefuegt
+- Wappenrock (`TabardFrame`, `ui/tabard.lua`) im Codex-Design, Gold, aus
+  Bausteinen nach `/wcui fenster` (1.0.8.11): Metall und Streifen ueber den
+  allgemeinen Durchlauf, Zierrahmen 136862/136863 weg, Leisten 131143 und
+  Geld 525911 flach, Innenflaechen 374154/374155. Wappen, Modell, Pfeile,
+  Drehknoepfe bleiben.
+
 ## [1.0.8.11] – 2026-11-22
 
 ### Geaendert

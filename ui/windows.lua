@@ -86,6 +86,8 @@ W.WINDOWS = { "CharacterFrame", "PVPFrame", "HonorFrame", "PlayerSpellsFrame", "
               "InspectFrame",
               -- 1.0.8.0: Stall des Jaegers (ui/petstable.lua).
               "PetStableFrame",
+              -- 1.0.8.12: Gildenwappenrock entwerfen (ui/tabard.lua).
+              "TabardFrame",
               -- 6.9.0.4: Auktionshaus (Blizzard_AuctionHouseUI, erst beim
               -- Ansprechen geladen; ui/auction.lua).
               "AuctionHouseFrame",

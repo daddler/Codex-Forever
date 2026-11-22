@@ -27699,6 +27699,59 @@ do
     Check(ok, "Bequem: Quests, Einladen, Duelle, Entzaubern, Flugkarte; Dungeon-Schluessel" .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 1.0.8.12: Wappenrock (TabardFrame) im Codex-Design, gemessen mit
+-- /wcui fenster: Metall, Zierrahmen und Leisten weg, Wappen bleibt.
+do
+    local ok, err = pcall(function()
+        local W, S, TB = WeintCodex.UIWindows, WeintCodex.UIStyle, WeintCodex.UITabard
+        local listed, movable = {}, {}
+        for _, n in ipairs(W.WINDOWS) do listed[n] = true end
+        for _, n in ipairs(WeintCodex.UIMoveWindows.WINDOWS) do movable[n] = true end
+        assert(TB and listed.TabardFrame and S.SCOPES.TabardFrame == S.CALM, "Wappenrock nicht im Durchlauf oder nicht in Gold")
+        assert(movable.TabardFrame and WeintCodex.UICalmParts.hosts.TabardFrame == TB, "Wappenrock ohne Bausteine")
+        for _, a in ipairs({ "UI-Frame-PortraitMetal-CornerTopLeft", "_UI-Frame-Metal-EdgeTop", "!UI-Frame-Metal-EdgeLeft",
+                             "_UI-Frame-TopTileStreaks" }) do
+            assert(W.HidesAtlas(a), "bleibt am Wappenrock: " .. a)
+        end
+        local function Tex(file)
+            local t = stub.NewObject("Texture")
+            t._file = file
+            t.GetTexture = function(self) return self._file end
+            return t
+        end
+        assert(TB.Kind(Tex(136863)) == "decor" and TB.Kind(Tex(136862)) == "decor", "Zierrahmen bleibt")
+        assert(TB.Kind(Tex(131143)) == "strip" and TB.Kind(Tex(525911)) == "strip", "Leisten der Auswahl/Geld nicht flach")
+        assert(TB.Kind(Tex(374154)) == "bg", "Innenflaeche fehlt")
+        assert(not TB.Kind(Tex(130757)), "Pfeile der Auswahl angefasst")
+    end)
+    Check(ok, "Wappenrock: Gold, Metall weg, Zierrahmen weg, Leisten flach, Pfeile bleiben" .. (ok and "" or (": " .. tostring(err))))
+end
+
+-- 1.0.8.12: Eine Hover-Flaeche in der Ebene HIGHLIGHT liegt ueber dem
+-- Text (OVERLAY). Deckend (Alpha >= 0.5 oder eine Flaechenfarbe) verdeckt sie
+-- Name und Beschreibung der Zeile - so in "Was ist aus?", der Suche der
+-- Einstellungen und der Hilfe. Durchscheinend (Weiss mit 0.05) ist erlaubt.
+do
+    local bad = {}
+    for _, dir in ipairs({ "ui", "modules", "core" }) do
+        local pipe = io.popen('find "' .. ROOT .. "/" .. dir .. '" -name "*.lua"')
+        for path in pipe:lines() do
+            local fh = io.open(path) local src = fh:read("*a") fh:close()
+            for var, rest in src:gmatch('local%s+([%w_]+)%s*=%s*[%w_%.]+:CreateTexture%(nil,%s*"HIGHLIGHT"%)(.-)\n%s*\n') do
+                local col = rest:match(var .. ':SetColorTexture%(([^\n]-)%)\n')
+                if col then
+                    local a = tonumber(col:match(",%s*([%d%.]+)%s*$"))
+                    if col:find("unpack%(C%.surface") or col:find("unpack%(C%.border") or (a and a >= 0.5) then
+                        bad[#bad + 1] = path:gsub("^.*/(%w+/[%w_]+%.lua)$", "%1")
+                    end
+                end
+            end
+        end
+        pipe:close()
+    end
+    Check(#bad == 0, "Hover in der Ebene HIGHLIGHT nicht deckend" .. (#bad > 0 and (": " .. table.concat(bad, ", ")) or ""))
+end
+
 -- 1.0.8.11: "Was ist aus?" - Ausgeschaltetes auflisten und einschalten.
 do
     local ok, err = pcall(function()
@@ -27740,6 +27793,15 @@ do
         -- Fenster: Zeilen, Filter, Knopf.
         local w = OL.Show()
         assert(w:IsShown() and w.rows[1] and w.rows[1]:IsShown(), "Fenster ohne Zeilen")
+        -- 1.0.8.12: Hover verdeckte die Zeile (Ebene HIGHLIGHT liegt ueber
+        -- dem Text), und im Aussehen "Transparent" schien das Fenster durch.
+        local r1 = w.rows[1]
+        assert(r1.hl and r1.hl:GetDrawLayer() == "BACKGROUND", "Hover-Flaeche liegt ueber dem Text")
+        r1:GetScript("OnEnter")(r1)
+        assert(r1.hl:IsShown() and r1.title:IsShown(), "Hover zeigt die Zeile nicht")
+        r1:GetScript("OnLeave")(r1)
+        assert(not r1.hl:IsShown(), "Hover bleibt stehen")
+        assert(w.kachel and w.kachel.solid, "Fenster nicht deckend")
         w.filter:SetText("Quests annehmen")
         local shown = OL.Fill()
         assert(#shown >= 1 and find(shown, "Quests automatisch annehmen"), "Filter findet den Schalter nicht")
