@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.0.8.13",
+        date    = "22.11.2026",
+        notes   = {
+            "|cff7C6CFFDeckend im Design „Transparent“|r – „Was ist aus?“, die Hilfe und die Dialoge, die eine Entscheidung verlangen (Design wechseln, Teilen), schienen trotzdem durch. Jetzt sind sie wirklich deckend; alles andere bleibt so durchsichtig, wie du es eingestellt hast.",
+        },
+    },
+    {
         version = "1.0.8.12",
         date    = "22.11.2026",
         notes   = {

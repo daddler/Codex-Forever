@@ -9,6 +9,16 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.0.8.13] – 2026-11-22
+
+### Behoben
+- `K.PaintKachel`: `solid` verhinderte im Aussehen „Transparent“ nur das
+  Absenken unter die Deckkraft des Aussehens – der Grundwert war aber schon
+  diese Deckkraft (45 %), also blieb jede `solid`-Kachel ohne eigenes
+  `alpha` durchsichtig („Was ist aus?“, Hilfe, Designwechsel, Teilen unter
+  Bequem; im Spiel gemessen). Jetzt mindestens `K.SOLID_ALPHA` (0.96).
+  Test misst die gemalte Deckkraft.
+
 ## [1.0.8.12] – 2026-11-22
 
 ### Behoben

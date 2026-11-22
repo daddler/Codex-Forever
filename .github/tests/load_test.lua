@@ -27802,6 +27802,21 @@ do
         r1:GetScript("OnLeave")(r1)
         assert(not r1.hl:IsShown(), "Hover bleibt stehen")
         assert(w.kachel and w.kachel.solid, "Fenster nicht deckend")
+        -- 1.0.8.13: solid allein half nicht - im Transparent bei 45 % blieb
+        -- die Flaeche bei 45 %. Gemessen an der gemalten Deckkraft.
+        do
+            local GC = WeintCodex.GameColors
+            local oldT, oldA = GC.lookTransparent, GC.kachelFill[4]
+            GC.lookTransparent, GC.kachelFill[4] = true, 0.45
+            local seen
+            local bg = w.kachel.bg
+            local oSet = bg.SetColorTexture
+            bg.SetColorTexture = function(self, r, g, b, a) seen = a end
+            K.PaintKachel(w.kachel)
+            bg.SetColorTexture = oSet
+            GC.lookTransparent, GC.kachelFill[4] = oldT, oldA
+            assert(seen and seen >= 0.95, "Was ist aus im Transparent durchsichtig: " .. tostring(seen))
+        end
         w.filter:SetText("Quests annehmen")
         local shown = OL.Fill()
         assert(#shown >= 1 and find(shown, "Quests automatisch annehmen"), "Filter findet den Schalter nicht")

@@ -1548,6 +1548,8 @@ end
 local kacheln = setmetatable({}, { __mode = "k" })
 K.kacheln = kacheln
 
+K.SOLID_ALPHA = 0.96
+
 function K.PaintKachel(o, keepEdge)
     local GC = WeintCodex.GameColors
     local f = GC.kachelFill
@@ -1556,6 +1558,10 @@ function K.PaintKachel(o, keepEdge)
     -- 1.0.7.43 (Wunsch: "beim Stueckeln sieht sie Okay und Abbrechen nicht"):
     -- Dialoge, die eine Entscheidung verlangen (o.solid), bleiben lesbar.
     if GC.lookTransparent and not o.solid then a = math.min(a, f[4]) end
+    -- 1.0.8.13 (gemessen: "Was ist aus?" blieb im Transparent durchsichtig):
+    -- `solid` verhinderte nur das Absenken - der Grundwert WAR schon die
+    -- Deckkraft des Aussehens (45 %). Deckend heisst: mindestens K.SOLID_ALPHA.
+    if GC.lookTransparent and o.solid then a = math.max(a, K.SOLID_ALPHA) end
     o.wood = GC.kachelWood and true or false
     if not o.bg then
         -- nur ein Rand (K.LookEdge)
