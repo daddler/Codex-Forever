@@ -19,6 +19,18 @@ nicht zusammen.
   Entfernung und Name und loescht frueher Gemerktes beim naechsten Lesen der
   Flugkarte. `QX.CheckFlightNear`/`QX.CheckFlight` schweigen auf einer
   Flugroute (`UnitOnTaxi`).
+- Gold doppelt (Bericht: „seit der Aenderung am Client am Freitag“, Zeilen
+  „Shooty“ und „Shooty-“): derselbe Charakter unter zwei Schluesseln.
+  `IV.Dedupe` (`ui/inventory.lua`, beim Einloggen) legt zusammen bei gleichem
+  Namen und gleichem Realm nach `IV.RealmKey` (ohne Gross/Klein, Leerraum,
+  Bindestrich, Apostroph, unsichtbare Zeichen) oder bei leerem Realm und genau
+  einem anderen echten; behalten wird der zuletzt gelesene. Verschiedene
+  Realm-Namen nie. `WeintCodex.Names.Blank`: ein Realm aus Leerraum/
+  unsichtbaren Zeichen gilt nicht (`core/names.lua`). `/wcui bestand` listet
+  jeden Charakter mit Realm in Anfuehrungszeichen und Laenge. Dieselbe Regel
+  in der Companion 1.0.9 (`core/inventory.py` `dedupe`). Ursache nicht
+  bestaetigt: ob der Realm leer oder anders geschrieben war, zeigt erst der
+  Bericht.
 
 ## [1.0.8.13] – 2026-11-22
 

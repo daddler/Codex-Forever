@@ -25,6 +25,7 @@ WeintCodex_ChangelogData = {
         version = "1.0.8.14",
         date    = "22.11.2026",
         notes   = {
+            "|cff7C6CFFGold nicht mehr doppelt|r – seit der Änderung am Spielclient stand derselbe Charakter manchmal zweimal in der Goldübersicht, einmal mit leerem oder anders geschriebenem Realm. Beim Einloggen legt WeintCodex solche Einträge jetzt zusammen; Charaktere gleichen Namens auf wirklich verschiedenen Realms bleiben getrennt. /wcui bestand zeigt alle gemerkten Charaktere mit ihrem Realm.",
             "|cff7C6CFFFlugpunkt-Erinnerung ohne Geisterpunkte|r – die Meldung „Flugpunkt in der Nähe“ nannte auch stillgelegte Punkte, die das Spiel noch mitliefert (etwa „zzOLDRiverglades“), mit alter Lage irgendwo. Die zählen nicht mehr. Und während des Flugs kommt keine Meldung mehr – landen kann man da ohnehin nicht.",
         },
     },

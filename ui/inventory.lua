@@ -618,7 +618,88 @@ function IV.StatusLines()
         out[#out + 1] = "Auf diesem Realm: " .. table.concat(here, ", ")
     end
     out[#out + 1] = "Tooltip über " .. tostring(IV.hookedVia or "–")
+    -- 1.0.8.14: jeder gemerkte Charakter mit Realm in Anfuehrungszeichen und
+    -- Laenge - so faellt ein Realm aus Leerraum oder eine zweite Schreibweise auf.
+    out[#out + 1] = "Dieser Realm laut WeintCodex: „" .. tostring(myRealm) .. "“"
+        .. " · zusammengelegt in dieser Sitzung: " .. tostring(IV.deduped or 0)
+    local keys = {}
+    for key in pairs(st and st.chars or {}) do keys[#keys + 1] = key end
+    table.sort(keys)
+    for _, key in ipairs(keys) do
+        local c = st.chars[key]
+        out[#out + 1] = string.format("  %s · Realm „%s“ (%d Zeichen) · Gold %s · gelesen %s",
+            tostring(c.name), tostring(c.realm), type(c.realm) == "string" and #c.realm or 0,
+            type(c.money) == "number" and IV.MoneyText(c.money) or "unbekannt",
+            (type(c.at) == "number" and c.at > 0 and _G.date) and _G.date("%d.%m. %H:%M", c.at) or "nie")
+    end
     return out
+end
+
+-- 1.0.8.14 (Bericht: "seit der Aenderung am Client am Freitag wird mein
+-- Gold doppelt gezaehlt" - zwei Zeilen "Shooty" und "Shooty-" mit
+-- unsichtbarem Realm): derselbe Charakter unter zwei Schluesseln, weil der
+-- Client den Realm einmal anders schrieb. Zusammengelegt wird nur, was
+-- sicher derselbe ist:
+--   * gleicher Name und Realms gleich bis auf Gross/Klein, Leerraum,
+--     Bindestrich, Apostroph und unsichtbare Zeichen;
+--   * oder gleicher Name, ein Realm leer/unsichtbar und genau EIN anderer
+--     Eintrag dieses Namens mit echtem Realm.
+-- Behalten wird der zuletzt gelesene (c.at), die anderen fallen weg.
+-- Wirklich verschiedene Realm-Namen werden NIE zusammengelegt - zwei
+-- Charaktere gleichen Namens auf zwei Realms gibt es.
+function IV.RealmKey(r)
+    if type(r) ~= "string" then return "" end
+    r = r:gsub("\194\160", ""):gsub("\226\128[\128-\143]", ""):gsub("\239\187\191", "")
+    -- erst den typografischen Apostroph (drei Bytes), dann Einzelzeichen:
+    -- Mehrbyte-Zeichen in einer Klasse [...] wuerden Bytes anderer Buchstaben treffen.
+    return (r:gsub("\226\128\153", ""):lower():gsub("[%s%-']", ""))
+end
+function IV.Dedupe()
+    local st = IV.Store(false)
+    if not st then return 0 end
+    local groups, byName = {}, {}
+    for key, c in pairs(st.chars) do
+        if type(c) == "table" and type(c.name) == "string" then
+            byName[c.name] = byName[c.name] or {}
+            table.insert(byName[c.name], key)
+        end
+    end
+    local removed = 0
+    for name, keys in pairs(byName) do
+        if #keys > 1 then
+            local real, blank = {}, {}
+            for _, key in ipairs(keys) do
+                local rk = IV.RealmKey(st.chars[key].realm)
+                if rk == "" then blank[#blank + 1] = key
+                else real[rk] = real[rk] or {} table.insert(real[rk], key) end
+            end
+            local realGroups = {}
+            for _, g in pairs(real) do realGroups[#realGroups + 1] = g end
+            if #blank > 0 and #realGroups == 1 then
+                for _, key in ipairs(blank) do table.insert(realGroups[1], key) end
+                blank = {}
+            end
+            if #blank > 1 then realGroups[#realGroups + 1] = blank end
+            for _, g in ipairs(realGroups) do
+                if #g > 1 then
+                    table.sort(g, function(a, b)
+                        local ca, cb = st.chars[a], st.chars[b]
+                        local ta = math.max(tonumber(ca.at) or 0, tonumber(ca.moneyAt) or 0)
+                        local tb = math.max(tonumber(cb.at) or 0, tonumber(cb.moneyAt) or 0)
+                        if ta ~= tb then return ta > tb end
+                        return IV.RealmKey(ca.realm) ~= "" and IV.RealmKey(cb.realm) == ""
+                    end)
+                    for i = 2, #g do
+                        st.chars[g[i]] = nil
+                        if type(st.excluded) == "table" then st.excluded[g[i]] = nil end
+                        removed = removed + 1
+                    end
+                end
+            end
+        end
+    end
+    IV.deduped = (IV.deduped or 0) + removed
+    return removed
 end
 
 -- Charakter vergessen (umbenannt, geloescht).
@@ -643,4 +724,4 @@ end)
 
 local boot = CreateFrame("Frame")
 boot:RegisterEvent("PLAYER_LOGIN")
-boot:SetScript("OnEvent", WeintCodex.Measured("Bestand", function() Apply() end))
+boot:SetScript("OnEvent", WeintCodex.Measured("Bestand", function() pcall(IV.Dedupe) Apply() end))

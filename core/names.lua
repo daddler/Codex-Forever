@@ -111,10 +111,18 @@ end
 -- UnitFullName nennt auf Forever als zweiten Wert den Nachnamen
 -- ("Shooty", "Peng") - nie als Realm nehmen.
 
+-- 1.0.8.14 (Bericht: Gold doppelt seit dem Client-Update, eine Zeile
+-- "Shooty-" ohne sichtbaren Realm): ein Realm nur aus Leerraum oder
+-- unsichtbaren Zeichen (geschuetztes Leerzeichen, Breite null) ist keiner.
+function WeintCodex.Names.Blank(v)
+    if type(v) ~= "string" then return true end
+    v = v:gsub("\194\160", ""):gsub("\226\128[\128-\143]", ""):gsub("\239\187\191", ""):gsub("%s+", "")
+    return v == ""
+end
 local function Open(v)
     local f = _G.issecretvalue
     if f and f(v) then return nil end
-    if type(v) ~= "string" or v == "" then return nil end
+    if type(v) ~= "string" or WeintCodex.Names.Blank(v) then return nil end
     return v
 end
 

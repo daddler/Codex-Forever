@@ -28740,6 +28740,38 @@ do
     Check(ok, "Klassenquests: gelernter Zauber = Quest erledigt" .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 1.0.8.14: Gold doppelt gezaehlt - derselbe Charakter unter zwei Realm-
+-- Schreibweisen ("Shooty" und "Shooty-" mit unsichtbarem Realm).
+do
+    local ok, err = pcall(function()
+        local IV = WeintCodex.UIInventory
+        local sd = WeintCodex.SavedData
+        local keep = sd.inventory
+        sd.inventory = { names = {}, chars = {
+            ["Forever EU|Shooty"]   = { name = "Shooty", realm = "Forever EU", money = 670000, at = 200 },
+            ["\194\160|Shooty"]    = { name = "Shooty", realm = "\194\160", money = 400000, at = 100 },
+            ["ForeverEU|Peng"]      = { name = "Peng", realm = "ForeverEU", money = 10, at = 50 },
+            ["forever eu|Peng"]     = { name = "Peng", realm = "forever eu", money = 20, at = 60 },
+            ["Forever EU|Aldora"]   = { name = "Aldora", realm = "Forever EU", money = 1, at = 10 },
+            ["Anderer Realm|Aldora"] = { name = "Aldora", realm = "Anderer Realm", money = 2, at = 20 },
+            ["Forever EU|Bet"]      = { name = "Bet", realm = "Forever EU", money = 3, at = 5 },
+        } }
+        local removed = IV.Dedupe()
+        local c = sd.inventory.chars
+        assert(removed == 2, "zusammengelegt: " .. removed)
+        assert(c["Forever EU|Shooty"] and not c["\194\160|Shooty"], "unsichtbarer Realm nicht zusammengelegt")
+        assert(c["forever eu|Peng"] and not c["ForeverEU|Peng"], "nicht den zuletzt gelesenen behalten")
+        assert(c["Forever EU|Aldora"] and c["Anderer Realm|Aldora"], "verschiedene Realms zusammengelegt")
+        assert(c["Forever EU|Bet"], "Einzelner verloren")
+        assert(WeintCodex.Names.Blank(" \194\160 ") and not WeintCodex.Names.Blank("Forever EU"), "Blank falsch")
+        assert(IV.RealmKey("Zul’Dar") == IV.RealmKey("zuldar") and IV.RealmKey("Über") ~= IV.RealmKey("ber"), "RealmKey falsch")
+        local lines = table.concat(IV.StatusLines(), "\n")
+        assert(lines:find("Realm „Forever EU“ (10 Zeichen)", 1, true), "Bericht ohne Realm:\n" .. lines)
+        sd.inventory = keep
+    end)
+    Check(ok, "Bestand: derselbe Charakter unter zwei Realm-Schreibweisen zaehlt einmal" .. (ok and "" or (": " .. tostring(err))))
+end
+
 -- 1.0.7.30: Flugpunkt-Erinnerung nach Entfernung.
 do
     local ok, err = pcall(function()
