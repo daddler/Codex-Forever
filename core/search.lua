@@ -19,7 +19,7 @@
 WeintCodex.Search = {}
 
 local C = WeintCodex.Colors
-local MAX_RESULTS = 8
+local MAX_RESULTS = 10
 local ROW_H = 26
 
 local CATEGORY_LABEL = {
@@ -38,6 +38,8 @@ local CATEGORY_LABEL = {
     book      = "BUCH",
     loot      = "BEUTE",
     wish      = "WUNSCHLISTE",
+    help      = "HILFE",
+    setting   = "EINSTELLUNG",
 }
 
 -- Hoechstens so viele Treffer je Art: sonst fuellten 2000 Rezepte mit
@@ -289,6 +291,7 @@ end
 
 -- Fuer den Prueflauf und nach Datenwechseln: beim naechsten Suchen neu.
 function WeintCodex.Search.Reset() staticIndex = nil end
+-- (Hilfeindex: fest im Bestand, wird nie neu gebaut.)
 
 local function BuildDynamic()
     local index = {}
@@ -378,23 +381,114 @@ local function BuildDynamic()
     return index
 end
 
-local function Filter(query)
-    query = Fold(query)
-    if query == "" then return {} end
-    local matches, perCat = {}, {}
+-- 1.0.8.11 ("die Suche soll intelligenter werden und Saetze verstehen"):
+-- gewertet statt "steht am Stueck drin" (core/searchtext.lua). Dazu stehen
+-- jetzt auch die Hilfetexte und die Einstellungen der Oberflaeche im
+-- Ergebnis - die eine Suche findet, was vorher drei Suchen brauchte.
+
+-- Bei Gleichstand: erst Seiten und Hilfe, dann Einstellungen, dann Daten.
+local CAT_ORDER = { page = 1, help = 2, setting = 3, dungeon = 4, boss = 4, raid = 4,
+                    trainer = 5, profession = 5, quest = 5, book = 6, character = 6 }
+-- Grosse Listen: kein Tippfehler-Durchgang (Tausende Rezepte, Gegenstaende).
+local NO_FUZZY = { recipe = true, item = true, loot = true, wish = true, beast = true, material = true }
+
+local function Fields(e)
+    if e._fields then return e._fields end
+    local ST = WeintCodex.SearchText
+    local name, rest = tostring(e.label):match("^(.-)%s%s·%s(.*)$")
+    name = name or e.label
+    local f = { { ST.Fold(name), 3 }, { ST.Fold(rest or ""), 1.5 } }
+    if e.extra then f[#f + 1] = { e.extra, 1 } end
+    e._fields = f
+    return f
+end
+
+-- Hilfetexte (data/help.lua) und die Seiten des Codex mit ihren
+-- Schlagwoertern: "wo sehe ich meine Bank" -> Taschen.
+local helpIndex
+local function HelpIndex()
+    if helpIndex then return helpIndex end
+    helpIndex = {}
+    local ST = WeintCodex.SearchText
+    local pages = WeintCodex.HelpData and WeintCodex.HelpData.PAGES or {}
+    local keys = {}
+    for k in pairs(pages) do keys[#keys + 1] = k end
+    table.sort(keys)
+    for _, k in ipairs(keys) do
+        local p = pages[k]
+        local tab = k:match("^nav:(.+)$")
+        helpIndex[#helpIndex + 1] = {
+            category = tab and "page" or "help",
+            label = p.title .. (tab and "" or "  · Einstellungen"),
+            extra = ST.Fold(p.text) .. " " .. ST.Fold(p.words),
+            onClick = function()
+                local H = WeintCodex.UIHelp
+                if H and H.OpenKey then H.OpenKey(k) elseif tab then GoTo(tab) end
+            end,
+        }
+    end
+    return helpIndex
+end
+
+-- Einstellungen der Oberflaeche (dieselbe Liste wie die Suche in /wcui).
+local function SettingsIndex()
+    local O = WeintCodex.UIOptions
+    if not (O and O.SearchIndex and O.OpenHit) then return {} end
+    local ok, idx = pcall(O.SearchIndex)
+    if not ok or type(idx) ~= "table" then return {} end
+    if idx._wcSearch then return idx._wcSearch end
+    local ST = WeintCodex.SearchText
+    local K = WeintCodex.UIKit
+    local list = {}
+    for _, e in ipairs(idx) do
+        local m = K and K.Module and K.Module(e.module)
+        local where = ((m and m.title) or e.module) .. " › " .. tostring(e.pageLabel or "")
+        local f = O.SearchFields and O.SearchFields(e)
+        list[#list + 1] = { category = "setting", label = e.label .. "  · " .. where,
+            _fields = f or { { ST.Fold(e.label), 3 }, { ST.Fold(where), 1 } },
+            onClick = function() O.OpenHit(e) end }
+    end
+    idx._wcSearch = list
+    return list
+end
+
+local function Filter(query, fuzzy)
+    local ST = WeintCodex.SearchText
+    local q = ST and ST.Parse(query)
+    if not q then return {} end
+    local scored = {}
+    local n = 0
     local function Scan(index)
         for _, entry in ipairs(index) do
-            if #matches >= MAX_RESULTS then return end
-            local n = perCat[entry.category] or 0
-            if n < (entry.category == "page" and MAX_RESULTS or MAX_PER_CATEGORY)
-                    and entry.key:find(query, 1, true) then
-                matches[#matches + 1] = entry
-                perCat[entry.category] = n + 1
+            n = n + 1
+            -- Grosse Listen auch im zweiten Durchgang, nur ohne Tippfehler.
+            local sc = ST.Score(q, Fields(entry), fuzzy and not NO_FUZZY[entry.category])
+            if sc then
+                scored[#scored + 1] = { entry = entry, score = sc,
+                                        order = (CAT_ORDER[entry.category] or 9) * 100000 + n }
             end
         end
     end
+    Scan(HelpIndex())
     Scan(StaticIndex())
+    Scan(SettingsIndex())
     Scan(BuildDynamic())
+    -- Kaum etwas gefunden: noch einmal mit Tippfehlern.
+    if #scored < 3 and not fuzzy then
+        local again = Filter(query, true)
+        if #again > 0 then return again end
+    end
+    ST.Rank(scored)
+    local matches, perCat = {}, {}
+    for _, h in ipairs(scored) do
+        local c = h.entry.category
+        local cap = (c == "page" or c == "help") and 3 or MAX_PER_CATEGORY
+        if (perCat[c] or 0) < cap then
+            matches[#matches + 1] = h.entry
+            perCat[c] = (perCat[c] or 0) + 1
+            if #matches >= MAX_RESULTS then break end
+        end
+    end
     return matches
 end
 WeintCodex.Search.Filter = Filter

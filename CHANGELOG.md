@@ -9,6 +9,23 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.0.8.11] – 2026-11-22
+
+### Geaendert
+- Suche (Wunsch: „intelligenter, auch Saetze verstehen“): neue gemeinsame
+  Regel `core/searchtext.lua` fuer Titelleiste (`core/search.lua`),
+  Einstellungen (`O.Search`/`O.SearchScored`) und Hilfe (`H.Search`).
+  Fuellwoerter `ST.FILL` fallen weg, `ST.SOFT` („einstellen“, „anzeigen“ …)
+  nur, wenn sonst etwas bleibt; Treffer als ganzes Wort, Schlagwort
+  (`HelpData.SYNONYMS`), Stamm (`ST.Stem`) oder Tippfehler (ein Zeichen,
+  ab 5 Buchstaben, zweiter Durchgang bei < 3 Treffern, nicht fuer grosse
+  Listen); bei mehr als zwei Woertern reichen 60 % (`ST.NEED`); Wertung
+  nach Feld (Name 3, Ort 1,5, Beschreibung 1) mit Bonus fuer die ganze
+  Frage im Namen, `ST.Rank`. Die Titelleiste zeigt jetzt bis zu 10 Treffer
+  und findet auch Hilfetexte (HILFE) und Einstellungen (EINSTELLUNG).
+- Hilfe „Entdecken“ nennt die Ruf-Belohnungen; neue Schlagwoerter (Geld,
+  Fraktion, Ruestmeister, Level, Mount, Brief).
+
 ## [1.0.8.10] – 2026-11-21
 
 ### Geaendert

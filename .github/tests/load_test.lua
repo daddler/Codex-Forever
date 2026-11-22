@@ -12445,6 +12445,35 @@ do
         assert(has(O.Search("sortieren taschen", 60), "kategorien"), "Taschen sortieren findet Kategorien nicht")
         assert(has(O.Search("aggro", 60), "farben"), "Aggro findet Bedrohung nicht")
         assert(#O.Search("taschen xyzzy", 60) == 0, "Wort ohne Treffer zaehlt nicht")
+        -- 1.0.8.11: Saetze, Staemme, Tippfehler, Wertung - und die eine
+        -- Suche in der Titelleiste findet auch Hilfe und Einstellungen.
+        do
+            local ST = WeintCodex.SearchText
+            assert(ST.Stem("sortieren") == "sortier" and ST.Stem("taschen") == "tasch", "Stamm")
+            assert(ST.OneEdit("bedrohng", "bedrohung") and ST.OneEdit("bedrhoung", "bedrohung")
+                   and not ST.OneEdit("bedrohung", "bewegung"), "Tippfehler")
+            assert(ST.Parse("Wie kann ich das?") == nil, "nur Fuellwoerter ergeben eine Suche")
+            assert(ST.Need(2) == 2 and ST.Need(5) == 3, "Anteil der Woerter")
+            assert(has(O.Search("Wie kann ich meine Taschen sortieren?", 60), "kategorien"), "Satz: Taschen sortieren")
+            assert(#O.Search("wie kann ich das", 60) == 0, "Fuellwoerter finden etwas")
+            assert(has(O.Search("Taschen sortieren nach Kategorie, aber schnell", 60), "kategorien"),
+                   "ein Wort ohne Treffer kippt den ganzen Satz")
+            assert(ST.Parse("Einstellungen") and #ST.Parse("Taschen einstellen").tokens == 1, "weiche Fuellwoerter")
+            assert(has(O.Search("bedrohng", 60), "farben"), "Tippfehler findet Bedrohung nicht")
+            local top = H.Search("Wo sehe ich, was ich beim Lehrer lernen kann?")
+            assert(top[1] and top[1].key == "nav:lehrer", "Satz: Lehrer nicht zuerst: " .. tostring(top[1] and (top[1].key or top[1].title)))
+            local SR = WeintCodex.Search
+            SR.Reset()
+            local function cat(list, c, word)
+                for _, e in ipairs(list) do
+                    if e.category == c and (not word or tostring(e.label):find(word, 1, true)) then return true end
+                end
+            end
+            local hits = SR.Filter("wo sehe ich meine bank?")
+            assert(cat(hits, "page", "Taschen"), "Titelleiste: 'Bank' findet die Taschen nicht")
+            assert(cat(SR.Filter("aggro anzeigen"), "setting"), "Titelleiste: keine Einstellung")
+            assert(#SR.Filter("wie kann ich") == 0, "Titelleiste: Fuellwoerter")
+        end
         local hits = H.Search("pfeil")
         local qp = false
         for _, h in ipairs(hits) do if h.title:find("Questpfeil", 1, true) then qp = true end end
@@ -19449,8 +19478,10 @@ do
         local u = UO.Search("ÜBER DER PLAKETTE")
         assert(#u > 0, "Umlaut in Grossbuchstaben findet nichts")
         -- Zeichen, die in Lua-Mustern etwas bedeuten, sind hier nur Text.
-        local okPct, pct = pcall(UO.Search, "in %")
-        assert(okPct and #pct > 0, "'in %' findet 'Bedrohung in %' nicht: " .. tostring(pct))
+        -- 1.0.8.11: "in" ist ein Fuellwort - gesucht wird nach "Bedrohung".
+        local okPct, pct = pcall(UO.Search, "Bedrohung in %")
+        assert(okPct and #pct > 0, "'Bedrohung in %' findet nichts: " .. tostring(pct))
+        assert(pcall(UO.Search, "in %"), "nur Fuellwort und Zeichen: Fehler")
         assert(#UO.Search("g") == 0, "ein Zeichen sucht schon")
         assert(#UO.Search("zzqxy") == 0, "Unsinn findet etwas")
         -- Im Fenster: Feld, Treffer, Klick oeffnet die Seite und klappt auf.

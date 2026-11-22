@@ -22,6 +22,14 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.0.8.11",
+        date    = "22.11.2026",
+        notes   = {
+            "|cff7C6CFFDie Suche versteht Fragen|r – „Wie kann ich meine Taschen sortieren?“ oder „Wo sehe ich, was ich beim Lehrer lernen kann?“ finden jetzt die passende Seite. Füllwörter fallen weg, Wortformen und kleine Tippfehler passen, nicht jedes Wort muss stimmen, und das Beste steht oben.",
+            "|cff7C6CFFEine Suche für alles|r – das Suchfeld oben im Codex findet jetzt auch die Einstellungen der Oberfläche und die Hilfetexte. Die Suche in /wcui und /wc hilfe folgt denselben Regeln.",
+        },
+    },
+    {
         version = "1.0.8.10",
         date    = "21.11.2026",
         notes   = {

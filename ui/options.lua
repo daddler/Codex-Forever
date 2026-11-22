@@ -1436,40 +1436,52 @@ function O.SearchIndex()
 end
 
 -- 1.0.5.5 (Spieler: "minutenlang durch die Einstellungen gesucht"): jedes
--- Wort zaehlt einzeln, die Reihenfolge nicht ("Taschen sortieren"), und ein
--- Wort darf auch ueber ein Schlagwort passen ("Aggro" -> Bedrohung,
--- data/help.lua). Vorher musste der ganze Text am Stueck dastehen.
+-- Wort zaehlt einzeln, die Reihenfolge nicht, Schlagwoerter helfen.
+-- 1.0.8.11 ("die Suche soll Saetze verstehen"): dieselbe Regel wie die
+-- Titelleiste des Codex (core/searchtext.lua) - Fuellwoerter fallen weg,
+-- Staemme und Tippfehler passen, nicht jedes Wort muss passen, Treffer
+-- nach Punkten sortiert.
+local function ST_Plain(text) return (Fold(text):gsub("%s", "")) end
 function O.MatchWords(hay, q)
-    local syn = WeintCodex.HelpData and WeintCodex.HelpData.SYNONYMS or {}
-    local any = false
-    for w in tostring(q or ""):gmatch("%S+") do
-        any = true
-        if not hay:find(w, 1, true) then
-            local ok = false
-            for _, alt in ipairs(syn[w] or {}) do
-                if hay:find(alt, 1, true) then ok = true break end
-            end
-            if not ok then return false end
-        end
-    end
-    return any
+    return WeintCodex.SearchText.Matches(q, hay)
 end
 
--- Treffer fuer `text` (ab zwei Zeichen), hoechstens `limit`.
-function O.Search(text, limit)
-    local q = Fold(text):gsub("^%s+", ""):gsub("%s+$", "")
-    local hits = {}
-    if #q < 2 then return hits end
+-- Gefaltete Felder eines Eintrags (einmal je Eintrag gemerkt).
+function O.SearchFields(e)
+    if e._fields then return e._fields end
+    local ST = WeintCodex.SearchText
     local pages = WeintCodex.HelpData and WeintCodex.HelpData.PAGES or {}
-    for _, e in ipairs(O.SearchIndex()) do
-        local m = Mod((O.Locate(e.module, e.page)))
-        local help = e.pageKey and pages[e.module .. "/" .. e.pageKey]
-        local hay = Fold(e.label) .. " " .. Fold(e.section) .. " " .. Fold(e.pageLabel) .. " "
-            .. Fold(m and m.title) .. " " .. Fold(e.description) .. " " .. Fold(help and help.words)
-        if O.MatchWords(hay, q) then
-            hits[#hits + 1] = e
-            if limit and #hits >= limit then break end
-        end
+    local m = Mod((O.Locate(e.module, e.page)))
+    local help = e.pageKey and pages[e.module .. "/" .. e.pageKey]
+    e._fields = {
+        { ST.Fold(e.label), 3 },
+        { ST.Fold(e.section) .. " " .. ST.Fold(e.pageLabel) .. " " .. ST.Fold(m and m.title), 1.5 },
+        { ST.Fold(e.description) .. " " .. ST.Fold(help and help.words) .. " " .. ST.Fold(help and help.title), 1 },
+    }
+    return e._fields
+end
+
+-- Treffer fuer `text`, beste zuerst, hoechstens `limit`.
+function O.SearchScored(text, fuzzy)
+    local ST = WeintCodex.SearchText
+    local q = ST.Parse(text)
+    local out = {}
+    if not q then return out end
+    for i, e in ipairs(O.SearchIndex()) do
+        local sc = ST.Score(q, O.SearchFields(e), fuzzy)
+        if sc then out[#out + 1] = { entry = e, score = sc, order = i } end
+    end
+    -- Nichts gefunden: noch einmal mit Tippfehlern.
+    if #out == 0 and not fuzzy then return O.SearchScored(text, true) end
+    return ST.Rank(out)
+end
+
+function O.Search(text, limit)
+    local hits = {}
+    if #ST_Plain(text) < 2 then return hits end
+    for _, h in ipairs(O.SearchScored(text)) do
+        hits[#hits + 1] = h.entry
+        if limit and #hits >= limit then break end
     end
     return hits
 end

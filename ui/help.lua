@@ -51,34 +51,52 @@ function H.OpenKey(key)
 end
 
 -- Hilfetexte und Einstellungen zu `text`: { title, text, path, open }.
-function H.Search(text, limit)
+-- 1.0.8.11: eine Wertung fuer beide (core/searchtext.lua) - Saetze,
+-- Staemme, Tippfehler; die besten zuerst, egal ob Hilfe oder Einstellung.
+function H.PageFields(k, p)
+    local ST = WeintCodex.SearchText
+    H.fields = H.fields or {}
+    local f = H.fields[k]
+    if not f then
+        f = { { ST.Fold(p.title), 3 }, { ST.Fold(p.words), 2 }, { ST.Fold(p.text), 1 } }
+        H.fields[k] = f
+    end
+    return f
+end
+
+function H.Search(text, limit, fuzzy)
     limit = limit or H.MAX
     local out = {}
-    local o = O()
-    local q = Fold(text):gsub("^%s+", ""):gsub("%s+$", "")
-    if #q < 2 then return out end
-    local match = o and o.MatchWords
-    if not match then return out end
+    local ST = WeintCodex.SearchText
+    local q = ST and ST.Parse(text)
+    if not q or #Fold(text):gsub("%s", "") < 2 then return out end
+    local scored = {}
     local keys = {}
     for k in pairs(D.PAGES) do keys[#keys + 1] = k end
     table.sort(keys)
-    for _, k in ipairs(keys) do
+    for i, k in ipairs(keys) do
         local p = D.PAGES[k]
-        local hay = Fold(p.title) .. " " .. Fold(p.text) .. " " .. Fold(p.words)
-        if match(hay, q) then
-            out[#out + 1] = { key = k, title = p.title, text = p.text, path = k:find("^nav:") and "Codex-Fenster" or "Einstellungen",
-                              open = function() H.OpenKey(k) end }
-            if #out >= limit then return out end
+        local sc = ST.Score(q, H.PageFields(k, p), fuzzy)
+        if sc then
+            -- Eine Hilfeseite beschreibt einen ganzen Bereich: bei
+            -- Gleichstand vor der einzelnen Einstellung.
+            scored[#scored + 1] = { score = sc + 0.5, order = i, hit = { key = k, title = p.title, text = p.text,
+                path = k:find("^nav:") and "Codex-Fenster" or "Einstellungen", open = function() H.OpenKey(k) end } }
         end
     end
-    if o and o.Search then
-        for _, e in ipairs(o.Search(text, limit - #out)) do
+    local o = O()
+    if o and o.SearchScored then
+        for _, h in ipairs(o.SearchScored(text, fuzzy)) do
+            local e = h.entry
             local m = K.Module(e.module)
-            out[#out + 1] = { title = e.label, text = e.description,
-                              path = "Einstellung · " .. ((m and m.title) or e.module) .. " › " .. tostring(e.pageLabel or ""),
-                              open = function() if o.OpenHit then o.OpenHit(e) end end }
+            scored[#scored + 1] = { score = h.score, order = 1000 + h.order, hit = { title = e.label, text = e.description,
+                path = "Einstellung · " .. ((m and m.title) or e.module) .. " › " .. tostring(e.pageLabel or ""),
+                open = function() if o.OpenHit then o.OpenHit(e) end end } }
         end
     end
+    if #scored == 0 and not fuzzy then return H.Search(text, limit, true) end
+    ST.Rank(scored)
+    for i = 1, math.min(limit, #scored) do out[i] = scored[i].hit end
     return out
 end
 

@@ -36,8 +36,8 @@ P["nav:taschen"] = { title = "Taschen",
     text = "Was alle deine Charaktere in Taschen, Bank und Ausrüstung haben. Die Bank zählt erst, wenn du sie einmal geöffnet hast.",
     words = "bestand inventar bank lager twink gegenstände" }
 P["nav:buecher"] = { title = "Entdecken",
-    text = "Bücher der Bibliothek und der Gemütliche Schlafsack: was du schon hast und welcher Schritt fehlt.",
-    words = "bücher bibliothek schlafsack sammeln" }
+    text = "Bücher der Bibliothek, der Gemütliche Schlafsack und die Ruf-Belohnungen beim Rüstmeister: was du schon hast, welcher Schritt fehlt und was du mit deinem Ruf kaufen kannst.",
+    words = "bücher bibliothek schlafsack sammeln ruf fraktion rüstmeister belohnung belohnungen" }
 P["nav:dungeons"] = { title = "Dungeons",
     text = "Alle Dungeons mit Stufenbereich, Bossen, Beute und Quests. Links den Dungeon wählen, auf der Seite den Boss.",
     words = "instanz ini boss bosse dungeon quests" }
@@ -201,6 +201,10 @@ local S = {
     markieren = { "markier", "automark" }, marker = { "markier" },
     rezept = { "beruf", "rezept" }, crafting = { "beruf" },
     talent = { "talent" }, munition = { "munition", "köcher" },
+    -- 1.0.8.11: Woerter aus Fragen ("wie viel Geld habe ich", "was gibt der Rüstmeister")
+    geld = { "gold" }, fraktion = { "ruf" }, ["rüstmeister"] = { "ruf" }, ansehen = { "ruf" },
+    level = { "stufe", "erfahrung" }, leveln = { "erfahrung", "stufe" }, mount = { "reittier" },
+    brief = { "post" }, mail = { "post" },
 }
 
 WeintCodex.HelpData = { PAGES = P, SYNONYMS = S }
