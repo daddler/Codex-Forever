@@ -28842,8 +28842,8 @@ do
         local sd = WeintCodex.SavedData
         local keep = sd.inventory
         sd.inventory = { names = {}, chars = {
-            ["Forever EU|Shooty"]   = { name = "Shooty", realm = "Forever EU", money = 670000, at = 200 },
-            ["\194\160|Shooty"]    = { name = "Shooty", realm = "\194\160", money = 400000, at = 100 },
+            ["Forever EU|Shooty"]   = { name = "Shooty", realm = "Forever EU", money = 670000, at = 200, bags = { [2589] = 7 } },
+            ["\194\160|Shooty"]    = { name = "Shooty", realm = "\194\160", money = 400000, at = 100, bags = { [2589] = 5 } },
             ["ForeverEU|Peng"]      = { name = "Peng", realm = "ForeverEU", money = 10, at = 50 },
             ["forever eu|Peng"]     = { name = "Peng", realm = "forever eu", money = 20, at = 60 },
             ["Forever EU|Aldora"]   = { name = "Aldora", realm = "Forever EU", money = 1, at = 10 },
@@ -28857,6 +28857,15 @@ do
         assert(c["forever eu|Peng"] and not c["ForeverEU|Peng"], "nicht den zuletzt gelesenen behalten")
         assert(c["Forever EU|Aldora"] and c["Anderer Realm|Aldora"], "verschiedene Realms zusammengelegt")
         assert(c["Forever EU|Bet"], "Einzelner verloren")
+        -- Taschen zaehlen genauso nur einmal (Tooltip, Suche, Seite Taschen).
+        local oAll = K.Get("comfort", "invAllRealms")
+        K.Set("comfort", "invAllRealms", true)
+        local shooty = 0
+        for _, h in ipairs(IV.Holders(2589)) do
+            if h.name == "Shooty" then shooty = shooty + 1 assert(h.bags == 7, "alter Stand gezaehlt: " .. h.bags) end
+        end
+        K.Set("comfort", "invAllRealms", oAll)
+        assert(shooty == 1, "Shooty in den Taschen " .. shooty .. "x")
         assert(WeintCodex.Names.Blank(" \194\160 ") and not WeintCodex.Names.Blank("Forever EU"), "Blank falsch")
         assert(IV.RealmKey("Zul’Dar") == IV.RealmKey("zuldar") and IV.RealmKey("Über") ~= IV.RealmKey("ber"), "RealmKey falsch")
         local lines = table.concat(IV.StatusLines(), "\n")
