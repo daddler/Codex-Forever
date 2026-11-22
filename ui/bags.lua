@@ -36,6 +36,9 @@ local defaults = {
     spacing    = 4,
     itemLevel  = true,
     qualityBorder = true,
+    -- 1.0.8.14 (Wunsch: "Quests, die man erst anklicken muss, muessen
+    -- visuell besser erkannt werden - vielleicht mit einem Blinken"):
+    questStartPulse = true,
     dimJunk    = true,
     scale      = 100,
     -- 6.26.19.0 (Beta-Test: "Taschen als einzelne anzeigen, mit Abstaenden
@@ -327,6 +330,28 @@ local function CreateSlot()
     d.quest:SetText("!")
     d.quest:SetTextColor(unpack(WeintCodex.GameColors.questBang))
     d.quest:Hide()
+    -- 1.0.8.14: Startet der Gegenstand eine Quest (noch nicht angenommen),
+    -- pulsiert ein Schein in Gold um und auf dem Platz - Animation der
+    -- Engine, kein OnUpdate. Das „!“ steht seitdem nur noch an diesen, wie
+    -- im Spiel; andere Questgegenstaende tragen nur den Rand in Gold.
+    local bang = WeintCodex.GameColors.questBang
+    d.startGlow = K.Glow(holder, { spread = 5, color = bang, shown = false })
+    d.startFill = top:CreateTexture(nil, "ARTWORK")
+    d.startFill:SetAllPoints(btn)
+    d.startFill:SetColorTexture(bang[1], bang[2], bang[3], 0.35)
+    if d.startFill.SetBlendMode then d.startFill:SetBlendMode("ADD") end
+    d.startFill:Hide()
+    d.startPulse = {}
+    for _, tex in ipairs({ d.startGlow.tex, d.startFill }) do
+        local ag = tex:CreateAnimationGroup()
+        ag:SetLooping("BOUNCE")
+        local a = ag:CreateAnimation("Alpha")
+        a:SetFromAlpha(1)
+        a:SetToAlpha(0.15)
+        a:SetDuration(0.7)
+        if a.SetSmoothing then a:SetSmoothing("IN_OUT") end
+        d.startPulse[#d.startPulse + 1] = ag
+    end
     -- Der Steinrahmen des Knopfs weg; das Symbol beschnitten und auf die
     -- volle Flaeche gezogen. Die Maske der Vorlage ist fuer 37 px gebaut;
     -- auf einem anders grossen Knopf blieb das Symbol in 6.0.0.3 im Spiel
@@ -605,7 +630,8 @@ local function PaintSlot(s, bag, slot)
     local q = info and info.quality
     local isQuest, starts = false, false
     if info and BG.QuestInfo then isQuest, starts = BG.QuestInfo(bag, slot) end
-    d.quest:SetShown(isQuest and true or false)
+    d.quest:SetShown(starts and true or false)
+    BG.SetStartPulse(d, starts and Opt("questStartPulse") and true or false)
     if isQuest then
         local g = C.gold
         d.quality:SetColor(g[1], g[2], g[3], 1)
@@ -632,6 +658,7 @@ local function PaintSlot(s, bag, slot)
     btn:Show()
     return info ~= nil
 end
+BG.PaintSlot, BG.CreateSlot = PaintSlot, CreateSlot   -- fuer Pruefungen (1.0.8.14)
 
 --------------------------------------------------
 -- Fenster
@@ -664,6 +691,20 @@ local function ItemClass(id)
     local ok, _, _, _, _, _, classID = pcall(f, id)
     classID = ok and K.Plain(classID) or nil
     return type(classID) == "number" and classID or nil
+end
+
+-- Schein um einen Gegenstand, der eine Quest startet: an/aus, Animation nur
+-- starten/stoppen, wenn sich etwas aendert (jeder Platz wird oft gemalt).
+function BG.SetStartPulse(d, on)
+    if not (d and d.startGlow) then return end
+    if d.startOn == on then return end
+    d.startOn = on
+    d.startGlow:SetShown(on)
+    d.startFill:SetShown(on)
+    for _, ag in ipairs(d.startPulse or {}) do
+        if on then ag:Play() else ag:Stop() end
+    end
+    if not on then d.startGlow.tex:SetAlpha(1) d.startFill:SetAlpha(1) end
 end
 
 -- Questgegenstand? Und startet er eine Quest (Quest-ID, noch nicht aktiv)?
@@ -1564,6 +1605,9 @@ K.Register({
             B:Row({ type = "toggle", label = "Gegenstandsstufe auf Ausrüstung", key = "itemLevel",
                     description = "Nennt das Spiel keine Stufe, bleibt das Feld leer – nie 0." },
                   { type = "toggle", label = "Rand in Qualitätsfarbe", key = "qualityBorder" })
+            B:Row({ type = "toggle", label = "Quest-Starter leuchten", key = "questStartPulse",
+                    description = "Gegenstände, die eine Quest starten, pulsieren in Gold und tragen das „!“ – Rechtsklick nimmt die Quest an. Andere Questgegenstände haben nur den goldenen Rand." },
+                  { type = "empty" })
             local pct = function(v) return string.format("%d %%", v) end
             B:Row({ type = "toggle", label = "Graue Gegenstände abdunkeln", key = "dimJunk" },
                   { type = "slider", label = "Hintergrund", key = "bgAlpha", min = 0, max = 100, step = 5, format = pct,

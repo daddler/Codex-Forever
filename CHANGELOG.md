@@ -11,7 +11,21 @@ nicht zusammen.
 
 ## [1.0.8.14] – 2026-11-22
 
+### Geaendert
+- Taschen (`ui/bags.lua`, Wunsch: „Quests, die man erst anklicken muss,
+  besser erkennen – vielleicht blinken“): Gegenstaende mit Quest-ID und
+  `isActive == false` (`BG.QuestInfo`, bisher berechnet, aber ungenutzt)
+  pulsieren in Gold (Schein + Flaeche, Alpha-Animation der Engine,
+  `BG.SetStartPulse` startet nur bei Wechsel) und tragen das „!“; andere
+  Questgegenstaende nur noch den goldenen Rand. Schalter `questStartPulse`,
+  ab Werk an (auf Wunsch).
+
 ### Behoben
+- „Loeschbestaetigung ausfuellen“ (`ui/comfort.lua`, Wunsch: „beim Loeschen
+  von Questgegenstaenden muss wirklich noch eine Nachfrage kommen“): fuellte
+  auch `DELETE_GOOD_QUEST_ITEM` aus. Jetzt nur `DELETE_GOOD_ITEM`
+  (`QoL.FILL_DELETE`); Questgegenstaende behalten die volle Nachfrage des
+  Spiels. Ausmisten (`ui/bagtriage.lua`) nahm Questgegenstaende schon nie.
 - Flugpunkt-Erinnerung (`ui/qolextra.lua`, Bildschirmfoto: „Flugpunkt in der
   Naehe: zzOLDRiverglades, Farholde Keep (510 m)“ im Vorgebirge des
   Huegellands, im Flug): `C_TaxiMap.GetAllTaxiNodes` liefert stillgelegte

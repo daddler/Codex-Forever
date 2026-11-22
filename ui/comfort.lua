@@ -121,17 +121,27 @@ local function FastLoot()
     for i = _G.GetNumLootItems(), 1, -1 do _G.LootSlot(i) end
 end
 
-local function FillDelete()
+-- 1.0.8.14 (Wunsch: "wenn man Questgegenstaende loescht, muss wirklich
+-- noch eine Nachfrage kommen"): bis 1.0.8.13 schrieb "Loeschbestaetigung
+-- ausfuellen" das Wort auch bei Questgegenstaenden vor (DELETE_GOOD_QUEST_ITEM)
+-- - dann war es ein einziger Klick. Questgegenstaende bleiben jetzt immer
+-- bei der vollen Nachfrage des Spiels; vorgeschrieben wird nur noch bei
+-- gewoehnlichen guten Gegenstaenden.
+QoL.FILL_DELETE = { DELETE_GOOD_ITEM = true }
+function QoL.FillDelete()
     local word = _G.DELETE_ITEM_CONFIRM_STRING
-    if not word then return end
+    if not word then return 0 end
+    local n = 0
     for i = 1, (_G.STATICPOPUP_NUMDIALOGS or 4) do
         local p = _G["StaticPopup" .. i]
-        if p and p:IsShown() and (p.which == "DELETE_GOOD_ITEM" or p.which == "DELETE_GOOD_QUEST_ITEM") then
+        if p and p:IsShown() and QoL.FILL_DELETE[p.which] then
             local box = p.editBox or p.EditBox or _G["StaticPopup" .. i .. "EditBox"]
-            if box and box.SetText then box:SetText(word) end
+            if box and box.SetText then box:SetText(word) n = n + 1 end
         end
     end
+    return n
 end
+local FillDelete = QoL.FillDelete
 
 -- 6.26.20.0 (Beta-Test: "beim neuen Charakter wird das Anfangsvideo
 -- geskipt - ueberhaupt nicht gut"): das Anfangsvideo eines neuen
@@ -507,7 +517,7 @@ K.Register({
             B:Row({ type = "toggle", label = "Schneller plündern", key = "fastLoot",
                     description = "Nimmt alles sofort, wenn automatisches Plündern an ist." },
                   { type = "toggle", label = "Löschbestätigung ausfüllen", key = "deleteFill",
-                    description = "Schreibt das Bestätigungswort vor. Klicken musst du selbst." })
+                    description = "Schreibt das Bestätigungswort vor. Klicken musst du selbst. Nie bei Questgegenständen – da fragt das Spiel immer ganz." })
             B:Section("Spiel")
             B:Row({ type = "toggle", label = "Filmsequenzen überspringen", key = "skipCinematics",
                     description = "Nie das Anfangsvideo eines neuen Charakters (Stufe 1)." },

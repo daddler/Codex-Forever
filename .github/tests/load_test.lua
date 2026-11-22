@@ -28740,6 +28740,77 @@ do
     Check(ok, "Klassenquests: gelernter Zauber = Quest erledigt" .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 1.0.8.14: Quest-Starter in den Taschen pulsieren (Wunsch: "Quests, die
+-- man erst anklicken muss, besser erkennen - vielleicht blinken").
+do
+    local G = _G
+    local oCC = G.C_Container
+    local ok, err = pcall(function()
+        local BG = WeintCodex.UIBags
+        assert(BG.CreateSlot and BG.PaintSlot and BG.SetStartPulse, "Platz nicht erreichbar")
+        local quest = { questID = 123, isActive = false }
+        G.C_Container = setmetatable({
+            GetContainerItemInfo = function() return { itemID = 9, iconFileID = 1, stackCount = 1, quality = 1 } end,
+            GetContainerItemQuestInfo = function() return quest end,
+        }, { __index = oCC })
+        local s = BG.CreateSlot()
+        assert(s, "kein Platz")
+        local played = 0
+        for _, ag in ipairs(s.d.startPulse) do
+            local oPlay = ag.Play
+            ag.Play = function(self) played = played + 1 if oPlay then return oPlay(self) end end
+        end
+        K.Set("bags", "questStartPulse", true)
+        BG.PaintSlot(s, 0, 1)
+        assert(s.d.startOn == true and s.d.startFill:IsShown() and s.d.quest:IsShown(), "Quest-Starter leuchtet nicht")
+        assert(played == 2, "Puls nicht gestartet: " .. played)
+        BG.PaintSlot(s, 0, 1)
+        assert(played == 2, "Puls bei jedem Malen neu gestartet")
+        -- Angenommen: nur noch Questgegenstand - Rand, kein Leuchten, kein „!“.
+        quest = { questID = 123, isActive = true, isQuestItem = true }
+        BG.PaintSlot(s, 0, 1)
+        assert(s.d.startOn == false and not s.d.quest:IsShown() and not s.d.startFill:IsShown(), "angenommene Quest leuchtet weiter")
+        -- Schalter aus: kein Leuchten.
+        quest = { questID = 124, isActive = false }
+        K.Set("bags", "questStartPulse", false)
+        BG.PaintSlot(s, 0, 1)
+        assert(s.d.startOn == false and s.d.quest:IsShown(), "Schalter aus wirkt nicht")
+        K.Set("bags", "questStartPulse", true)
+    end)
+    G.C_Container = oCC
+    Check(ok, "Taschen: Quest-Starter pulsieren mit „!“, angenommene nicht, Schalter" .. (ok and "" or (": " .. tostring(err))))
+end
+
+-- 1.0.8.14: Questgegenstaende loeschen fragt immer ganz - auch mit
+-- "Loeschbestaetigung ausfuellen" (bis 1.0.8.13 auch bei DELETE_GOOD_QUEST_ITEM).
+do
+    local G = _G
+    local keep = {}
+    for _, n in ipairs({ "StaticPopup1", "StaticPopup2", "DELETE_ITEM_CONFIRM_STRING", "STATICPOPUP_NUMDIALOGS" }) do keep[n] = G[n] end
+    local ok, err = pcall(function()
+        local QoL = WeintCodex.UIComfort
+        G.DELETE_ITEM_CONFIRM_STRING = "LÖSCHEN"
+        G.STATICPOPUP_NUMDIALOGS = 2
+        local function Popup(which)
+            local box = { text = "" }
+            function box:SetText(t) self.text = t end
+            return { which = which, IsShown = function() return true end, editBox = box }
+        end
+        G.StaticPopup1 = Popup("DELETE_GOOD_QUEST_ITEM")
+        assert(QoL.FillDelete() == 0 and G.StaticPopup1.editBox.text == "", "Questgegenstand vorausgefuellt")
+        G.StaticPopup1 = Popup("DELETE_QUEST_ITEM")
+        assert(QoL.FillDelete() == 0, "einfacher Questgegenstand angefasst")
+        G.StaticPopup1 = Popup("DELETE_GOOD_ITEM")
+        assert(QoL.FillDelete() == 1 and G.StaticPopup1.editBox.text == "LÖSCHEN", "guter Gegenstand nicht mehr ausgefuellt")
+        -- Ausmisten (Loeschen & looten) nimmt nie Questgegenstaende.
+        local BT = WeintCodex.UIBagTriage
+        local _, why = BT.Evaluate({ itemID = 5, quality = 1, stackCount = 1 }, 0, 1, { questID = 9, isActive = false })
+        assert(why == "quest", "Ausmisten bietet Quest-Starter an: " .. tostring(why))
+    end)
+    for n, v in pairs(keep) do G[n] = v end
+    Check(ok, "Loeschen: Questgegenstaende nie vorausgefuellt, nie im Ausmisten" .. (ok and "" or (": " .. tostring(err))))
+end
+
 -- 1.0.8.14: Gold doppelt gezaehlt - derselbe Charakter unter zwei Realm-
 -- Schreibweisen ("Shooty" und "Shooty-" mit unsichtbarem Realm).
 do
