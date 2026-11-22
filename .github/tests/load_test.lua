@@ -27699,6 +27699,56 @@ do
     Check(ok, "Bequem: Quests, Einladen, Duelle, Entzaubern, Flugkarte; Dungeon-Schluessel" .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 1.0.8.11: "Was ist aus?" - Ausgeschaltetes auflisten und einschalten.
+do
+    local ok, err = pcall(function()
+        local OL = WeintCodex.UIOffList
+        assert(OL and OL.Collect and OL.Show, "Liste fehlt")
+        local function find(list, label)
+            for _, it in ipairs(list) do if it.label == label then return it end end
+        end
+        local wasComfort = K.ModuleEnabled("comfort")
+        K.SetModuleEnabled("comfort", true)
+        K.Set("comfort", "questAccept", false)
+        K.Set("comfort", "tipMouseInst", false)   -- Unterschalter, aus
+        local list = OL.Collect()
+        K.Set("comfort", "tipMouseInst", true)
+        local qa = find(list, "Quests automatisch annehmen")
+        assert(qa and qa.kind == "toggle" and qa.path:find("Bequem", 1, true), "Hauptschalter, der aus ist, fehlt")
+        -- Unterschalter (haengen an einem anderen) und Abschalter stehen nicht da.
+        assert(not find(list, "In Dungeon und PvP wie im Spiel"), "Unterschalter in der Liste")
+        assert(not find(list, "Blätterpfeile ausblenden") and not find(list, "Reichweitenpunkt ausblenden"), "Abschalter in der Liste")
+        assert(not find(list, "Nur volle Stapel") and not find(list, "Für alle Charaktere"), "Einschraenkung in der Liste")
+        -- Einschalten setzt denselben Schalter wie die Seite.
+        qa.on()
+        assert(K.Get("comfort", "questAccept") == true, "Einschalten wirkt nicht")
+        assert(not find(OL.Collect(), "Quests automatisch annehmen"), "Eingeschaltetes bleibt in der Liste")
+        K.Set("comfort", "questAccept", false)
+        -- Ein Modul, das aus ist, steht als Modul da; einschalten schaltet es an.
+        local mkey
+        for _, k in ipairs(K.order) do
+            local m = K.Module(k)
+            if k ~= "general" and m.group ~= "ui" and K.ModuleEnabled(k) and k ~= "comfort" then mkey = k break end
+        end
+        if mkey then
+            K.SetModuleEnabled(mkey, false)
+            local mod = find(OL.Collect(), K.Module(mkey).title or mkey)
+            assert(mod and mod.kind == "module", "ausgeschaltetes Modul fehlt: " .. mkey)
+            mod.on()
+            assert(K.ModuleEnabled(mkey), "Modul nicht eingeschaltet")
+        end
+        -- Fenster: Zeilen, Filter, Knopf.
+        local w = OL.Show()
+        assert(w:IsShown() and w.rows[1] and w.rows[1]:IsShown(), "Fenster ohne Zeilen")
+        w.filter:SetText("Quests annehmen")
+        local shown = OL.Fill()
+        assert(#shown >= 1 and find(shown, "Quests automatisch annehmen"), "Filter findet den Schalter nicht")
+        w:Hide()
+        K.SetModuleEnabled("comfort", wasComfort)
+    end)
+    Check(ok, "Was ist aus: Module und Hauptschalter, ohne Unter- und Abschalter, Einschalten, Filter" .. (ok and "" or (": " .. tostring(err))))
+end
+
 -- 1.0.8.8: Pfeiltasten holen Gesendetes zurueck - eigene Liste, denn der
 -- Verlauf des Spiels antwortet auf Forever nicht, und die Zeile stellt die
 -- Pfeile beim Schreiben zurueck.

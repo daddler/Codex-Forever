@@ -472,6 +472,8 @@ ui/calm.lua
 ui/testmode.lua
 ui/options.lua
 ui/help.lua
+# "Was ist aus?" - Ausgeschaltetes auflisten und einschalten (1.0.8.11).
+ui/offlist.lua
 ui/enchants.lua
 ui/glanzpage.lua
 # Symbol der Oberflaeche an der Minikarte (6.9.0.0), nur mit Oberflaeche.

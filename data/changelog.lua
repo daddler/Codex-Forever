@@ -27,6 +27,7 @@ WeintCodex_ChangelogData = {
         notes   = {
             "|cff7C6CFFDie Suche versteht Fragen|r – „Wie kann ich meine Taschen sortieren?“ oder „Wo sehe ich, was ich beim Lehrer lernen kann?“ finden jetzt die passende Seite. Füllwörter fallen weg, Wortformen und kleine Tippfehler passen, nicht jedes Wort muss stimmen, und das Beste steht oben.",
             "|cff7C6CFFEine Suche für alles|r – das Suchfeld oben im Codex findet jetzt auch die Einstellungen der Oberfläche und die Hilfetexte. Die Suche in /wcui und /wc hilfe folgt denselben Regeln.",
+            "|cff7C6CFFWas ist aus?|r – unter /wcui → Allgemein listet ein Knopf alle Module und Funktionen, die gerade ausgeschaltet sind, mit „Einschalten“ in jeder Zeile und einem Filter. Auch mit /wcui aus. „Weiche Schatten“ steht dafür jetzt unter „Erweitert“.",
         },
     },
     {

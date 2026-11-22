@@ -144,6 +144,8 @@ K.Register({
                 -- Beide Wege zum Verschieben nebeneinander: die Rahmen von
                 -- WeintCodex und die des Spiels.
                 B:Row(unlock, game)
+                -- 1.0.8.11 (Wunsch: "ein Button, der auflistet, was nicht
+                -- aktiviert ist - und dort auch aktivieren"): ui/offlist.lua.
                 B:Row({ type = "button", label = "Willkommen", text = "Assistenten zeigen",
                         tooltip = "Der Rundgang vom ersten Mal: Oberfläche ja oder nein, Komfort wählen, übernehmen (/wcui willkommen).",
                         onClick = function() WeintCodex.UIWelcome.Ask() end },
@@ -156,7 +158,9 @@ K.Register({
                         reload = true, format = function(v) return v == 0 and "ausgeblendet" or (v .. " %") end,
                         disabled = function() return not K.UIEnabled() or K.Get("general", "look") ~= "transparent" end,
                         tooltip = "Wie stark Rahmen, Leisten und Tooltips die Welt verdecken – 0 blendet Flächen und Ränder ganz aus. Gilt nach dem Neuladen." },
-                      { type = "empty" })
+                      { type = "button", label = "Was ist aus?", text = "Ausgeschaltetes zeigen",
+                        tooltip = "Alle Module und Funktionen, die gerade aus sind – mit Knopf zum Einschalten (/wcui aus).",
+                        onClick = function() WeintCodex.UIOffList.Show() end })
                 B:Note("Eigenes Profil: Die Oberfläche bekommt im Bearbeitungsmodus ein eigenes Layout „WeintCodex“. Dein Layout, deine Chatreiter und deine Spieleinstellungen bleiben – schaltest du aus, ist dein Layout wieder aktiv, und was WeintCodex an Einstellungen geändert hat, steht wie vorher.")
                 B:Note("Alles links unter „Komfort“ — Schadensanzeige, Questpfeil, Erinnerungen, Klickzauber, Makro-Helfer, Automark und die kleinen Helfer — hängt nicht an diesem Schalter. Schadensanzeige und Erinnerungen sind mit der Oberfläche von Haus aus an; ohne sie schaltest du sie selbst ein.")
             else
@@ -183,9 +187,10 @@ K.Register({
                         { value = "none",  text = "Keine (mit Schatten)" },
                         { value = "thin",  text = "Dünn" },
                         { value = "thick", text = "Dick" } } })
+            -- 1.0.8.11: "Weiche Schatten" unter Erweitert - Platz fuer
+            -- "Was ist aus?" (hoechstens 15 sichtbare Einstellungen je Seite).
             B:Row({ type = "dropdown", label = "Balkentextur – gilt für alle Balken", key = "barStyle", items = K.BarStyleItems },
-                  { type = "toggle", label = "Weiche Schatten", key = "shadows",
-                    description = "Rahmen, Leisten und Fenster heben sich mit einem Schatten von der Spielwelt ab." })
+                  { type = "empty" })
             B:Row({ type = "dropdown", label = "Farbe der Oberfläche", key = "highlight", reload = true, items = {
                         { value = "class",  text = "In der Farbe deiner Klasse" },
                         { value = "accent", text = "WeintCodex-Lila" },
@@ -203,6 +208,10 @@ K.Register({
                   { type = "dropdown", label = "Rahmen am Rand", key = "wideArea", reload = true, items = K.WIDE_AREAS,
                     tooltip = "Gilt nach dem Neuladen für die Rahmen von WeintCodex. Die Rahmen des Spiels (Chat, Minikarte, Questliste) setzt „/wcui einrichten“ neu. Selbst verschobene Rahmen bleiben, wo du sie hingezogen hast." })
             B:Advanced()
+            B:Section("Feinheiten")
+            B:Row({ type = "toggle", label = "Weiche Schatten", key = "shadows",
+                    description = "Rahmen, Leisten und Fenster heben sich mit einem Schatten von der Spielwelt ab." },
+                  { type = "empty" })
             B:Section("Testmodus",
                 "Zeigt Ziel, Fokus, Gruppe, Zauberbalken und Schadensanzeige mit Beispielwerten – so siehst du alles auf einem Bildschirm, ohne Gruppe und ohne Kampf. Auch mit /wcui test.")
             B:Row({ type = "button", label = "Beispieldaten",
@@ -1393,15 +1402,18 @@ end
 function Recorder:Section(title) self.section = title end
 function Recorder:Advanced() self.adv = true end
 function Recorder:EndAdvanced() self.adv = false end
-function Recorder:Add(label, description)
+function Recorder:Add(label, description, spec)
     if type(label) ~= "string" or label == "" then return end
     local out = self.out
     out[#out + 1] = { module = self.module, page = self.page, pageLabel = self.pageLabel, pageKey = self.pageKey,
                       section = self.section, label = label, description = description,
-                      advanced = self.adv and true or false }
+                      advanced = self.adv and true or false,
+                      -- 1.0.8.11 ("was ist aus?", ui/offlist.lua): Schalter mit
+                      -- allem, was es zum Lesen und Setzen braucht.
+                      spec = spec, store = self.storeMod or self.module }
 end
 function Recorder:Cell(spec)
-    if type(spec) == "table" and spec.type ~= "empty" then self:Add(spec.label, spec.description) end
+    if type(spec) == "table" and spec.type ~= "empty" then self:Add(spec.label, spec.description, spec) end
 end
 function Recorder:Row(a, b) self:Cell(a) self:Cell(b) end
 function Recorder:GameEditMode() self:Add(O.GAME_EDIT_TEXT) end
@@ -1427,6 +1439,7 @@ function O.SearchIndex()
         for i, def in ipairs(m.pages or {}) do
             if def.build then
                 local R = setmetatable({ out = index, module = key, page = i, pageLabel = def.label, pageKey = def.key,
+                                         storeMod = def.store or key,
                                          parent = scratch, y = -4, widgets = {} }, Recorder)
                 pcall(def.build, R)
             end
@@ -1934,6 +1947,10 @@ SlashCmdList["WEINTCODEXUI"] = function(msg)
     if msg == "teilen" or msg == "share" then
         local EVm = WeintCodex.UIEveryday
         if EVm and EVm.ShowShare then EVm.ShowShare(true) end
+        return
+    end
+    if msg == "aus" or msg == "off" then
+        if WeintCodex.UIOffList then WeintCodex.UIOffList.Show() end
         return
     end
     if msg == "ruf" or msg == "reputation" then

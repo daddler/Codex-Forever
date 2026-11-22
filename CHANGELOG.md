@@ -26,6 +26,18 @@ nicht zusammen.
 - Hilfe „Entdecken“ nennt die Ruf-Belohnungen; neue Schlagwoerter (Geld,
   Fraktion, Ruestmeister, Level, Mount, Brief).
 
+### Neu
+- „Was ist aus?“ (Wunsch: Knopf unter Allgemein, der auflistet, was nicht
+  aktiviert ist, und dort einschalten): `ui/offlist.lua`, Knopf neben
+  „Deckkraft“ und `/wcui aus`. Gelistet: Hauptschalter der Oberflaeche
+  (dann ohne ihre Module), Module, die aus sind, und Hauptschalter laufender
+  Module (Schalter ohne `disabled`, nicht unter „Erweitert“, keine
+  Abschalter „…ausblenden/abschalten“, keine Einschraenkungen „Nur/Auch/Für
+  alle …“). „Einschalten“ nutzt Lese-/Schreibweg aus dem Mitschrieb
+  (`Recorder:Add` speichert jetzt `spec` und `store`), Neuladen-Hinweis mit
+  Knopf, Filter mit der Suche von 1.0.8.11, Klick auf die Zeile oeffnet die
+  Seite. „Weiche Schatten“ unter „Erweitert“ (15 sichtbare Einstellungen).
+
 ## [1.0.8.10] – 2026-11-21
 
 ### Geaendert
