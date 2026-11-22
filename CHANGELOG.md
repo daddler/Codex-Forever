@@ -9,6 +9,17 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.0.8.14] – 2026-11-22
+
+### Behoben
+- Flugpunkt-Erinnerung (`ui/qolextra.lua`, Bildschirmfoto: „Flugpunkt in der
+  Naehe: zzOLDRiverglades, Farholde Keep (510 m)“ im Vorgebirge des
+  Huegellands, im Flug): `C_TaxiMap.GetAllTaxiNodes` liefert stillgelegte
+  Punkte mit; `QX.DeadNode` (`^zz`, „deprecated“, „unused“) nimmt sie aus
+  Entfernung und Name und loescht frueher Gemerktes beim naechsten Lesen der
+  Flugkarte. `QX.CheckFlightNear`/`QX.CheckFlight` schweigen auf einer
+  Flugroute (`UnitOnTaxi`).
+
 ## [1.0.8.13] – 2026-11-22
 
 ### Geaendert

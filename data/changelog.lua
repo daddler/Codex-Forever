@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.0.8.14",
+        date    = "22.11.2026",
+        notes   = {
+            "|cff7C6CFFFlugpunkt-Erinnerung ohne Geisterpunkte|r – die Meldung „Flugpunkt in der Nähe“ nannte auch stillgelegte Punkte, die das Spiel noch mitliefert (etwa „zzOLDRiverglades“), mit alter Lage irgendwo. Die zählen nicht mehr. Und während des Flugs kommt keine Meldung mehr – landen kann man da ohnehin nicht.",
+        },
+    },
+    {
         version = "1.0.8.13",
         date    = "22.11.2026",
         notes   = {

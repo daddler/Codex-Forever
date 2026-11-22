@@ -28751,8 +28751,35 @@ do
         assert(name == "A" and math.abs(d - 300) < 1e-6, "naher Punkt nicht erkannt")
         assert(QX.NearFlight(1, 400, 100, s) == nil, "anderer Kontinent")
         assert(QX.FLIGHT_YARDS >= 400, "zu nah")
+        -- 1.0.8.14: stillgelegte Punkte (zzOLD...) zaehlen nicht, im Flug keine Meldung.
+        s.pos["zzOLDRiverglades, Farholde Keep"] = { 0, 390, 100 }
+        s.all["zzOLDRiverglades, Farholde Keep"] = true
+        assert(QX.NearFlight(0, 400, 100, s) == "A", "zzOLD-Punkt als naechster")
+        assert(QX.DeadNode("Ruins of X DEPRECATED") and not QX.DeadNode("Southshore, Hillsbrad"), "Stilllegung falsch erkannt")
+        local G = _G
+        local oTaxi, oWorld, oSay, oNotice = G.UnitOnTaxi, K.PlayerWorld, G.RaidNotice_AddMessage, nil
+        local said = 0
+        G.UnitOnTaxi = function() return true end
+        K.PlayerWorld = function() return 0, 400, 100 end
+        G.RaidNotice_AddMessage = function() said = said + 1 end
+        G.RaidWarningFrame = G.RaidWarningFrame or {}
+        local oS = K.CharState
+        K.CharState = function() return { flights = s } end
+        assert(QX.MissingFlight("Farholde Keep", "zzOLDRiverglades") == nil, "zzOLD-Punkt ueber den Namen")
+        assert(QX.MissingFlight(nil, "A") == "A", "echter Punkt ueber den Namen nicht gefunden")
+        local oGet = K.Get
+        K.Get = function(m, k) if k == "flightRemind" then return true end return oGet(m, k) end
+        local oAct = K.IsActive
+        K.IsActive = function() return true end
+        QX.CheckFlightNear()
+        assert(said == 0, "Meldung im Flug")
+        G.UnitOnTaxi = function() return false end
+        QX.CheckFlightNear()
+        K.Get, K.CharState, K.PlayerWorld, G.UnitOnTaxi, G.RaidNotice_AddMessage = oGet, oS, oWorld, oTaxi, oSay
+        K.IsActive = oAct
+        assert(said == 1, "nach der Landung keine Meldung: " .. said)
     end)
-    Check(ok, "Flugpunkte: Erinnerung nach Entfernung" .. (ok and "" or (": " .. tostring(err))))
+    Check(ok, "Flugpunkte: Erinnerung nach Entfernung, ohne stillgelegte, nicht im Flug" .. (ok and "" or (": " .. tostring(err))))
 end
 
 -- 1.0.7.17: Anordnung der Knoepfe - unterste Reihe zuerst.

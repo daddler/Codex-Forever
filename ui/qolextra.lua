@@ -370,6 +370,18 @@ local function FlightStore()
     st.flights.pos = st.flights.pos or {}
     return st.flights
 end
+-- 1.0.8.14 (Bildschirmfoto: "Flugpunkt in der Naehe: zzOLDRiverglades,
+-- Farholde Keep" im Vorgebirge des Huegellands, waehrend des Flugs): die
+-- Flugkarte des Clients liefert auch stillgelegte Punkte - Blizzard setzt
+-- "zz" davor (zzOLD...) oder schreibt DEPRECATED/UNUSED in den Namen. Die
+-- kann niemand entdecken; ihre Lage ist alt. Sie zaehlen nirgends.
+QX.DEAD_NODE = { "^zz", "deprecated", "unused" }
+function QX.DeadNode(name)
+    if type(name) ~= "string" then return true end
+    local l = name:lower()
+    for _, p in ipairs(QX.DEAD_NODE) do if l:find(p) then return true end end
+    return false
+end
 -- Beim Oeffnen einer Flugkarte: alle Punkte mit Stand merken.
 function QX.ReadTaxi()
     local tm = _G.C_TaxiMap
@@ -381,7 +393,10 @@ function QX.ReadTaxi()
     local n = 0
     for _, nd in ipairs(nodes) do
         local name = K.Plain(nd.name)
-        if type(name) == "string" then
+        if type(name) == "string" and QX.DeadNode(name) then
+            -- auch frueher Gemerktes weg (vor 1.0.8.14 gespeichert)
+            s.all[name], s.pos[name], s.known[name] = nil, nil, nil
+        elseif type(name) == "string" then
             s.all[name] = true
             -- 1.0.7.30: Lage des Punkts in der Welt (Kontinent, Norden,
             -- Westen), damit die Erinnerung nach Entfernung kommt.
@@ -405,7 +420,7 @@ function QX.MissingFlight(zone, sub)
     local s = FlightStore()
     if not (s and s.read) then return nil end
     for name in pairs(s.all) do
-        if not s.known[name] then
+        if not s.known[name] and not QX.DeadNode(name) then
             local head = name:match("^([^,]+)")
             if head and ((sub and sub ~= "" and head == sub) or (zone and head == zone) or (zone and name:find(zone, 1, true))) then
                 return name
@@ -425,7 +440,7 @@ function QX.NearFlight(c, n, w, s)
     if not (c and s and s.read and s.pos) then return nil end
     local best, bd
     for name, p in pairs(s.pos) do
-        if not s.known[name] and not reminded[name] and p[1] == c then
+        if not s.known[name] and not reminded[name] and p[1] == c and not QX.DeadNode(name) then
             local dn, dw = p[2] - n, p[3] - w
             local d = math.sqrt(dn * dn + dw * dw)
             if d <= QX.FLIGHT_YARDS and (not bd or d < bd) then best, bd = name, d end
@@ -448,6 +463,8 @@ end
 
 function QX.CheckFlightNear()
     if not Get("flightRemind") or K.InCombat() then return end
+    -- Im Flug landet man nicht: vorbeifliegen ist kein "in der Naehe".
+    if K.Bool(_G.UnitOnTaxi and _G.UnitOnTaxi("player"), false) then return end
     local c, n, w = K.PlayerWorld()
     local name, d = QX.NearFlight(c, n, w, FlightStore())
     if name then
@@ -467,6 +484,7 @@ flightTick:SetScript("OnUpdate", K.Measured("Helfer", function(_, el)
 end))
 function QX.CheckFlight()
     if not Get("flightRemind") then return end
+    if K.Bool(_G.UnitOnTaxi and _G.UnitOnTaxi("player"), false) then return end   -- 1.0.8.14: nicht im Flug
     local zone = _G.GetZoneText and K.Plain(_G.GetZoneText())
     local sub = _G.GetSubZoneText and K.Plain(_G.GetSubZoneText())
     local name = QX.MissingFlight(type(zone) == "string" and zone or nil, type(sub) == "string" and sub or nil)
