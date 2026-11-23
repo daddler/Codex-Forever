@@ -328,7 +328,17 @@ local function OnEvent(_, event, ...)
     elseif event == "LOOT_CLOSED" then
         if state.lootOpen then state.lootOpen = false FI.Apply() end
     elseif event == "PLAYER_EQUIPMENT_CHANGED" then
-        if Plain((...)) == FI.MAIN_HAND then FI.Apply() end
+        -- 1.0.8.19: jeder Platz - ob die Angel in der Haupthand liegt,
+        -- prueft FI.PoleEquipped selbst; ein Wechsel der Nebenhand mit
+        -- Zweihand-Angel meldet sonst nicht immer Platz 16.
+        FI.Apply()
+    elseif event == "UPDATE_BINDINGS" then
+        -- 1.0.8.19 (Rueckmeldung: "F wirft nicht aus, sondern nutzt die
+        -- Faehigkeit darauf"): laedt das Spiel die Tastenbelegung neu
+        -- (Anmelden, Belegung je Charakter), wird die Vorrang-Belegung
+        -- neu gesetzt statt sich auf den gemerkten Stand zu verlassen.
+        state.applied, state.appliedKey = nil, nil
+        FI.Apply()
     elseif event == "PLAYER_REGEN_ENABLED" then
         state.waitCombat = false
         pcall(ev.UnregisterEvent, ev, "PLAYER_REGEN_ENABLED")
@@ -347,13 +357,45 @@ local function OnEvent(_, event, ...)
     end
 end
 
-for _, e in ipairs({ "PLAYER_LOGIN", "PLAYER_ENTERING_WORLD", "PLAYER_LOGOUT", "PLAYER_EQUIPMENT_CHANGED",
+for _, e in ipairs({ "PLAYER_LOGIN", "PLAYER_ENTERING_WORLD", "PLAYER_LOGOUT", "PLAYER_EQUIPMENT_CHANGED", "UPDATE_BINDINGS",
                      "UNIT_SPELLCAST_CHANNEL_START", "UNIT_SPELLCAST_CHANNEL_STOP",
                      "PLAYER_SOFT_INTERACT_CHANGED", "LOOT_OPENED", "LOOT_CLOSED" }) do
     pcall(ev.RegisterEvent, ev, e)
 end
 ev:SetScript("OnEvent", WeintCodex.Measured("Angeln", OnEvent))
 FI.OnEvent = OnEvent
+
+--------------------------------------------------
+-- /wcui angeln (1.0.8.19): warum die Taste nicht auswirft
+--------------------------------------------------
+
+function FI.Report()
+    local out = {}
+    local function add(t) out[#out + 1] = t end
+    local key = FI.Key()
+    add("Angeln mit einer Taste: " .. (K.Get(KEY, "fishKeyOn") and "an" or "AUS")
+        .. " · Komfort aktiv: " .. (K.IsActive(KEY) and "ja" or "NEIN"))
+    add("Taste: " .. (FI.KeyText(key) or "keine gewählt") .. (key and (" (" .. key .. ")") or ""))
+    local id = _G.GetInventoryItemID and Plain(_G.GetInventoryItemID("player", FI.MAIN_HAND))
+    local info = (_G.C_Item and _G.C_Item.GetItemInfoInstant) or _G.GetItemInfoInstant
+    local cls, sub
+    if type(id) == "number" and type(info) == "function" then
+        local r = { pcall(info, id) }
+        if r[1] then cls, sub = Plain(r[7]), Plain(r[8]) end
+    end
+    add("Haupthand: " .. (type(id) == "number" and ("Gegenstand " .. id .. " · Klasse " .. tostring(cls) .. "/" .. tostring(sub)) or "leer oder unbekannt")
+        .. " · als Angel erkannt: " .. (FI.PoleEquipped() and "ja" or "NEIN (erwartet Klasse "
+        .. FI.POLE.class .. "/" .. FI.POLE.subclass .. ")"))
+    add("Zauber: " .. tostring(FI.SpellName() or "Angeln nicht gefunden"))
+    local want = FI.Wanted()
+    add("Gewollt: " .. tostring(want or "nichts – die Taste gehört dir") .. " · gesetzt: " .. tostring(state.applied or "nichts")
+        .. (InCombat() and " · im Kampf (wird danach gesetzt)" or ""))
+    if key and _G.GetBindingAction then
+        local ok, now = pcall(_G.GetBindingAction, key, true)
+        add("Die Taste löst gerade aus: " .. tostring(ok and Plain(now) or "?") .. " · deine Belegung: " .. tostring(FI.BoundTo(key) or "nichts"))
+    end
+    return out
+end
 
 --------------------------------------------------
 -- Einstellungen: Komfortseite "Sammeln"

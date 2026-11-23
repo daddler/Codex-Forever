@@ -9,6 +9,18 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.0.8.19] – 2026-11-23
+
+### Behoben (Verdacht, nicht im Spiel bestaetigt)
+- Angeln mit einer Taste (`ui/fishing.lua`, Rueckmeldung: „F wirft nicht
+  aus, sondern nutzt die Faehigkeit auf F“): `FI.Apply` setzte die
+  Vorrang-Belegung nur bei geaendertem Wunsch (`state.applied`). Laedt das
+  Spiel die Tastenbelegung neu (`UPDATE_BINDINGS`), wird jetzt neu gesetzt;
+  `PLAYER_EQUIPMENT_CHANGED` prueft jeden Platz statt nur Platz 16.
+- `/wcui angeln` (`FI.Report`): Schalter, Taste, Haupthand mit Klasse/
+  Unterklasse und ob als Angel erkannt, Zauber, gewollt/gesetzt, was die
+  Taste gerade ausloest (`GetBindingAction(key, true)`).
+
 ## [1.0.8.18] – 2026-11-23
 
 ### Behoben

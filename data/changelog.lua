@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.0.8.19",
+        date    = "23.11.2026",
+        notes   = {
+            "|cff7C6CFFAngeln mit einer Taste zuverlässiger|r – lädt das Spiel die Tastenbelegung neu (etwa beim Anmelden oder mit Belegung je Charakter), wird die Angel-Taste neu gesetzt, und jeder Ausrüstungswechsel wird geprüft. Wirft die Taste trotzdem nicht aus, zeigt „/wcui angeln“, woran es liegt: ob die Angel erkannt wird und was die Taste gerade auslöst.",
+        },
+    },
+    {
         version = "1.0.8.18",
         date    = "23.11.2026",
         notes   = {

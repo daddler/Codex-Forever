@@ -24920,6 +24920,13 @@ do
             "Angeln: Makro wirft per Namen aus")
         Check(FI.BoundTo("F") == "Ziel unterstützen", "Angeln: eigene Belegung wird genannt, nie geändert")
         Check(FI.KeyText("SHIFT-BUTTON4") == "Umschalt + Maustaste 4", "Angeln: Taste lesbar")
+        -- 1.0.8.19: laedt das Spiel die Belegung neu, wird neu gesetzt.
+        bound.F = nil
+        FI.OnEvent(nil, "UPDATE_BINDINGS")
+        Check(bound.F == "CLICK WeintCodexFishingCast", "Angeln: nach neu geladener Tastenbelegung wieder gesetzt (" .. tostring(bound.F) .. ")")
+        local rep = table.concat(FI.Report(), "\n")
+        Check(rep:find("als Angel erkannt: ja", 1, true) and rep:find("Gewollt: cast", 1, true) ~= nil,
+            "Angeln: /wcui angeln nennt Angel und Taste\n" .. rep)
 
         -- Wurf: Sitzung setzt Reichweite und Ton; Glitzern hatte die Reichweite schon.
         WeintCodex.UIProfile.SetCVar("SoftTargetInteractArc", "2", "sparkles")

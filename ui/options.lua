@@ -2014,6 +2014,13 @@ local function SlashUI(msg)
         end
         return
     end
+    if msg == "angeln" or msg == "fishing" then
+        local FI = WeintCodex.UIFishing
+        for _, line in ipairs(FI and FI.Report and FI.Report() or { "Angeln nicht geladen." }) do
+            print(WeintCodex.ColorText("accent", "[WeintCodex]") .. " " .. line)
+        end
+        return
+    end
     if msg == "rahmen" or msg == "frames" then
         local UF = WeintCodex.UIUnitFrames
         for _, line in ipairs(UF and UF.FrameReport and UF.FrameReport() or { "Einheitenrahmen nicht geladen." }) do
