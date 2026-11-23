@@ -22,6 +22,12 @@ nicht zusammen.
   (Anker am Rahmen, Ebene darueber) und bleibt sichtbar.
 - `/wcui rahmen` nennt „In Gruppe ausblenden“ mit Weg zum Abschalten.
 
+### Geaendert
+- Erinnerungen (Wunsch: „Waffenverzauberung individuell einstellbar, bis
+  1 min vor Ablauf“): `weaponMinutes` (1–30 min, ab Werk 5) gab es seit
+  langem, aber unter „Anzeige“. Jetzt eigener Abschnitt „Waffe“ auf der
+  Seite „Regeln“.
+
 ## [1.0.8.17] – 2026-11-23
 
 ### Neu

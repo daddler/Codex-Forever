@@ -2534,6 +2534,12 @@ K.Register({
                   { type = "dropdown", label = "Laune (bei Begleiter): erinnern, wenn", items = R.HAPPY_BELOW,
                     get = function() return draft.below end, set = function(v) draft.below = v DraftChanged() end,
                     disabled = function() return draft.kind ~= "happy" end })
+            -- 1.0.8.18 (Wunsch: "individuell einstellbar, bis 1 min vor
+            -- Ablauf"): stand unter "Anzeige" und wurde dort nicht gefunden.
+            B:Section("Waffe", "Gift, Öl, Wetzstein und Waffenbuffs des Schamanen: wann die Erinnerung vor dem Ablauf kommt.")
+            B:Row({ type = "slider", label = "Erinnern ab", key = "weaponMinutes", min = 1, max = 30, step = 1,
+                    format = function(v) return string.format("%d min vor Ablauf", v) end },
+                  { type = "empty" })
         end },
         { key = "buffzeiten", label = "Buffzeiten", build = function(B)
             WeintCodex.UIBuffTimes.BuildPage(B)
@@ -2563,11 +2569,8 @@ K.Register({
                         { value = "instance", text = "Nur in Dungeons und Schlachtzügen" } } })
             B:Row({ type = "toggle", label = "Auch im Kampf", key = "remindInCombat",
                     description = "Im Kampf nennt der Client Buffs oft nur verschlüsselt – dann bleibt die Erinnerung aus, statt zu raten." },
-                  { type = "slider", label = "Waffe: erinnern ab", key = "weaponMinutes", min = 1, max = 30, step = 1,
-                    format = function(v) return string.format("%d min Rest", v) end })
-            B:Row({ type = "toggle", label = "Anklicken zum Benutzen", key = "clickPick",
-                    description = "Gift, Öl, Wetzstein oder Essen aus der Tasche: eine Sorte benutzt der Klick gleich, mehrere zeigt ein Ring. Bei Waffen links Haupthand, rechts Nebenhand. Nicht im Kampf." },
-                  { type = "empty" })
+                  { type = "toggle", label = "Anklicken zum Benutzen", key = "clickPick",
+                    description = "Gift, Öl, Wetzstein oder Essen aus der Tasche: eine Sorte benutzt der Klick gleich, mehrere zeigt ein Ring. Bei Waffen links Haupthand, rechts Nebenhand. Nicht im Kampf." })
             B:Section("Aussehen")
             B:Row({ type = "slider", label = "Größe der Erinnerungen", key = "bannerScale", min = 50, max = 250, step = 5,
                     format = function(v) return string.format("%d %%", v) end },

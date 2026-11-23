@@ -26,6 +26,7 @@ WeintCodex_ChangelogData = {
         date    = "23.11.2026",
         notes   = {
             "|cff7C6CFFZauberbalken bleibt in der Gruppe|r – ist „In Gruppe ausblenden“ für den Spielerrahmen eingeschaltet, verschwand in jeder Gruppe auch der eigene Zauberbalken, und der des Spiels war ebenfalls aus. Jetzt bleibt der Zauberbalken an seinem Platz, nur der Rahmen tritt zurück. „/wcui rahmen“ nennt die Einstellung ausdrücklich.",
+            "|cff7C6CFFWaffen-Erinnerung einstellbar, wo man sie sucht|r – wann die Erinnerung vor dem Ablauf von Gift, Öl, Wetzstein oder Waffenbuff kommt (1 bis 30 Minuten, ab Werk 5), steht jetzt unter Erinnerungen → Regeln → Waffe statt versteckt unter „Anzeige“.",
         },
     },
     {
