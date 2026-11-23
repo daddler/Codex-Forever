@@ -636,7 +636,19 @@ local function Create(unit)
     end
 
     if SHAPE[unit].cast then
-        f._cast = CB.Create(f)
+        -- 1.0.8.18 (Rueckmeldung: "Spielerfenster und Zauberbalken
+        -- verschwinden"; Bericht: "In Gruppe ausblenden: ja"): der
+        -- Zauberbalken des Spielers haengt nur noch per Anker am Rahmen,
+        -- nicht mehr als Kind. Blendet der Sichtbarkeits-Treiber den
+        -- Rahmen in der Gruppe aus, bleibt der Zauberbalken - er ersetzt
+        -- den des Spiels, sonst gaebe es in der Gruppe gar keinen.
+        if unit == "player" then
+            f._cast = CB.Create(UIParent)
+            f._cast:SetFrameStrata("LOW")
+            f._cast:SetFrameLevel((f:GetFrameLevel() or 1) + 10)
+        else
+            f._cast = CB.Create(f)
+        end
         f._cast:SetUnit(unit)
     end
 
@@ -2161,10 +2173,14 @@ function UF.FrameReport()
             .. " · Bildschirm " .. Num(sw) .. "x" .. Num(sh) .. " · Skalierung " .. Num(okS and sc or nil))
         add("  In Gruppe ausblenden: " .. YesNo(Opt("player_hideInGroup")) .. " · in Gruppe: "
             .. YesNo(K.Bool(_G.IsInGroup and _G.IsInGroup(), false)) .. " · Treiber aktiv: " .. YesNo(f._groupDriver))
+        if Opt("player_hideInGroup") then
+            add("  → In jeder Gruppe (auch Dungeonsuche, Schlachtfeld) ist der Spielerrahmen weg."
+                .. " Abschalten: /wcui → Einheitenrahmen → Spieler → „In Gruppe ausblenden“.")
+        end
         local cast = f._cast
         if cast then
             add("  Zauberbalken: " .. (Opt("player_cast") and "an" or "AUS") .. " · ersetzt den des Spiels: "
-                .. YesNo(Opt("replacePlayerCast")) .. " · haengt am Spielerrahmen")
+                .. YesNo(Opt("replacePlayerCast")) .. " · bleibt auch, wenn der Rahmen in der Gruppe ausgeblendet ist")
         end
     end
     if P then

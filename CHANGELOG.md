@@ -9,6 +9,19 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.0.8.18] – 2026-11-23
+
+### Behoben
+- Spielerrahmen und Zauberbalken „verschwinden“ (Bericht `/wcui rahmen`
+  des Spielers: „In Gruppe ausblenden: ja · Treiber aktiv: ja“): die
+  Ursache ist die Einstellung `player_hideInGroup` (1.0.5.12) – in jeder
+  Gruppe blendet der Sichtbarkeits-Treiber den Rahmen aus. Der eigene
+  Zauberbalken war ein Kind des Rahmens und verschwand mit, waehrend der des
+  Spiels durch `replacePlayerCast` versteckt blieb – in der Gruppe gab es
+  gar keinen. Der Zauberbalken des Spielers liegt jetzt an `UIParent`
+  (Anker am Rahmen, Ebene darueber) und bleibt sichtbar.
+- `/wcui rahmen` nennt „In Gruppe ausblenden“ mit Weg zum Abschalten.
+
 ## [1.0.8.17] – 2026-11-23
 
 ### Neu

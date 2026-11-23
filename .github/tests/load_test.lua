@@ -29012,6 +29012,19 @@ do
         K.Set("general", "fade_player", oFade)
         assert(lines:find("fast oder ganz unsichtbar", 1, true), "Ruhe auf 0 % nicht genannt:\n" .. lines)
         assert(type(UF.RescueFrame()) == "string", "Zurueckholen ohne Antwort")
+        -- 1.0.8.18: "In Gruppe ausblenden" wird im Bericht ausdruecklich genannt.
+        local oHide = K.Get("unitframes", "player_hideInGroup")
+        K.Set("unitframes", "player_hideInGroup", true)
+        lines = table.concat(UF.FrameReport(), "\n")
+        K.Set("unitframes", "player_hideInGroup", oHide)
+        if UF.frames.player then
+            assert(lines:find("In jeder Gruppe", 1, true), "Gruppen-Ausblendung nicht genannt:\n" .. lines)
+            -- Der Zauberbalken ist kein Kind des Rahmens: der Treiber blendet ihn nicht mit aus.
+            local cast = UF.frames.player._cast
+            assert(cast and cast.GetParent and cast:GetParent() ~= UF.frames.player, "Zauberbalken haengt als Kind am Spielerrahmen")
+        else
+            error("Spielerrahmen im Prueflauf nicht gebaut")
+        end
     end)
     Check(ok, "Spielerrahmen: Bericht nennt Ruhe-Ausblendung, Zurueckholen antwortet" .. (ok and "" or (": " .. tostring(err))))
 end

@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.0.8.18",
+        date    = "23.11.2026",
+        notes   = {
+            "|cff7C6CFFZauberbalken bleibt in der Gruppe|r – ist „In Gruppe ausblenden“ für den Spielerrahmen eingeschaltet, verschwand in jeder Gruppe auch der eigene Zauberbalken, und der des Spiels war ebenfalls aus. Jetzt bleibt der Zauberbalken an seinem Platz, nur der Rahmen tritt zurück. „/wcui rahmen“ nennt die Einstellung ausdrücklich.",
+        },
+    },
+    {
         version = "1.0.8.17",
         date    = "23.11.2026",
         notes   = {
