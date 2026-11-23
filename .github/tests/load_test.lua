@@ -28999,6 +28999,23 @@ do
     Check(ok, "Berufe: derselbe Charakter unter zwei Realm-Schreibweisen zaehlt einmal" .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 1.0.8.17: /wcui rahmen - warum der Spielerrahmen nicht zu sehen ist.
+do
+    local ok, err = pcall(function()
+        local UF = WeintCodex.UIUnitFrames
+        assert(UF and UF.FrameReport and UF.RescueFrame, "Bericht fehlt")
+        local lines = table.concat(UF.FrameReport(), "\n")
+        assert(lines:find("Spielerrahmen (WeintCodex)", 1, true) and lines:find("Ruhe und Kampf", 1, true), "Bericht unvollstaendig:\n" .. lines)
+        local oFade = K.Get("general", "fade_player")
+        K.Set("general", "fade_player", 0)
+        lines = table.concat(UF.FrameReport(), "\n")
+        K.Set("general", "fade_player", oFade)
+        assert(lines:find("fast oder ganz unsichtbar", 1, true), "Ruhe auf 0 % nicht genannt:\n" .. lines)
+        assert(type(UF.RescueFrame()) == "string", "Zurueckholen ohne Antwort")
+    end)
+    Check(ok, "Spielerrahmen: Bericht nennt Ruhe-Ausblendung, Zurueckholen antwortet" .. (ok and "" or (": " .. tostring(err))))
+end
+
 -- 1.0.7.30: Flugpunkt-Erinnerung nach Entfernung.
 do
     local ok, err = pcall(function()

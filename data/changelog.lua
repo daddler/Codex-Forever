@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.0.8.17",
+        date    = "23.11.2026",
+        notes   = {
+            "|cff7C6CFFSpielerrahmen verschwunden?|r – „/wcui rahmen“ zeigt, warum der Spielerrahmen samt Zauberbalken nicht zu sehen ist: ausgeschaltet, in der Gruppe ausgeblendet, in Ruhe zurückgetreten (Allgemein → Ruhe und Kampf) oder verschoben. „/wcui rahmen zurück“ holt ihn sofort an seinen Platz zurück.",
+        },
+    },
+    {
         version = "1.0.8.16",
         date    = "23.11.2026",
         notes   = {

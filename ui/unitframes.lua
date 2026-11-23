@@ -2131,6 +2131,83 @@ function UF.ApplyGroupHide()
     end)
 end
 
+-- 1.0.8.17 (Rueckmeldung: "Spielerfenster und Zauberbalken verschwinden
+-- haeufig, auch nach Neustart"): /wcui rahmen sagt, warum der Rahmen nicht
+-- zu sehen ist - ohne Vermutung, nur was der Client und die Einstellungen
+-- sagen. Der Zauberbalken haengt am Spielerrahmen und verschwindet mit ihm.
+local function YesNo(v) return v and "ja" or "nein" end
+local function Num(v) return type(v) == "number" and string.format("%.2f", v) or "?" end
+
+function UF.FrameReport()
+    local out = {}
+    local function add(t) out[#out + 1] = t end
+    local P = WeintCodex.UIPresence
+    local f = frames.player
+    add("Spielerrahmen (WeintCodex): " .. (Opt("player_enabled") and "eingeschaltet" or "AUS (Einheitenrahmen → Spieler)"))
+    if not f then
+        add("  nicht gebaut" .. (K.InCombat() and " – wird nach dem Kampf gebaut" or " – Modul Einheitenrahmen aus oder Fehler beim Laden (/wcui fehler)"))
+    else
+        local ok1, shown = pcall(f.IsShown, f)
+        local ok2, vis = pcall(f.IsVisible, f)
+        local ok3, a = pcall(f.GetAlpha, f)
+        local ok4, ea = pcall(f.GetEffectiveAlpha, f)
+        add("  gezeigt: " .. YesNo(ok1 and shown) .. " · sichtbar: " .. YesNo(ok2 and vis)
+            .. " · Deckkraft: " .. Num(ok3 and a or nil) .. " (wirksam " .. Num(ok4 and ea or nil) .. ")")
+        local okS, sc = pcall(f.GetEffectiveScale, f)
+        local okL, l, b, w, h = pcall(f.GetRect, f)
+        local sw = _G.GetScreenWidth and _G.GetScreenWidth()
+        local sh = _G.GetScreenHeight and _G.GetScreenHeight()
+        add("  Lage: " .. (okL and type(l) == "number" and string.format("%d,%d (%dx%d)", l, b, w or 0, h or 0) or "unbekannt")
+            .. " · Bildschirm " .. Num(sw) .. "x" .. Num(sh) .. " · Skalierung " .. Num(okS and sc or nil))
+        add("  In Gruppe ausblenden: " .. YesNo(Opt("player_hideInGroup")) .. " · in Gruppe: "
+            .. YesNo(K.Bool(_G.IsInGroup and _G.IsInGroup(), false)) .. " · Treiber aktiv: " .. YesNo(f._groupDriver))
+        local cast = f._cast
+        if cast then
+            add("  Zauberbalken: " .. (Opt("player_cast") and "an" or "AUS") .. " · ersetzt den des Spiels: "
+                .. YesNo(Opt("replacePlayerCast")) .. " · haengt am Spielerrahmen")
+        end
+    end
+    if P then
+        local G = function(k) local v = K.Get("general", k) if v == nil then v = P.DEFAULTS[k] end return v end
+        add("Ruhe und Kampf: " .. (G("presence") and "an" or "aus") .. " · Zustand: " .. tostring(P.State())
+            .. " · Spielerrahmen in Ruhe: " .. tostring(G("fade_player")) .. " %"
+            .. (G("presenceCombatOnly") and " · nur der Kampf zählt" or ""))
+        if G("presence") and type(G("fade_player")) == "number" and G("fade_player") <= 10 then
+            add("  → In Ruhe ist der Spielerrahmen (mit Zauberbalken) fast oder ganz unsichtbar."
+                .. " Einstellen unter /wcui → Allgemein → Ruhe und Kampf.")
+        end
+    end
+    local gf = _G.PlayerFrame
+    if gf then
+        local okA, ga = pcall(gf.GetAlpha, gf)
+        add("Spielerrahmen des Spiels: gezeigt " .. YesNo(gf.IsShown and gf:IsShown())
+            .. " · Deckkraft " .. Num(okA and ga or nil) .. (f and " (ersetzt, darf aus sein)" or ""))
+    end
+    add("Sofort zurückholen: /wcui rahmen zurück")
+    return out
+end
+
+-- Holt den Rahmen zurueck: Platz des Layouts, volle Deckkraft, Gruppen-
+-- Treiber geloest, wenn die Einstellung aus ist. Aendert keine Einstellung.
+function UF.RescueFrame()
+    local f = frames.player
+    if not f then return "Kein Spielerrahmen von WeintCodex – Einheitenrahmen → Spieler einschalten und /reload." end
+    if K.InCombat() then return "Im Kampf geht das nicht – nach dem Kampf noch einmal." end
+    local ui = K.Profile()
+    if ui and ui.positions then ui.positions["uf_player"] = nil end
+    if K.ApplyPosition then pcall(K.ApplyPosition, "uf_player") end
+    if f._groupDriver and not Opt("player_hideInGroup") and _G.UnregisterStateDriver then
+        _G.UnregisterStateDriver(f, "visibility")
+        f._groupDriver = nil
+    end
+    if not f._groupDriver then f:Show() end
+    f:SetAlpha(1)
+    local P = WeintCodex.UIPresence
+    if P and P.Apply then P.Apply(true) end
+    f:Refresh()
+    return "Spielerrahmen zurück an seinem Standardplatz."
+end
+
 local function OnSetting(key)
     for _, f in pairs(frames) do
         f:Layout()

@@ -9,6 +9,20 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.0.8.17] – 2026-11-23
+
+### Neu
+- `/wcui rahmen` (`UF.FrameReport`, Rueckmeldung: „Spielerfenster und
+  Zauberbalken verschwinden haeufig, auch nach Neustart und Aus/An der
+  Module“): Schalter, gezeigt/sichtbar, Deckkraft (auch wirksam), Lage und
+  Bildschirm, Gruppen-Treiber, Ruhe und Kampf (Zustand, `fade_player`),
+  Spielerrahmen des Spiels. Ursache nicht reproduziert – der Bericht soll
+  sie zeigen. Verdacht: „Ruhe und Kampf“ mit `fade_player` nahe 0 (wirkt
+  genau ausserhalb des Kampfes, ist eine Einstellung und ueberlebt daher
+  jeden Neustart; der Zauberbalken haengt am Spielerrahmen).
+- `/wcui rahmen zurück` (`UF.RescueFrame`): Standardplatz, volle Deckkraft,
+  verwaister Gruppen-Treiber geloest; aendert keine Einstellung.
+
 ## [1.0.8.16] – 2026-11-23
 
 ### Behoben

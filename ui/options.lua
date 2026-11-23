@@ -2014,6 +2014,18 @@ local function SlashUI(msg)
         end
         return
     end
+    if msg == "rahmen" or msg == "frames" then
+        local UF = WeintCodex.UIUnitFrames
+        for _, line in ipairs(UF and UF.FrameReport and UF.FrameReport() or { "Einheitenrahmen nicht geladen." }) do
+            print(WeintCodex.ColorText("accent", "[WeintCodex]") .. " " .. line)
+        end
+        return
+    end
+    if msg == "rahmen zurück" or msg == "rahmen zurueck" or msg == "frames reset" then
+        local UF = WeintCodex.UIUnitFrames
+        print(WeintCodex.ColorText("accent", "[WeintCodex]") .. " " .. (UF and UF.RescueFrame and UF.RescueFrame() or "Einheitenrahmen nicht geladen."))
+        return
+    end
     if msg == "essen" or msg == "food" then
         local R = WeintCodex.UIReminders
         for _, line in ipairs(R and R.FoodReport and R.FoodReport() or { "Erinnerungen nicht geladen." }) do
