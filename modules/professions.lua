@@ -235,6 +235,81 @@ function PRO.Memory()
     return m
 end
 
+-- 1.0.8.16 (Rueckmeldung: Berufe doppelt seit der Aenderung am Client):
+-- eine Anmeldung ohne Realm legte "Shooty-" neben "Shooty-Realm" an.
+-- Gleicher Name, Realm gleich nach `Names.RealmKey` oder leer bei genau
+-- einem echten Realm: zusammenlegen in den Eintrag mit Realm. Gelernte
+-- Rezepte und Namen vereint, je Beruf der juengste Scan, Fertigkeiten vom
+-- juengeren Stand. Wirklich verschiedene Realms bleiben getrennt.
+local function MergeProf(into, from)
+    into.known, into.scanned, into.names = into.known or {}, into.scanned or {}, into.names or {}
+    for k, v in pairs(type(from.known) == "table" and from.known or {}) do if v == true then into.known[k] = true end end
+    for k, v in pairs(type(from.names) == "table" and from.names or {}) do
+        if type(into.names[k]) ~= "string" then into.names[k] = v end
+    end
+    for k, v in pairs(type(from.scanned) == "table" and from.scanned or {}) do
+        if type(v) == "number" and (type(into.scanned[k]) ~= "number" or v > into.scanned[k]) then into.scanned[k] = v end
+    end
+    if type(from.skills) == "table" and next(from.skills) ~= nil
+       and (type(into.skills) ~= "table" or next(into.skills) == nil
+            or (tonumber(from.skillsAt) or 0) > (tonumber(into.skillsAt) or 0)) then
+        into.skills, into.skillsAt = from.skills, from.skillsAt
+    end
+end
+
+function PRO.Dedupe()
+    local sd = WeintCodex.SavedData
+    local all = type(sd) == "table" and sd.professions
+    if type(all) ~= "table" then return 0 end
+    local RK = WeintCodex.Names.RealmKey
+    local byName = {}
+    for key, m in pairs(all) do
+        if type(key) == "string" and type(m) == "table" then
+            local n, r = key:match("^(.-)%-(.*)$")
+            if not n then n, r = key, "" end
+            byName[n] = byName[n] or {}
+            table.insert(byName[n], { key = key, rk = RK(r) })
+        end
+    end
+    local removed = 0
+    for _, list in pairs(byName) do
+        if #list > 1 then
+            local real, blank, groups = {}, {}, {}
+            for _, e in ipairs(list) do
+                if e.rk == "" then blank[#blank + 1] = e
+                else
+                    if not real[e.rk] then real[e.rk] = {} groups[#groups + 1] = real[e.rk] end
+                    table.insert(real[e.rk], e)
+                end
+            end
+            if #blank > 0 and #groups == 1 then
+                for _, e in ipairs(blank) do table.insert(groups[1], e) end
+            elseif #blank > 1 then
+                groups[#groups + 1] = blank
+            end
+            for _, g in ipairs(groups) do
+                if #g > 1 then
+                    -- Ziel: ein Eintrag mit Realm, sonst der juengste Stand.
+                    table.sort(g, function(a, b)
+                        if (a.rk ~= "") ~= (b.rk ~= "") then return a.rk ~= "" end
+                        local ta = tonumber(all[a.key].skillsAt) or 0
+                        local tb = tonumber(all[b.key].skillsAt) or 0
+                        if ta ~= tb then return ta > tb end
+                        return a.key < b.key
+                    end)
+                    local into = all[g[1].key]
+                    for i = 2, #g do
+                        MergeProf(into, all[g[i].key])
+                        all[g[i].key] = nil
+                        removed = removed + 1
+                    end
+                end
+            end
+        end
+    end
+    return removed
+end
+
 -- 1.0.3.5 (Rezeptsuche im Discord nur auf Englisch): der Name eines
 -- gelernten Rezepts so, wie ihn der Client nennt (deutsch im deutschen
 -- Spiel). Der Bestand kennt nur die englischen Namen; die Companion
@@ -1825,6 +1900,7 @@ end
 PRO.eventCount = {}
 ev:SetScript("OnEvent", WeintCodex.Measured("Berufe", function(_, event, id)
     PRO.eventCount[event] = (PRO.eventCount[event] or 0) + 1
+    if event == "PLAYER_LOGIN" then pcall(PRO.Dedupe) end
     if event == "PLAYER_LOGIN" or event == "SKILL_LINES_CHANGED" then pcall(PRO.RememberSkills) end
     if event == "PLAYER_LOGIN" then
         -- 1.0.1.6: noch einmal, wenn der Client die Berufe sicher kennt.

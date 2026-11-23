@@ -9,6 +9,20 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.0.8.16] – 2026-11-23
+
+### Behoben
+- Berufe doppelt (`modules/professions.lua`, Rueckmeldung: „bei den Berufen
+  ist das aehnlich“ – nach dem doppelten Gold): eine Anmeldung ohne Realm
+  legte `professions["Shooty-"]` neben `professions["Shooty-Realm"]` an.
+  `PRO.Dedupe` beim Einloggen legt zusammen, mit denselben Regeln wie
+  `IV.Dedupe` (gleicher Name, Realm gleich nach `Names.RealmKey` oder leer
+  bei genau einem echten Realm): Rezepte und Namen vereint, je Beruf der
+  juengste Scan, Fertigkeiten vom juengeren Stand. Verschiedene Realms
+  bleiben getrennt.
+- `IV.RealmKey` ist jetzt `WeintCodex.Names.RealmKey` (`core/names.lua`),
+  von Bestand und Berufen gemeinsam genutzt.
+
 ## [1.0.8.15] – 2026-11-23
 
 ### Geaendert

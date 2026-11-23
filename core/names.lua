@@ -119,6 +119,16 @@ function WeintCodex.Names.Blank(v)
     v = v:gsub("\194\160", ""):gsub("\226\128[\128-\143]", ""):gsub("\239\187\191", ""):gsub("%s+", "")
     return v == ""
 end
+-- Realm zum Vergleichen (Gross/Klein, Leerraum, Bindestrich, Apostroph,
+-- unsichtbare Zeichen egal). Seit 1.0.8.16 hier, damit Bestand und Berufe
+-- dieselbe Regel nutzen; die Companion rechnet gleich (`realm_key`).
+function WeintCodex.Names.RealmKey(r)
+    if type(r) ~= "string" then return "" end
+    r = r:gsub("\194\160", ""):gsub("\226\128[\128-\143]", ""):gsub("\239\187\191", "")
+    -- erst den typografischen Apostroph (drei Bytes), dann Einzelzeichen:
+    -- Mehrbyte-Zeichen in einer Klasse [...] wuerden Bytes anderer Buchstaben treffen.
+    return (r:gsub("\226\128\153", ""):lower():gsub("[%s%-']", ""))
+end
 local function Open(v)
     local f = _G.issecretvalue
     if f and f(v) then return nil end

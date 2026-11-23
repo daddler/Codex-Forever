@@ -28965,6 +28965,40 @@ do
     Check(ok, "Bestand: derselbe Charakter unter zwei Realm-Schreibweisen zaehlt einmal" .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 1.0.8.16: Berufe doppelt ("Shooty-" ohne Realm neben "Shooty-Realm").
+do
+    local ok, err = pcall(function()
+        local PRO = WeintCodex.Professions
+        assert(PRO and PRO.Dedupe, "PRO.Dedupe fehlt")
+        local sd = WeintCodex.SavedData
+        local keep = sd.professions
+        sd.professions = {
+            ["Shooty-"] = { known = { [7] = true }, scanned = { mining = 50 }, names = { [7] = "Sieben" },
+                            skills = { mining = { rank = 199, max = 225 } }, skillsAt = 300 },
+            ["Shooty-CAMWOW EU4"] = { known = { [8] = true }, scanned = { mining = 10 }, names = {},
+                                      skills = { mining = { rank = 194, max = 225 } }, skillsAt = 200 },
+            ["Echo-Realm A"] = { known = {}, scanned = {} },
+            ["Echo-Realm B"] = { known = {}, scanned = {} },
+            ["Peng-ForeverEU"] = { known = { [1] = true }, scanned = {}, skillsAt = 5 },
+            ["Peng-forever eu"] = { known = { [2] = true }, scanned = {}, skillsAt = 9 },
+        }
+        local removed = PRO.Dedupe()
+        local p = sd.professions
+        assert(removed == 2, "zusammengelegt: " .. removed)
+        local s = p["Shooty-CAMWOW EU4"]
+        assert(s and not p["Shooty-"], "leerer Realm nicht zusammengelegt")
+        assert(s.known[7] and s.known[8], "Rezepte verloren")
+        assert(s.scanned.mining == 50 and s.names[7] == "Sieben", "Scan/Namen nicht uebernommen")
+        assert(s.skills.mining.rank == 199, "aelterer Stand gewann")
+        assert(p["Echo-Realm A"] and p["Echo-Realm B"], "verschiedene Realms zusammengelegt")
+        local n = 0
+        for k, m in pairs(p) do if k:find("^Peng%-") then n = n + 1 assert(m.known[1] and m.known[2], "Peng unvollstaendig") end end
+        assert(n == 1, "Peng " .. n .. "x")
+        sd.professions = keep
+    end)
+    Check(ok, "Berufe: derselbe Charakter unter zwei Realm-Schreibweisen zaehlt einmal" .. (ok and "" or (": " .. tostring(err))))
+end
+
 -- 1.0.7.30: Flugpunkt-Erinnerung nach Entfernung.
 do
     local ok, err = pcall(function()

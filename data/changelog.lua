@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.0.8.16",
+        date    = "23.11.2026",
+        notes   = {
+            "|cff7C6CFFBerufe nicht mehr doppelt|r – seit der Änderung am Spiel konnte ein Charakter seine Berufe zweimal gespeichert haben, einmal ohne Realm. Beim Einloggen werden beide Einträge zusammengelegt; gelernte Rezepte gehen dabei nicht verloren, die Fertigkeit kommt vom neueren Stand.",
+        },
+    },
+    {
         version = "1.0.8.15",
         date    = "23.11.2026",
         notes   = {

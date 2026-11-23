@@ -647,13 +647,7 @@ end
 -- Behalten wird der zuletzt gelesene (c.at), die anderen fallen weg.
 -- Wirklich verschiedene Realm-Namen werden NIE zusammengelegt - zwei
 -- Charaktere gleichen Namens auf zwei Realms gibt es.
-function IV.RealmKey(r)
-    if type(r) ~= "string" then return "" end
-    r = r:gsub("\194\160", ""):gsub("\226\128[\128-\143]", ""):gsub("\239\187\191", "")
-    -- erst den typografischen Apostroph (drei Bytes), dann Einzelzeichen:
-    -- Mehrbyte-Zeichen in einer Klasse [...] wuerden Bytes anderer Buchstaben treffen.
-    return (r:gsub("\226\128\153", ""):lower():gsub("[%s%-']", ""))
-end
+IV.RealmKey = WeintCodex.Names.RealmKey
 function IV.Dedupe()
     local st = IV.Store(false)
     if not st then return 0 end
