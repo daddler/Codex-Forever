@@ -12,6 +12,12 @@ nicht zusammen.
 ## [1.0.8.26] – 2026-11-24
 
 ### Geändert
+- Gruppenrahmen (`ui/groupframes.lua`): der Kopfrahmen des Schlachtzugs
+  entsteht erst im Schlachtzug (`GF.EnsureRaid`, bei `GROUP_ROSTER_UPDATE`
+  und im Testmodus ab sechs, immer außerhalb des Kampfes); Anker und Platz
+  im Gestaltungsmodus gleich (`Anchor`). Anlass: `/wcui speicher` maß beim
+  Einschalten 4057 Fenster, ~25 MB und 289 ms – 40 Knöpfe mit je rund 80
+  Teilen auf Vorrat.
 - Fenster-Takt (`ui/windows.lua`): `W.Tick` gestaltet je Lauf nur noch EIN
   offenes Fenster (`W.InnerStep`, reihum, Karte als letzter Platz);
   `W.Inner` macht beim Öffnen, Blättern und in Gesprächen weiter alles auf

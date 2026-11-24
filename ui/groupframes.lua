@@ -839,6 +839,7 @@ GF._Style = Style   -- fuer den Prueflauf: einen Knopf einrichten wie der Kopfra
 --------------------------------------------------
 
 local headers = {}   -- [kind] = { header, anchor, max }
+local anchors = {}   -- [kind] = Anker (auch ohne Kopfrahmen)
 
 local function Children(header, max)
     local out = {}
@@ -917,32 +918,53 @@ end
 
 local function Configure(kind)
     local hd = headers[kind]
-    if not hd then return end
-    local h = hd.header
+    local anchor = anchors[kind]
+    if not anchor then return end
     local w, ht, sp = Opt(kind .. "Width"), Opt(kind .. "Height"), Opt(kind .. "Spacing")
-    for _, b in ipairs(Children(h, hd.max)) do
-        Style(b)
-        b:SetSize(w, ht)
-        b:Layout(w, ht)
-        b:Refresh()
+    if hd then
+        local h = hd.header
+        for _, b in ipairs(Children(h, hd.max)) do
+            Style(b)
+            b:SetSize(w, ht)
+            b:Layout(w, ht)
+            b:Refresh()
+        end
+        LayoutAttributes(kind, h)
     end
-    LayoutAttributes(kind, h)
     if kind == "tank" then
-        hd.anchor:SetSize(w, 5 * ht + 4 * sp)
+        anchor:SetSize(w, 5 * ht + 4 * sp)
     elseif kind == "raid" and Opt("raidHorizontal") then
-        hd.anchor:SetSize(5 * w + 4 * sp, 8 * ht + 7 * sp)
+        anchor:SetSize(5 * w + 4 * sp, 8 * ht + 7 * sp)
     elseif kind == "raid" then
-        hd.anchor:SetSize(8 * w + 7 * sp, 5 * ht + 4 * sp)
+        anchor:SetSize(8 * w + 7 * sp, 5 * ht + 4 * sp)
     elseif Opt("partyHorizontal") then
-        hd.anchor:SetSize(5 * w + 4 * sp, ht)
+        anchor:SetSize(5 * w + 4 * sp, ht)
     else
-        hd.anchor:SetSize(w, 5 * ht + 4 * sp)
+        anchor:SetSize(w, 5 * ht + 4 * sp)
     end
-    h:ClearAllPoints()
-    h:SetPoint("TOPLEFT", hd.anchor, "TOPLEFT", 0, 0)
+    if hd then
+        hd.header:ClearAllPoints()
+        hd.header:SetPoint("TOPLEFT", anchor, "TOPLEFT", 0, 0)
+    end
+end
+
+-- Anker und Platz im Gestaltungsmodus: gleich beim Einschalten, auch wenn
+-- der Kopfrahmen selbst noch fehlt (Schlachtzug, siehe GF.EnsureRaid).
+local function Anchor(kind)
+    local anchor = anchors[kind]
+    if anchor then return anchor end
+    anchor = CreateFrame("Frame", nil, UIParent)
+    anchor:SetSize(100, 100)
+    anchor.WCShowForUnlock = function() end
+    anchors[kind] = anchor
+    local mkey = "gf_" .. kind
+    K.RegisterMover(anchor, mkey, kind == "tank" and "Tanks" or (kind == "raid" and "Schlachtzug" or "Gruppe"),
+        K.Layout(mkey), { secure = true })
+    return anchor
 end
 
 local function CreateHeader(kind)
+    if headers[kind] then return end
     local isRaid = (kind == "raid")
     local isTank = (kind == "tank")
     local name = isTank and "WeintCodexTankHeader" or (isRaid and "WeintCodexRaidHeader" or "WeintCodexPartyHeader")
@@ -981,13 +1003,7 @@ local function CreateHeader(kind)
     h:Show()
     h:SetAttribute("startingIndex", 1)
 
-    local anchor = CreateFrame("Frame", nil, UIParent)
-    anchor:SetSize(100, 100)
-    anchor.WCShowForUnlock = function() end
-    headers[kind] = { header = h, anchor = anchor, max = max }
-    local mkey = "gf_" .. kind
-    K.RegisterMover(anchor, mkey, isTank and "Tanks" or (isRaid and "Schlachtzug" or "Gruppe"),
-        K.Layout(mkey), { secure = true })
+    headers[kind] = { header = h, anchor = Anchor(kind), max = max }
 
     Configure(kind)
 
@@ -995,6 +1011,32 @@ local function CreateHeader(kind)
         _G.RegisterStateDriver(h, "visibility", isTank and "[group] show; hide"
             or (isRaid and "[group:raid] show; hide" or "[group:party,nogroup:raid] show; hide"))
     end
+end
+
+-- 1.0.8.26 (/wcui speicher: "groupframes ~25940 KB, 4057 Fenster,
+-- 288,8 ms" beim Einschalten): der Kopfrahmen des Schlachtzugs legt seine
+-- 40 Knoepfe mit je rund 80 Teilen auf Vorrat an - auch fuer jeden, der
+-- nie in einen Schlachtzug geht. Jetzt entsteht er erst beim ersten
+-- Schlachtzug (oder Testmodus ab sechs), immer ausserhalb des Kampfes. Wird
+-- man IM Kampf in einen Schlachtzug geholt, kommen die Rahmen nach dem
+-- Kampf. Einmal angelegt, bleibt er bis zum Neuladen.
+GF.raidWanted = false
+function GF.InRaid()
+    local f = _G.IsInRaid
+    return type(f) == "function" and K.Bool(f(), false) or false
+end
+function GF.EnsureRaid(cb)
+    if headers.raid or not GF.raidWanted then
+        if cb and headers.raid then cb() end
+        return
+    end
+    K.AfterCombat(function()
+        if headers.raid then if cb then cb() end return end
+        CreateHeader("raid")
+        Remap()
+        GF.ApplyClicks()
+        if cb then cb() end
+    end)
 end
 
 --------------------------------------------------
@@ -1035,6 +1077,10 @@ function GF.ShowTest(on, n)
     if n then GF.testCount = math.max(1, math.min(40, math.floor(n))) end
     for _, b in pairs(testButtons) do b:Hide() end
     n = GF.testCount
+    if on and n > 5 and not headers.raid and GF.raidWanted then
+        GF.EnsureRaid(function() GF.ShowTest(true) end)
+        return
+    end
     local kind = (n > 5 and headers.raid) and "raid" or "party"
     local hd = headers[kind]
     if not on or not hd or (hd.header.IsVisible and hd.header:IsVisible()) then return end
@@ -1138,7 +1184,7 @@ end
 local function RestyleLater()
     local function run()
         K.AfterCombat(function()
-            for kind in pairs(headers) do Configure(kind) end
+            for kind in pairs(anchors) do Configure(kind) end
             Remap()
             GF.ApplyClicks()
         end)
@@ -1152,6 +1198,7 @@ local function OnEvent(_, event, unit, ...)
         return
     end
     if event == "GROUP_ROSTER_UPDATE" or event == "PLAYER_ENTERING_WORLD" then
+        if not headers.raid and GF.raidWanted and GF.InRaid() then GF.EnsureRaid() end
         RestyleLater()
     end
     if event == "GROUP_ROSTER_UPDATE" or event == "PLAYER_ENTERING_WORLD"
@@ -1241,7 +1288,9 @@ local function Enable()
             K.HideBlizzard("CompactPartyFrame")
         end
         if Opt("raidEnabled") then
-            CreateHeader("raid")
+            GF.raidWanted = true
+            Anchor("raid")
+            if GF.InRaid() then CreateHeader("raid") else Configure("raid") end
             K.HideBlizzard("CompactRaidFrameContainer")
             K.HideBlizzard("CompactRaidFrameManager")
         end
@@ -1278,7 +1327,7 @@ local function OnSetting(key)
     local GG = WeintCodex.UIGameGroup
     if (key == "leaderIcon" or key == "*") and GG and GG.UpdateLeaders then GG.UpdateLeaders() end
     K.AfterCombat(function()
-        for kind in pairs(headers) do Configure(kind) end
+        for kind in pairs(anchors) do Configure(kind) end
         GF.ApplyGameOrientation(key)
         GF.ApplyClicks()
     end)

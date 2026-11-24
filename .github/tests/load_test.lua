@@ -27210,6 +27210,24 @@ do
     Check(ok, "Plaketten: Bosse der neuen Dungeons über ihre NPC-Nummer" .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 1.0.8.26 (/wcui speicher: groupframes 4057 Fenster beim Einschalten):
+-- der Schlachtzugsrahmen entsteht erst im Schlachtzug, sein Platz im
+-- Gestaltungsmodus gleich.
+do
+    local GF = WeintCodex.UIGroupFrames
+    local ok, err = pcall(function()
+        assert(GF.raidWanted, "Schlachtzugsrahmen ab Werk nicht gewollt - Test passt nicht mehr")
+        assert(_G.WeintCodexRaidHeader == nil, "Schlachtzugsrahmen ohne Schlachtzug angelegt")
+        assert(_G.WeintCodexPartyHeader ~= nil, "Gruppenrahmen fehlt")
+        local oldR = _G.IsInRaid
+        _G.IsInRaid = function() return false end
+        GF.EnsureRaid()
+        assert(_G.WeintCodexRaidHeader ~= nil, "EnsureRaid legt nicht an")
+        _G.IsInRaid = oldR
+    end)
+    Check(ok, "Gruppenrahmen: Schlachtzug erst bei Bedarf" .. (ok and "" or (": " .. tostring(err))))
+end
+
 do
     local K = WeintCodex.UIKit
     local ok, err = pcall(function()
