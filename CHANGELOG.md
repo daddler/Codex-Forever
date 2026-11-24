@@ -12,6 +12,21 @@ nicht zusammen.
 ## [1.0.8.23] – 2026-11-24
 
 ### Behoben
+- Routenplaner kippte unterwegs (Beta-Test: Buch im Hinterland – „Flug zur
+  Zuflucht“, nach ein paar Schritten „Flug ins Hinterland“). Gemessen über
+  alle Allianz-Flugpunkte des Kontinents mit dem Pfeil folgend: vorher
+  Wechsel, jetzt keiner. Drei Ursachen: (1) die Fußweg-Schätzung
+  „Wegstrecke zwischen festen Orten minus Abstand“ wuchs, wenn man auf das
+  Ziel zulief, und sprang, wenn der nächste feste Ort wechselte – jetzt
+  Umwegfaktor (Wegstrecke ÷ Luftlinie) gewichtet über alle festen Orte im
+  Umkreis, mal der eigenen Luftlinie (`RT.Detour`), stetig; Berg-Schutz
+  (Gnomeregan) und Teldrassil-Regel bleiben; (2) Hysterese in `RT.Plan`: eine
+  neue Route löst nur ab, wenn sie von der jetzigen Lage aus nachgerechnet
+  ≥ 45 s und ≥ 12 % schneller ist (`RT.Remaining`, `RT.StillGood`);
+  (3) Geschwindigkeit = schnellste gesehene der Sitzung (max. 14, nicht im
+  Flug) statt der jetzigen. Ob Zuflucht oder Nistgipfel im Hinterland
+  wirklich schneller ist, kann der Planer ohne Gelände nicht sicher sagen –
+  er bleibt jetzt aber bei seiner Wahl.
 - Seite „Bücher“ brach ab (Fehlerbericht 1.0.8.22: `core/navigation.lua:2142:
   attempt to call a nil value` in `GetItemInfo`): der Baustein `itemlist` des
   Detailbereichs rief das globale `GetItemInfo`/`GetItemIcon`/

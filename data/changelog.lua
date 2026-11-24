@@ -25,6 +25,7 @@ WeintCodex_ChangelogData = {
         version = "1.0.8.23",
         date    = "24.11.2026",
         notes   = {
+            "|cff7C6CFFQuestpfeil bleibt bei seiner Route|r – unterwegs wechselt er nicht mehr nach ein paar Schritten zwischen zwei fast gleich schnellen Wegen hin und her. Eine andere Route nimmt er erst, wenn sie deutlich schneller ist – etwa weil du in eine andere Richtung läufst. Auf- und Absitzen ändert die Rechnung nicht mehr.",
             "|cff7C6CFFBücher öffnen sich wieder|r – ein Klick auf „Bücher“ brach mit einem Fehler ab, seit die Seite die Belohnungen zeigt.",
             "|cff7C6CFFQuestgegenstände prüfen|r – der Tooltip eines Questgegenstands sagt, ob du ihn noch brauchst: behalten, kann weg oder unklar, mit den Quests dazu. Unter Taschen → Questgegenstände siehst du alle auf einen Blick, das Unnötige zuerst. Ein Klick merkt sich einen Gegenstand als „immer behalten“. Gelöscht wird nie etwas – „kann weg“ steht nur, wenn alle seine Quests erledigt oder nicht für deinen Charakter sind.",
             "|cff7C6CFFKlassenquests: lohnt sich das?|r – ein Klick auf eine Klassenquest zeigt rechts ihre Belohnungen mit Symbol und Tooltip, fest und zur Wahl, dazu was Forever neu gibt. Neben jedem Gegenstand steht seine Stufe gegen das, was du im selben Platz trägst; in der Liste markiert „Belohnung besser als angelegt“ die Quests, die dich weiterbringen.",

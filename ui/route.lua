@@ -52,6 +52,14 @@ RT.ANCHOR_AGE  = 6 * 3600
 RT.REPLAN_EVERY, RT.REPLAN_MOVE = 3, 20
 RT.HEARTH_ITEM = 6948
 RT.TRAM_MAP = 369      -- die Tiefenbahn liegt auf einer eigenen Karte
+-- 1.0.8.23 (Beta-Test: "der Pfeil empfahl bis zur Zuflucht zu fliegen, nach
+-- ein paar Schritten doch den Greifenmeister ins Hinterland"): gemessen
+-- kippte der Planer an vielen Orten nach 25-50 Schritten zwischen zwei fast
+-- gleich schnellen Wegen. Eine gewaehlte Route bleibt, bis eine neue - von
+-- der jetzigen Lage aus nachgerechnet - deutlich schneller ist.
+RT.SWITCH_GAIN  = 45   -- s: so viel schneller muss eine andere Route sein ...
+RT.SWITCH_SHARE = 0.12 -- ... und mindestens dieser Anteil der Gesamtzeit
+RT.MAX_SPEED    = 14   -- Laufen/Reiten hoechstens (100 %-Reittier)
 
 local KIND_LEG = { flight = "Flug nach", boat = "Schiff nach", zeppelin = "Zeppelin nach",
     tram = "Tiefenbahn nach", lift = "Aufzug nach", portal = "Portal nach", teleport = "Teleport nach" }
@@ -237,13 +245,20 @@ local function Usable(faction, mine)
     return faction == 0 or faction == 3 or (mine ~= nil and faction == mine)
 end
 
+-- 1.0.8.23: die schnellste gesehene Geschwindigkeit dieser Sitzung (nicht
+-- im Flug), hoechstens RT.MAX_SPEED - Auf- und Absitzen wechselt sonst die
+-- Rechnung und mit ihr die Route.
+RT.bestSpeed = nil
 function RT.WalkSpeed()
-    if _G.GetUnitSpeed then
+    if _G.GetUnitSpeed and not (_G.UnitOnTaxi and K.Bool(_G.UnitOnTaxi("player"), false)) then
         local ok, _, run = pcall(_G.GetUnitSpeed, "player")
         run = ok and K.Plain(run)
-        if type(run) == "number" and run > 0.5 then return math.max(run, RT.WALK_SPEED) end
+        if type(run) == "number" and run > 0.5 then
+            run = math.min(run, RT.MAX_SPEED)
+            if not RT.bestSpeed or run > RT.bestSpeed then RT.bestSpeed = run end
+        end
     end
-    return RT.WALK_SPEED
+    return math.max(RT.bestSpeed or 0, RT.WALK_SPEED)
 end
 
 local function Dist(a, b)
@@ -254,13 +269,72 @@ local function Walkable(a, b)
     return a.c == b.c and a.mass == b.mass
 end
 
+-- 1.0.8.23: Umwegfaktor zwischen zwei Lagen (Wegstrecke durch Luftlinie der
+-- festen Orte), gewichtet ueber alle festen Orte im Umkreis RT.NEAR - je
+-- naeher, desto mehr (1 / (Abstand + RT.DETOUR_SOFT)^2). Ein fester Knoten
+-- zaehlt nur mit seinem eigenen Ort. Stetig: ein Ort, der in den Umkreis
+-- kommt oder der naechste wird, verschiebt den Faktor nur wenig. Vorher
+-- "Wegstrecke minus Abstand" ab dem naechsten Ort - wer auf das Ziel zulief,
+-- bekam eine laengere Schaetzung (Chillwind -> Hinterland 2626 -> 2850), und
+-- wechselte der naechste Ort, sprang sie; die Route kippte nach wenigen
+-- Schritten. Rueckgabe: Faktor >= 1, nil (nichts bekannt), false (kein Weg).
+RT.DETOUR_SOFT = 60
+local candA, candB = {}, {}
+local function Candidates(node, out)
+    local n = 0
+    if node.place then
+        out[1], out[2], n = node.place, 1, 1
+    else
+        for i = 1, #(places or {}) do
+            local p = places[i]
+            if p[1] == node.c then
+                local d = math.sqrt((p[2] - node.n) ^ 2 + (p[3] - node.w) ^ 2)
+                if d <= RT.NEAR then
+                    n = n + 1
+                    out[2 * n - 1], out[2 * n] = i, 1 / (d + RT.DETOUR_SOFT) ^ 2
+                end
+            end
+        end
+    end
+    return n
+end
+function RT.Detour(a, b)
+    local na, nb = Candidates(a, candA), Candidates(b, candB)
+    if na == 0 or nb == 0 then return nil end
+    local sum, wsum, blocked = 0, 0, 0
+    for i = 1, na do
+        local pa, wa = candA[2 * i - 1], candA[2 * i]
+        for j = 1, nb do
+            local pb, wb = candB[2 * j - 1], candB[2 * j]
+            local k
+            if pa == pb then
+                k = 1
+            else
+                local y = walkTo[pa] and walkTo[pa][pb]
+                if y == false then
+                    blocked = blocked + wa * wb
+                elseif y then
+                    local p1, p2 = places[pa], places[pb]
+                    local base = math.sqrt((p1[2] - p2[2]) ^ 2 + (p1[3] - p2[3]) ^ 2)
+                    k = base >= 1 and math.max(1, y / base) or 1
+                end
+            end
+            if k then sum, wsum = sum + wa * wb * k, wsum + wa * wb end
+        end
+    end
+    if wsum == 0 then return blocked > 0 and false or nil end
+    -- Ueberwiegend kein Weg zwischen den Orten: keiner.
+    if blocked > wsum then return false end
+    return sum / wsum
+end
+
 -- Laufstrecke in Spieleinheiten, oder nil, wenn es keinen Weg gibt.
 -- Feste Orte: aus dem Bestand. Spieler/Ziel (near, nearD): Luftlinie, aber
 -- mindestens die echte Strecke ab ihrem festen Ort minus dessen Abstand.
 function RT.WalkYards(a, b)
     if not Walkable(a, b) then return nil end
     local straight = Dist(a, b)
-    local pa, pb = a.place or a.near, b.place or b.near
+    local pa, pb = a.place, b.place
     -- 6.60.2.0 (Beta-Test mit Bild, Teldrassil: von Shadowglen zu einer
     -- Quest 400 Einheiten entfernt fuehrte die Route hinunter, durchs Portal
     -- nach Darnassus und zurueck). Start und Ziel lagen je rund 1800 vom
@@ -270,15 +344,18 @@ function RT.WalkYards(a, b)
     local da = a.place and 0 or (a.nearD or 0)
     local db = b.place and 0 or (b.nearD or 0)
     if straight < da + db then return straight end
-    if pa and pb and pa ~= pb then
+    if a.place and b.place then
+        if pa == pb then return straight end
         local y = walkTo[pa] and walkTo[pa][pb]
         if y == false then return nil end
-        if y then
-            if a.place and b.place then return y end
-            return math.max(straight, y - (a.place and 0 or a.nearD) - (b.place and 0 or b.nearD))
-        end
+        return y or straight
     end
-    return straight
+    local k = RT.Detour(a, b)
+    if k == false then return nil end
+    -- Uebergang zur Teldrassil-Regel oben stetig: knapp ueber der Grenze
+    -- zaehlt der Umweg kaum, ab dem Doppelten voll.
+    local share = math.min(1, (straight - da - db) / (da + db + 1))
+    return straight * (1 + ((k or 1) - 1) * share)
 end
 
 --------------------------------------------------
@@ -738,11 +815,55 @@ function RT.Plan(pc, pN, pW, gc, gN, gW)
     end
     last.at, last.gc, last.gN, last.gW = now, gc, gN, gW
     last.pc, last.pN, last.pW = pc, pN, pW
+    local old = last.route
     local ok, route = pcall(RT.Solve, pc, pN, pW, gc, gN, gW)
     if not ok then RT.lastError = route end
-    last.route = ok and route or nil
+    route = ok and route or nil
+    if route and old and old ~= route and old.goal and old.goal[1] == gc and old.goal[2] == gN and old.goal[3] == gW then
+        local keep = RT.StillGood(old, route, pc, pN, pW)
+        if keep then route = old end
+    end
+    last.route = route
     if last.route then last.route.at = now end
     return last.route
+end
+
+-- Was die bisherige Route von hier aus noch kostet: zu Fuss bis zu ihrem
+-- ersten Einstieg, dann ihr Rest wie geplant. nil: nicht nachrechenbar
+-- (Teleport, Lauf ohne Weg) - dann gilt die neue.
+function RT.Remaining(old, pc, pN, pW)
+    local speed = RT.WalkSpeed()
+    START.c, START.n, START.w = pc, pN, pW
+    START.mass = RT.Landmass(pc, pN, pW)
+    START.near, START.nearD = RT.NearestPlace(START, RT.NEAR)
+    if old.direct then
+        local y = RT.WalkYards(START, GOAL)
+        return y and y / speed or nil
+    end
+    local legs = old.legs
+    local first, second = legs[1], legs[2]
+    if not (first and first.mode == "walk" and first.node and second and type(second.at) == "number") then return nil end
+    local y = RT.WalkYards(START, first.node)
+    if not y then return nil end
+    return y / speed + (old.seconds - second.at)
+end
+
+-- true: die bisherige Route bleibt (die neue ist nicht deutlich schneller).
+-- Die behaltene bekommt die nachgerechnete Zeit und die neue Lage.
+function RT.StillGood(old, new, pc, pN, pW)
+    local rest = RT.Remaining(old, pc, pN, pW)
+    if not rest then return false end
+    local margin = math.max(RT.SWITCH_GAIN, (new.seconds or 0) * RT.SWITCH_SHARE)
+    if rest > (new.seconds or 0) + margin then return false end
+    if not old.direct then
+        local d = rest - old.seconds
+        old.seconds = rest
+        for _, leg in ipairs(old.legs) do if type(leg.at) == "number" and leg ~= old.legs[1] then leg.at = leg.at + d end end
+    else
+        old.seconds = rest
+    end
+    old.start = { pc, pN, pW }
+    return true
 end
 function RT.Invalidate() last.at = -100 last.gc = nil end
 

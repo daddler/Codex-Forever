@@ -5106,6 +5106,88 @@ do
         .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 1.0.8.23 (Beta-Test: Buch im Hinterland - "Flug zur Zuflucht", nach ein
+-- paar Schritten "Flug ins Hinterland"): beim Gehen kippt die Route nicht
+-- zwischen fast gleich schnellen Wegen; eine klar schnellere loest ab;
+-- Auf- und Absitzen aendert die Rechnung nicht.
+do
+    local RT = WeintCodex.UIRoute
+    local saved = { RT.Store, _G.UnitFactionGroup, _G.GetUnitSpeed, RT.WalkSpeed, RT.bestSpeed, _G.GetTime }
+    local ok, err = pcall(function()
+        local clock = 1000
+        _G.GetTime = function() return clock end
+        local D = WeintCodex.TravelData
+        local store = { taxi = {}, names = {}, times = {} }
+        for id, t in pairs(D.taxi) do if t[4] ~= 2 then store.taxi[id] = true end end
+        RT.Store = function() return store end
+        _G.UnitFactionGroup = function() return "Alliance" end
+        RT.Build(true)
+        -- Geschwindigkeit: die schnellste gesehene zaehlt, nicht die jetzige.
+        RT.bestSpeed = nil
+        local speed = 14
+        _G.GetUnitSpeed = function() return speed, speed, 7 end
+        assert(RT.WalkSpeed() == 14, "Reittier nicht erkannt")
+        speed = 7
+        assert(RT.WalkSpeed() == 14, "Absitzen aendert die Rechnung")
+        RT.WalkSpeed = function() return 7 end
+        -- Ziel: Shadra'Alor im Hinterland (Buch "Venomous Journeys").
+        local gN, gW = 1466.67 + 0.728 * (-1100 - 1466.67), -1575 + 0.36 * (-5425 + 1575)
+        local function Sig(r)
+            if not r then return "-" end
+            local out = {}
+            for _, l in ipairs(r.legs) do if l.mode ~= "walk" and l.node then out[#out + 1] = l.mode .. tostring(l.node.id or l.node.idx) end end
+            return table.concat(out, ">")
+        end
+        -- Dem Pfeil folgen, von jedem Allianz-Flugpunkt des Kontinents aus:
+        -- die Route bleibt dieselbe (vorher kippte sie z. B. ab Chillwind
+        -- nach 4 Schritten, weil die Fussweg-Schaetzung beim Naeherkommen
+        -- wuchs).
+        local flips, trips = 0, 0
+        for _, st in pairs(D.taxi) do
+            if st[1] == 0 and st[4] ~= 2 then
+                RT.Invalidate()
+                trips = trips + 1
+                local pN, pW, prev = st[2] + 500, st[3] + 350, nil
+                for _ = 1, 40 do
+                    clock = clock + 4
+                    local r = RT.Plan(0, pN, pW, 0, gN, gW)
+                    if not r then break end
+                    local sg = Sig(r)
+                    if prev and sg ~= prev then flips = flips + 1 end
+                    prev = sg
+                    local tgt = (not r.direct) and r.legs[1].node
+                    local tn, tw = gN, gW
+                    if tgt then tn, tw = tgt.n, tgt.w end
+                    local dn, dw = tn - pN, tw - pW
+                    local d = math.sqrt(dn * dn + dw * dw)
+                    if d < 30 then break end
+                    pN, pW = pN + dn / d * 28, pW + dw / d * 28
+                end
+            end
+        end
+        assert(trips > 10 and flips == 0, "Route kippt beim Folgen: " .. flips .. "x in " .. trips .. " Wegen")
+        -- Hysterese: knapp schneller loest nicht ab, deutlich schneller schon.
+        local t = D.taxi[43]
+        RT.Invalidate()
+        clock = clock + 4
+        local cur = RT.Plan(0, t[2] + 100, t[3], 0, gN, gW)
+        local rest = RT.Remaining(cur, 0, t[2] + 100, t[3])
+        assert(rest, "Rest der Route nicht nachrechenbar")
+        assert(RT.StillGood(cur, { seconds = rest - 10 }, 0, t[2] + 100, t[3]), "10 s schneller loest ab")
+        assert(not RT.StillGood(cur, { seconds = rest - 300 }, 0, t[2] + 100, t[3]), "300 s schneller loest nicht ab")
+        -- Klar schneller loest ab: weit weg vom alten Einstieg neu geplant.
+        RT.Invalidate()
+        local a = RT.Plan(0, t[2], t[3], 0, gN, gW)
+        local IF = D.taxi[6]
+        clock = clock + 4
+        local b = RT.Plan(0, IF[2] + 30, IF[3], 0, gN, gW)
+        assert(b and b ~= a and Sig(b):find("flight", 1, true), "neue Lage, alte Route behalten")
+    end)
+    RT.Store, _G.UnitFactionGroup, _G.GetUnitSpeed, RT.WalkSpeed, RT.bestSpeed, _G.GetTime = unpack(saved, 1, 6)
+    RT.Invalidate()
+    Check(ok, "Routenplaner: kein Kippen beim Gehen, klar Schnelleres loest ab, Reiten aendert nichts" .. (ok and "" or (": " .. tostring(err))))
+end
+
 -- 6.40.0.0: Ringe (ui/rings.lua): vier feste Ringe, Markierungen,
 -- Umwandeln in einen eigenen, Eintippen, Fuellen der sicheren Rahmen.
 do
