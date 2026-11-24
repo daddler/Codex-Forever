@@ -136,7 +136,20 @@ function XB.FirstReadyQuest()
     return found
 end
 
+-- 1.0.8.26 (/wcui speicher: Erfahrungsbalken 26,5 KB/s): jede Auswertung
+-- liest alle Quests mit allen Zielen, und je Ereignis lief sie zweimal
+-- (Balken und Text). Solange der Balken die Questereignisse hoert, gilt das
+-- Ergebnis bis zum naechsten Ereignis (XB.qxpLive); sonst wird jedes Mal
+-- neu gerechnet. false = Client kennt die Auskunft nicht.
+XB.qxpLive, XB.qxp = false, nil
 function XB.QuestXP()
+    if XB.qxpLive and XB.qxp ~= nil then return XB.qxp or nil end
+    local r = XB.QuestXPNow()
+    if XB.qxpLive then XB.qxp = r or false end
+    return r
+end
+
+function XB.QuestXPNow()
     local ql = _G.C_QuestLog
     local reward = _G.GetQuestLogRewardXP
     if not (ql and ql.GetNumQuestLogEntries and ql.GetInfo and type(reward) == "function") then return nil end
@@ -474,6 +487,9 @@ function XB.Apply()
     XB.Update()
 end
 
+XB.QUEST_EVENTS = { QUEST_LOG_UPDATE = true, QUEST_TURNED_IN = true, QUEST_ACCEPTED = true, QUEST_REMOVED = true }
+XB.QUEST_DELAY = 0.2
+
 function XB.Enable()
     if frame or not Opt("enabled") then return end
     Build()
@@ -484,13 +500,33 @@ function XB.Enable()
                          "QUEST_LOG_UPDATE", "QUEST_TURNED_IN", "QUEST_ACCEPTED", "QUEST_REMOVED" }) do
         pcall(ev.RegisterEvent, ev, e)
     end
-    ev:SetScript("OnEvent", K.Measured("Erfahrungsbalken", function(_, event)
-        if event == "PLAYER_ENTERING_WORLD" and Opt("hideGame") then XB.HideGameBars() end
-        XB.Track()
-        XB.Update()
-    end))
+    XB.qxpLive = true
+    ev:SetScript("OnEvent", K.Measured("Erfahrungsbalken", function(...) return XB.OnEvent(...) end))
     XB.Track()
     XB.Apply()
+end
+
+-- Ein Schub Questereignisse: einmal zeichnen (eine Huelle fuer alle Schuebe).
+local FlushQuests = K.Measured("Erfahrungsbalken", function()
+    XB.pending = false
+    XB.qxp = nil
+    XB.Update()
+end)
+
+function XB.OnEvent(_, event)
+    XB.qxp = nil
+    if event == "PLAYER_ENTERING_WORLD" and Opt("hideGame") then XB.HideGameBars() end
+    -- Questereignisse kommen in Schueben (QUEST_LOG_UPDATE oft mehrmals je
+    -- Sekunde): einmal je Schub zeichnen, kurz danach.
+    if XB.QUEST_EVENTS[event] and _G.C_Timer and _G.C_Timer.After then
+        if not XB.pending then
+            XB.pending = true
+            _G.C_Timer.After(XB.QUEST_DELAY, FlushQuests)
+        end
+        return
+    end
+    XB.Track()
+    XB.Update()
 end
 
 XB.Frame = function() return frame end

@@ -6857,6 +6857,9 @@ do
         -- 6.6.0.1: Erfahrung aus Quests - abgabebereit gruen im Balken,
         -- ohne die Funktion des Clients keine Auskunft (nie 0).
         local oldQL, oldRX = _G.C_QuestLog, _G.GetQuestLogRewardXP
+        -- 1.0.8.26: hier wechselt der Client ohne Ereignis - ohne Zwischenspeicher rechnen.
+        local oldLive = XB.qxpLive
+        XB.qxpLive, XB.qxp = false, nil
         _G.GetQuestLogRewardXP = nil
         assert(XB.QuestXP() == nil, "Quest-EP ohne Auskunft des Clients")
         local qlog = { { questID = 1 }, { isHeader = true }, { questID = 2 }, { questID = 3 } }
@@ -6873,6 +6876,27 @@ do
         _G.GetQuestLogRewardXP = function() return 3000 end
         XB.Update()
         assert(f.quest:GetValue() == 5000, "Aufstieg: gruenes Stueck laeuft ueber")
+        -- 1.0.8.26: mit Zwischenspeicher zaehlt das Questlog einmal je
+        -- Ereignis, nicht je Abfrage; ein Ereignis rechnet neu.
+        do
+            local reads = 0
+            _G.C_QuestLog = { GetNumQuestLogEntries = function() reads = reads + 1 return #qlog end,
+                              GetInfo = function(i) return qlog[i] end,
+                              ReadyForTurnIn = function(id) return id ~= 3 end }
+            _G.GetQuestLogRewardXP = function(id) return ({ [1] = 800, [2] = 450, [3] = 1000 })[id] end
+            XB.qxpLive, XB.qxp, XB.pending = true, nil, false
+            XB.QuestXP() XB.Update() XB.Label() XB.QuestXP()
+            assert(reads == 1, "Questlog je Abfrage neu gelesen: " .. reads)
+            _G.GetQuestLogRewardXP = function() return 10 end
+            local oldAfter, later = _G.C_Timer.After, {}
+            _G.C_Timer.After = function(_, fn) later[#later + 1] = fn end
+            for _ = 1, 4 do XB.OnEvent(nil, "QUEST_LOG_UPDATE") end
+            _G.C_Timer.After = oldAfter
+            assert(#later == 1, "Schub nicht zusammengefasst: " .. #later)
+            later[1]()
+            assert(XB.QuestXP().all == 30 and reads == 2, "nach dem Ereignis nicht neu gerechnet")
+            XB.qxpLive, XB.qxp = oldLive, nil
+        end
         _G.C_QuestLog, _G.GetQuestLogRewardXP = oldQL, oldRX
         XB.Update()
         assert(not f.quest:IsShown(), "gruenes Stueck ohne Quests")
@@ -14733,6 +14757,33 @@ do
         for _ = 1, 20 do W.Inner() end
         local grew = collectgarbage("count") - k0
         collectgarbage("restart")
+        -- 1.0.8.26: der Takt macht je Lauf EIN offenes Fenster, abwechselnd;
+        -- geschlossene nie. Gemessen je Fenster, ohne die Summe zu doppeln.
+        do
+            local open2 = Build("WCTestOpenFrame2")
+            _G.WCTestOpenFrame2 = open2
+            table.insert(W.WINDOWS, "WCTestOpenFrame2")
+            W.done[open2] = {}
+            local oldMap = _G[W.MAP]
+            _G[W.MAP] = nil
+            local seq = {}
+            for _ = 1, 4 do seq[#seq + 1] = tostring(W.InnerStep()) end
+            assert(table.concat(seq, ",") == "WCTestOpenFrame2,WCTestOpenFrame,WCTestOpenFrame2,WCTestOpenFrame"
+                or table.concat(seq, ",") == "WCTestOpenFrame,WCTestOpenFrame2,WCTestOpenFrame,WCTestOpenFrame2",
+                "Takt wechselt nicht ab: " .. table.concat(seq, ","))
+            assert(asked == 0, "geschlossenes Fenster im Takt durchlaufen")
+            local K = WeintCodex.UIKit
+            K.prof.on = true
+            W.Inner()
+            K.prof.on = false
+            assert(K.prof.data["Fenster: WCTestOpenFrame"] and K.prof.data["Fenster: WCTestOpenFrame"].sub,
+                "Fenster nicht einzeln gemessen")
+            K.prof.data["Fenster: WCTestOpenFrame"], K.prof.data["Fenster: WCTestOpenFrame2"] = nil, nil
+            open2:Hide() shut:Show() shut:Hide()
+            assert(W.InnerStep() == "WCTestOpenFrame" and W.InnerStep() == "WCTestOpenFrame", "geschlossenes Fenster im Wechsel")
+            table.remove(W.WINDOWS)
+            W.done[open2], _G.WCTestOpenFrame2, _G[W.MAP] = nil, nil, oldMap
+        end
         table.remove(W.WINDOWS) table.remove(W.WINDOWS)
         W.done[open], W.done[shut] = nil, nil
         _G.WCTestOpenFrame, _G.WCTestShutFrame = nil, nil
@@ -27175,6 +27226,34 @@ do
         K.prof.data["Prüfteil"] = nil
         local src = io.open(ROOT .. "/ui/postal.lua"):read("*a")
         assert(src:find('WeintCodex.Measured("Post"', 1, true), "Post nicht gemessen")
+        -- 1.0.8.26 (Bericht "UIAuction ~15 MB"): ein Fenster - hier eines
+        -- mit einer grossen Liste daran - zaehlt nicht zu den Daten.
+        local big = CreateFrame("Frame")
+        big[0] = newproxy()   -- wie im Client: Griff als userdata an [0]
+        big.rows = {}
+        for i = 1, 5000 do big.rows[i] = { name = "Zeile " .. i } end
+        local budget = { left = K.HELD_STEPS }
+        local sz = K.HeldSize({ host = big, small = { 1, 2, 3 } }, {}, budget)
+        assert(sz < 2048 and budget.widgets == 1, "Fenster mitgezählt: " .. sz)
+        assert(K.HeldSize(big, {}, { left = 100 }) == 0, "Fenster als Wurzel gezählt")
+        -- Teilschritte stehen im Bericht, zählen aber nicht doppelt zur Summe.
+        local oldGc2, oldAfter2 = _G.collectgarbage, _G.C_Timer.After
+        local mem2, done2 = 0, nil
+        _G.collectgarbage = function(opt) if opt == "count" then return mem2 end return 0 end
+        _G.C_Timer.After = function(_, f) done2 = f end
+        local lines2
+        K.ProfileRun(10, function(l) lines2 = l end)
+        WeintCodex.Measured("Hauptteil", function() mem2 = mem2 + 100 K.MeasureSub("Hauptteil: Stück", function() mem2 = mem2 + 50 end) end)()
+        done2()
+        _G.collectgarbage, _G.C_Timer.After = oldGc2, oldAfter2
+        local j2 = table.concat(lines2, "\n")
+        assert(j2:find("Gemessene Teile zusammen: 15", 1, true) and j2:find("Hauptteil: Stück", 1, true),
+            "Teilschritt doppelt gezählt oder fehlt: " .. j2)
+        -- Beim Einschalten: Kosten je Teil.
+        local mods = 0
+        for _ in pairs(K.enableCost) do mods = mods + 1 end
+        assert(mods > 0, "keine Kosten beim Einschalten erfasst")
+        assert(table.concat(K.HeldReport(), "\n"):find("Beim Einschalten angelegt", 1, true), "Abschnitt Einschalten fehlt")
     end)
     K.prof.on = false
     Check(ok, "/wcui speicher: neue Teile gemessen, gehaltene Daten geschätzt" .. (ok and "" or (": " .. tostring(err))))

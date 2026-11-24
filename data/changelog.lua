@@ -22,6 +22,15 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.0.8.26",
+        date    = "24.11.2026",
+        notes   = {
+            "|cff7C6CFFWeniger Ruckler bei offenen Fenstern|r – offene Fenster werden im Hintergrund nacheinander nachgestaltet, nicht mehr alle im selben Moment. Beim Öffnen bleibt alles wie gewohnt.",
+            "|cff7C6CFFErfahrungsbalken sparsamer|r – die Erfahrung aus abgabebereiten Quests wird einmal je Änderung im Questlog gerechnet, nicht mehrmals hintereinander.",
+            "|cff7C6CFF/wcui speicher genauer|r – die Schätzung zählt die Fenster des Spiels nicht mehr als Daten von WeintCodex mit (das Auktionshaus stand dort mit 15 MB). Neu: was jeder Teil beim Einschalten anlegt, und welches Fenster im Takt wie lange braucht.",
+        },
+    },
+    {
         version = "1.0.8.25",
         date    = "24.11.2026",
         notes   = {

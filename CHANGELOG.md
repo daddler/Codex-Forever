@@ -9,6 +9,23 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.0.8.26] – 2026-11-24
+
+### Geändert
+- Fenster-Takt (`ui/windows.lua`): `W.Tick` gestaltet je Lauf nur noch EIN
+  offenes Fenster (`W.InnerStep`, reihum, Karte als letzter Platz);
+  `W.Inner` macht beim Öffnen, Blättern und in Gesprächen weiter alles auf
+  einmal. Anlass: `/wcui speicher` meldete 28,5 ms in einem Aufruf.
+- Erfahrungsbalken (`ui/xpbar.lua`): `XB.QuestXP` rechnet einmal je
+  Ereignis statt je Abfrage (zweimal je Ereignis); Schübe von
+  Questereignissen zeichnen einmal nach 0,2 s. Anlass: 26,5 KB/s Abfall.
+- `/wcui speicher` (`ui/kit.lua`): `K.HeldSize` betritt keine Fenster und
+  Bilder mehr (`K.IsWidget`, Griff an `[0]`) – „UIAuction ~15 MB“ war das
+  Auktionshaus des Spiels. Neu: Kosten je Teil beim Einschalten
+  (`K.enableCost`: Speicher mit Abfall, Zeit, Fenster über einen
+  nachgestellten Haken an `CreateFrame`) und Teilschritte je Fenster
+  (`K.MeasureSub`, nicht in der Summe).
+
 ## [1.0.8.25] – 2026-11-24
 
 ### Behoben

@@ -904,6 +904,20 @@ function K.MeasureCall(name, fn, ...)
     return Account(name, m0, t0, fn(...))
 end
 
+-- 1.0.8.26: ein Teilschritt eines schon gemessenen Teils (z. B. ein
+-- einzelnes Fenster im Takt "Fenster"). Steht im Bericht als eigene Zeile,
+-- zaehlt aber nicht zur Summe - sonst waere er doppelt drin.
+function K.MeasureSub(name, fn, ...)
+    if not K.prof.on then return fn(...) end
+    local e = K.prof.data[name]
+    if not e then
+        e = { calls = 0, kb = 0, ms = 0, sub = true }
+        K.prof.data[name] = e
+    end
+    local m0, t0 = GcCount(), Clock()
+    return Account(name, m0, t0, fn(...))
+end
+
 function K.Measured(name, fn)
     return function(...)
         if not K.prof.on then return fn(...) end
@@ -963,7 +977,7 @@ function K.ProfileReport(secs)
     local list, sum = {}, 0
     for name, e in pairs(P.data) do
         list[#list + 1] = { name = name, e = e }
-        sum = sum + e.kb
+        if not e.sub then sum = sum + e.kb end
     end
     table.sort(list, function(a, b) return a.e.kb > b.e.kb end)
     -- 1.0.5.42: was dauerhaft gehalten wird - am Ende, nach der Messung.
@@ -1012,8 +1026,14 @@ end
 -- einmal). Geteilte Tabellen zaehlen beim Ersten. Begrenzte Schrittzahl,
 -- damit das Spiel nicht haengt.
 K.HELD_STEPS = 3000000
+-- Ein Fenster oder Bild des Spiels: Tabelle mit dem Griff des Clients an [0].
+function K.IsWidget(t)
+    if type(t) ~= "table" then return false end
+    local ok, h = pcall(_G.rawget, t, 0)
+    return ok and type(h) == "userdata"
+end
 function K.HeldSize(root, seen, budget)
-    if type(root) ~= "table" or seen[root] then return 0 end
+    if type(root) ~= "table" or seen[root] or K.IsWidget(root) then return 0 end
     local bytes, stack = 0, { root }
     seen[root] = true
     while #stack > 0 do
@@ -1038,7 +1058,12 @@ function K.HeldSize(root, seen, budget)
                     if not seen[x] then seen[x] = true bytes = bytes + 25 + #x end
                 elseif tx == "table" and not seen[x] then
                     seen[x] = true
-                    stack[#stack + 1] = x
+                    -- 1.0.8.26 (Bericht: "UIAuction ~15 MB"): Fenster und
+                    -- Bilder - eigene wie die des Spiels - nicht betreten.
+                    -- Ueber einen Verweis auf das Auktionshaus zaehlte die
+                    -- Schaetzung sonst dessen Ergebnislisten mit.
+                    if K.IsWidget(x) then budget.widgets = (budget.widgets or 0) + 1
+                    else stack[#stack + 1] = x end
                 end
                 x = v
             end
@@ -1082,7 +1107,27 @@ function K.HeldReport()
     for k, v in pairs(WeintCodex) do
         if type(v) == "table" then data[#data + 1] = { "WeintCodex." .. tostring(k), K.HeldSize(v, seen, budget) } end
     end
-    top("Daten und Teile des Addons (geschätzt)", data, 15)
+    top("Daten und Teile des Addons (geschätzt, ohne Fenster)", data, 15)
+    if (budget.widgets or 0) > 0 then
+        out[#out + 1] = string.format("   (%d Fenster und Bilder übersprungen - die zählt der nächste Abschnitt)", budget.widgets)
+    end
+    -- 1.0.8.26: was jeder Teil beim Einschalten angelegt hat (K.Activate).
+    local cost = {}
+    for key, c in pairs(K.enableCost) do cost[#cost + 1] = { key, c } end
+    table.sort(cost, function(a, b) return a[2].kb > b[2].kb end)
+    if #cost > 0 then
+        local kb, fr = 0, 0
+        for _, e in ipairs(cost) do kb, fr = kb + e[2].kb, fr + (e[2].frames or 0) end
+        out[#out + 1] = string.format("Beim Einschalten angelegt (mit Abfall): zusammen ~%.1f MB, %d Fenster", kb / 1024, fr)
+        for i = 1, math.min(12, #cost) do
+            local c = cost[i][2]
+            out[#out + 1] = string.format("   %s: ~%.0f KB, %s, %.1f ms", cost[i][1], c.kb,
+                c.frames and (c.frames .. " Fenster") or "Fenster unbekannt", c.ms or 0)
+        end
+    end
+    if K.framesMade then
+        out[#out + 1] = string.format("Fenster seit dem Laden angelegt (alle Addons und das Spiel): %d", K.framesMade)
+    end
     if budget.cut then out[#out + 1] = "Schätzung abgebrochen (zu groß) – Werte sind Untergrenzen." end
     return out
 end
@@ -1098,11 +1143,27 @@ function K.Report(moduleKey, err)
         .. ": ") .. tostring(err))
 end
 
+-- 1.0.8.26: Kosten je Teil beim Einschalten - Speicher (ohne Aufraeumen,
+-- also mit Abfall), Zeit und neue Fenster. Fenster zaehlt ein nachgestellter
+-- Haken an CreateFrame (hooksecurefunc veraendert den Aufruf nicht).
+K.enableCost = {}
+if _G.hooksecurefunc and type(_G.CreateFrame) == "function" then
+    K.framesMade = 0
+    pcall(_G.hooksecurefunc, "CreateFrame", function() K.framesMade = K.framesMade + 1 end)
+end
+
 function K.Activate(moduleKey)
     local m = modules[moduleKey]
     if not m or m._active then return end
     if m.Enable then
+        local m0, t0, f0 = GcCount(), Clock(), K.framesMade
         local ok, err = pcall(m.Enable)
+        local m1, t1 = GcCount(), Clock()
+        local c = K.enableCost[moduleKey] or { kb = 0, ms = 0 }
+        if m0 and m1 and m1 > m0 then c.kb = c.kb + (m1 - m0) end
+        if t0 and t1 then c.ms = c.ms + (t1 - t0) end
+        if f0 and K.framesMade then c.frames = (c.frames or 0) + (K.framesMade - f0) end
+        K.enableCost[moduleKey] = c
         if not ok then K.Report(moduleKey, err) return end
     end
     m._active = true

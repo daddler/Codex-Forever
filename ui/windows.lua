@@ -2707,67 +2707,128 @@ function W.HoldGlow(f, n)
     d.glowHeld = off
 end
 
-function W.Inner()
+-- 1.0.8.26 (/wcui speicher: "Fenster" 28,5 ms in einem Aufruf - ab etwa
+-- 16 ms faellt ein Bild aus): die Arbeit je Fenster ist ein eigener Schritt.
+-- W.Inner macht weiter alles auf einmal (Oeffnen, Blaettern, Gespraeche -
+-- dort darf das Design des Spiels nicht aufblitzen); der Takt W.Tick macht
+-- je Lauf nur EIN offenes Fenster (W.InnerStep). Jeder Schritt wird einzeln
+-- gemessen ("Fenster: <Name>"), damit der Bericht das langsame Fenster nennt.
+local subName = {}
+local function SubName(n)
+    local s = subName[n]
+    if not s then s = "Fenster: " .. tostring(n) subName[n] = s end
+    return s
+end
+
+local function InnerWindow(n, f)
+    HideByAtlas(f, 0, scoped[f])
+    SkinSlots(f)
+    Grey(f, 0)
+    SkinTabSystems(f, 0)
+    SkinPanelButtons(f, 0)
+    SkinSideTabs(f)
+    -- Innenflaechen tiefer im Fenster nur dort, wo sie gemessen
+    -- zu sehen waren - die schon gestalteten Fenster bleiben, wie sie sind.
+    if n == "CommunitiesFrame" then W.SkinCommunitiesList(f) end
+    if n == "CommunitiesFrame" or n == "ProfessionsFrame" or n == "LFGParentFrame" or n == "PVEFrame" then
+        SkinInsets(f, 0)
+    end
+    if n == "CharacterFrame" then
+        FitStats(f, 0)
+        -- Das Charakterfenster als Ganzes: ui/character.lua.
+        local CS = WeintCodex.UICharacter
+        if CS then CS.Update(f, done[f]) end
+        -- Gestaltete Reiter (W.TABS): Register (ui/register.lua: Ruf,
+        -- Fertigkeiten) und PvP (ui/pvp.lua). Jeder prueft selbst,
+        -- ob sein Reiter offen ist.
+        for _, tab in ipairs(W.TABS) do tab.Update(f) end
+    end
+    local hosted = W.HOSTED[n]
+    if hosted then
+        for _, tab in ipairs(hosted) do tab.Update(f) end
+    end
+    W.HoldGlow(f, n)
+    if W.WantsLarge(n) then
+        SkinSpellItems(f, 0)
+        LightenText(f, 0)
+        W.HideLarge(f)
+    elseif W.DIALOGS[n] then
+        LightenText(f, 0, true)
+        W.HideLarge(f)
+    end
+end
+
+local function InnerMap(map)
+    W.SkinMap(map)
+    -- 6.7.9.0: auch die Karte hat gestaltete Teile (Questlog) und den
+    -- Schein der Klasse (in Gold: aus).
+    local hosted = W.HOSTED[W.MAP]
+    if hosted then
+        for _, tab in ipairs(hosted) do tab.Update(map) end
+    end
+    W.HoldGlow(map, W.MAP)
+end
+
+local function OpenMap()
+    local map = _G[W.MAP]
+    if type(map) == "table" and done[map] and Opt("mapSkin") and Open(map) then return map end
+    return nil
+end
+
+local function InnerShared()
+    SkinModeTabs()
+    for f, d in pairs(listHeads) do
+        if Open(f) then FitList(d) end
+    end
+end
+
+local function Begin()
     stats.runs = stats.runs + 1
     stats.last = _G.GetTime and K.Plain(_G.GetTime()) or nil
     -- Stile der Bereiche (ui/style.lua), bevor der erste Durchlauf eine
     -- Kopfzeile oder einen Balken anlegt.
     S.Register()
+end
+
+function W.Inner()
+    Begin()
     for _, n in ipairs(W.WINDOWS) do
         local f = _G[n]
-        if type(f) == "table" and done[f] and Open(f) then
-            HideByAtlas(f, 0, scoped[f])
-            SkinSlots(f)
-            Grey(f, 0)
-            SkinTabSystems(f, 0)
-            SkinPanelButtons(f, 0)
-            SkinSideTabs(f)
-            -- Innenflaechen tiefer im Fenster nur dort, wo sie gemessen
-            -- zu sehen waren - die schon gestalteten Fenster bleiben, wie sie sind.
-            if n == "CommunitiesFrame" then W.SkinCommunitiesList(f) end
-            if n == "CommunitiesFrame" or n == "ProfessionsFrame" or n == "LFGParentFrame" or n == "PVEFrame" then
-                SkinInsets(f, 0)
+        if type(f) == "table" and done[f] and Open(f) then K.MeasureSub(SubName(n), InnerWindow, n, f) end
+    end
+    InnerShared()
+    local map = OpenMap()
+    if map then K.MeasureSub(SubName(W.MAP), InnerMap, map) end
+end
+
+-- Ein Schritt des Takts: das naechste offene Fenster nach dem zuletzt
+-- gestalteten (die Karte ist der letzte Platz der Runde). Gibt den Namen
+-- zurueck oder nil, wenn nichts offen war.
+W.rr = 0
+function W.InnerStep()
+    Begin()
+    InnerShared()
+    local N = #W.WINDOWS
+    for step = 1, N + 1 do
+        local i = (W.rr + step - 1) % (N + 1) + 1
+        if i <= N then
+            local n = W.WINDOWS[i]
+            local f = _G[n]
+            if type(f) == "table" and done[f] and Open(f) then
+                W.rr = i
+                K.MeasureSub(SubName(n), InnerWindow, n, f)
+                return n
             end
-            if n == "CharacterFrame" then
-                FitStats(f, 0)
-                -- Das Charakterfenster als Ganzes: ui/character.lua.
-                local CS = WeintCodex.UICharacter
-                if CS then CS.Update(f, done[f]) end
-                -- Gestaltete Reiter (W.TABS): Register (ui/register.lua: Ruf,
-                -- Fertigkeiten) und PvP (ui/pvp.lua). Jeder prueft selbst,
-                -- ob sein Reiter offen ist.
-                for _, tab in ipairs(W.TABS) do tab.Update(f) end
-            end
-            local hosted = W.HOSTED[n]
-            if hosted then
-                for _, tab in ipairs(hosted) do tab.Update(f) end
-            end
-            W.HoldGlow(f, n)
-            if W.WantsLarge(n) then
-                SkinSpellItems(f, 0)
-                LightenText(f, 0)
-                W.HideLarge(f)
-            elseif W.DIALOGS[n] then
-                LightenText(f, 0, true)
-                W.HideLarge(f)
+        else
+            local map = OpenMap()
+            if map then
+                W.rr = i
+                K.MeasureSub(SubName(W.MAP), InnerMap, map)
+                return W.MAP
             end
         end
     end
-    SkinModeTabs()
-    for f, d in pairs(listHeads) do
-        if Open(f) then FitList(d) end
-    end
-    local map = _G[W.MAP]
-    if type(map) == "table" and done[map] and Opt("mapSkin") and Open(map) then
-        W.SkinMap(map)
-        -- 6.7.9.0: auch die Karte hat gestaltete Teile (Questlog) und den
-        -- Schein der Klasse (in Gold: aus).
-        local hosted = W.HOSTED[W.MAP]
-        if hosted then
-            for _, tab in ipairs(hosted) do tab.Update(map) end
-        end
-        W.HoldGlow(map, W.MAP)
-    end
+    return nil
 end
 
 function W.Status()
@@ -2872,7 +2933,7 @@ function W.Tick()
     local gap = now < tick.fastUntil and W.TICK_FAST or W.TICK_SLOW
     if now - tick.last < gap then return false end
     tick.last = now
-    Run(W.Inner)
+    Run(W.InnerStep)
     return true
 end
 
