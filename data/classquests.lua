@@ -4,7 +4,7 @@
 -- ERZEUGT von .github/scripts/import_foreverguide.py - nicht von Hand
 -- aendern; neu erzeugen.
 --
--- HERKUNFT `community`: das Addon ForeverGuide 1.36.0 sammelt die
+-- HERKUNFT `community`: das Addon ForeverGuide 1.39.22 sammelt die
 -- Klassenquests aus der Questie-Datenbank fuer Forever. Uebernommen sind
 -- nur Fakten: Nummer, Stufe, Mindeststufe, Klassen, Voelker, Geber und
 -- Abgabe (NPC-Nummer), Vor- und Folgequest, gelehrter Zauber, Belohnungen.

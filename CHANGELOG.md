@@ -32,6 +32,18 @@ nicht zusammen.
 - Punkte auch auf den gezeichneten Karten; Tooltip nennt die Herkunft
   („Lage aus Classic“ / „Lage von Spielern gesammelt“).
 
+### Daten (Info_Updates, 24.11.2026)
+- Import-Skripte neu gelaufen: Naowh Forever 1.4.9 (Daten vom 20.11.,
+  Build 1.60.1.71037; Dungeon-Journal +12 KB, Berufe, Lehrer, Stadt-Pins
+  +41 Zeilen, Questziele, Debuffs, Talente, Feldbuch), AtlasLootClassic für
+  Forever 1.60.1 (`data/loot.lua`), QuestieDB 1.1.5 mit Questie 12.13.0
+  (`data/questdb.lua`: 5602 Quests, 4563 NPCs, 1021 Objekte),
+  Rezeptherkünfte (`data/recipe_sources.lua`). ForeverGuide 1.39.22: Daten
+  unverändert gegenüber 1.36.0, nur die Versionsangabe.
+- Nicht übernommen: ForeverDungeonJournal 2.1.5 (keine Lizenz), Naowh BiS
+  und AtlasBIStooltips (keine BiS, siehe CLAUDE.md), Naowh Market/
+  AuctionData (fremde Preise), QuestieTrace (Werkzeug).
+
 ## [1.0.8.20] – 2026-11-24
 
 ### Neu

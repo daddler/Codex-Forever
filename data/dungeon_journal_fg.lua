@@ -1,5 +1,5 @@
 --------------------------------------------------
--- WeintCodex :: Dungeon-Journal, Abgleich mit ForeverGuide 1.36.0
+-- WeintCodex :: Dungeon-Journal, Abgleich mit ForeverGuide 1.39.22
 --------------------------------------------------
 -- ERZEUGT von .github/scripts/import_foreverguide.py - nicht von Hand
 -- aendern; neu erzeugen. Ergaenzt data/dungeon_journal.lua (das bleibt,

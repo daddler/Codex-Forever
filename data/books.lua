@@ -4,7 +4,7 @@
 -- ERZEUGT von .github/scripts/import_foreverguide.py - nicht von Hand
 -- aendern; neu erzeugen.
 --
--- HERKUNFT `community`: das Addon ForeverGuide 1.36.0 (Quest- und
+-- HERKUNFT `community`: das Addon ForeverGuide 1.39.22 (Quest- und
 -- Gegenstandsnummern aus der Questie-Datenbank, abgeglichen mit der Beta).
 -- Nur Fakten: Abgabequest, Gegenstand, Fraktion, englischer Name (im Spiel
 -- nennt der Client seinen), Fundort; Belohnungsquests ab 10/20/25 Buechern.

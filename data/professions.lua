@@ -4,7 +4,7 @@
 -- ERZEUGT von .github/scripts/import_foreverguide.py - nicht von Hand
 -- aendern; neu erzeugen.
 --
--- HERKUNFT `community`: das Addon ForeverGuide 1.36.0 hat die Rezepte aus dem
+-- HERKUNFT `community`: das Addon ForeverGuide 1.39.22 hat die Rezepte aus dem
 -- Forever-Client gelesen (Build 1.60.1, ueber wowforevertalents.com) und
 -- die Lehrer aus der Questie-Datenbank fuer Forever. Uebernommen sind nur
 -- Fakten (Nummern, Fertigkeitsstufen, Reagenzien, Lagen). Die Haendler

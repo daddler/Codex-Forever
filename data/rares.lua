@@ -4,7 +4,7 @@
 -- ERZEUGT von .github/scripts/import_foreverguide.py - nicht von Hand
 -- aendern; neu erzeugen.
 --
--- HERKUNFT `community`: das Addon ForeverGuide 1.36.0 nennt die seltenen
+-- HERKUNFT `community`: das Addon ForeverGuide 1.39.22 nennt die seltenen
 -- Gegner aus der Questie-Datenbank fuer Forever (Liste, Stufen, Lagen). Die
 -- WIEDERKEHR stammt aus Classic (cmangos) und heisst so (`classic`).
 -- Uebernommen sind nur Fakten - keine Faehigkeiten, keine Texte, keine

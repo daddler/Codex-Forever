@@ -31,7 +31,7 @@ import subprocess
 import sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-FG_VERSION = "1.36.0"
+FG_VERSION = "1.39.22"
 FG_DATE = "17.10.2026"
 
 # ForeverGuide-Schluessel -> Dungeon des Codex (Fluegel zusammengefasst).
