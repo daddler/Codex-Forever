@@ -2,6 +2,7 @@
 ## Title: |cff7C6CFFWeintCodex|r
 ## Notes: Raid Guide & Intelligence System — Forever Edition
 ## Author: Fabian
+## IconTexture: Interface\AddOns\WeintCodex\media\ui\logo_64
 ## Version: 1.0.8.23
 ## SavedVariables: WeintCodex_SavedData, WeintCompanionDB, WeintCompanionInboxDB, WeintCodex_WhispersAccount
 ## SavedVariablesPerCharacter: WeintCodex_Whispers, WeintCodex_Backup
@@ -122,6 +123,7 @@ data/proftrainers_nf.lua
 # Klassenquests und Klassenlehrer (6.15.0.0, erzeugt); gelesen von modules/classquests.lua.
 data/classquests.lua
 data/classquests_ofa.lua
+data/classquests_rewards.lua
 data/questspell_map.lua
 # Wildtierkunde des Jaegers (erzeugt); gelesen von modules/beasts.lua.
 data/beasts.lua

@@ -133,6 +133,125 @@ local function ItemName(id)
     return "Gegenstand " .. id
 end
 
+--------------------------------------------------
+-- Belohnungen und Vergleich (1.0.8.23, Wunsch: "die Belohnungen der
+-- Klassenquests anzeigen, um zu sehen, ob sich eine Klassenquest lohnt")
+--------------------------------------------------
+-- Gegenstaende: fest und zur Wahl aus dem Bestand (`classic`), dazu was
+-- Forever zusaetzlich gibt (data/classquests_rewards.lua, `community`).
+-- "Lohnt sich" sagt WeintCodex nur an einer Zahl, die der Client nennt:
+-- Gegenstandsstufe der Belohnung gegen die des angelegten Gegenstands im
+-- selben Platz (oder Platz leer). Werte wichtet WeintCodex nicht - es gibt
+-- keinen Sim fuer Forever; den Vergleich der Werte zeigt der Tooltip.
+
+-- Plaetze je Ausruestungsart; die Nummern nennt der Client (GetInventorySlotInfo).
+CQ.EQUIP_SLOTS = {
+    INVTYPE_HEAD = { "HeadSlot" }, INVTYPE_NECK = { "NeckSlot" }, INVTYPE_SHOULDER = { "ShoulderSlot" },
+    INVTYPE_BODY = { "ShirtSlot" }, INVTYPE_CHEST = { "ChestSlot" }, INVTYPE_ROBE = { "ChestSlot" },
+    INVTYPE_WAIST = { "WaistSlot" }, INVTYPE_LEGS = { "LegsSlot" }, INVTYPE_FEET = { "FeetSlot" },
+    INVTYPE_WRIST = { "WristSlot" }, INVTYPE_HAND = { "HandsSlot" },
+    INVTYPE_FINGER = { "Finger0Slot", "Finger1Slot" }, INVTYPE_TRINKET = { "Trinket0Slot", "Trinket1Slot" },
+    INVTYPE_CLOAK = { "BackSlot" },
+    INVTYPE_WEAPON = { "MainHandSlot" }, INVTYPE_2HWEAPON = { "MainHandSlot" }, INVTYPE_WEAPONMAINHAND = { "MainHandSlot" },
+    INVTYPE_WEAPONOFFHAND = { "SecondaryHandSlot" }, INVTYPE_SHIELD = { "SecondaryHandSlot" },
+    INVTYPE_HOLDABLE = { "SecondaryHandSlot" },
+    INVTYPE_RANGED = { "RangedSlot" }, INVTYPE_RANGEDRIGHT = { "RangedSlot" }, INVTYPE_THROWN = { "RangedSlot" },
+    INVTYPE_RELIC = { "RangedSlot" },
+}
+
+-- { { id, kind = "fixed"|"choice"|"forever" } }
+function CQ.Rewards(q)
+    local out = {}
+    for _, id in ipairs(q.items or {}) do out[#out + 1] = { id = id, kind = "fixed" } end
+    for _, id in ipairs(q.choice or {}) do out[#out + 1] = { id = id, kind = "choice" } end
+    local extra = Q and Q.FOREVER_REWARDS and Q.FOREVER_REWARDS[q.id]
+    for _, id in ipairs(extra or {}) do out[#out + 1] = { id = id, kind = "forever" } end
+    return out
+end
+
+local loadingItems = {}
+-- Gegenstandsstufe vom Client oder nil (dann wird nachgeladen).
+function CQ.ItemLevel(item)
+    local ci = _G.C_Item
+    local f = (ci and ci.GetDetailedItemLevelInfo) or _G.GetDetailedItemLevelInfo
+    local lvl
+    if f then
+        local ok, v = pcall(f, item)
+        lvl = ok and Plain(v) or nil
+    end
+    if type(lvl) ~= "number" and _G.GetItemInfo then
+        local ok, _, _, _, v = pcall(_G.GetItemInfo, item)
+        lvl = ok and Plain(v) or nil
+    end
+    if type(lvl) == "number" and lvl > 0 then return lvl end
+    if type(item) == "number" and not loadingItems[item] and ci and ci.RequestLoadItemDataByID then
+        loadingItems[item] = true
+        pcall(ci.RequestLoadItemDataByID, item)
+    end
+    return nil
+end
+
+function CQ.EquipLoc(id)
+    local ci = _G.C_Item
+    local f = (ci and ci.GetItemInfoInstant) or _G.GetItemInfoInstant
+    if not f then return nil end
+    local ok, _, _, _, loc = pcall(f, id)
+    loc = ok and Plain(loc) or nil
+    return type(loc) == "string" and loc ~= "" and loc or nil
+end
+
+local function SlotId(name)
+    if not _G.GetInventorySlotInfo then return nil end
+    local ok, id = pcall(_G.GetInventorySlotInfo, name)
+    id = ok and Plain(id) or nil
+    return type(id) == "number" and id or nil
+end
+
+-- Vergleich mit dem Angelegten: { lvl, worn (niedrigste Stufe der Plaetze),
+-- empty (ein Platz leer), diff } oder nil (keine Ausruestung / unbekannt).
+function CQ.Compare(id)
+    local names = CQ.EQUIP_SLOTS[CQ.EquipLoc(id) or ""]
+    if not names then return nil end
+    local lvl = CQ.ItemLevel(id)
+    if not lvl then return { loading = true } end
+    local worn, empty, known = nil, false, false
+    for _, n in ipairs(names) do
+        local slot = SlotId(n)
+        if slot then
+            known = true
+            local link = _G.GetInventoryItemLink and Plain(_G.GetInventoryItemLink("player", slot))
+            if type(link) ~= "string" then
+                empty = true
+            else
+                local w = CQ.ItemLevel(link)
+                if w and (not worn or w < worn) then worn = w end
+            end
+        end
+    end
+    if not known then return nil end
+    return { lvl = lvl, worn = worn, empty = empty, diff = worn and (lvl - worn) or nil }
+end
+
+function CQ.CompareText(c)
+    if not c then return nil end
+    if c.loading then return "lädt …" end
+    if c.empty then return "Stufe " .. c.lvl .. " · Platz leer – besser als nichts" end
+    if not c.worn then return "Stufe " .. c.lvl .. " · angelegt unbekannt" end
+    if c.diff > 0 then return "Stufe " .. c.lvl .. " · angelegt " .. c.worn .. " (+" .. c.diff .. ")" end
+    if c.diff == 0 then return "Stufe " .. c.lvl .. " · wie angelegt" end
+    return "Stufe " .. c.lvl .. " · angelegt " .. c.worn .. " (" .. c.diff .. ")"
+end
+
+-- Lohnt die Quest fuer die Ausruestung? true: mindestens eine Belohnung hat
+-- eine hoehere Stufe als das Angelegte oder fuellt einen leeren Platz.
+function CQ.Upgrade(q)
+    for _, r in ipairs(CQ.Rewards(q)) do
+        local c = CQ.Compare(r.id)
+        if c and not c.loading and (c.empty or (c.diff and c.diff > 0)) then return true end
+    end
+    return false
+end
+
 local function ZoneName(map)
     local QM = WeintCodex.QuestMap
     return map and QM and QM.MapName and QM.MapName(map) or nil
@@ -461,9 +580,11 @@ local function Tooltip(row)
     if q.money and WeintCodex.Trainer and WeintCodex.Trainer.Money then
         line("Geld: " .. WeintCodex.Trainer.Money(q.money), "textMuted")
     end
-    if #rew > 0 or #ch > 0 or q.money then line("Belohnungen aus Classic – in Forever vielleicht anders.", "textDim") end
-    local g = CQ.Npc(q.giver)
-    if g and g.map then line("Klick: Geber auf der Karte", "textDim") end
+    local fr = {}
+    for _, id in ipairs(Q and Q.FOREVER_REWARDS and Q.FOREVER_REWARDS[q.id] or {}) do fr[#fr + 1] = ItemName(id) end
+    if #fr > 0 then line("In Forever dazu: " .. table.concat(fr, ", "), "textMuted") end
+    if #rew > 0 or #ch > 0 or q.money then line("Belohnungen aus Classic, ergänzt um Forever – vielleicht anders.", "textDim") end
+    line("Klick: Belohnungen und Vergleich rechts", "textDim")
     gt:Show()
 end
 
@@ -476,6 +597,10 @@ local function QuestRow(body, y, w, q, state, dim)
         local hl = row:CreateTexture(nil, "HIGHLIGHT")
         hl:SetAllPoints(row)
         hl:SetColorTexture(C.textBright[1], C.textBright[2], C.textBright[3], 0.05)
+        row.selBg = row:CreateTexture(nil, "BACKGROUND")
+        row.selBg:SetAllPoints(row)
+        local s3 = C.surface3
+        row.selBg:SetColorTexture(s3[1], s3[2], s3[3], 1)
         row.icon = row:CreateTexture(nil, "ARTWORK")
         row.icon:SetSize(22, 22)
         row.icon:SetPoint("LEFT", row, "LEFT", 2, 0)
@@ -495,7 +620,8 @@ local function QuestRow(body, y, w, q, state, dim)
         row:SetScript("OnLeave", function() if _G.GameTooltip then _G.GameTooltip:Hide() end end)
         row:SetScript("OnClick", function(self)
             local qq = self.quest
-            ShowOnMap(qq and CQ.Npc(qq.giver), qq and CQ.Title(qq))
+            CQ.sel = qq and (CQ.sel ~= qq.id and qq.id or nil) or nil
+            CQ.Draw()
         end)
         rowPool[used.row] = row
     end
@@ -527,7 +653,11 @@ local function QuestRow(body, y, w, q, state, dim)
     end
     local sub = CQ.GiverText(q)
     if q.spell then sub = WeintCodex.ColorText(dim and "textDim" or "successBright", "Lehrt " .. CQ.SpellName(q)) .. "  ·  " .. sub end
+    if not dim and CQ.Upgrade(q) then
+        sub = WeintCodex.ColorText("successBright", "Belohnung besser als angelegt") .. "  ·  " .. sub
+    end
     row.sub:SetText(sub)
+    row.selBg:SetShown(CQ.sel == q.id)
     row:Show()
     return y - ROW_H
 end
@@ -566,6 +696,54 @@ local function TrainerRow(body, y, w, n, className)
     row:Show()
     return y - (TRAINER_H + 4)
 end
+
+-- Detailbereich einer gewaehlten Quest: Belohnungen mit Vergleich.
+function CQ.QuestBlocks(q)
+    local rows = { { label = "Stufe", value = q.lv .. (q.rl ~= q.lv and (" · ab " .. q.rl) or "") } }
+    if q.spell then rows[#rows + 1] = { label = "Lehrt", value = CQ.SpellName(q) } end
+    if q.money and WeintCodex.Trainer and WeintCodex.Trainer.Money then
+        rows[#rows + 1] = { label = "Geld", value = WeintCodex.Trainer.Money(q.money) }
+    end
+    local blocks = {
+        { type = "header", text = CQ.Title(q) },
+        { type = "rows", rows = rows },
+    }
+    local groups = { { "fixed", "Belohnung" }, { "choice", "Zur Wahl (eins davon)" }, { "forever", "In Forever dazu" } }
+    local all = CQ.Rewards(q)
+    for _, g in ipairs(groups) do
+        local items = {}
+        for _, r in ipairs(all) do
+            if r.kind == g[1] then
+                local c = CQ.Compare(r.id)
+                local up = c and not c.loading and (c.empty or (c.diff and c.diff > 0))
+                items[#items + 1] = { id = r.id, state = up and "have" or "open", sublabel = CQ.CompareText(c) }
+            end
+        end
+        if #items > 0 then
+            blocks[#blocks + 1] = { type = "text", text = g[2] .. ":" }
+            blocks[#blocks + 1] = { type = "itemlist", items = items, height = #items * CQ.ITEM_ROW_H + 2 }
+        end
+    end
+    if #all == 0 then
+        blocks[#blocks + 1] = { type = "text", text = q.spell and "Keine Gegenstände – die Quest lehrt einen Zauber."
+            or "Keine Gegenstände als Belohnung hinterlegt." }
+    end
+    local g = CQ.Npc(q.giver)
+    if g and g.map then
+        blocks[#blocks + 1] = { type = "button", label = "Geber auf der Karte",
+            onClick = function() ShowOnMap(g, CQ.Title(q)) end }
+    end
+    blocks[#blocks + 1] = { type = "divider" }
+    blocks[#blocks + 1] = { type = "card", lines = {
+        "Haken: höhere Gegenstandsstufe als",
+        "angelegt oder Platz leer. Werte wichtet",
+        "WeintCodex nicht – den Vergleich zeigt",
+        "der Tooltip. Belohnungen aus Classic,",
+        "ergänzt um Forever; von Spielern gesammelt.",
+    }}
+    return blocks
+end
+CQ.ITEM_ROW_H = 30
 
 local function InspectorBlocks(className, list, cat)
     local spells, done = 0, 0
@@ -611,7 +789,10 @@ function CQ.Draw()
     local level = PlayerLevel()
     local list = CQ.List(class, CQ.PlayerRace())
     local cat = CQ.Categorize(list, level)
-    WeintCodex.Navigation.SetInspector(InspectorBlocks(className, list, cat))
+    local selQ
+    for _, q in ipairs(list) do if q.id == CQ.sel then selQ = q end end
+    if not selQ then CQ.sel = nil end
+    WeintCodex.Navigation.SetInspector(selQ and CQ.QuestBlocks(selQ) or InspectorBlocks(className, list, cat))
 
     local total = Plain(f:GetWidth())
     if type(total) == "number" and total > 400 then
@@ -685,11 +866,16 @@ end
 
 local ev = CreateFrame("Frame")
 for _, e in ipairs({ "QUEST_TURNED_IN", "QUEST_ACCEPTED", "QUEST_REMOVED", "QUEST_LOG_UPDATE",
-                     "QUEST_DATA_LOAD_RESULT", "PLAYER_LEVEL_UP" }) do
+                     "QUEST_DATA_LOAD_RESULT", "PLAYER_LEVEL_UP", "ITEM_DATA_LOAD_RESULT",
+                     "PLAYER_EQUIPMENT_CHANGED" }) do
     pcall(ev.RegisterEvent, ev, e)
 end
 ev:SetScript("OnEvent", WeintCodex.Measured("classquests", function(_, event, id)
-    if event == "QUEST_DATA_LOAD_RESULT" then
+    if event == "ITEM_DATA_LOAD_RESULT" then
+        id = Plain(id)
+        if not loadingItems[id] then return end
+        loadingItems[id] = nil
+    elseif event == "QUEST_DATA_LOAD_RESULT" then
         id = Plain(id)
         if not pending[id] then return end
         pending[id] = nil

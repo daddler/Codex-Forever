@@ -20,6 +20,18 @@ nicht zusammen.
   `data/questdb.lua` mit `qi` (Gegenstand → Quests) und `rq` (wiederholbar),
   erzeugt von `import_questdb.py` aus derselben QuestieDB wie bisher.
   Doku: `docs/systems/ui.md`, *Questgegenstände prüfen*.
+- Klassenquests: Belohnungen im Detailbereich (Klick auf eine Quest), fest /
+  zur Wahl / „in Forever dazu“, Name und Symbol vom Client; Vergleich nur nach
+  Gegenstandsstufe gegen den angelegten Platz (`CQ.Compare`, Plätze über
+  `GetInventorySlotInfo`), Hinweis „Belohnung besser als angelegt“ in der
+  Liste. Keine Wertung von Werten (kein Sim). Forever-Belohnungen:
+  `data/classquests_rewards.lua`, erzeugt von
+  `.github/scripts/import_classquest_rewards.lua` aus OneForAll 6.2.13
+  (GPL-3.0, nur Daten; dort QuestieDB Forever) – nur, was dem Bestand fehlt
+  (5 Quests, z. B. Totem der geladenen Flammen, Götze der wechselnden Gezeiten).
+  Klick auf eine Quest öffnet nicht mehr die Karte; dafür der Knopf rechts.
+- Addon-Liste: `## IconTexture` mit dem Logo (`media/ui/logo_64`) statt des
+  roten Fragezeichens. Den Ordner „WeintCodex Töne“ schreibt die Companion.
 
 ## [1.0.8.22] – 2026-11-24
 

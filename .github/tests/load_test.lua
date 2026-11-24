@@ -21969,6 +21969,46 @@ do
     Check(ok, "Buecher-Seite: Bewertung nach Stufe und Lage, Karte aus dem Client, Liste" .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 1.0.8.23: Belohnungen der Klassenquests mit Vergleich zum Angelegten
+-- (Wunsch: "ob sich diese Klassenquest auch lohnt").
+do
+    local G = _G
+    local saved = { G.GetInventorySlotInfo, G.GetInventoryItemLink, G.C_Item, G.GetDetailedItemLevelInfo }
+    local ok, err = pcall(function()
+        local CQ, Q = WeintCodex.ClassQuests, WeintCodex.ClassQuestData
+        local q
+        for _, x in ipairs(Q.CLASSES.SHAMAN) do if x.id == 1527 then q = x end end
+        assert(q, "Quest 1527 fehlt")
+        local kinds = {}
+        for _, r in ipairs(CQ.Rewards(q)) do kinds[r.id] = r.kind end
+        assert(kinds[5176] == "fixed" and kinds[263412] == "forever", "Belohnungen aus Forever fehlen")
+        local lvl = { [5176] = 13, [263412] = 15, ["|Hitem:999|h"] = 10 }
+        local worn = "|Hitem:999|h"
+        G.C_Item = {
+            GetItemInfoInstant = function(id) return id, "", "", "INVTYPE_RELIC" end,
+            GetDetailedItemLevelInfo = function(x) return lvl[x] end,
+            GetItemNameByID = function(id) return "Ding " .. id end,
+        }
+        G.GetInventorySlotInfo = function(n) return n == "RangedSlot" and 18 or 1 end
+        G.GetInventoryItemLink = function(_, slot) return slot == 18 and worn or nil end
+        local c = CQ.Compare(263412)
+        assert(c and c.lvl == 15 and c.worn == 10 and c.diff == 5, "Vergleich falsch")
+        assert(CQ.CompareText(c):find("(+5)", 1, true), "Text: " .. tostring(CQ.CompareText(c)))
+        assert(CQ.Upgrade(q), "Besseres nicht erkannt")
+        lvl[worn] = 20
+        assert(not CQ.Upgrade(q), "Schwaecheres als besser gemeldet")
+        worn = nil
+        assert(CQ.Compare(5176).empty and CQ.Upgrade(q), "leerer Platz nicht als besser")
+        local lists = 0
+        for _, b in ipairs(CQ.QuestBlocks(q)) do
+            if b.type == "itemlist" then lists = lists + 1 assert(b.items[1].sublabel, "ohne Vergleich") end
+        end
+        assert(lists == 2, "fest + Forever nicht getrennt: " .. lists)
+    end)
+    G.GetInventorySlotInfo, G.GetInventoryItemLink, G.C_Item, G.GetDetailedItemLevelInfo = saved[1], saved[2], saved[3], saved[4]
+    Check(ok, "Klassenquests: Belohnungen (Classic + Forever), Vergleich nach Gegenstandsstufe" .. (ok and "" or (": " .. tostring(err))))
+end
+
 -- 1.0.8.23: Questgegenstaende in den Taschen pruefen (Verhalten wie Quest
 -- Item Cleaner, eigener Code) - vorsichtig: unklar ist nie "kann weg".
 do
