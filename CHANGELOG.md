@@ -9,6 +9,29 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.0.8.21] – 2026-11-24
+
+### Neu
+- Bosse auf den Dungeonkarten, zweite Quelle (Wunsch: „Info_Updates …
+  Instanzenkarten inkl. Bosse und Position – erkennen, wo die Bosse sind“):
+  Naowh Forever 1.4.9 (`NaowhForever_DungeonJournal/Data/Maps.lua`, „all
+  rights reserved“) – übernommen nur die Lage je Boss (NPC-Nummer über
+  `BossNpcs`/`ForeverBossNpcs`), kein Code, kein Bild. Jedes Naowh-Bild
+  wird per Bildabgleich (`.github/scripts/register_naowh_maps.py`, OpenCV
+  ECC affin) auf unsere Ebenen gelegt; unsere klassischen Ebenen aus den
+  Kacheln des Clients (wago.tools). Fast alle Ebenen pixelgleich (cc ≥ 0,99);
+  Scholomance und vier Tempel-Ebenen nutzen andere Bilder (cc < 0,9) und
+  fallen weg. Abgleich mit der Spieltabelle (1.0.8.20): 105 von 111
+  gemeinsamen Bossen auf derselben Ebene, Median 0,6 % der Kartenbreite
+  auseinander. Regel in `import_mappins.py`: gleiche Ebene und ≤ 10 % →
+  Spieltabelle; Widerspruch → kein Punkt (Ring des Gesetzes, Mr. Smite,
+  Lethtendris, Mutter Glimmernetz, Tüftler Gizlock, Roogug, Agathelos,
+  Charlga, Baron Silberlein, Kommandant Frühlingstal); nur Naowh → Naowh
+  (`community`). 212 Bosse (116 Spieltabelle, 96 Naowh). Blackmaw Hold hat
+  in keiner Quelle Punkte.
+- Punkte auch auf den gezeichneten Karten; Tooltip nennt die Herkunft
+  („Lage aus Classic“ / „Lage von Spielern gesammelt“).
+
 ## [1.0.8.20] – 2026-11-24
 
 ### Neu

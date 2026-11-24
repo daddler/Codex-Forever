@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.0.8.21",
+        date    = "24.11.2026",
+        notes   = {
+            "|cff7C6CFFBosse auch auf den neuen Dungeonkarten|r – Hall of Thanes, Ruinen von Lordaeron, Ausgrabungsstätte, Dalaran, Drowned City, Krol'dok, Alcaz und Shaper's Terrace zeigen ihre Bosse jetzt ebenfalls auf der Karte, dazu viele, die bisher fehlten: Flammenschlund, Verlies, Burg Schattenfang, Scharlachrotes Kloster und mehr. Über 200 Bosse stehen auf der Karte; beim Drüberfahren steht, woher die Lage stammt. Wo zwei Quellen sich widersprechen, steht lieber kein Punkt als ein falscher.",
+        },
+    },
+    {
         version = "1.0.8.20",
         date    = "24.11.2026",
         notes   = {

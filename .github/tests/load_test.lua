@@ -23526,13 +23526,23 @@ do
                 local d = D.Get(p[1])
                 assert(d, "unbekannter Dungeon " .. tostring(p[1]))
                 assert(DM.Boss(p[1], p[2]), "unbekannter Boss " .. p[1] .. "/" .. tostring(p[2]))
-                assert(m.floors[p[3]] and not m.floors[p[3]].files, "Punkt auf fehlender oder gezeichneter Ebene: " .. p[2])
+                assert(m.floors[p[3]], "Punkt auf fehlender Ebene: " .. p[2])
+                assert(p[6] == "s" or p[6] == "n", "Herkunft fehlt: " .. p[2])
                 assert(p[4] > 0 and p[4] < 1 and p[5] > 0 and p[5] < 1, "Lage ausserhalb der Karte: " .. p[2])
             end
         end
-        assert(n >= 100, "zu wenige Bosspunkte: " .. n)
+        assert(n >= 200, "zu wenige Bosspunkte: " .. n)
+        -- 1.0.8.21: auch auf den gezeichneten Forever-Karten.
+        assert(P[3065] and #P[3065] == 4, "Hall of Thanes ohne ihre vier Bosse")
         _G.WorldMapFrame = _G.WorldMapFrame or CreateFrame("Frame", "WorldMapFrame", UIParent)
         _G.IsInInstance = function() return true, "party" end
+        _G.GetInstanceInfo = function() return "Deadmines", "party", 1, "", 5, 0, false, 36 end
+        -- Gezeichnete Karte (Hall of Thanes): Punkte auch dort, mit Herkunft.
+        _G.GetInstanceInfo = function() return "Hall", "party", 1, "", 5, 0, false, 3065 end
+        assert(DM.Refresh() == true, "Zeichnung nicht gezeigt")
+        DM.view.page:SetSize(1024, 684)
+        assert(DM.PlacePins() == 4, "Bosse auf der Zeichnung nicht gesetzt")
+        assert(DM.pinList[1].origin == "Lage von Spielern gesammelt", "Herkunft nicht genannt")
         _G.GetInstanceInfo = function() return "Deadmines", "party", 1, "", 5, 0, false, 36 end
         DM.floorOf[36] = 2
         assert(DM.Refresh() == true, "Karte nicht gezeigt")

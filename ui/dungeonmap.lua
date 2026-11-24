@@ -154,7 +154,7 @@ local function Layout()
         b:ClearAllPoints()
         b:SetPoint("TOPLEFT", view.page, "TOPLEFT", 0, -512 * s)
         b:SetTexCoord(0, 1, 0, (ph - 512) / 256)
-        for _, p in ipairs(DM.pinList) do p:Hide() end
+        if DM.PlacePins then DM.PlacePins() end
         return
     end
     local s = math.min(w / DM.PIC_W, h / DM.PIC_H)
@@ -231,6 +231,7 @@ local function Pin(i)
     b:SetScript("OnEnter", function(self)
         GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
         GameTooltip:SetText(self.label or "?", 1, 1, 1)
+        if self.origin then GameTooltip:AddLine(self.origin, 0.6, 0.6, 0.65) end
         GameTooltip:AddLine("Rechtsklick: im Codex öffnen", 0.7, 0.7, 0.75)
         GameTooltip:Show()
     end)
@@ -242,13 +243,13 @@ local function Pin(i)
     return b
 end
 
--- Bosspunkte der gezeigten Ebene setzen (nur auf Bildern des Clients).
+-- Bosspunkte der gezeigten Ebene setzen (Bilder des Clients und Zeichnungen).
 function DM.PlacePins()
     if not view then return 0 end
     for _, b in ipairs(DM.pinList) do b:Hide() end
     local fl = view.map and view.floor and view.map.floors[view.floor]
     local scale = PinSize()
-    if not fl or fl.files or scale <= 0 then return 0 end
+    if not fl or scale <= 0 then return 0 end
     local w, h = K.Plain(view.page:GetWidth()), K.Plain(view.page:GetHeight())
     if type(w) ~= "number" or type(h) ~= "number" or w <= 0 or h <= 0 then return 0 end
     local n = 0
@@ -263,6 +264,8 @@ function DM.PlacePins()
             b.x, b.y = p[4] * w, -p[5] * h
             b:SetPoint("CENTER", view.page, "TOPLEFT", b.x, b.y)
             b.dungeon, b.boss, b.label = p[1], p[2], boss.name
+            -- 1.0.8.21: Herkunft der Lage (Spieltabelle aus Classic oder von Spielern gesammelt).
+            b.origin = (p[6] == "n") and "Lage von Spielern gesammelt" or "Lage aus Classic"
             b.num:SetText(boss.order and tostring(boss.order) or "")
             b.num:SetShown(scale >= 0.7)
             b:SetFrameLevel((K.Plain(view.page:GetFrameLevel()) or 1) + 5)

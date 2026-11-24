@@ -26,7 +26,15 @@ des Spiels als Forever.
 Aufruf:
     for t in JournalEncounter UiMapXMapArt UiMapArtTile; do for p in wow_classic wow; do
       curl -s "https://wago.tools/db2/$t/csv?product=$p" -o "$DIR/${t}_$p.csv"; done; done
-    python3 -I .github/scripts/import_mappins.py "$DIR" <Datei mit Codex-Bossen (TSV)>
+    python3 -I .github/scripts/import_mappins.py "$DIR" <Codex-Bosse (TSV)> [nfpins.json npcs.tsv]
+
+1.0.8.21: zweite Quelle, Naowh Forever (nur die Lage, siehe
+register_naowh_maps.py; npcs.tsv aus dump_boss_npcs.lua ordnet die NPC-
+Nummern den Codex-Bossen zu). Regel: kennen beide Quellen einen Boss und
+liegen sie auf derselben Ebene hoechstens CONFLICT auseinander, gilt die
+Spieltabelle; widersprechen sie sich, steht KEIN Punkt (ein falscher ist
+schlimmer als keiner); kennt nur Naowh ihn, gilt Naowh (Herkunft
+`community`), wenn das Bild mindestens MIN_CC uebereinstimmt.
 
 Die Codex-Bosse (TSV: "B<TAB>dungeon<TAB>boss-id<TAB>Name") liefert
 .github/scripts/dump_bosses.lua.
@@ -65,6 +73,10 @@ ALIAS = {
     ("stratholme", "baron_rivendare"): "Lord Aurius Rivendare",
     ("stratholme", "balnazzar"): "Balnazzar",
 }
+
+
+CONFLICT = 0.10
+MIN_CC = 0.90
 
 
 def norm(s):
@@ -124,6 +136,46 @@ def main():
                     if want == jn and (i, dg, bid) not in found:
                         found[(i, dg, bid)] = (fi, float(r["Map_0"]), float(r["Map_1"]), u)
 
+    src_of = {k: "s" for k in found}
+    dropped = []
+    if len(sys.argv) > 4:
+        import json
+        byname = {}
+        for line in open(tsv, encoding="utf-8"):
+            p = line.rstrip("\n").split("\t")
+            if p[0] == "B":
+                byname[(p[1], p[3])] = p[2]
+        npc = {}
+        for line in open(sys.argv[4], encoding="utf-8"):
+            p = line.rstrip("\n").split("\t")
+            if p[0] == "N":
+                npc[int(p[1])] = (p[2], p[3])
+            elif p[0] == "F" and int(p[1]) not in npc and (p[2], p[3]) in byname:
+                npc[int(p[1])] = (p[2], byname[(p[2], p[3])])
+        inst_of = {dg: i for i, dgs in INST.items() for dg in dgs}
+        seen = set()
+        for p in json.load(open(sys.argv[3], encoding="utf-8")):
+            b = npc.get(p["npc"])
+            if not b or p["cc"] < MIN_CC or b in seen:
+                continue
+            seen.add(b)
+            dg, bid = b
+            i = inst_of.get(dg, p["inst"])
+            if i != p["inst"]:
+                continue
+            key = (i, dg, bid)
+            if key in found:
+                fi, gx, gy, _ = found[key]
+                if fi != p["floor"] or ((gx - p["x"]) ** 2 + (gy - p["y"]) ** 2) ** 0.5 > CONFLICT:
+                    del found[key]
+                    dropped.append("%s/%s" % (dg, bid))
+                continue
+            found[key] = (p["floor"], p["x"], p["y"], 0)
+            src_of[key] = "n"
+            INST.setdefault(i, [])
+            if dg not in INST[i]:
+                INST[i].append(dg)
+
     lines = [
         "--------------------------------------------------",
         "-- WeintCodex :: Bosse auf den Dungeonkarten",
@@ -138,7 +190,11 @@ def main():
         "-- Dass Forever die Bosse an denselben Stellen stehen hat, ist eine",
         "-- begruendete Erwartung, nicht gemessen.",
         "--",
-        "-- [Instanz] = { { dungeon, boss, Ebene, x, y }, ... }  (x, y: 0..1)",
+        "-- 1.0.8.21: dazu Naowh Forever, nur die Lage (`community`, Feld 6 =",
+        "-- \"n\"); Spieltabelle = \"s\". Widersprechen sich beide, steht kein Punkt:",
+        "--   " + (", ".join(sorted(dropped)) if dropped else "keiner"),
+        "--",
+        "-- [Instanz] = { { dungeon, boss, Ebene, x, y, Quelle }, ... }  (x, y: 0..1)",
         "--------------------------------------------------",
         "",
         "WeintCodex = WeintCodex or {}",
@@ -151,13 +207,14 @@ def main():
             continue
         lines.append("    [%d] = {" % i)
         for dg, bid, fi, px, py, u in rows:
-            lines.append('        { "%s", "%s", %d, %.4f, %.4f },   -- Karte %d' % (dg, bid, fi, px, py, u))
+            lines.append('        { "%s", "%s", %d, %.4f, %.4f, "%s" },%s' % (
+            dg, bid, fi, px, py, src_of.get((i, dg, bid), "s"), ("   -- Karte %d" % u) if u else ""))
             total += 1
         lines.append("    },")
     lines.append("}")
     with open(OUT, "w", encoding="utf-8", newline="\n") as f:
         f.write("\n".join(lines) + "\n")
-    print("geschrieben:", os.path.relpath(OUT, ROOT), total, "Bosse")
+    print("geschrieben:", os.path.relpath(OUT, ROOT), total, "Bosse; ohne Punkt wegen Widerspruch:", ", ".join(dropped))
 
 
 if __name__ == "__main__":
