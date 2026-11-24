@@ -11,6 +11,16 @@ nicht zusammen.
 
 ## [1.0.8.23] – 2026-11-24
 
+### Behoben
+- Seite „Bücher“ brach ab (Fehlerbericht 1.0.8.22: `core/navigation.lua:2142:
+  attempt to call a nil value` in `GetItemInfo`): der Baustein `itemlist` des
+  Detailbereichs rief das globale `GetItemInfo`/`GetItemIcon`/
+  `GetItemQualityColor` – auf Forever gibt es nur `C_Item`. Neu
+  `WeintCodex.ItemInfo`/`WeintCodex.ItemQualityColor` (C_Item zuerst, alles
+  über `pcall`), auch in `modules/materials.lua`. Die Attrappe kannte das
+  globale `GetItemInfo`, deshalb fiel es nicht auf; der Lauf prüft es jetzt
+  ohne.
+
 ### Neu
 - Questgegenstände prüfen (Wunsch: Quest Item Cleaner Forever „muss auch in
   Codex vorhanden sein“; dort „All Rights Reserved“ – nur das Verhalten,

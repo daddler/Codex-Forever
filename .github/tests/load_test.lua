@@ -21980,6 +21980,33 @@ do
     Check(ok, "Buecher-Seite: Bewertung nach Stufe und Lage, Karte aus dem Client, Liste" .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 1.0.8.23 (Fehlerbericht 1.0.8.22: "navigation.lua:2142: attempt to call a
+-- nil value" beim Klick auf "Buecher"): Forever hat kein globales
+-- GetItemInfo/GetItemIcon/GetItemQualityColor - die Gegenstandsliste im
+-- Detailbereich darf sie nicht brauchen.
+do
+    local G = _G
+    local saved = { G.GetItemInfo, G.GetItemIcon, G.GetItemQualityColor, G.C_Item }
+    local ok, err = pcall(function()
+        G.GetItemInfo, G.GetItemIcon, G.GetItemQualityColor = nil, nil, nil
+        G.C_Item = { GetItemCount = function() return 0 end }
+        assert(WeintCodex.ItemInfo(277254) == nil, "ohne Client ein Name")
+        WeintCodex.BooksPage.sel, WeintCodex.BooksPage.cat = nil, "all"
+        WeintCodex.BooksPage.Show()
+        G.C_Item = {
+            GetItemCount = function() return 0 end,
+            GetItemInfo = function(id) return "Bogen " .. id, "|Hitem:" .. id .. "|h", 3, 40, 40, "", "", 1, "", 1234 end,
+            GetItemQualityColor = function() return 0.1, 0.2, 0.3 end,
+        }
+        local n, l, q, t = WeintCodex.ItemInfo(277254)
+        assert(n == "Bogen 277254" and q == 3 and t == 1234, "C_Item.GetItemInfo nicht genutzt")
+        assert(WeintCodex.ItemQualityColor(3)[2] == 0.2, "Qualitaetsfarbe")
+        WeintCodex.BooksPage.Show()
+    end)
+    G.GetItemInfo, G.GetItemIcon, G.GetItemQualityColor, G.C_Item = saved[1], saved[2], saved[3], saved[4]
+    Check(ok, "Gegenstandsliste im Detailbereich ohne globales GetItemInfo (Buecher-Seite)" .. (ok and "" or (": " .. tostring(err))))
+end
+
 -- 1.0.8.23: Belohnungen der Klassenquests mit Vergleich zum Angelegten
 -- (Wunsch: "ob sich diese Klassenquest auch lohnt").
 do

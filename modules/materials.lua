@@ -656,7 +656,7 @@ local function ScanCurrentTab()
         local link = GetGuildBankItemLink(tabIndex, slotIndex)
         if link then
             local itemId = tonumber(link:match("item:(%d+)"))
-            local itemName = GetItemInfo(link)
+            local itemName = WeintCodex.ItemInfo and WeintCodex.ItemInfo(link)
             if not itemName then
                 itemName = link:match("%[(.-)%]")
             end

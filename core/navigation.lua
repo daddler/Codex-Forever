@@ -2135,15 +2135,62 @@ local ITEM_STATE = {
 -- itemID -> Liste von Zeilen, die nachgezogen werden muessen.
 local pendingItemRows = {}
 
+local function Plain(v)
+    local K = WeintCodex.UIKit
+    if K and K.Plain then return K.Plain(v) end
+    return v
+end
+
+-- Name, Link, Qualitaet, Symbol eines Gegenstands - C_Item zuerst, dann die
+-- alten globalen Aufrufe; nil, solange der Client ihn nicht geladen hat
+-- (dann wird nachgeladen). Nie ein Fehler, wenn eine Funktion fehlt.
+function WeintCodex.ItemInfo(item)
+    local ci = _G.C_Item
+    local name, link, quality, texture
+    for _, f in ipairs({ ci and ci.GetItemInfo or false, _G.GetItemInfo or false }) do
+        if f then
+            local ok, n, l, q, _, _, _, _, _, _, t = pcall(f, item)
+            if ok and Plain(n) then
+                name, link, quality, texture = Plain(n), Plain(l), Plain(q), Plain(t)
+                break
+            end
+        end
+    end
+    if not texture then
+        for _, f in ipairs({ ci and ci.GetItemIconByID or false, _G.GetItemIcon or false }) do
+            if f then
+                local ok, t = pcall(f, item)
+                if ok and Plain(t) then texture = Plain(t) break end
+            end
+        end
+    end
+    if not name and type(item) == "number" and ci and ci.RequestLoadItemDataByID then
+        pcall(ci.RequestLoadItemDataByID, item)
+    end
+    return name, link, quality, texture
+end
+
+-- Farbe einer Qualitaet als { r, g, b } oder nil.
+function WeintCodex.ItemQualityColor(quality)
+    if type(quality) ~= "number" then return nil end
+    local ci = _G.C_Item
+    for _, f in ipairs({ ci and ci.GetItemQualityColor or false, _G.GetItemQualityColor or false }) do
+        if f then
+            local ok, r, g, b = pcall(f, quality)
+            r, g, b = ok and Plain(r), ok and Plain(g), ok and Plain(b)
+            if type(r) == "number" and type(g) == "number" and type(b) == "number" then return { r, g, b } end
+        end
+    end
+    return nil
+end
+
 local function ApplyItemDisplay(row)
     local itemId = row._itemID
     if not itemId then return true end
 
-    local name, link, quality, _, _, _, _, _, _, texture = GetItemInfo(itemId)
-
-    if not texture and GetItemIcon then
-        texture = GetItemIcon(itemId)
-    end
+    -- 1.0.8.23 (Fehlerbericht, Seite "Buecher"): Forever kennt das globale
+    -- GetItemInfo nicht mehr - nur C_Item. Beide versucht, nie ungeschuetzt.
+    local name, link, quality, texture = WeintCodex.ItemInfo(itemId)
     row._icon:SetTexture(texture or "Interface\\Icons\\INV_Misc_QuestionMark")
 
     if name then
@@ -2151,10 +2198,8 @@ local function ApplyItemDisplay(row)
         row._name:SetText(name)
 
         local r, g, b = C.textNormal[1], C.textNormal[2], C.textNormal[3]
-        if quality and GetItemQualityColor then
-            local qr, qg, qb = GetItemQualityColor(quality)
-            if qr then r, g, b = qr, qg, qb end
-        end
+        local qc = WeintCodex.ItemQualityColor(quality)
+        if qc then r, g, b = qc[1], qc[2], qc[3] end
         row._name:SetTextColor(r, g, b)
         return true
     end
@@ -2167,6 +2212,7 @@ end
 
 local itemInfoWatcher = CreateFrame("Frame")
 itemInfoWatcher:RegisterEvent("GET_ITEM_INFO_RECEIVED")
+pcall(itemInfoWatcher.RegisterEvent, itemInfoWatcher, "ITEM_DATA_LOAD_RESULT")
 itemInfoWatcher:SetScript("OnEvent", WeintCodex.Measured("Navigation", function(_, _, itemId)
     local rows = itemId and pendingItemRows[itemId]
     if not rows then return end
