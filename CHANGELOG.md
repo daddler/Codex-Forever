@@ -64,6 +64,10 @@ nicht zusammen.
   `data/dungeon_questgivers.lua`. Geber in Instanzen, Quests aus Beute und 25
   Geber ohne Lage in Forever bleiben ohne Punkt. Quests ohne Gebertext
   bekommen „Beginnt: Name, Gebiet“.
+- Dungeonkarte: Bosspunkte mit dem eigenen Bossbild (`WeintCodex.Art.Boss`,
+  quadratischer Ausschnitt um `focusX` des Banners, rund maskiert über
+  `disc_hd`), 40 statt 26 px bei 100 %, Nummer auf eigener Plakette unten
+  rechts. Ohne Bild oder ohne Maske im Client: der bisherige Punkt.
 - Addon-Liste: `## IconTexture` mit dem Logo (`media/ui/logo_64`) statt des
   roten Fragezeichens. Den Ordner „WeintCodex Töne“ schreibt die Companion.
 

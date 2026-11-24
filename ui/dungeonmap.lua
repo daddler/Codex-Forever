@@ -36,6 +36,9 @@ DM.DEFAULTS = { dungeonMaps = true, dungeonPinSize = 100 }
 -- data/dungeonpins.lua (Tabellen des Spiels, nur auf denselben Bildern).
 DM.pinList = {}     -- Bosspunkte (Knoepfe), wiederverwendet
 DM.PIN = 26              -- Groesse eines Bosspunkts bei 100 %
+-- 1.0.8.23 (Wunsch mit Bild: "schoener waere mit dem Bossbild"): wo der Boss
+-- ein eigenes Bild hat (data/artwork.lua), steht sein Bild rund im Ring.
+DM.PIN_ART = 40          -- Groesse eines Bosspunkts mit Bild bei 100 %
 -- Ueber Karten anderer Addons (die ihre Dungeonkarte bis Ebene 9200 legen).
 DM.LEVEL = 9300
 
@@ -225,6 +228,25 @@ local function Pin(i)
     b.disc:SetTexture(K.MEDIA .. "disc_hd")
     local s0 = C.surface0 or C.surface1
     b.disc:SetVertexColor(s0[1], s0[2], s0[3], 1)
+    -- Bild des Bosses: rund maskiert in der Scheibe (Maske = disc_hd).
+    b.art = b:CreateTexture(nil, "ARTWORK", nil, 2)
+    b.art:SetPoint("TOPLEFT", b, "TOPLEFT", 3, -3)
+    b.art:SetPoint("BOTTOMRIGHT", b, "BOTTOMRIGHT", -3, 3)
+    local mok, mask = pcall(function() return b:CreateMaskTexture() end)
+    if mok and type(mask) == "table" and mask.SetTexture then
+        mask:SetTexture(K.MEDIA .. "disc_hd", "CLAMPTOBLACKADDITIVE", "CLAMPTOBLACKADDITIVE")
+        mask:SetAllPoints(b.art)
+        if b.art.AddMaskTexture then b.art:AddMaskTexture(mask) end
+        b.masked = true
+    end
+    b.art:Hide()
+    -- Nummer: mitten im Punkt, mit Bild klein unten rechts auf eigener Scheibe.
+    b.badge = b:CreateTexture(nil, "OVERLAY", nil, 1)
+    b.badge:SetTexture(K.MEDIA .. "disc_hd")
+    b.badge:SetVertexColor(s0[1], s0[2], s0[3], 1)
+    b.badge:SetSize(15, 15)
+    b.badge:SetPoint("BOTTOMRIGHT", b, "BOTTOMRIGHT", 2, -2)
+    b.badge:Hide()
     b.num = K.NewText(b, 11)
     b.num:SetPoint("CENTER", b, "CENTER", 0, 0)
     b.num:SetTextColor(gold[1], gold[2], gold[3], 1)
@@ -258,8 +280,29 @@ function DM.PlacePins()
         if boss then
             n = n + 1
             local b = Pin(n)
-            local size = math.floor(DM.PIN * scale + 0.5)
+            -- 1.0.8.23: mit eigenem Bild (nur wo es eins gibt, rund).
+            local art = b.masked and WeintCodex.Art and WeintCodex.Art.Boss(p[1], p[2])
+            local size = math.floor((art and DM.PIN_ART or DM.PIN) * scale + 0.5)
             b:SetSize(size, size)
+            if art then
+                b.art:SetTexture(art.file)
+                -- Quadrat um den Bildmittelpunkt (focusX) des breiten Banners.
+                local half = (art.h / art.w) / 2
+                local cx = math.max(half, math.min(1 - half, art.focusX or 0.5))
+                b.art:SetTexCoord(cx - half, cx + half, 0, 1)
+                b.art:Show()
+                b.artFile, b.artLeft, b.artRight = art.file, cx - half, cx + half
+            else
+                b.art:Hide()
+                b.artFile, b.artLeft, b.artRight = false, false, false
+            end
+            b.hasArt = art and true or false
+            b.num:ClearAllPoints()
+            if art then
+                b.num:SetPoint("CENTER", b.badge, "CENTER", 0, 0)
+            else
+                b.num:SetPoint("CENTER", b, "CENTER", 0, 0)
+            end
             b:ClearAllPoints()
             b.x, b.y = p[4] * w, -p[5] * h
             b:SetPoint("CENTER", view.page, "TOPLEFT", b.x, b.y)
@@ -268,6 +311,7 @@ function DM.PlacePins()
             b.origin = (p[6] == "n") and "Lage von Spielern gesammelt" or "Lage aus Classic"
             b.num:SetText(boss.order and tostring(boss.order) or "")
             b.num:SetShown(scale >= 0.7)
+            b.badge:SetShown(art and boss.order ~= nil and scale >= 0.7 or false)
             b:SetFrameLevel((K.Plain(view.page:GetFrameLevel()) or 1) + 5)
             b:Show()
         end
