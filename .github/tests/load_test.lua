@@ -23824,7 +23824,9 @@ do
         assert(vc and vc.label == "Edwin VanCleef", "VanCleef fehlt auf der Karte")
         -- 1.0.8.23: mit eigenem Bild, rund, groesser; Nummer auf der Plakette.
         local art = WeintCodex.Art.Boss("the_deadmines", "edwin_vancleef")
-        assert(art and vc.hasArt == true and vc.artFile == art.file .. "_pin", "Bossbild fehlt im Punkt")
+        assert(art and vc.hasArt == true
+            and vc.artFile == "Interface\\AddOns\\WeintCodex\\media\\" .. (art.file .. "_pin"):gsub("/", "\\"),
+            "Bossbild ohne vollen Pfad: " .. tostring(vc.artFile))
         local px, py = vc.x, vc.y
         assert(type(px) == "number" and math.abs(px - 0.6076 * 1002) < 1 and math.abs(py + 0.4489 * 668) < 1,
             "VanCleef nicht an seiner Stelle: " .. tostring(px) .. ", " .. tostring(py))

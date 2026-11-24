@@ -39,6 +39,7 @@ DM.PIN = 26              -- Groesse eines Bosspunkts bei 100 %
 -- 1.0.8.23 (Wunsch mit Bild: "schoener waere mit dem Bossbild"): wo der Boss
 -- ein eigenes Bild hat (data/artwork.lua), steht sein Bild rund im Ring.
 DM.PIN_ART = 40          -- Groesse eines Bosspunkts mit Bild bei 100 %
+DM.ART_ROOT = "Interface\\AddOns\\WeintCodex\\media\\"
 -- Ueber Karten anderer Addons (die ihre Dungeonkarte bis Ebene 9200 legen).
 DM.LEVEL = 9300
 
@@ -280,9 +281,13 @@ function DM.PlacePins()
             local size = math.floor((art and DM.PIN_ART or DM.PIN) * scale + 0.5)
             b:SetSize(size, size)
             if art then
-                local ok = b.art:SetTexture(art.file .. "_pin")
+                -- art.file ist relativ zu media/ (data/artwork.lua) - voller Pfad
+                -- mit Backslashes wie in core/ui.lua. 1.0.8.24 fehlte der Ordner:
+                -- das Spiel fand die Datei nie, der Punkt blieb leer.
+                local path = DM.ART_ROOT .. string.gsub(art.file .. "_pin", "/", "\\")
+                local ok = b.art:SetTexture(path)
                 b.art:Show()
-                b.artFile = art.file .. "_pin"
+                b.artFile = path
                 -- Scheibe dahinter ausblenden: das Bild deckt sie ganz.
                 b.disc:SetShown(ok == false)
             else

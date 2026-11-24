@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.0.8.25",
+        date    = "24.11.2026",
+        notes   = {
+            "|cff7C6CFFBossbilder auf der Dungeonkarte – jetzt wirklich|r – die runden Punkte blieben leer, weil das Bild am falschen Ort gesucht wurde. Jetzt steht in jedem das Bild des Bosses.",
+        },
+    },
+    {
         version = "1.0.8.24",
         date    = "24.11.2026",
         notes   = {

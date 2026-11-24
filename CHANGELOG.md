@@ -9,6 +9,16 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.0.8.25] – 2026-11-24
+
+### Behoben
+- Bosspunkte der Dungeonkarte blieben leer (1.0.8.23 schwarz, 1.0.8.24 beige):
+  `art.file` aus `data/artwork.lua` ist relativ zu `media/`
+  (`dungeons/<Dungeon>/<Boss>`); `ui/dungeonmap.lua` setzte ihn ohne
+  `Interface\AddOns\WeintCodex\media\` und mit Schrägstrichen – das Spiel
+  fand die Datei nie. Die Maske war nicht die Ursache. Jetzt voller Pfad wie
+  in `core/ui.lua`; der Lauf prüft ihn.
+
 ## [1.0.8.24] – 2026-11-24
 
 ### Behoben
