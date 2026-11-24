@@ -23824,8 +23824,7 @@ do
         assert(vc and vc.label == "Edwin VanCleef", "VanCleef fehlt auf der Karte")
         -- 1.0.8.23: mit eigenem Bild, rund, groesser; Nummer auf der Plakette.
         local art = WeintCodex.Art.Boss("the_deadmines", "edwin_vancleef")
-        assert(art and vc.hasArt == true and vc.artFile == art.file, "Bossbild fehlt im Punkt")
-        assert(math.abs((vc.artRight - vc.artLeft) - art.h / art.w) < 1e-6, "Bildausschnitt nicht quadratisch")
+        assert(art and vc.hasArt == true and vc.artFile == art.file .. "_pin", "Bossbild fehlt im Punkt")
         local px, py = vc.x, vc.y
         assert(type(px) == "number" and math.abs(px - 0.6076 * 1002) < 1 and math.abs(py + 0.4489 * 668) < 1,
             "VanCleef nicht an seiner Stelle: " .. tostring(px) .. ", " .. tostring(py))

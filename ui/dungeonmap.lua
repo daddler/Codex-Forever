@@ -228,17 +228,12 @@ local function Pin(i)
     b.disc:SetTexture(K.MEDIA .. "disc_hd")
     local s0 = C.surface0 or C.surface1
     b.disc:SetVertexColor(s0[1], s0[2], s0[3], 1)
-    -- Bild des Bosses: rund maskiert in der Scheibe (Maske = disc_hd).
+    -- Bild des Bosses: fertig rund vorberechnet (<Boss>_pin.tga, Ecken
+    -- durchsichtig, .github/scripts/make_boss_pins.py). 1.0.8.23 erst mit
+    -- Maske (CreateMaskTexture) - im Spiel blieb der Punkt schwarz.
     b.art = b:CreateTexture(nil, "ARTWORK", nil, 2)
     b.art:SetPoint("TOPLEFT", b, "TOPLEFT", 3, -3)
     b.art:SetPoint("BOTTOMRIGHT", b, "BOTTOMRIGHT", -3, 3)
-    local mok, mask = pcall(function() return b:CreateMaskTexture() end)
-    if mok and type(mask) == "table" and mask.SetTexture then
-        mask:SetTexture(K.MEDIA .. "disc_hd", "CLAMPTOBLACKADDITIVE", "CLAMPTOBLACKADDITIVE")
-        mask:SetAllPoints(b.art)
-        if b.art.AddMaskTexture then b.art:AddMaskTexture(mask) end
-        b.masked = true
-    end
     b.art:Hide()
     -- Nummer: mitten im Punkt, mit Bild klein unten rechts auf eigener Scheibe.
     b.badge = b:CreateTexture(nil, "OVERLAY", nil, 1)
@@ -281,20 +276,19 @@ function DM.PlacePins()
             n = n + 1
             local b = Pin(n)
             -- 1.0.8.23: mit eigenem Bild (nur wo es eins gibt, rund).
-            local art = b.masked and WeintCodex.Art and WeintCodex.Art.Boss(p[1], p[2])
+            local art = WeintCodex.Art and WeintCodex.Art.Boss(p[1], p[2])
             local size = math.floor((art and DM.PIN_ART or DM.PIN) * scale + 0.5)
             b:SetSize(size, size)
             if art then
-                b.art:SetTexture(art.file)
-                -- Quadrat um den Bildmittelpunkt (focusX) des breiten Banners.
-                local half = (art.h / art.w) / 2
-                local cx = math.max(half, math.min(1 - half, art.focusX or 0.5))
-                b.art:SetTexCoord(cx - half, cx + half, 0, 1)
+                local ok = b.art:SetTexture(art.file .. "_pin")
                 b.art:Show()
-                b.artFile, b.artLeft, b.artRight = art.file, cx - half, cx + half
+                b.artFile = art.file .. "_pin"
+                -- Scheibe dahinter ausblenden: das Bild deckt sie ganz.
+                b.disc:SetShown(ok == false)
             else
                 b.art:Hide()
-                b.artFile, b.artLeft, b.artRight = false, false, false
+                b.disc:Show()
+                b.artFile = false
             end
             b.hasArt = art and true or false
             b.num:ClearAllPoints()

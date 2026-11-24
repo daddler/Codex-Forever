@@ -847,6 +847,8 @@ for dungeonId, entry in pairs(WeintCodex.Artworks or {}) do
         Check(known, "Artwork " .. dungeonId .. "/" .. bossId
             .. " gehoert zu einem Boss, den es gibt")
         CheckArt(art, dungeonId .. "/" .. bossId)
+        -- 1.0.8.23: rundes Bild fuer die Dungeonkarte (make_boss_pins.py).
+        CheckArt({ file = art.file .. "_pin", w = 64, h = 64 }, dungeonId .. "/" .. bossId .. " (Kartenpunkt)")
     end
 end
 

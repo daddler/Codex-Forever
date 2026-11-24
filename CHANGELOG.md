@@ -9,6 +9,17 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.0.8.24] – 2026-11-24
+
+### Behoben
+- Bosspunkte der Dungeonkarte blieben schwarz (Bild aus dem Spiel,
+  Alcaz Island Prison): das Bild lag hinter einer Maske
+  (`CreateMaskTexture` mit `disc_hd`), die im Spiel nichts zeigte. Jetzt
+  fertig runde Bilder ohne Maske: `media/dungeons/<Dungeon>/<Boss>_pin.tga`
+  (64 × 64, Ecken durchsichtig, oben links wie `media/ui`), erzeugt von
+  `.github/scripts/make_boss_pins.py` aus den eigenen Bossbildern (252).
+  `data_test.lua` prüft je Bossbild das runde.
+
 ## [1.0.8.23] – 2026-11-24
 
 ### Behoben

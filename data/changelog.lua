@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.0.8.24",
+        date    = "24.11.2026",
+        notes   = {
+            "|cff7C6CFFBossbilder auf der Dungeonkarte sichtbar|r – die Punkte waren seit der letzten Fassung größer, blieben aber schwarz. Jetzt steht in jedem das runde Bild des Bosses.",
+        },
+    },
+    {
         version = "1.0.8.23",
         date    = "24.11.2026",
         notes   = {
