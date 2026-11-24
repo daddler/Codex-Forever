@@ -9,6 +9,27 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.0.8.22] – 2026-11-24
+
+### Neu
+- Bücher der Bibliothek: Belohnungen je Stufe im Detailbereich der Seite
+  (Wunsch mit Bild aus dem Spiel: „Belohnung für 25 Bücher aktualisieren“).
+  Die Gegenstände standen schon richtig im Bestand (277254, 277258, 277260 –
+  Bogen, Wappen, Nachtlicht), die Seite zeigte sie nur nie; jetzt als
+  `itemlist`, Name und Symbol vom Client.
+- Stufe für 30 Bücher (Quest 84394, Wahl aus 281637, 281636, 277202, ab
+  Stufe 50, abzugeben beim Magierlehrer Jennea Cannon / Oran Snakewrithe):
+  nur aus Naowh Forever 1.4.9 (`NaowhForever_Discovery/Data/Books.lua`,
+  dort „reported“), übernommen im Importer
+  (`.github/scripts/import_foreverguide.py`, `NF_LIBRARY_*`), nur Fakten.
+
+### Geändert
+- Mindeststufen: 25 Bücher ab 35 (Naowh Forever und OneForAll; ForeverGuide
+  sagt 30), 20 Bücher ab 20 (nur Naowh). `LB.Progress` meldet eine erreichte,
+  aber zu frühe Belohnung als `wait` statt `claim`; ohne Stufe vom Client
+  gilt sie als erreicht. `LB.TurnIn` nennt, wo abzuholen ist; die Startseite
+  nutzt es.
+
 ## [1.0.8.21] – 2026-11-24
 
 ### Neu

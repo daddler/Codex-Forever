@@ -34,6 +34,22 @@ ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)
 FG_VERSION = "1.39.22"
 FG_DATE = "17.10.2026"
 
+# 1.0.8.22 (Wunsch: "die Belohnung fuer 25 Buecher aktualisieren", Bild aus
+# dem Spiel): Abgleich mit Naowh Forever 1.4.9 (NaowhForever_Discovery,
+# Data/Books.lua) - nur Fakten. Die 30-Buecher-Stufe kennt nur Naowh (dort
+# "reported", abzugeben beim Magierlehrer); die Mindeststufen 35 (25 Buecher)
+# nennen Naowh und OneForAll gleich, ForeverGuide 30; 20 (20 Buecher) nur Naowh.
+NF_LIBRARY_VERSION = "1.4.9"
+NF_LIBRARY_LEVEL = {"ring": 20, "library25": 35}
+NF_LIBRARY_EXTRA = [
+    {"key": "library30", "goal": 30, "quest": 84394, "items": [281637, 281636, 277202],
+     "minLevel": 50, "turnIn": "trainer"},
+]
+NF_LIBRARY_TRAINERS = {
+    "Alliance": {"npc": 5497, "name": "Jennea Cannon", "map": 1453, "x": 49.5, "y": 86.0},
+    "Horde": {"npc": 7825, "name": "Oran Snakewrithe", "map": 1458, "x": 73.5, "y": 32.5},
+}
+
 # ForeverGuide-Schluessel -> Dungeon des Codex (Fluegel zusammengefasst).
 DUNGEON_MAP = {
     "rfc": "ragefire_chasm", "thanes": "hall_of_thanes", "lordaeron": "ruins_of_lordaeron",
@@ -953,7 +969,10 @@ def build_books(fg):
         r = rw[key]
         rewards.append({"key": key, "goal": int(r["goal"]), "quest": int(r["quest"]),
                         "items": [int(i) for i in as_list(r.get("items"))],
-                        "minLevel": int(r.get("minLevel") or 0)})
+                        "minLevel": max(int(r.get("minLevel") or 0), NF_LIBRARY_LEVEL.get(key, 0))})
+    for r in NF_LIBRARY_EXTRA:
+        if r["quest"] not in [x["quest"] for x in rewards]:
+            rewards.append(dict(r))
     rewards.sort(key=lambda r: r["goal"])
     lib = {}
     for side, v in fg["LIBRARIANS"].items():
@@ -961,7 +980,8 @@ def build_books(fg):
                      "x": num(v["x"]), "y": num(v["y"])}
     say("Bibliotheksbuecher")
     say(f"  {len(books)} Buecher, Belohnungen bei {', '.join(str(r['goal']) for r in rewards)}")
-    return {"books": books, "rewards": rewards, "librarians": lib, "each": rw.get("each", {})}
+    return {"books": books, "rewards": rewards, "librarians": lib, "trainers": NF_LIBRARY_TRAINERS,
+            "each": rw.get("each", {})}
 
 
 def write_books(bd):
@@ -977,6 +997,8 @@ def write_books(bd):
     w("-- Gegenstandsnummern aus der Questie-Datenbank, abgeglichen mit der Beta).")
     w("-- Nur Fakten: Abgabequest, Gegenstand, Fraktion, englischer Name (im Spiel")
     w("-- nennt der Client seinen), Fundort; Belohnungsquests ab 10/20/25 Buechern.")
+    w("-- Abgleich mit Naowh Forever " + NF_LIBRARY_VERSION + ": die Stufe fuer 30 Buecher (beim")
+    w("-- Magierlehrer, `turnIn = \"trainer\"`) und die Mindeststufen 20/35.")
     w("-- OB ein Buch abgegeben ist, fragt WeintCodex den Client - nie der Bestand.")
     w("--------------------------------------------------")
     w("")
@@ -991,11 +1013,18 @@ def write_books(bd):
     w("    rewards = {")
     for r in bd["rewards"]:
         items = ", ".join(str(i) for i in r["items"])
-        w(f"        {{ key = {lua_str(r['key'])}, goal = {r['goal']}, quest = {r['quest']}, minLevel = {r['minLevel']}, items = {{ {items} }} }},")
+        extra = f", turnIn = {lua_str(r['turnIn'])}" if r.get("turnIn") else ""
+        w(f"        {{ key = {lua_str(r['key'])}, goal = {r['goal']}, quest = {r['quest']}, minLevel = {r['minLevel']}{extra}, items = {{ {items} }} }},")
     w("    },")
     w("    librarians = {")
     for side in sorted(bd["librarians"]):
         v = bd["librarians"][side]
+        w(f"        {side} = {{ npc = {v['npc']}, name = {lua_str(v['name'])}, map = {v['map']}, x = {v['x']}, y = {v['y']} }},")
+    w("    },")
+    w("    -- Magierlehrer: dort die Belohnung fuer 30 Buecher (Naowh Forever)")
+    w("    trainers = {")
+    for side in sorted(bd["trainers"]):
+        v = bd["trainers"][side]
         w(f"        {side} = {{ npc = {v['npc']}, name = {lua_str(v['name'])}, map = {v['map']}, x = {v['x']}, y = {v['y']} }},")
     w("    },")
     w("}")

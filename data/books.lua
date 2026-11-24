@@ -8,6 +8,8 @@
 -- Gegenstandsnummern aus der Questie-Datenbank, abgeglichen mit der Beta).
 -- Nur Fakten: Abgabequest, Gegenstand, Fraktion, englischer Name (im Spiel
 -- nennt der Client seinen), Fundort; Belohnungsquests ab 10/20/25 Buechern.
+-- Abgleich mit Naowh Forever 1.4.9: die Stufe fuer 30 Buecher (beim
+-- Magierlehrer, `turnIn = "trainer"`) und die Mindeststufen 20/35.
 -- OB ein Buch abgegeben ist, fragt WeintCodex den Client - nie der Bestand.
 --------------------------------------------------
 
@@ -56,11 +58,17 @@ WeintCodex.BooksData = {
     },
     rewards = {
         { key = "neck", goal = 10, quest = 78150, minLevel = 0, items = { 277203, 277204 } },
-        { key = "ring", goal = 20, quest = 79536, minLevel = 0, items = { 281634, 281635 } },
-        { key = "library25", goal = 25, quest = 82208, minLevel = 30, items = { 277254, 277258, 277260 } },
+        { key = "ring", goal = 20, quest = 79536, minLevel = 20, items = { 281634, 281635 } },
+        { key = "library25", goal = 25, quest = 82208, minLevel = 35, items = { 277254, 277258, 277260 } },
+        { key = "library30", goal = 30, quest = 84394, minLevel = 50, turnIn = "trainer", items = { 281637, 281636, 277202 } },
     },
     librarians = {
         Alliance = { npc = 211033, name = "Garion Wendell", map = 1453, x = 49, y = 86.4 },
         Horde = { npc = 211022, name = "Owen Thadd", map = 1458, x = 74, y = 32.4 },
+    },
+    -- Magierlehrer: dort die Belohnung fuer 30 Buecher (Naowh Forever)
+    trainers = {
+        Alliance = { npc = 5497, name = "Jennea Cannon", map = 1453, x = 49.5, y = 86.0 },
+        Horde = { npc = 7825, name = "Oran Snakewrithe", map = 1458, x = 73.5, y = 32.5 },
     },
 }

@@ -348,6 +348,7 @@ function HM.Steps(ctx)
     local LB = WeintCodex.Library
     if bk and LB and not bk.finished and (bk.done > 0 or bk.bag > 0) then
         local who, place = LB.Librarian()
+        if bk.claim and LB.TurnIn then who, place = LB.TurnIn(bk.claim) end
         local title, headline
         if bk.claim then
             title = LB.RewardName(bk.claim) .. " abholen"
@@ -355,9 +356,13 @@ function HM.Steps(ctx)
         elseif bk.bag > 0 then
             title = Plural(bk.bag, "Ein Buch abgeben", "Bücher abgeben")
             headline = title
-        else
+        elseif bk.next then
             title = "Bücher: " .. bk.done .. " von " .. bk.next.goal
             headline = "Bibliothek: " .. bk.done .. " von " .. bk.next.goal .. " Büchern"
+        else
+            -- 1.0.8.22: alle Buecher da, die Belohnung wartet auf die Stufe.
+            title = LB.RewardName(bk.wait) .. " ab Stufe " .. bk.wait.minLevel
+            headline = "Bibliothek: " .. title
         end
         local detail = LB.Line(bk) .. (who and (" · bei " .. who .. ", " .. place) or "")
         -- 6.57.0.0: nichts abzugeben - dann das naechste fehlende Buch, mit

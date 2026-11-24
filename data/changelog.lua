@@ -22,6 +22,15 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.0.8.22",
+        date    = "24.11.2026",
+        notes   = {
+            "|cff7C6CFFBelohnungen der Bibliothek zum Ansehen|r – auf der Bücherseite steht rechts, was jede Stufe zur Wahl gibt, mit Symbol und Tooltip, so wie im Spiel: für 25 Bücher Bogen des Wahrheitssuchers, Wappen der Aufklärung oder Nachtlicht des Forschers.",
+            "|cff7C6CFFNeu: die Belohnung für 30 Bücher|r – abzuholen ab Stufe 50 beim Magierlehrer, nicht beim Bibliothekar.",
+            "|cff7C6CFFAbholen erst mit der richtigen Stufe|r – die Belohnung für 20 Bücher ab Stufe 20, für 25 Bücher ab Stufe 35. Bis dahin steht, ab wann sie wartet, statt „abholen“.",
+        },
+    },
+    {
         version = "1.0.8.21",
         date    = "24.11.2026",
         notes   = {

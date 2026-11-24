@@ -26,11 +26,12 @@ local C = WeintCodex.Colors
 
 BP.HEAD = 84
 BP.ROW_H = 44
+BP.ITEM_ROW_H = 30      -- Zeile einer itemlist im Detailbereich (core/navigation.lua)
 BP.MAP_RATIO = 668 / 1002
 BP.cat = "all"
 -- Kurz unter den Marken: 20 und 25 liegen nah beieinander (Bild: die
 -- Beschriftungen liefen ineinander).
-BP.SHORT = { neck = "Halskette", ring = "Ring", library25 = "Bonus" }
+BP.SHORT = { neck = "Halskette", ring = "Ring", library25 = "Bonus", library30 = "Bonus" }
 BP.sel = nil            -- Abgabequest des gewaehlten Buches
 
 local page
@@ -394,10 +395,32 @@ local function SidebarItems(list)
     return items, order
 end
 
+-- Belohnungen je Stufe: Ueberschrift, eine Zeile (Stufe, wo, Stand) und die
+-- Gegenstaende zur Wahl (Zeilen des Detailbereichs, Name/Symbol vom Client).
+function BP.RewardBlocks()
+    local lb, d = LB(), WeintCodex.BooksData
+    local out = { { type = "header", text = "Belohnungen" } }
+    for _, r in ipairs(d and d.rewards or {}) do
+        local parts = { r.goal .. " Bücher" }
+        if (r.minLevel or 0) > 0 then parts[#parts + 1] = "ab Stufe " .. r.minLevel end
+        if r.turnIn == "trainer" then parts[#parts + 1] = "beim Magierlehrer" end
+        local got = lb.Done(r.quest)
+        if got == true then parts[#parts + 1] = "abgeholt" end
+        out[#out + 1] = { type = "text", text = table.concat(parts, " · ") .. ":" }
+        local items = {}
+        for _, id in ipairs(r.items or {}) do
+            -- Kein Haken je Gegenstand: welchen man gewaehlt hat, sagt das Spiel nicht.
+            items[#items + 1] = { id = id, state = "open" }
+        end
+        out[#out + 1] = { type = "itemlist", items = items, height = #items * BP.ITEM_ROW_H + 2 }
+    end
+    return out
+end
+
 local function Inspector(e, p)
     local lb = LB()
     if not e then
-        return {
+        local blocks = {
             { type = "header", text = "So wird bewertet" },
             { type = "card", lines = {
                 "Empfohlen: Gebiet passt zu deiner Stufe,",
@@ -407,14 +430,19 @@ local function Inspector(e, p)
                 "Möglich: passt, aber anderer Kontinent.",
             }},
             { type = "divider" },
-            { type = "header", text = "Woher das stammt" },
-            { type = "card", lines = {
-                "Was abgegeben ist, sagt das Spiel.",
-                "Fundorte und Belohnungen: von Spielern",
-                "gesammelt. Stufen der",
-                "Gebiete aus Classic.",
-            }},
         }
+        -- 1.0.8.22 (Wunsch, Bild aus dem Spiel): was jede Stufe zur Wahl
+        -- gibt - Namen und Symbole nennt der Client.
+        for _, b in ipairs(BP.RewardBlocks()) do blocks[#blocks + 1] = b end
+        blocks[#blocks + 1] = { type = "divider" }
+        blocks[#blocks + 1] = { type = "header", text = "Woher das stammt" }
+        blocks[#blocks + 1] = { type = "card", lines = {
+            "Was abgegeben ist, sagt das Spiel.",
+            "Fundorte und Belohnungen: von Spielern",
+            "gesammelt. Stufen der",
+            "Gebiete aus Classic.",
+        }}
+        return blocks
     end
     local b = e.b
     local cat = CatOf(e.cat)

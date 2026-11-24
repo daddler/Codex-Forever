@@ -19,7 +19,8 @@ WeintCodex.Library = {}
 
 local LB = WeintCodex.Library
 
-LB.REWARD_NAME = { neck = "Halskette", ring = "Ring", library25 = "Belohnung für 25 Bücher" }
+LB.REWARD_NAME = { neck = "Halskette", ring = "Ring", library25 = "Belohnung für 25 Bücher",
+                   library30 = "Belohnung für 30 Bücher" }
 
 local function Plain(v)
     local K = WeintCodex.UIKit
@@ -34,6 +35,14 @@ local function Faction()
     local ok, f = pcall(_G.UnitFactionGroup, "player")
     f = ok and Plain(f) or nil
     return (f == "Alliance" and 1) or (f == "Horde" and 2) or nil
+end
+
+-- Stufe vom Client oder nil.
+function LB.PlayerLevel()
+    if not _G.UnitLevel then return nil end
+    local ok, l = pcall(_G.UnitLevel, "player")
+    l = ok and Plain(l) or nil
+    return type(l) == "number" and l > 0 and l or nil
 end
 
 -- true / false / nil (Client antwortet nicht).
@@ -82,12 +91,22 @@ function LB.Progress()
         if v then done = done + 1 elseif InBags(b[2]) then bag = bag + 1 end
     end
     local p = { done = done, total = total, bag = bag }
+    -- 1.0.8.22: eine Belohnung mit Mindeststufe wartet, bis die Stufe
+    -- reicht (`wait`) - erst dann "abholen". Nennt der Client keine Stufe,
+    -- gilt sie als erreicht: abholbar ist dann, was die Buecher sagen.
+    local level = LB.PlayerLevel()
     for _, r in ipairs(d.rewards) do
         local got = LB.Done(r.quest)
-        if done >= r.goal and got == false and not p.claim then p.claim = r end
+        if done >= r.goal and got == false then
+            if level and (r.minLevel or 0) > level then
+                if not p.wait then p.wait = r end
+            elseif not p.claim then
+                p.claim = r
+            end
+        end
         if done < r.goal and not p.next then p.next = r end
     end
-    p.finished = not p.next and not p.claim
+    p.finished = not p.next and not p.claim and not p.wait
     return p
 end
 
@@ -103,11 +122,26 @@ function LB.Librarian()
     return l.name, place, l
 end
 
+-- Wo eine Belohnung abzuholen ist: beim Bibliothekar, die fuer 30 Buecher
+-- beim Magierlehrer (`turnIn = "trainer"`). Name, Ort, Eintrag.
+function LB.TurnIn(r)
+    if not (r and r.turnIn == "trainer") then return LB.Librarian() end
+    local d = Data()
+    local f = Faction()
+    local t = d and d.trainers and d.trainers[f == 1 and "Alliance" or "Horde"]
+    if not t then return nil end
+    local place = f == 1 and "Sturmwind, Magierviertel" or "Unterstadt, Magierviertel"
+    return t.name .. " (Magierlehrer)", place, t
+end
+
 -- Text "7 von 10 – noch 3 bis zur Halskette" (ohne Abholen).
 function LB.Line(p)
     if not p then return nil end
     if p.claim then
         return p.done .. " abgegeben – " .. LB.RewardName(p.claim) .. " abholen"
+    end
+    if p.wait then
+        return p.done .. " abgegeben – " .. LB.RewardName(p.wait) .. " ab Stufe " .. p.wait.minLevel
     end
     if p.next then
         local left = p.next.goal - p.done
@@ -183,12 +217,7 @@ LB.CATS = {
     { key = "done",  label = "Abgegeben",   color = "textMuted" },
 }
 
-local function Level()
-    if not _G.UnitLevel then return nil end
-    local ok, l = pcall(_G.UnitLevel, "player")
-    l = ok and Plain(l) or nil
-    return type(l) == "number" and l > 0 and l or nil
-end
+local Level = LB.PlayerLevel
 
 function LB.ZoneLevel(map)
     local z = WeintCodex.ZoneInfoData and WeintCodex.ZoneInfoData[map]

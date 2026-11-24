@@ -21969,6 +21969,54 @@ do
     Check(ok, "Buecher-Seite: Bewertung nach Stufe und Lage, Karte aus dem Client, Liste" .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 1.0.8.22: Belohnungen je Stufe (Bild aus dem Spiel: Bogen, Wappen,
+-- Nachtlicht), Mindeststufe haelt "abholen" zurueck, 30 Buecher beim
+-- Magierlehrer.
+do
+    local G = _G
+    local oQ, oF, oC, oL = G.C_QuestLog, G.UnitFactionGroup, G.C_Item, G.UnitLevel
+    local ok, err = pcall(function()
+        local LB, BP, D = WeintCodex.Library, WeintCodex.BooksPage, WeintCodex.BooksData
+        local by = {}
+        for _, r in ipairs(D.rewards) do by[r.key] = r end
+        assert(by.library25 and table.concat(by.library25.items, ",") == "277254,277258,277260", "25 Buecher: falsche Gegenstaende")
+        assert(by.library30 and by.library30.goal == 30 and by.library30.turnIn == "trainer", "30 Buecher fehlen")
+        assert(by.library25.minLevel == 35 and by.ring.minLevel == 20, "Mindeststufen")
+        G.UnitFactionGroup = function() return "Alliance", "Alliance" end
+        G.C_Item = { GetItemCount = function() return 0 end }
+        local mine = LB.Mine()
+        local doneSet = { [by.neck.quest] = true, [by.ring.quest] = true }
+        for i = 1, 25 do doneSet[mine[i][1]] = true end
+        G.C_QuestLog = { IsQuestFlaggedCompleted = function(q) return doneSet[q] == true end }
+        G.UnitLevel = function() return 34 end
+        local p = LB.Progress()
+        assert(not p.claim and p.wait == by.library25 and not p.finished, "Stufe 34: 25er schon abholbar")
+        assert(LB.Line(p):find("ab Stufe 35", 1, true), "Zeile: " .. tostring(LB.Line(p)))
+        G.UnitLevel = function() return 35 end
+        p = LB.Progress()
+        assert(p.claim == by.library25 and not p.wait, "Stufe 35: 25er nicht abholbar")
+        assert((LB.TurnIn(p.claim)) == "Garion Wendell", "25er nicht beim Bibliothekar")
+        for i = 26, 30 do doneSet[mine[i][1]] = true end
+        doneSet[by.library25.quest] = true
+        G.UnitLevel = function() return 50 end
+        p = LB.Progress()
+        assert(p.claim == by.library30, "30er nicht abholbar")
+        local who = LB.TurnIn(p.claim)
+        assert(who and who:find("Jennea Cannon", 1, true), "30er nicht beim Magierlehrer: " .. tostring(who))
+        local blocks, lists, texts = BP.RewardBlocks(), 0, {}
+        for _, b in ipairs(blocks) do
+            if b.type == "itemlist" then lists = lists + 1 assert(#b.items >= 2 and b.items[1].id, "Belohnungen ohne Gegenstaende") end
+            if b.type == "text" then texts[#texts + 1] = b.text end
+        end
+        assert(lists == #D.rewards, "nicht jede Stufe mit Belohnungen")
+        assert(table.concat(texts, "|"):find("25 Bücher · ab Stufe 35 · abgeholt", 1, true), "Stand der 25er: " .. table.concat(texts, "|"))
+        BP.sel = nil
+        BP.Show()
+    end)
+    G.C_QuestLog, G.UnitFactionGroup, G.C_Item, G.UnitLevel = oQ, oF, oC, oL
+    Check(ok, "Buecher: Belohnungen je Stufe, Mindeststufe, 30 Buecher beim Magierlehrer" .. (ok and "" or (": " .. tostring(err))))
+end
+
 -- 1.0.8.10: Ruf-Belohnungen als Seite unter "Entdecken" statt Kopierfenster
 -- (Bild: Nummern statt Namen, Preise als nackte Zahlen, "du: 1", Fraktionen
 -- der anderen Seite).
