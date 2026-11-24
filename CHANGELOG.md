@@ -24,9 +24,9 @@ nicht zusammen.
   fallen weg. Abgleich mit der Spieltabelle (1.0.8.20): 105 von 111
   gemeinsamen Bossen auf derselben Ebene, Median 0,6 % der Kartenbreite
   auseinander. Regel in `import_mappins.py`: gleiche Ebene und ≤ 10 % →
-  Spieltabelle; Widerspruch → kein Punkt (Ring des Gesetzes, Mr. Smite,
-  Lethtendris, Mutter Glimmernetz, Tüftler Gizlock, Roogug, Agathelos,
-  Charlga, Baron Silberlein, Kommandant Frühlingstal); nur Naowh → Naowh
+  Spieltabelle; Widerspruch → kein Punkt (Ring of Law, Mr. Smite,
+  Lethtendris, Mother Smolderweb, Tinkerer Gizlock, Roogug, Agathelos,
+  Charlga Razorflank, Baron Silverlaine, Commander Springvale); nur Naowh → Naowh
   (`community`). 212 Bosse (116 Spieltabelle, 96 Naowh). Blackmaw Hold hat
   in keiner Quelle Punkte.
 - Punkte auch auf den gezeichneten Karten; Tooltip nennt die Herkunft
