@@ -18,6 +18,14 @@ nicht zusammen.
   im Gestaltungsmodus gleich (`Anchor`). Anlass: `/wcui speicher` maß beim
   Einschalten 4057 Fenster, ~25 MB und 289 ms – 40 Knöpfe mit je rund 80
   Teilen auf Vorrat.
+- Questhilfe auf der Karte (`ui/questhelper.lua`): `QH.MapIndex` – ein
+  Verzeichnis Karte → Quests mit Geber, Abgabe, Ziel, Beutequelle oder
+  Questgebiet dort, einmal je Sitzung beim Anmelden. `QH.ForMap` liest nur
+  noch diese Quests statt aller 5602. Im Prüflauf je Neuaufbau ~12 MB
+  Abfall/60–90 ms → 0,4–0,8 MB/2–4 ms; der Lauf vergleicht das Ergebnis mit
+  dem Durchgehen aller Quests. Anlass: „Karte: Questhilfe“ 515 KB/s, 65 ms.
+- Fenster-Takt: die Schritte je Fenster einzeln gemessen
+  („Fenster: CharacterFrame · Grau“ …), Anlass: 34,6 ms im Charakterfenster.
 - Fenster-Takt (`ui/windows.lua`): `W.Tick` gestaltet je Lauf nur noch EIN
   offenes Fenster (`W.InnerStep`, reihum, Karte als letzter Platz);
   `W.Inner` macht beim Öffnen, Blättern und in Gesprächen weiter alles auf

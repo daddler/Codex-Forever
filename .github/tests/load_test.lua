@@ -27210,6 +27210,44 @@ do
     Check(ok, "Plaketten: Bosse der neuen Dungeons über ihre NPC-Nummer" .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 1.0.8.26 (/wcui speicher: "Karte: Questhilfe" 515 KB/s, 65 ms): der
+-- Neuaufbau einer Karte liest nur die Quests, die dort etwas haben - und
+-- zeichnet genau dasselbe wie das Durchgehen aller Quests.
+do
+    local QH = WeintCodex.UIQuestHelper
+    local ok, err = pcall(function()
+        local d = WeintCodex.QuestDBData
+        local total = 0
+        for _ in pairs(d.q) do total = total + 1 end
+        local oldOffer, oldMe, oldParse, oldIdx = QH.Offer, QH.Me, QH.Parse, QH.MapIndex
+        QH.Offer = function() return "avail" end
+        local parsed = 0
+        QH.Parse = function(raw) parsed = parsed + 1 return oldParse(raw) end
+        local function sig(out)
+            local t = {}
+            for _, e in ipairs(out) do t[#t + 1] = e.kind .. string.format("%.4f,%.4f", e.x, e.y) .. ":" .. #e.quests end
+            table.sort(t)
+            return table.concat(t, "|")
+        end
+        QH.MapIndex()
+        QH.Forget() parsed = 0
+        local a = QH.ForMap(1429)
+        local viaIndex = parsed
+        local all = {}
+        for id in pairs(d.q) do all[#all + 1] = id end
+        QH.MapIndex = function() return setmetatable({}, { __index = function() return all end }) end
+        QH.Forget()
+        local b = QH.ForMap(1429)
+        QH.MapIndex = oldIdx
+        QH.Offer, QH.Me, QH.Parse = oldOffer, oldMe, oldParse
+        QH.Forget()
+        assert(#a > 0, "Testkarte ohne Symbole - Vergleich sagt nichts")
+        assert(sig(a) == sig(b), "Verzeichnis zeichnet anderes als alle Quests: " .. #a .. " gegen " .. #b)
+        assert(viaIndex < total / 10, "Neuaufbau liest zu viele Quests: " .. viaIndex .. " von " .. total)
+    end)
+    Check(ok, "Questhilfe: Karte liest nur ihre Quests, zeichnet dasselbe" .. (ok and "" or (": " .. tostring(err))))
+end
+
 -- 1.0.8.26 (/wcui speicher: groupframes 4057 Fenster beim Einschalten):
 -- der Schlachtzugsrahmen entsteht erst im Schlachtzug, sein Platz im
 -- Gestaltungsmodus gleich.

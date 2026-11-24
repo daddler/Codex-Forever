@@ -566,6 +566,71 @@ function QH.Cluster(list)
     return out
 end
 
+-- 1.0.8.26 (/wcui speicher: "Karte: Questhilfe" 515 KB/s, ein Aufruf
+-- 65 ms): jeder Neuaufbau zerlegte alle 5600 Quests des Bestands - rund
+-- 11 MB Abfall, auch auf einer Karte ohne ein einziges Symbol. Jetzt EIN
+-- Verzeichnis Karte -> Quests, die dort einen Geber, eine Abgabe, ein Ziel
+-- oder ein Questgebiet haben (einmal je Sitzung, beim Anmelden); der
+-- Neuaufbau liest nur noch diese. Was es nicht kennt, haette auf der Karte
+-- ohnehin nichts gezeichnet (QH.Places/QH.Camps fanden dort nichts).
+local mapIndex, mapIndexFor
+local function MapsOfRec(rec, mark)
+    if type(rec) == "string" then
+        for m in rec:gmatch("[\t;](%d+):") do mark(tonumber(m)) end
+    elseif type(rec) == "table" then
+        local i, n = 2, #rec
+        while i <= n do
+            mark(rec[i])
+            local j = i + 1
+            while j < n and rec[j] ~= 0 do j = j + 2 end
+            i = j + 1
+        end
+    end
+end
+
+function QH.MapIndex()
+    local d = Data()
+    if mapIndex and mapIndexFor == d then return mapIndex end
+    local idx = {}
+    local spots = WeintCodex.QuestSpotsNF
+    local id, seen = nil, {}
+    local function mark(m)
+        if type(m) ~= "number" or seen[m] then return end
+        seen[m] = true
+        local l = idx[m]
+        if not l then l = {} idx[m] = l end
+        l[#l + 1] = id
+    end
+    for qid, raw in pairs(d.q) do
+        id = qid
+        for k in pairs(seen) do seen[k] = nil end
+        local q = QH.Parse(raw)
+        if type(q) == "table" then
+            for _, f in ipairs({ 6, 8, 10 }) do
+                for _, npc in ipairs(q[f] or {}) do MapsOfRec(d.n[npc], mark) end
+            end
+            for _, f in ipairs({ 7, 9, 11 }) do
+                for _, ob in ipairs(q[f] or {}) do MapsOfRec(d.o[ob], mark) end
+            end
+            for _, item in ipairs(q[12] or {}) do
+                local src = QH.Item(d.i[item])
+                if src then
+                    for _, npc in ipairs(src[1]) do MapsOfRec(d.n[npc], mark) end
+                    for _, ob in ipairs(src[2]) do MapsOfRec(d.o[ob], mark) end
+                end
+            end
+        end
+        local sp = type(spots) == "table" and spots[qid]
+        if type(sp) == "string" then
+            for m in sp:gmatch("(%d+),[%d%.]+,[%d%.]+") do mark(tonumber(m)) end
+        end
+    end
+    mapIndex, mapIndexFor = idx, d
+    QH.stats.indexed = (QH.stats.indexed or 0) + 1
+    return idx
+end
+
+local NONE = {}
 function QH.ForMap(mapID)
     if type(mapID) ~= "number" then return {} end
     local cached = forMap[mapID]
@@ -578,8 +643,8 @@ function QH.ForMap(mapID)
     local focus = QH.Focus()
     QH.builtFocus = focus
     local allZ = Get("qhAllTargets")
-    for id, raw in pairs(d.q) do
-        local q = QH.Parse(raw)
+    for _, id in ipairs(QH.MapIndex()[mapID] or NONE) do
+        local q = QH.Parse(d.q[id])
         if wantA and QH.EventAllowed(QH.EventOf(id)) then
             local offer = QH.Offer(id, q, me)
             if offer == "avail" or (offer == "low" and wantL) then
@@ -1404,7 +1469,11 @@ ev:SetScript("OnEvent", WeintCodex.Measured("questhelper", function(_, event, na
         -- Der Kalender liefert erst nach einer Anfrage (CALENDAR_UPDATE_EVENT_LIST).
         local cal = _G.C_Calendar
         if QH.Active() and cal and cal.OpenCalendar then pcall(cal.OpenCalendar) end
-        if QH.Active() then Refresh(true) EnsureDriver() mmTicker:SetShown(QH.MinimapActive()) end
+        if QH.Active() then
+            -- Verzeichnis Karte -> Quests jetzt, unter dem Ladebildschirm.
+            QH.MapIndex()
+            Refresh(true) EnsureDriver() mmTicker:SetShown(QH.MinimapActive())
+        end
         return
     end
     -- QUEST_LOG_UPDATE kommt in Schauern - einmal je Bild genuegt.

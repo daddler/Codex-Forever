@@ -26,6 +26,7 @@ WeintCodex_ChangelogData = {
         date    = "24.11.2026",
         notes   = {
             "|cff7C6CFFDeutlich weniger Speicher beim Einloggen|r – die Schlachtzugsrahmen werden erst angelegt, wenn du in einen Schlachtzug kommst, nicht mehr auf Vorrat für jeden. Das spart gut 20 MB und etwa eine Viertelsekunde beim Laden. Wirst du mitten im Kampf in einen Schlachtzug geholt, erscheinen die Rahmen nach dem Kampf.",
+            "|cff7C6CFFWeltkarte ohne Hänger|r – die Questhilfe auf der Karte ging bei jedem Neuaufbau alle 5600 Quests durch und hielt das Spiel dabei bis zu 65 ms an. Jetzt liest sie nur die Quests der gezeigten Karte – gleiche Symbole, ein Bruchteil der Arbeit.",
             "|cff7C6CFFWeniger Ruckler bei offenen Fenstern|r – offene Fenster werden im Hintergrund nacheinander nachgestaltet, nicht mehr alle im selben Moment. Beim Öffnen bleibt alles wie gewohnt.",
             "|cff7C6CFFErfahrungsbalken sparsamer|r – die Erfahrung aus abgabebereiten Quests wird einmal je Änderung im Questlog gerechnet, nicht mehrmals hintereinander.",
             "|cff7C6CFF/wcui speicher genauer|r – die Schätzung zählt die Fenster des Spiels nicht mehr als Daten von WeintCodex mit (das Auktionshaus stand dort mit 15 MB). Neu: was jeder Teil beim Einschalten anlegt, und welches Fenster im Takt wie lange braucht.",

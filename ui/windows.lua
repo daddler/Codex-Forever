@@ -2720,40 +2720,57 @@ local function SubName(n)
     return s
 end
 
+-- Schritte einzeln messen ("Fenster: CharacterFrame · Grau"), Namen einmal gebaut.
+local stepName = {}
+local function Step(n, step, fn, ...)
+    if not K.prof.on then return fn(...) end
+    local byN = stepName[n]
+    if not byN then byN = {} stepName[n] = byN end
+    local name = byN[step]
+    if not name then name = SubName(n) .. " · " .. step byN[step] = name end
+    return K.MeasureSub(name, fn, ...)
+end
+
+local function CharacterParts(f)
+    FitStats(f, 0)
+    -- Das Charakterfenster als Ganzes: ui/character.lua.
+    local CS = WeintCodex.UICharacter
+    if CS then Step("CharacterFrame", "Charakter", CS.Update, f, done[f]) end
+    -- Gestaltete Reiter (W.TABS): Register (ui/register.lua: Ruf,
+    -- Fertigkeiten) und PvP (ui/pvp.lua). Jeder prueft selbst,
+    -- ob sein Reiter offen ist.
+    for _, tab in ipairs(W.TABS) do Step("CharacterFrame", tab.LABEL or "Reiter", tab.Update, f) end
+end
+
+local function Hosted(n, f)
+    local hosted = W.HOSTED[n]
+    if hosted then
+        for _, tab in ipairs(hosted) do Step(n, tab.LABEL or "Reiter", tab.Update, f) end
+    end
+end
+
 local function InnerWindow(n, f)
-    HideByAtlas(f, 0, scoped[f])
-    SkinSlots(f)
-    Grey(f, 0)
-    SkinTabSystems(f, 0)
-    SkinPanelButtons(f, 0)
-    SkinSideTabs(f)
+    Step(n, "Atlas", HideByAtlas, f, 0, scoped[f])
+    Step(n, "Plätze", SkinSlots, f)
+    Step(n, "Grau", Grey, f, 0)
+    Step(n, "Reiter", SkinTabSystems, f, 0)
+    Step(n, "Knöpfe", SkinPanelButtons, f, 0)
+    Step(n, "Seitenreiter", SkinSideTabs, f)
     -- Innenflaechen tiefer im Fenster nur dort, wo sie gemessen
     -- zu sehen waren - die schon gestalteten Fenster bleiben, wie sie sind.
     if n == "CommunitiesFrame" then W.SkinCommunitiesList(f) end
     if n == "CommunitiesFrame" or n == "ProfessionsFrame" or n == "LFGParentFrame" or n == "PVEFrame" then
-        SkinInsets(f, 0)
+        Step(n, "Innenflächen", SkinInsets, f, 0)
     end
-    if n == "CharacterFrame" then
-        FitStats(f, 0)
-        -- Das Charakterfenster als Ganzes: ui/character.lua.
-        local CS = WeintCodex.UICharacter
-        if CS then CS.Update(f, done[f]) end
-        -- Gestaltete Reiter (W.TABS): Register (ui/register.lua: Ruf,
-        -- Fertigkeiten) und PvP (ui/pvp.lua). Jeder prueft selbst,
-        -- ob sein Reiter offen ist.
-        for _, tab in ipairs(W.TABS) do tab.Update(f) end
-    end
-    local hosted = W.HOSTED[n]
-    if hosted then
-        for _, tab in ipairs(hosted) do tab.Update(f) end
-    end
+    if n == "CharacterFrame" then CharacterParts(f) end
+    Hosted(n, f)
     W.HoldGlow(f, n)
     if W.WantsLarge(n) then
-        SkinSpellItems(f, 0)
-        LightenText(f, 0)
+        Step(n, "Zauber", SkinSpellItems, f, 0)
+        Step(n, "Text", LightenText, f, 0)
         W.HideLarge(f)
     elseif W.DIALOGS[n] then
-        LightenText(f, 0, true)
+        Step(n, "Text", LightenText, f, 0, true)
         W.HideLarge(f)
     end
 end
