@@ -26,6 +26,7 @@ local C = WeintCodex.Colors
 BG.CELL = 40
 BG.GAP = 4
 BG.ALL = "*"                 -- Auswahl "Alle Charaktere"
+BG.QUESTS = "?quests"        -- 1.0.8.23: Questgegenstaende pruefen (ui/questitems.lua)
 BG.HEAD = 84
 
 BG.sel = BG.ALL
@@ -86,6 +87,18 @@ end
 -- Gegenstaende fuer das Raster: { { id, count, name } } nach Auswahl,
 -- Filter und Suche; sortiert nach Name.
 function BG.Items()
+    if BG.sel == BG.QUESTS then
+        local QI = WeintCodex.UIQuestItems
+        local list = QI and QI.Scan() or {}
+        BG.questList = list
+        local q = (BG.query or ""):lower()
+        if q == "" then return list end
+        local out = {}
+        for _, e in ipairs(list) do
+            if type(e.name) == "string" and e.name:lower():find(q, 1, true) then out[#out + 1] = e end
+        end
+        return out
+    end
     local iv = IV()
     local st = iv and iv.Store(false)
     if not st then return {} end
@@ -146,13 +159,29 @@ local function Cell(i)
     b.icon:SetPoint("BOTTOMRIGHT", b, "BOTTOMRIGHT", -2, 2)
     b.count = WeintCodex.Label(b, "", { size = 11, color = "textBright" })
     b.count:SetPoint("BOTTOMRIGHT", b, "BOTTOMRIGHT", -3, 3)
+    -- 1.0.8.23: Leiste unten = Stand des Questgegenstands (nur in "Questgegenstaende").
+    b.mark = b:CreateTexture(nil, "OVERLAY")
+    b.mark:SetPoint("BOTTOMLEFT", b, "BOTTOMLEFT", 0, 0)
+    b.mark:SetPoint("BOTTOMRIGHT", b, "BOTTOMRIGHT", 0, 0)
+    b.mark:SetHeight(4)
+    b.mark:Hide()
     b:SetScript("OnEnter", function(self)
         local gt = _G.GameTooltip
         if not (gt and self.id) then return end
         gt:SetOwner(self, "ANCHOR_RIGHT")
         if gt.SetItemByID then pcall(gt.SetItemByID, gt, self.id)
         else gt:SetText(self.name or ("#" .. self.id)) end
+        if self.judge then
+            local m = C.textFaint
+            gt:AddLine(self.judge.manual and "Klick: Regel „behalten“ entfernen" or "Klick: immer behalten", m[1], m[2], m[3])
+        end
         gt:Show()
+    end)
+    b:SetScript("OnClick", function(self)
+        local QI = WeintCodex.UIQuestItems
+        if not (self.judge and QI) then return end
+        QI.SetKept(self.id, not self.judge.manual)
+        BG.Show()
     end)
     b:SetScript("OnLeave", function() if _G.GameTooltip then _G.GameTooltip:Hide() end end)
     cells[i] = b
@@ -280,8 +309,16 @@ function BG.DrawGrid()
     local step = BG.CELL + BG.GAP
     for i, it in ipairs(items) do
         local b = Cell(i)
-        b.id, b.name = it.id, it.name
+        b.id, b.name, b.judge = it.id, it.name, it.judge
         b.icon:SetTexture(Icon(it.id))
+        local QI = WeintCodex.UIQuestItems
+        if it.judge and QI then
+            local c = C[QI.COLOR[it.judge.state]] or C.textMuted
+            b.mark:SetColorTexture(c[1], c[2], c[3], 1)
+            b.mark:Show()
+        else
+            b.mark:Hide()
+        end
         b.count:SetText(it.count > 1 and tostring(it.count) or "")
         local col, row = (i - 1) % cols, math.floor((i - 1) / cols)
         b:ClearAllPoints()
@@ -298,6 +335,17 @@ function BG.DrawGrid()
         note = " · Bank unbekannt – einmal mit diesem Charakter öffnen"
     end
     local text
+    if BG.sel == BG.QUESTS then
+        local QI = WeintCodex.UIQuestItems
+        local c = QI and QI.Counts(BG.questList) or { keep = 0, done = 0, unknown = 0 }
+        if #items == 0 then
+            text = BG.query ~= "" and ("Nichts gefunden für „" .. BG.query .. "“.") or "Keine Questgegenstände in den Taschen."
+        else
+            text = c.done .. " können weg · " .. c.keep .. " behalten · " .. c.unknown .. " unklar – gelöscht wird nichts, das entscheidest du."
+        end
+        page.Foot:SetText(text)
+        return
+    end
     if #items == 0 then
         if #BG.Chars() == 0 then text = "Noch kein Charakter erfasst – einmal einloggen."
         elseif BG.query ~= "" then text = "Nichts gefunden für „" .. BG.query .. "“."
@@ -328,12 +376,63 @@ local function SidebarItems(chars, myRealm)
                               onClick = function() BG.sel = key BG.Show() end }
         order[#order + 1] = key
     end
+    -- 1.0.8.23: Questgegenstaende dieses Charakters pruefen.
+    if WeintCodex.UIQuestItems then
+        items[#items + 1] = { isGroup = true, label = "Prüfen" }
+        local QI = WeintCodex.UIQuestItems
+        local n = QI.Counts(QI.Scan()).done
+        items[#items + 1] = { label = "Questgegenstände",
+            status = { text = n > 0 and (n .. " können weg") or "", color = n > 0 and "gold" or "textMuted" },
+            onClick = function() BG.sel = BG.QUESTS BG.Show() end }
+        order[#order + 1] = BG.QUESTS
+    end
     return items, order
 end
 
 local function Toggle(k) Set(k, not Get(k)) BG.Show() end
 
+local function QuestInspector()
+    local QI = WeintCodex.UIQuestItems
+    local c = QI.Counts(BG.questList)
+    local rules = QI.Rules(false)
+    local nr = 0
+    for _ in pairs(rules or {}) do nr = nr + 1 end
+    return {
+        { type = "header", text = "Questgegenstände" },
+        { type = "rows", rows = {
+            { label = "Können weg", value = tostring(c.done) },
+            { label = "Behalten", value = tostring(c.keep) },
+            { label = "Unklar", value = tostring(c.unknown) },
+            { label = "Deine Regeln", value = tostring(nr) },
+        }},
+        { type = "card", lines = {
+            "Leiste unter dem Symbol: grün behalten,",
+            "gold kann weg, grau unklar. Klick auf",
+            "einen Gegenstand: immer behalten.",
+            "Gelöscht wird nichts automatisch.",
+        }},
+        { type = "divider" },
+        { type = "header", text = "Einstellungen" },
+        { type = "button", label = "Im Tooltip zeigen: " .. (Get("questItemTip") ~= false and "an" or "aus"),
+          onClick = function() Set("questItemTip", Get("questItemTip") == false) BG.Show() end },
+        nr > 0 and { type = "button", label = "Alle Regeln „behalten“ entfernen",
+          onClick = function() QI.ClearRules() BG.Show() end } or { type = "divider" },
+        { type = "divider" },
+        { type = "header", text = "So wird geprüft" },
+        { type = "card", lines = {
+            "Behalten: eine Quest im Log, eine",
+            "wiederholbare oder noch offene Quest",
+            "braucht ihn. Kann weg: nur reine Quest-",
+            "gegenstände, deren Quests alle erledigt",
+            "oder nicht für dich sind. Sagt das Spiel",
+            "nichts, bleibt es unklar. Welche Quest",
+            "was nutzt: von Spielern gesammelt.",
+        }},
+    }
+end
+
 local function Inspector(chars)
+    if BG.sel == BG.QUESTS and WeintCodex.UIQuestItems then return QuestInspector() end
     local iv = IV()
     local st = iv.Store(false)
     local rows = {}
@@ -394,7 +493,7 @@ function BG.Show(sub)
     iv.ScanBags()
     local _, _, myRealm = iv.Me()
     local chars = BG.Chars()
-    local known = BG.sel == BG.ALL
+    local known = BG.sel == BG.ALL or (BG.sel == BG.QUESTS and WeintCodex.UIQuestItems ~= nil)
     for _, ch in ipairs(chars) do if ch.key == BG.sel then known = true end end
     if not known then BG.sel = BG.ALL end
     local items, order = SidebarItems(chars, myRealm)
@@ -406,15 +505,27 @@ function BG.Show(sub)
         end
     end
     if BG.sel ~= BG.ALL then
-        for i, key in ipairs(order) do
-            if key == BG.sel then WeintCodex.SetBreadcrumb("Taschen", items[i].label) end
+        local n = 0
+        for _, it in ipairs(items) do
+            if not it.isGroup then
+                n = n + 1
+                if order[n] == BG.sel then WeintCodex.SetBreadcrumb("Taschen", it.label) end
+            end
         end
     end
     nav.SetInspector(Inspector(chars))
+    local quests = BG.sel == BG.QUESTS
+    f.Head.Title:SetText(quests and "Questgegenstände" or "Taschen")
+    if f.Head.Sub then
+        f.Head.Sub:SetText(quests and "Was in deinen Taschen eine Quest braucht – und was weg kann, weil alle seine Quests erledigt sind."
+            or "Was deine Charaktere in Taschen, auf der Bank und am Leib tragen – Stand ihres letzten Besuchs.")
+    end
 
     -- Filter: an = Akzent, aus = Flaeche.
     local a = C.accent
     for _, fb in ipairs(filterBtns) do
+        -- Questgegenstaende: nur die eigenen Taschen, Filter ohne Sinn.
+        fb:SetShown(BG.sel ~= BG.QUESTS)
         local on = BG.filter[fb.key]
         if on then fb.bg:SetColorTexture(a[1], a[2], a[3], 0.25) else
             local s = C.surface2

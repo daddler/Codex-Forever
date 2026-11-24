@@ -9,6 +9,18 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.0.8.23] – 2026-11-24
+
+### Neu
+- Questgegenstände prüfen (Wunsch: Quest Item Cleaner Forever „muss auch in
+  Codex vorhanden sein“; dort „All Rights Reserved“ – nur das Verhalten,
+  eigener Code): `ui/questitems.lua`, Tooltip und Seite „Taschen“ →
+  „Questgegenstände“ (Leiste je Zustand, Klick = Regel „behalten“).
+  Vorsichtig: unklar ist nie „kann weg“, gelöscht wird nichts. Bestand:
+  `data/questdb.lua` mit `qi` (Gegenstand → Quests) und `rq` (wiederholbar),
+  erzeugt von `import_questdb.py` aus derselben QuestieDB wie bisher.
+  Doku: `docs/systems/ui.md`, *Questgegenstände prüfen*.
+
 ## [1.0.8.22] – 2026-11-24
 
 ### Neu

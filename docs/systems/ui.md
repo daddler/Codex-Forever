@@ -4945,3 +4945,27 @@ setzt die Klicks seiner Rahmen selbst.
 
 Nicht im Spiel geprüft: ob die Container mit Zauberfilter auf Forever die
 HoTs im Kampf zeigen (VoidBox meldet es so).
+
+## Questgegenstände prüfen *(1.0.8.23, `ui/questitems.lua`, Seite „Taschen“ → „Questgegenstände“)*
+
+Wunsch: „Dieses Addon soll richtig gut sein, das muss auch in Codex
+vorhanden sein“ – Quest Item Cleaner Forever (MisterPi_, „All Rights
+Reserved“). Nachgebaut ist nur das **Verhalten**, kein Code, kein Text,
+kein Bild. Das Original liest Questie zur Laufzeit; WeintCodex liest den
+eigenen Bestand `data/questdb.lua`, der dafür zwei Tabellen bekommt
+(`import_questdb.py`): `qi[Gegenstand]` = Quests, die ihn als Ziel
+brauchen, mitgeben (`sourceItemId`), voraussetzen (`requiredSourceItems`)
+oder mit ihm starten (`startedBy`, dritte Gruppe); `rq` = wiederholbare
+Quests (`specialFlags` 1, `questFlags` 4096/32768).
+
+`QI.Judge` ist vorsichtig: eigene Regel → behalten; Quest im Log (auch
+abgabebereit), Questinfo der Tasche oder Ziel des Spiels per Name
+(`UIQuestSell.QuestsFor`) → behalten; wiederholbar → behalten; offen und
+für diesen Charakter → behalten; Client schweigt → **unklar**; nur ein
+**reiner Questgegenstand (Klasse 12)**, dessen Quests alle erledigt oder
+nicht für diesen Charakter sind, ist „kann weg“. Gewöhnliche Ware steht
+nur da, solange eine Quest im Log sie braucht. Gelöscht wird nie etwas.
+Tooltip-Zeilen hinter dem Schalter `comfort.questItemTip` (an, auf Wunsch;
+umschaltbar im Detailbereich der Seite, nicht auf der Komfortseite – die
+hat ihre 15 Einstellungen). Regeln „behalten“ je Charakter in
+`SavedData.questItemKeep[Name-Realm]`.

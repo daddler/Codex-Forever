@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.0.8.23",
+        date    = "24.11.2026",
+        notes   = {
+            "|cff7C6CFFQuestgegenstände prüfen|r – der Tooltip eines Questgegenstands sagt, ob du ihn noch brauchst: behalten, kann weg oder unklar, mit den Quests dazu. Unter Taschen → Questgegenstände siehst du alle auf einen Blick, das Unnötige zuerst. Ein Klick merkt sich einen Gegenstand als „immer behalten“. Gelöscht wird nie etwas – „kann weg“ steht nur, wenn alle seine Quests erledigt oder nicht für deinen Charakter sind.",
+        },
+    },
+    {
         version = "1.0.8.22",
         date    = "24.11.2026",
         notes   = {

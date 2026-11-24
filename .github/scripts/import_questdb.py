@@ -201,7 +201,7 @@ def main():
     st = Store(read_meta(os.path.join(folder, "QuestieDB_Forever.toc")))
     zmap = zone_map(folder)
 
-    qids, quests = st.entity("Quest-", [2, 3, 10, 12, 13, 16, 18, 19, 20, 22, 25, 27, 28, 30, 31, 32, 33, 34, 35, 36])
+    qids, quests = st.entity("Quest-", [2, 3, 10, 11, 12, 13, 16, 18, 19, 20, 21, 22, 23, 24, 25, 27, 28, 30, 31, 32, 33, 34, 35, 36])
     qde = st.german("Quest", qids)
 
     need_npc, need_obj, need_item = set(), set(), set()
@@ -249,6 +249,8 @@ def main():
         "--            z = Zauber, b = Berufsrang), Elternquest im Log, ab Quest, weg wenn im Log",
         "-- n[NPC] / o[Objekt] = Name, dann je Karte \"Karte:x,y,x,y\" durch \";\" getrennt",
         "-- i[Gegenstand] = NPCs, Objekte   (wer ihn fallen laesst)",
+        "-- qi[Gegenstand] = Quests, die ihn brauchen, mitgeben oder mit ihm starten",
+        "-- rq = wiederholbare Quests (taeglich, woechentlich, beliebig oft)",
         "--------------------------------------------------",
         "",
         "WeintCodex = WeintCodex or {}",
@@ -256,6 +258,7 @@ def main():
         "    q = {",
     ]
     nq = 0
+    uses, repeat = {}, []
     for i in sorted(quests):
         q = quests[i]
         name = text(qde.get(i) or q.get(1))
@@ -290,7 +293,23 @@ def main():
                    csv(ids(q.get(28)) + one(36))]         # im Log -> weg
         lines.append("        [%d] = %s," % (i, lua_str("\t".join(fields)).replace("\t", "\\t")))
         nq += 1
+        # 1.0.8.23 (Questgegenstaende in den Taschen): welche Quest welchen
+        # Gegenstand braucht oder mitbringt - Ziel, Startgegenstand der Quest
+        # (sourceItemId), noetige Gegenstaende (requiredSourceItems), Gegenstand,
+        # der die Quest startet (startedBy, dritte Gruppe). Wiederholbar:
+        # specialFlags REPEATABLE (1), questFlags DAILY (4096) / WEEKLY (32768).
+        for it in set(targets(2) + one(11) + ids(q.get(21)) + grp(sb, 2)):
+            if isinstance(it, int) and it > 0:
+                uses.setdefault(it, set()).add(i)
+        if (int(q.get(24) or 0) & 1) or (int(q.get(23) or 0) & (4096 | 32768)):
+            repeat.append(i)
     lines.append("    },")
+    # Gegenstand -> Quests (nur Quests im Bestand), wiederholbare Quests.
+    lines.append("    qi = {")
+    for it in sorted(uses):
+        lines.append('        [%d] = "%s",' % (it, csv(sorted(uses[it]))))
+    lines.append("    },")
+    lines.append('    rq = "%s",' % csv(sorted(repeat)))
 
     def places(table, names, key, out_name):
         lines.append("    %s = {" % out_name)

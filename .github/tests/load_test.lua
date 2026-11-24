@@ -21969,6 +21969,68 @@ do
     Check(ok, "Buecher-Seite: Bewertung nach Stufe und Lage, Karte aus dem Client, Liste" .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 1.0.8.23: Questgegenstaende in den Taschen pruefen (Verhalten wie Quest
+-- Item Cleaner, eigener Code) - vorsichtig: unklar ist nie "kann weg".
+do
+    local G = _G
+    local oQ, oC, oCI, oSD = G.C_QuestLog, G.C_Container, G.C_Item, WeintCodex.SavedData.questItemKeep
+    local ok, err = pcall(function()
+        local QI, BG = WeintCodex.UIQuestItems, WeintCodex.Bags
+        assert(QI and BG and BG.QUESTS, "Baustein fehlt")
+        assert(QI.QuestsOf(10599)[1] == 3510 and QI.Repeatable(94312) and not QI.Repeatable(3510), "Bestand qi/rq")
+        local done, inlog = {}, {}
+        G.C_QuestLog = {
+            IsQuestFlaggedCompleted = function(q) return done[q] end,
+            GetNumQuestLogEntries = function() local n = 0 for _ in pairs(inlog) do n = n + 1 end return n end,
+            GetInfo = function(i) local n = 0 for q in pairs(inlog) do n = n + 1 if n == i then return { questID = q, title = "Q" } end end end,
+        }
+        local cls = { [10599] = 12, [264112] = 12, [7972] = 12, [999001] = 12, [2589] = 7 }
+        G.C_Item = { GetItemInfoInstant = function(id) return id, "", "", "", 0, cls[id] or 15 end, GetItemCount = function() return 0 end }
+        local me = { race = 1, class = 1, faction = "Alliance" }
+        local function J(id) return QI.Judge(id, { me = me, log = QI.LogSet() }) end
+        done[3510] = false
+        assert(J(10599).state == "keep", "offene Quest: nicht behalten")
+        done[3510] = true
+        assert(J(10599).state == "done", "alle Quests erledigt: nicht 'kann weg'")
+        done[3510] = nil
+        assert(J(10599).state == "unknown", "Client schweigt: nicht unklar")
+        done[3510] = true
+        inlog[3510] = true
+        assert(J(10599).state == "keep", "Quest im Log: nicht behalten")
+        inlog[3510] = nil
+        done[94312] = true
+        assert(J(264112).state == "keep", "wiederholbare Quest: nicht behalten")
+        done[8256] = false
+        assert(J(7972).state == "notmine", "Quest anderer Klasse: nicht 'nicht fuer dich'")
+        assert(J(999001).state == "unknown", "Questgegenstand ohne Quest: nicht unklar")
+        assert(J(2589) == nil, "gewoehnliche Ware ohne Quest im Log genannt")
+        WeintCodex.SavedData.questItemKeep = nil
+        assert(QI.SetKept(10599, true) and J(10599).state == "keep" and J(10599).manual, "eigene Regel greift nicht")
+        -- Seite: Taschen des Charakters, Leiste je Zustand, Klick = Regel.
+        G.C_Container = {
+            GetContainerNumSlots = function(bag) return bag == 0 and 3 or 0 end,
+            GetContainerItemInfo = function(_, slot)
+                local ids = { 10599, 7972, 2589 }
+                return { itemID = ids[slot], stackCount = 1, hyperlink = "|Hitem:" .. ids[slot] .. "|h[Ding " .. slot .. "]|h" }
+            end,
+        }
+        local list = QI.Scan()
+        assert(#list == 2 and list[1].id == 7972, "Scan: kann weg nicht zuerst")
+        BG.sel = BG.QUESTS
+        BG.Show()
+        local cells = 0
+        for _, it in ipairs(BG.shown or {}) do if it.judge then cells = cells + 1 end end
+        assert(cells == 2, "Seite zeigt nicht die Questgegenstaende")
+        QI.SetKept(10599, false)
+        assert(not QI.IsKept(10599), "Regel nicht entfernt")
+        local lines = QI.TooltipLines(7972)
+        for _, l in ipairs(lines or {}) do assert(not l[1]:find("Cleaner", 1, true) and not l[1]:find("Questie", 1, true), "fremder Name") end
+        BG.sel = BG.ALL
+    end)
+    G.C_QuestLog, G.C_Container, G.C_Item, WeintCodex.SavedData.questItemKeep = oQ, oC, oCI, oSD
+    Check(ok, "Questgegenstaende: behalten/kann weg/unklar, eigene Regel, Seite Taschen" .. (ok and "" or (": " .. tostring(err))))
+end
+
 -- 1.0.8.22: Belohnungen je Stufe (Bild aus dem Spiel: Bogen, Wappen,
 -- Nachtlicht), Mindeststufe haelt "abholen" zurueck, 30 Buecher beim
 -- Magierlehrer.
