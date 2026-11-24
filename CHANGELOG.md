@@ -30,6 +30,15 @@ nicht zusammen.
   (GPL-3.0, nur Daten; dort QuestieDB Forever) – nur, was dem Bestand fehlt
   (5 Quests, z. B. Totem der geladenen Flammen, Götze der wechselnden Gezeiten).
   Klick auf eine Quest öffnet nicht mehr die Karte; dafür der Knopf rechts.
+- Dungeonjournal: Questgeber auf der Karte für 113 weitere Quests, 5 Punkte
+  versetzt (Stockade 386/388, Dalaran 92457/92458/96984 – in Forever an
+  anderer Stelle als in den Classic-Berichten); 199 bestehende Punkte stimmen
+  mit Forever überein (≤ 5 % der Kartenbreite). Quelle: der eigene
+  Questbestand (QuestieDB Forever: Geber je Quest, Lagen der NPCs/Objekte),
+  erzeugt von `.github/scripts/import_questgivers.lua` →
+  `data/dungeon_questgivers.lua`. Geber in Instanzen, Quests aus Beute und 25
+  Geber ohne Lage in Forever bleiben ohne Punkt. Quests ohne Gebertext
+  bekommen „Beginnt: Name, Gebiet“.
 - Addon-Liste: `## IconTexture` mit dem Logo (`media/ui/logo_64`) statt des
   roten Fragezeichens. Den Ordner „WeintCodex Töne“ schreibt die Companion.
 

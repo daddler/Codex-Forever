@@ -95,6 +95,7 @@ data/dungeon_journal_fg.lua
 # Stufen der Bosse, "noch nicht im Spiel" (J.MergeNaowh) - nach dem Abgleich oben.
 data/dungeon_journal_nf.lua
 data/dungeon_journal_ofa.lua
+data/dungeon_questgivers.lua
 
 #
 # data/artwork.lua steht NACH den Dungeondateien, weil es sie mit

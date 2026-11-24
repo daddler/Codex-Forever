@@ -11432,8 +11432,19 @@ do
         WeintCodex.Navigation.SwitchTo("dungeons")
         -- 6.14.0.0: dazu der Eingang (Westfalen) - fuenf Geber, ein Eingang.
         -- Dungeon Journal 1.6.3: dazu Jordan Stilwell (Paladinquest 1806).
-        assert(DP.mapLinks == 7 and DP.entranceLinks == 1,
-            "Kartenlinks in The Deadmines: " .. tostring(DP.mapLinks) .. " statt 7, Eingaenge " .. tostring(DP.entranceLinks))
+        -- 1.0.8.23: Geber aus dem Questbestand (Forever) - drei mehr.
+        assert(DP.mapLinks == 10 and DP.entranceLinks == 1,
+            "Kartenlinks in The Deadmines: " .. tostring(DP.mapLinks) .. " statt 10, Eingaenge " .. tostring(DP.entranceLinks))
+        -- 1.0.8.23: neue Geber und in Forever versetzte.
+        assert((J.GIVERS_NEW or 0) > 100, "Geber aus dem Questbestand fehlen")
+        local afadra = J.Place(96394)
+        assert(afadra and afadra.map == 1455 and afadra.forever, "Afadra Dunwall (Hall of Thanes) ohne Punkt")
+        assert(J.Place(386).forever and math.abs(J.Place(386).x - 0.212) < 1e-6, "versetzter Geber nicht uebernommen")
+        local hasNpc
+        for _, q in ipairs(J.Quests("drowned_city", nil)) do
+            if q.id == 95798 then hasNpc = q.giverNpc and q.giverNpc.name end
+        end
+        assert(hasNpc, "Quest ohne Gebertext bekommt keinen Namen")
         -- 6.5.1.1: jede Quest in ihrer Kachel (sieben in The Deadmines).
         assert(DP.questTiles == #J.Quests("the_deadmines", nil) or DP.questTiles == #J.Quests("the_deadmines", "alliance"),
             "Questkacheln: " .. tostring(DP.questTiles))
