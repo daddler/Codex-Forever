@@ -30,7 +30,14 @@ local KEY = "comfort"
 
 DM.PIC_W, DM.PIC_H = 1002, 668
 DM.HEAD = 30
-DM.DEFAULTS = { dungeonMaps = true }
+DM.DEFAULTS = { dungeonMaps = true, dungeonPinSize = 100 }
+-- 1.0.8.20 (Wunsch: "auf den Dungeon Maps genau positioniert die Bosse; mit
+-- Rechtsklick ins Dungeonjournal von Codex"): Bosspunkte aus
+-- data/dungeonpins.lua (Tabellen des Spiels, nur auf denselben Bildern).
+DM.pinList = {}     -- Bosspunkte (Knoepfe), wiederverwendet
+DM.PIN = 26              -- Groesse eines Bosspunkts bei 100 %
+-- Ueber Karten anderer Addons (die ihre Dungeonkarte bis Ebene 9200 legen).
+DM.LEVEL = 9300
 
 local view, hiddenFor
 DM.floorOf = {}          -- [Instanz] = zuletzt gezeigte Ebene (diese Sitzung)
@@ -147,6 +154,7 @@ local function Layout()
         b:ClearAllPoints()
         b:SetPoint("TOPLEFT", view.page, "TOPLEFT", 0, -512 * s)
         b:SetTexCoord(0, 1, 0, (ph - 512) / 256)
+        for _, p in ipairs(DM.pinList) do p:Hide() end
         return
     end
     local s = math.min(w / DM.PIC_W, h / DM.PIC_H)
@@ -159,8 +167,110 @@ local function Layout()
         t:SetPoint("TOPLEFT", view.page, "TOPLEFT", col * 256 * s, -row * 256 * s)
         t:SetTexCoord(0, tw / 256, 0, th / 256)
     end
+    if DM.PlacePins then DM.PlacePins() end
 end
 DM.Layout = Layout
+
+-- Bosspunkte der Instanz je Ebene: { { dungeon, boss, Ebene, x, y }, ... }.
+function DM.Pins(inst, floor)
+    local all = WeintCodex.DungeonPins
+    local out = {}
+    for _, p in ipairs(type(all) == "table" and all[inst] or {}) do
+        if p[3] == floor then out[#out + 1] = p end
+    end
+    return out
+end
+
+-- Der Boss im Codex (Name, Reihenfolge) oder nil.
+function DM.Boss(dungeonId, bossId)
+    local D = WeintCodex.DungeonData
+    local d = D and D.Get and D.Get(dungeonId)
+    for _, b in ipairs(d and d.bosses or {}) do
+        if b.id == bossId then return b, d end
+    end
+    return nil
+end
+
+-- Rechtsklick: Codex auf diesem Boss.
+function DM.OpenBoss(dungeonId, bossId)
+    local CL = WeintCodex.UICodexLinks
+    local function pre()
+        local DP = WeintCodex.DungeonPages
+        if DP and DP.Select then DP.Select(dungeonId, bossId) end
+    end
+    if CL and CL.Open then return CL.Open("dungeons", pre) end
+    return false
+end
+
+local function PinSize()
+    local v = tonumber(K.Get(KEY, "dungeonPinSize"))
+    if not v then v = DM.DEFAULTS.dungeonPinSize end
+    return math.max(0, math.min(150, v)) / 100
+end
+DM.PinSize = PinSize
+
+local function Pin(i)
+    local b = DM.pinList[i]
+    if b then return b end
+    b = CreateFrame("Button", nil, view.page)
+    b:RegisterForClicks("RightButtonUp", "LeftButtonUp")
+    local gold = (WeintCodex.GameColors or {}).frameAccent or { 0.76, 0.64, 0.44, 1 }
+    b.ring = b:CreateTexture(nil, "ARTWORK")
+    b.ring:SetAllPoints(b)
+    b.ring:SetTexture(K.MEDIA .. "disc_hd")
+    b.ring:SetVertexColor(gold[1], gold[2], gold[3], 1)
+    b.disc = b:CreateTexture(nil, "ARTWORK", nil, 1)
+    b.disc:SetPoint("TOPLEFT", b, "TOPLEFT", 3, -3)
+    b.disc:SetPoint("BOTTOMRIGHT", b, "BOTTOMRIGHT", -3, 3)
+    b.disc:SetTexture(K.MEDIA .. "disc_hd")
+    local s0 = C.surface0 or C.surface1
+    b.disc:SetVertexColor(s0[1], s0[2], s0[3], 1)
+    b.num = K.NewText(b, 11)
+    b.num:SetPoint("CENTER", b, "CENTER", 0, 0)
+    b.num:SetTextColor(gold[1], gold[2], gold[3], 1)
+    b:SetScript("OnEnter", function(self)
+        GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
+        GameTooltip:SetText(self.label or "?", 1, 1, 1)
+        GameTooltip:AddLine("Rechtsklick: im Codex öffnen", 0.7, 0.7, 0.75)
+        GameTooltip:Show()
+    end)
+    b:SetScript("OnLeave", function() GameTooltip:Hide() end)
+    b:SetScript("OnClick", function(self, button)
+        if button == "RightButton" then DM.OpenBoss(self.dungeon, self.boss) end
+    end)
+    DM.pinList[i] = b
+    return b
+end
+
+-- Bosspunkte der gezeigten Ebene setzen (nur auf Bildern des Clients).
+function DM.PlacePins()
+    if not view then return 0 end
+    for _, b in ipairs(DM.pinList) do b:Hide() end
+    local fl = view.map and view.floor and view.map.floors[view.floor]
+    local scale = PinSize()
+    if not fl or fl.files or scale <= 0 then return 0 end
+    local w, h = K.Plain(view.page:GetWidth()), K.Plain(view.page:GetHeight())
+    if type(w) ~= "number" or type(h) ~= "number" or w <= 0 or h <= 0 then return 0 end
+    local n = 0
+    for _, p in ipairs(DM.Pins(view.inst, view.floor)) do
+        local boss = DM.Boss(p[1], p[2])
+        if boss then
+            n = n + 1
+            local b = Pin(n)
+            local size = math.floor(DM.PIN * scale + 0.5)
+            b:SetSize(size, size)
+            b:ClearAllPoints()
+            b.x, b.y = p[4] * w, -p[5] * h
+            b:SetPoint("CENTER", view.page, "TOPLEFT", b.x, b.y)
+            b.dungeon, b.boss, b.label = p[1], p[2], boss.name
+            b.num:SetText(boss.order and tostring(boss.order) or "")
+            b.num:SetShown(scale >= 0.7)
+            b:SetFrameLevel((K.Plain(view.page:GetFrameLevel()) or 1) + 5)
+            b:Show()
+        end
+    end
+    return n
+end
 
 -- Ebene i zeigen. false, wenn der Client ein Bild nicht kennt.
 function DM.ShowFloor(i)
@@ -211,7 +321,7 @@ local function Build(wm)
     local host = type(wm.ScrollContainer) == "table" and wm.ScrollContainer or wm
     local f = CreateFrame("Frame", "WeintCodexDungeonMap", host)
     f:SetAllPoints(host)
-    f:SetFrameLevel((K.Plain(host:GetFrameLevel()) or 1) + 40)
+    f:SetFrameLevel(math.max((K.Plain(host:GetFrameLevel()) or 1) + 40, DM.LEVEL))
     f:EnableMouse(true)
     f:EnableMouseWheel(true)
     local bg = f:CreateTexture(nil, "BACKGROUND")
@@ -298,7 +408,9 @@ end))
 function DM.BuildRows(B)
     B:Row({ type = "toggle", label = "Dungeonkarten", key = "dungeonMaps",
             description = "In Dungeons und Schlachtzügen zeigt die Weltkarte (M) die Karte der Instanz, mit Ebenen. Klassische Instanzen: Bilder aus dem Spiel. Neue Dungeons: Zeichnungen von Santiago Reyes (Atlas de Azeroth: Forever)." },
-          { type = "empty" })
+          { type = "slider", label = "Bosse auf der Karte", key = "dungeonPinSize", min = 0, max = 150, step = 10,
+            format = function(v) return v == 0 and "aus" or string.format("%d %%", v) end,
+            description = "Größe der Bosspunkte auf der Dungeonkarte. Rechtsklick auf einen Boss öffnet ihn im Codex." })
 end
 
 local mod = K.Module(KEY)
@@ -307,3 +419,8 @@ if mod then
         if mod.defaults[k] == nil then mod.defaults[k] = v end
     end
 end
+
+-- Groesse der Bosspunkte geaendert: sofort neu setzen.
+K.Listen(function(kind, moduleKey)
+    if kind == "setting" and moduleKey == KEY and view and view:IsShown() then pcall(DM.PlacePins) end
+end)

@@ -9,6 +9,31 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.0.8.20] – 2026-11-24
+
+### Neu
+- Bosse auf den Dungeonkarten (`ui/dungeonmap.lua`, Wunsch: „auf den
+  Dungeon Maps genau positioniert die Bosse; mit Rechtsklick ins
+  Dungeonjournal von Codex – die Bosse und wo sie sind in Codex
+  enthalten“): `data/dungeonpins.lua`, **erzeugt** von
+  `.github/scripts/import_mappins.py` aus den Spieltabellen
+  JournalEncounter (Lage des Bosses auf der Kartengrafik), UiMapXMapArt und
+  UiMapArtTile (Classic- und aktuelle Fassung, über wago.tools). Ein Punkt
+  steht nur, wo die Kartengrafik aus genau denselben Bilddateien besteht wie
+  die Ebene in `data/dungeonmaps.lua`. Zuordnung über den Namen,
+  `ALIAS` für denselben Kampf unter späterem Namen (Sneed, The Lost Dwarves,
+  Nekrum & Sezz'ziz, Ring of Law, Stratholme). 126 Bosse in 16 Instanzen;
+  keine in Ragefire, Verlies, Scharlachrotem Kloster, Scholomance
+  (Classic-Bosse) und den gezeichneten Forever-Karten – dort kennt das
+  Kompendium nur die Bosse späterer Fassungen. Herkunft `classic`. Kein
+  Addon kopiert (ForeverDungeonJournal hat keine Lizenz – nur das
+  Verhalten). Punkt: goldener Ring mit Reihenfolge, Tooltip, Rechtsklick
+  `DungeonPages.Select(dungeon, boss)`; Größe `dungeonPinSize` (0–150 %,
+  0 = aus) auf der Komfortseite „Karte“.
+- Dungeonkarte über Karten anderer Addons (Ebene mindestens `DM.LEVEL` 9300).
+- `CL.CurrentDungeon` findet den Dungeon auch, wenn der Kartenname vom
+  Codex-Namen abweicht („Deadmines“ / „The Deadmines“).
+
 ## [1.0.8.19] – 2026-11-23
 
 ### Behoben (Verdacht, nicht im Spiel bestaetigt)

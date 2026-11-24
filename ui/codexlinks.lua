@@ -133,14 +133,18 @@ end
 function CL.CurrentDungeon()
     local DM = WeintCodex.UIDungeonMap
     if not (DM and DM.Current) then return nil end
-    local ok, m = pcall(DM.Current)
+    local ok, m, inst = pcall(DM.Current)
     local name = ok and type(m) == "table" and m.name or nil
     local D = WeintCodex.DungeonData
-    if type(name) ~= "string" or not (D and D.All) then return nil end
-    for _, d in ipairs(D.All()) do
-        if d.name == name then return d.id end
+    if type(name) == "string" and D and D.All then
+        for _, d in ipairs(D.All()) do
+            if d.name == name then return d.id end
+        end
     end
-    return nil
+    -- 1.0.8.20: Kartenname und Codex-Name weichen ab ("Deadmines" gegen
+    -- "The Deadmines") - die Bosspunkte der Instanz kennen den Dungeon.
+    local pins = ok and WeintCodex.DungeonPins and WeintCodex.DungeonPins[inst]
+    return pins and pins[1] and pins[1][1] or nil
 end
 
 local function IsTradeTrainer()

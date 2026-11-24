@@ -22,6 +22,14 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.0.8.20",
+        date    = "24.11.2026",
+        notes   = {
+            "|cff7C6CFFBosse auf der Dungeonkarte|r – drückst du im Dungeon M, stehen die Bosse an ihrer Stelle auf der Karte, auf der richtigen Ebene, mit ihrer Nummer in der Reihenfolge. Drüberfahren nennt den Namen, Rechtsklick öffnet den Boss im Codex. Die Größe der Punkte (oder aus) stellst du unter Komfort → Karte ein. Die Lagen stammen aus dem Spiel selbst, aus Classic; für die umgebauten und die neuen Dungeons gibt es noch keine.",
+            "|cff7C6CFFDungeonkarte obenauf|r – die Dungeonkarte liegt jetzt auch über den Karten anderer Karten-Addons.",
+        },
+    },
+    {
         version = "1.0.8.19",
         date    = "23.11.2026",
         notes   = {

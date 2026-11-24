@@ -23510,6 +23510,61 @@ do
     Check(ok, "Dungeonkarten: bekannte Instanz zeigt ihre Ebenen" .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 1.0.8.20: Bosse auf den Dungeonkarten (data/dungeonpins.lua, Tabellen des Spiels).
+do
+    local oII, oGI, oWM = _G.IsInInstance, _G.GetInstanceInfo, _G.WorldMapFrame
+    local ok, err = pcall(function()
+        local DM, P, MD = WeintCodex.UIDungeonMap, WeintCodex.DungeonPins, WeintCodex.DungeonMapData
+        local D = WeintCodex.DungeonData
+        assert(type(P) == "table" and P[36], "Bosspunkte fehlen")
+        local n = 0
+        for inst, list in pairs(P) do
+            local m = MD.MAPS[inst]
+            assert(m, "Punkte ohne Karte: " .. inst)
+            for _, p in ipairs(list) do
+                n = n + 1
+                local d = D.Get(p[1])
+                assert(d, "unbekannter Dungeon " .. tostring(p[1]))
+                assert(DM.Boss(p[1], p[2]), "unbekannter Boss " .. p[1] .. "/" .. tostring(p[2]))
+                assert(m.floors[p[3]] and not m.floors[p[3]].files, "Punkt auf fehlender oder gezeichneter Ebene: " .. p[2])
+                assert(p[4] > 0 and p[4] < 1 and p[5] > 0 and p[5] < 1, "Lage ausserhalb der Karte: " .. p[2])
+            end
+        end
+        assert(n >= 100, "zu wenige Bosspunkte: " .. n)
+        _G.WorldMapFrame = _G.WorldMapFrame or CreateFrame("Frame", "WorldMapFrame", UIParent)
+        _G.IsInInstance = function() return true, "party" end
+        _G.GetInstanceInfo = function() return "Deadmines", "party", 1, "", 5, 0, false, 36 end
+        DM.floorOf[36] = 2
+        assert(DM.Refresh() == true, "Karte nicht gezeigt")
+        DM.view.page:SetSize(1002, 668)
+        local placed = DM.PlacePins()
+        assert(placed >= 4, "Bosse auf Ebene 2 nicht gesetzt: " .. placed)
+        local vc
+        for _, b in ipairs(DM.pinList) do if b:IsShown() and b.boss == "edwin_vancleef" then vc = b end end
+        assert(vc and vc.label == "Edwin VanCleef", "VanCleef fehlt auf der Karte")
+        local px, py = vc.x, vc.y
+        assert(type(px) == "number" and math.abs(px - 0.6076 * 1002) < 1 and math.abs(py + 0.4489 * 668) < 1,
+            "VanCleef nicht an seiner Stelle: " .. tostring(px) .. ", " .. tostring(py))
+        -- Rechtsklick: Codex auf dem Boss.
+        local oOpen, got = DM.OpenBoss, nil
+        DM.OpenBoss = function(dg, b) got = dg .. "/" .. b end
+        vc:GetScript("OnClick")(vc, "RightButton")
+        DM.OpenBoss = oOpen
+        assert(got == "the_deadmines/edwin_vancleef", "Rechtsklick oeffnet nicht den Boss: " .. tostring(got))
+        -- Groesse 0: keine Punkte.
+        local oSize = K.Get("comfort", "dungeonPinSize")
+        K.Set("comfort", "dungeonPinSize", 0)
+        assert(DM.PlacePins() == 0, "Punkte trotz Groesse 0")
+        K.Set("comfort", "dungeonPinSize", oSize)
+        -- Der Dungeon der Instanz auch, wenn der Kartenname abweicht.
+        assert(WeintCodex.UICodexLinks.CurrentDungeon() == "the_deadmines", "Dungeon der Instanz nicht erkannt")
+        assert(DM.view:GetFrameLevel() >= DM.LEVEL, "Karte liegt unter fremden Karten")
+    end)
+    WeintCodex.UIDungeonMap.floorOf[36] = nil
+    _G.IsInInstance, _G.GetInstanceInfo, _G.WorldMapFrame = oII, oGI, oWM
+    Check(ok, "Dungeonkarten: Bosse an ihrer Stelle, Rechtsklick oeffnet den Codex" .. (ok and "" or (": " .. tostring(err))))
+end
+
 -- 6.73.0.0: eigenes Ziel setzt den Wegpunkt des Spiels und nimmt ihn wieder ab.
 do
     local ok, err = pcall(function()
