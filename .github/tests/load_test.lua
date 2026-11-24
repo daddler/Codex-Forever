@@ -27210,6 +27210,26 @@ do
     Check(ok, "Plaketten: Bosse der neuen Dungeons über ihre NPC-Nummer" .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 1.0.8.26: Urteil je Atlasname einmal - und neu, wenn sich die Liste aendert.
+do
+    local W = WeintCodex.UIWindows
+    local ok, err = pcall(function()
+        local calls, oldH = 0, W.HidesAtlas
+        W.HidesAtlas = function(a) calls = calls + 1 return oldH(a) end
+        local name = "UI-Frame-Test-Unbekannt-" .. tostring(os.time())
+        assert(W.AtlasClass(name) == 0 and W.AtlasClass(name) == 0, "unbekannter Atlas nicht 0")
+        local once = calls
+        for _ = 1, 50 do W.AtlasClass(name) end
+        assert(calls == once, "Urteil nicht gemerkt: " .. calls)
+        table.insert(W.HIDE_ATLAS, "^UI%-Frame%-Test%-")
+        assert(W.AtlasClass(name) == 1, "geänderte Liste nicht beachtet")
+        table.remove(W.HIDE_ATLAS)
+        assert(W.AtlasClass(name) == 0, "entfernter Eintrag wirkt weiter")
+        W.HidesAtlas = oldH
+    end)
+    Check(ok, "Fenster: Atlas-Urteil je Name gemerkt" .. (ok and "" or (": " .. tostring(err))))
+end
+
 -- 1.0.8.26 (/wcui speicher: "Karte: Questhilfe" 515 KB/s, 65 ms): der
 -- Neuaufbau einer Karte liest nur die Quests, die dort etwas haben - und
 -- zeichnet genau dasselbe wie das Durchgehen aller Quests.

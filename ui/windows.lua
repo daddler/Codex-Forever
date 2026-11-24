@@ -1071,12 +1071,32 @@ end
 -- durchgereicht - ein Rahmen mit eigenem Stil gibt ihn an alles darunter
 -- weiter. Ohne Stil: wie bis 6.6.4.5.
 local seen = setmetatable({}, { __mode = "k" })
+-- 1.0.8.26 (/wcui speicher: "Fenster: CharacterFrame · Atlas" bis 17 ms in
+-- einem Lauf): je Bild und Takt liefen bis zu 63 Suchmuster, auch fuer
+-- Bilder, die laengst ausgeblendet waren. Jetzt: Urteil je Atlasname einmal
+-- (1 = ausblenden, 2 = toenen, 0 = nichts; neu, sobald sich die Listen
+-- aendern). Die Folgeschritte (Auswahl in Listen, Linien an Ueberschriften)
+-- laufen weiter in jedem Takt - sie folgen dem Zustand des Fensters.
+local atlasClass, atlasSig = {}, nil
+local function AtlasClass(atlas)
+    if type(atlas) ~= "string" then return 0 end
+    local sig = #W.HIDE_ATLAS * 1000 + #W.TONE_ATLAS
+    if sig ~= atlasSig then atlasClass, atlasSig = {}, sig end
+    local c = atlasClass[atlas]
+    if c == nil then
+        c = W.HidesAtlas(atlas) and 1 or (W.TonesAtlas(atlas) and 2 or 0)
+        atlasClass[atlas] = c
+    end
+    return c
+end
+W.AtlasClass = AtlasClass
 local HideByAtlas
 function HideByAtlas(f, depth, sc)
     if depth > 8 or type(f) ~= "table" or (f.IsForbidden and f:IsForbidden()) then return end
     for _, r in ipairs(Regions(f, "atlas", depth)) do
         local ok, atlas = pcall(TextureAtlas, r)
-        if ok and W.HidesAtlas(atlas) then
+        local class = ok and AtlasClass(atlas) or 0
+        if class == 1 then
             Hide(r)
             if not seen[r] then
                 seen[r] = true
@@ -1090,7 +1110,7 @@ function HideByAtlas(f, depth, sc)
                 if sc and sc.header == "list" then W.ListHeader(f, r, sc) else W.Header(f, r) end
             end
             if atlas:find("^_?128%-RedButton%-") and W.SkinPanelButton then pcall(W.SkinPanelButton, f) end
-        elseif ok and W.TonesAtlas(atlas) then
+        elseif class == 2 then
             if Opt("windowArt") then W.Tone(r) else Hide(r) end
             if not seen[r] then
                 seen[r] = true

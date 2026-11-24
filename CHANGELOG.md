@@ -24,6 +24,14 @@ nicht zusammen.
   noch diese Quests statt aller 5602. Im Prüflauf je Neuaufbau ~12 MB
   Abfall/60–90 ms → 0,4–0,8 MB/2–4 ms; der Lauf vergleicht das Ergebnis mit
   dem Durchgehen aller Quests. Anlass: „Karte: Questhilfe“ 515 KB/s, 65 ms.
+- Fenster-Takt, Schritt „Atlas“ (`HideByAtlas`): Urteil je Atlasname
+  einmal (`W.AtlasClass`, neu bei geänderten Listen) statt bis zu 63
+  Suchmustern je Bild und Takt. Anlass: „Fenster: CharacterFrame · Atlas“
+  bis 17 ms in einem Lauf.
+- Berufe (`modules/proftools.lua`): `PRO.SpellIndex` beim ersten
+  `PLAYER_ENTERING_WORLD` statt beim ersten eigenen Zauber (im Prüflauf
+  25 ms, 5 MB). Anlass: „Berufe-Werkzeuge“ 40 ms in einem Aufruf.
+- Questpfeil: Planen, Drehen, Neu bestimmen und Kompass einzeln gemessen.
 - Fenster-Takt: die Schritte je Fenster einzeln gemessen
   („Fenster: CharacterFrame · Grau“ …), Anlass: 34,6 ms im Charakterfenster.
 - Fenster-Takt (`ui/windows.lua`): `W.Tick` gestaltet je Lauf nur noch EIN

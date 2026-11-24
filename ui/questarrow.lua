@@ -2138,14 +2138,15 @@ local function OnTick(_, elapsed)
     planAcc = planAcc + acc
     acc = 0
     -- Unterwegs aendert sich, was am naechsten liegt.
+    -- 1.0.8.26: Teile einzeln gemessen (/wcui speicher: "Questpfeil" 58 KB/s).
     if planAcc >= QA.PLAN_EVERY then
         planAcc = 0
-        QA.Replan()
+        K.MeasureSub("Questpfeil · Planen", QA.Replan)
     end
-    if full >= QA.FULL_EVERY or not QA.Turn() then
+    if full >= QA.FULL_EVERY or not K.MeasureSub("Questpfeil · Drehen", QA.Turn) then
         full = 0
-        QA.Update()
-        if WeintCodex.UICompass then WeintCodex.UICompass.Refresh() end
+        K.MeasureSub("Questpfeil · Neu bestimmen", QA.Update)
+        if WeintCodex.UICompass then K.MeasureSub("Questpfeil · Kompass", WeintCodex.UICompass.Refresh) end
     end
     -- Auswahl weg (oder im Kampf ausgeblendet): der Takt steht, bis ein
     -- Ereignis ihn wieder anwirft.

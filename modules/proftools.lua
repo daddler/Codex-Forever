@@ -2267,6 +2267,11 @@ ev:SetScript("OnEvent", WeintCodex.Measured("Berufe-Werkzeuge", function(_, even
     elseif event == "PLAYER_ENTERING_WORLD" then
         if started then return end
         started = true
+        -- 1.0.8.26 (/wcui speicher: "Berufe-Werkzeuge" 40 ms in einem
+        -- Aufruf): das Verzeichnis Zauber -> Beruf entstand beim ersten
+        -- eigenen Zauber nach dem Anmelden - oft im Kampf. Jetzt hier, unter
+        -- dem Ladebildschirm.
+        pcall(PRO.SpellIndex)
         PT.ApplyShare()
         PT.HookTooltips()
         PT.Prune()
