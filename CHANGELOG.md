@@ -9,6 +9,15 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.0.9.1] – 2026-11-25
+
+### Behoben
+- Stadt-Pins: kein Auktionshaus in der Sengenden Schlucht (1427, 38.8/28.5).
+  Naowh Forever führt „Master Smith Burninate“ (Thoriumbruderschaft) als
+  `auction`; `.github/scripts/import_naowh_qol.lua` nimmt Auktionshäuser nur
+  noch, wenn Name oder Titel „Auctioneer“ enthält. Neu erzeugt ist
+  `data/towns.lua` bis auf diese Zeile unverändert.
+
 ## [1.0.9.0] – 2026-11-25
 
 ### Hinzugefügt

@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.0.9.1",
+        date    = "25.11.2026",
+        notes   = {
+            "|cff7C6CFFKein Auktionshaus mehr in der Sengenden Schlucht|r – die Karte zeigte am Thoriumspitzen-Lager ein Auktionshaus, das es dort nicht gibt. Der Schmied der Thoriumbruderschaft war fälschlich als Auktionator eingetragen.",
+        },
+    },
+    {
         version = "1.0.9.0",
         date    = "25.11.2026",
         notes   = {
