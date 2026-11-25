@@ -27298,6 +27298,90 @@ do
     Check(ok, "Abklingzeitmanager: Balken je Fähigkeit (Wirkung, Abklingzeit, bereit), gemischte Reihen" .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 1.0.9.0: Buehne des Abklingzeitmanagers - Vorschau wie im Spiel, Ziehen
+-- an eine Stelle, Vorrat, Rechtsklick Symbol/Balken, eine Buehne je Sitzung.
+do
+    local OC, ST = WeintCodex.UIOwnCooldowns, WeintCodex.UICooldownStage
+    local ok, err = pcall(function()
+        assert(ST and ST.Create, "ui/cdstage.lua nicht geladen")
+        local m = OC.Mem()
+        local saveSpells, saveOrder, saveDisp = m.spells, m.order, m.display
+        m.spells, m.order, m.display = {}, {}, {}
+        local e1 = { key = "st:1", name = "Eins", id = 1001, tex = 1, preset = "big" }
+        local e2 = { key = "st:2", name = "Zwei", id = 1002, tex = 2, preset = "big" }
+        local e3 = { key = "st:3", name = "Drei", id = 1003, tex = 3, preset = "off" }
+        local oldKnown = OC.known
+        OC.known = { e1, e2, e3 }
+        local prevBefore = OC.prev["st:1"]
+        -- Der Client nennt "bereit" offen - die Spielreihe wuerde es sich merken.
+        local oldCS = _G.C_Spell
+        _G.C_Spell = { GetSpellCooldown = function() return { startTime = 0, duration = 0 } end }
+        local stage = ST.Create(UIParent, 560)
+        _G.C_Spell = oldCS
+        assert(#stage.lanes == #ST.SpellSlots() and #stage.lanes >= 2, "Bahnen fehlen")
+        assert(stage.pool.btns[1]._e == e3 and stage.pool.btns[1]:IsShown(), "Vorrat zeigt nicht, was aus ist")
+        local big = stage.bySlot.big
+        assert(big.row._preview and big.row.items[1]._e == e1 and big.row.items[2]._e == e2, "Reihe Wichtig nicht wie im Spiel")
+        assert(OC.prev["st:1"] == prevBefore, "Vorschau merkt sich Zustände (Töne)")
+        assert(ST.Create(UIParent, 560) == stage, "neue Bühne statt der alten")
+        -- Ziel: Attrappen mit Lage (Bildschirmpunkte), Maus bei (x, y).
+        local function Box(l, r, t, b)
+            return { IsShown = function() return true end, GetEffectiveScale = function() return 1 end,
+                     GetLeft = function() return l end, GetRight = function() return r end,
+                     GetTop = function() return t end, GetBottom = function() return b end }
+        end
+        local i1, i2 = Box(10, 50, 100, 60), Box(54, 94, 100, 60)
+        i1._e, i2._e = e1, e2
+        local lane = Box(0, 560, 110, 50)
+        lane.slot, lane.row = "big", Box(0, 560, 100, 60)
+        lane.row.items = { i1, i2 }
+        local fake = { pool = Box(0, 560, 40, 0), lanes = { lane } }
+        local oldGCP = _G.GetCursorPosition
+        local cx, cy = 20, 80
+        _G.GetCursorPosition = function() return cx, cy end
+        local sl, before = ST.Target(fake, "st:3")
+        assert(sl == "big" and before == "st:1", "links vom ersten: nicht davor")
+        cx = 70
+        sl, before = ST.Target(fake, "st:3")
+        assert(sl == "big" and before == "st:2", "links vom zweiten: nicht davor")
+        cx = 90
+        sl, before = ST.Target(fake, "st:3")
+        assert(sl == "big" and before == nil, "rechts vom letzten: nicht ans Ende")
+        cx = 40
+        sl, before = ST.Target(fake, "st:1")
+        assert(sl == "big" and before == "st:2", "sich selbst als Ziel")
+        cx, cy = 100, 20
+        assert(ST.Target(fake, "st:1") == "off", "Vorrat nicht erkannt")
+        _G.GetCursorPosition = oldGCP
+        -- Ablegen: Drei aus dem Vorrat vor Zwei.
+        local oldTarget, oldRel = ST.Target, OC.Relayout
+        ST.Target = function() return "big", "st:2" end
+        OC.Relayout = function() end
+        ST.Begin(stage, e3)
+        assert(ST.Finish(), "Ablegen ohne Wirkung")
+        assert(OC.Slot(e3) == "big", "nicht in die Reihe gelegt")
+        local pos = {}
+        for i, e in ipairs(OC.known) do pos[e.key] = i end
+        assert(pos["st:1"] < pos["st:3"] and pos["st:3"] < pos["st:2"], "nicht an die Stelle gelegt")
+        ST.Target = function() return "off", nil end
+        ST.Begin(stage, e1)
+        ST.Finish()
+        assert(OC.Slot(e1) == "off", "in den Vorrat gezogen: nicht aus")
+        ST.Target = oldTarget
+        -- Rechtsklick: Symbol <-> Balken.
+        stage.Sync()
+        local it = stage.bySlot.big.row.items[1]
+        local who = it._e
+        it:GetScript("OnMouseUp")(it, "RightButton")
+        assert(OC.Display(who) == "bar", "Rechtsklick macht keinen Balken")
+        OC.Relayout = oldRel
+        OC.known = oldKnown
+        m.spells, m.order, m.display = saveSpells, saveOrder, saveDisp
+        stage:Hide()
+    end)
+    Check(ok, "Abklingzeitmanager: Bühne – Vorschau, Ziehen an eine Stelle, Vorrat, Rechtsklick" .. (ok and "" or (": " .. tostring(err))))
+end
+
 -- 1.0.8.27: der Versand-Takt der Post laeuft nicht im Leerlauf.
 do
     local PO = WeintCodex.UIPostal

@@ -9,19 +9,26 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
-## [1.0.8.27] – 2026-11-25
-
-### Behoben
-- Geländekarte (`ui/navmesh.lua`): auf dem Greifen (`UnitOnTaxi`) startet
-  `NV.Path` keine Suche, eine laufende wird verworfen (`NV.OnTaxi`,
-  Zähler `NV.stats.taxi`). Anlass: im Flug „Geländekarte“ 71 ms/s, 227 KB/s –
-  jede Suche wurde vom Abrücken vom Weg ersetzt, bevor sie fertig war.
-
-- Post (`ui/postal.lua`): der Takt für „An mehrere“ (`PO.multiTick`) läuft
-  nur während eines solchen Versands. Anlass: „Post“ 143 Aufrufe/s und bis
-  42 KB/s ohne offenen Briefkasten.
+## [1.0.9.0] – 2026-11-25
 
 ### Hinzugefügt
+- Abklingzeitmanager: **Bühne** (`ui/cdstage.lua`, neu) statt der
+  Spaltenliste auf der Seite Erinnerungen → Abklingzeitmanager. Je Reihe
+  eine Bahn mit der Reihe wie im Spiel (`OC.DrawSpells`, `row._preview`:
+  kein Ton, kein Zustand), Vorrat für „Aus“, Ziehen mit Einfügemarke
+  (`ST.Target`, `ST.Track`, Ablegen über `OC.Place`), Kontextmenü je
+  Fähigkeit (`ST.Menu`), Rechtsklick Symbol ↔ Balken, Hinzufügen per Ziehen
+  aus Zauberbuch/Taschen an die Stelle. Eine Bühne je Sitzung
+  (`ST.current`); `OC.Relayout` baut die Seite nur bei geänderter Höhe neu
+  (`ST.Refit`). Die alte Spaltenliste (`CreateList`) ist entfernt.
+- Abklingzeitmanager: **Darstellung je Fähigkeit** Symbol oder Balken
+  (`ocd.display`), gemischte Reihen (`OC.Layout`, reine Rechnung; `Arrange`
+  ordnet Teile verschiedener Größe). Balken: Wirkung (`OC.EffectOf`: eigener
+  DoT, eigener Buff aus `BT.active`), dann Abklingzeit (Client offen, sonst
+  `OC.EstimateEnd`), dann bereit; unbekannt = leer mit „?“. Farbe der
+  Wirkung je Fähigkeit (`ocd.barColor`), neue Farben
+  `GameColors.ocdCooldown`/`ocdReady`; Balkenbreite/-höhe je Reihe im Menü
+  der Reihe (`barWidth`, `barHeight`).
 - `/wcui speicher`: „Interne Tabellen der Dateien“ – jede Datei unter
   `core/`, `modules/`, `ui/` meldet ihre Tabellen der obersten Ebene am
   Dateiende über `WeintCodex.Hold(datei, function() … end)` an (131
@@ -35,6 +42,16 @@ nicht zusammen.
   beim Aufrufer). Nachgestellte Haken an `CreateFrame` und an den
   Methodentabellen der gängigen Fensterarten. Anlass: nach längerem Spielen
   106 statt 55 MB nach dem Aufräumen, 2300 Fenster mehr (alle Addons).
+
+### Behoben
+- Geländekarte (`ui/navmesh.lua`): auf dem Greifen (`UnitOnTaxi`) startet
+  `NV.Path` keine Suche, eine laufende wird verworfen (`NV.OnTaxi`,
+  Zähler `NV.stats.taxi`). Anlass: im Flug „Geländekarte“ 71 ms/s, 227 KB/s –
+  jede Suche wurde vom Abrücken vom Weg ersetzt, bevor sie fertig war.
+
+- Post (`ui/postal.lua`): der Takt für „An mehrere“ (`PO.multiTick`) läuft
+  nur während eines solchen Versands. Anlass: „Post“ 143 Aufrufe/s und bis
+  42 KB/s ohne offenen Briefkasten.
 
 ## [1.0.8.26] – 2026-11-24
 

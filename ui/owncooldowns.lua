@@ -247,6 +247,7 @@ local function SpellRank(id)
 end
 OC.SpellRank = SpellRank
 
+OC.SpellRank = function(id) return SpellRank(id) end
 local function SpellName(id)
     local cs = _G.C_Spell
     if cs and cs.GetSpellName then
@@ -1273,6 +1274,11 @@ function OC.SetRowOpt(slot, key, v)
     m.rowOpt[slot] = m.rowOpt[slot] or {}
     m.rowOpt[slot][key] = v
     OC.Refresh()
+    -- Groesse, Anordnung, Balken: die Buehne der Einstellungen folgt.
+    local ST = WeintCodex.UICooldownStage
+    if ST and ST.current and ST.current:IsVisible() and _G.C_Timer and _G.C_Timer.After then
+        _G.C_Timer.After(0, OC.Relayout)
+    end
 end
 OC.ROW_LABEL = { buffs = "Buffs", debuffs = "Eigene Debuffs" }
 
@@ -2266,279 +2272,7 @@ function OC.ModeRow(B)
           { type = "empty" })
 end
 
-local ROW_H = 26
-local HEAD_H = 26
-local BAND_GAP = 10
--- Hoehe je Band (bis zu drei Spalten nebeneinander) aus der Zahl der Zauber.
-local function Bands()
-    local n = {}
-    for _, e in ipairs(OC.known) do local sl = OC.Slot(e) n[sl] = (n[sl] or 0) + 1 end
-    local slots, bands = OC.Slots(), {}
-    for i, sl in ipairs(slots) do
-        local b = math.floor((i - 1) / OC.COLS_PER_BAND) + 1
-        bands[b] = math.max(bands[b] or 1, n[sl] or 0)
-    end
-    for b, most in ipairs(bands) do bands[b] = HEAD_H + most * ROW_H + 8 end
-    return bands
-end
-local function ListHeight()
-    local h = 0
-    for i, bh in ipairs(Bands()) do h = h + bh + (i > 1 and BAND_GAP or 0) end
-    return h
-end
-OC.ListHeight = ListHeight
-
--- Drei Spalten Wichtig | Weitere | Aus (6.92.0.0, Wunsch). Ziehen ordnet
--- innerhalb einer Spalte und zwischen ihnen; Klick oeffnet die Feinheiten
--- des Zaubers (Rang, Leuchten, Ton).
-local function CreateList(parent, width)
-    local f = CreateFrame("Frame", nil, parent)
-    f.lines, f.cols = {}, {}
-    local gap = 10
-    local per = OC.COLS_PER_BAND
-    local colW = math.floor((width - (per - 1) * gap) / per)
-    local bands = Bands()
-    local slots = {}
-    for i, sl in ipairs(OC.Slots()) do slots[i] = sl end
-    for ci, slot in ipairs(slots) do
-        local col = CreateFrame("Button", nil, f)
-        col.slot = slot
-        local band, pos = math.floor((ci - 1) / per) + 1, (ci - 1) % per
-        local y = 0
-        for b = 1, band - 1 do y = y + bands[b] + BAND_GAP end
-        col:SetPoint("TOPLEFT", f, "TOPLEFT", pos * (colW + gap), -y)
-        col:SetSize(colW, bands[band])
-        -- Eigene Reihe: Klick auf die Kopfzeile -> Umbenennen, Größe, Löschen
-        if slot ~= "off" then
-            col:RegisterForClicks("LeftButtonUp", "RightButtonUp")
-            col:SetScript("OnClick", function(self)
-                local _, cy = _G.GetCursorPosition()
-                local sc = self:GetEffectiveScale() or 1
-                local top = self:GetTop()
-                if top and cy / sc < top - HEAD_H then return end
-                OC.RowMenu(self, slot)
-            end)
-        end
-        local bg = col:CreateTexture(nil, "BACKGROUND")
-        bg:SetAllPoints(col)
-        bg:SetColorTexture(unpack(C.surface1))
-        col.head = K.NewText(col, 12)
-        col.head:SetPoint("TOPLEFT", col, "TOPLEFT", 8, -6)
-        col.head:SetTextColor(unpack(slot == "off" and C.textMuted or C.textBright))
-        col:SetFrameLevel(f:GetFrameLevel() + 1)
-        col:EnableMouse(true)
-        f.cols[ci] = col
-    end
-    -- Zauber oder Gegenstand auf die Liste ziehen: hinzufuegen.
-    f.Drop = function()
-        local c = OC.FromCursor()
-        if c and OC.Add(c) then
-            if _G.ClearCursor then _G.ClearCursor() end
-            OC.Relayout()
-        end
-    end
-    f:EnableMouse(true)
-    f:SetScript("OnReceiveDrag", f.Drop)
-    f:SetScript("OnMouseUp", function() if OC.FromCursor() then f.Drop() end end)
-    for _, col in ipairs(f.cols) do
-        col:SetScript("OnReceiveDrag", f.Drop)
-        col:SetScript("OnMouseUp", function() if OC.FromCursor() then f.Drop() end end)
-    end
-    OC.list = f
-
-    -- Feinheiten je Zauber: kleines Feld neben der Zeile.
-    -- Am UIParent, nicht an der Liste (6.93.1.0): die Liste liegt in der
-    -- Rollflaeche der Einstellungen und die schneidet alles ab, was
-    -- daneben stehen soll - das Feld war unsichtbar.
-    local pop = CreateFrame("Frame", "WeintCodexOwnCooldownsPop", UIParent)
-    pop:SetSize(240, 6 * 30 + 40)
-    pop:SetFrameStrata("FULLSCREEN_DIALOG")
-    pop:SetClampedToScreen(true)
-    if type(_G.UISpecialFrames) == "table" then table.insert(_G.UISpecialFrames, "WeintCodexOwnCooldownsPop") end
-    pop:EnableMouse(true)
-    K.Kachel(pop, { shadow = 6, alpha = 1 })
-    pop.title = K.NewText(pop, 13, "OVERLAY")
-    pop.title:SetPoint("TOPLEFT", pop, "TOPLEFT", 10, -8)
-    pop.title:SetPoint("RIGHT", pop, "RIGHT", -10, 0)
-    pop.title:SetJustifyH("LEFT")
-    if pop.title.SetWordWrap then pop.title:SetWordWrap(false) end
-    local function PopBtn(i, onClick)
-        local b = WeintCodex.CreateButton(pop, { text = "", kind = "secondary", height = 26, size = 11, onClick = onClick })
-        b:SetPoint("TOPLEFT", pop, "TOPLEFT", 10, -32 - (i - 1) * 30)
-        b:SetPoint("RIGHT", pop, "RIGHT", -10, 0)
-        return b
-    end
-    pop:Hide()
-    f.pop = pop
-    local function PopSync()
-        local e = pop.entry
-        if not e then pop:Hide() return end
-        pop.title:SetText(e.name)
-        pop.rank:SetText(e.ranks and #e.ranks > 1 and ("Rang: " .. (e.rank or "?") .. "  ›") or (e.rank or "Nur ein Rang"))
-        pop.glow:SetText("Leuchten: " .. OC.GLOW_TEXT[OC.GlowMode(e)] .. "  ›")
-        pop.sound:SetText("Ton: " .. OC.SoundText(OC.SoundOf(e)) .. "  ›")
-        pop.when:SetText("Ton wann: " .. OC.WHEN_TEXT[OC.SoundWhen(e)] .. (OC.DotDuration(e.name) and "  ›" or ""))
-        pop.slot:SetText("Spalte: " .. OC.SlotText(OC.Slot(e)) .. "  ›")
-        pop.remove:SetText(e.custom and "Entfernen" or "Schließen")
-    end
-    pop.rank = PopBtn(1, function() if pop.entry then OC.NextRank(pop.entry) PopSync() f.Sync() end end)
-    pop.glow = PopBtn(2, function() if pop.entry then OC.NextGlow(pop.entry) PopSync() f.Sync() end end)
-    pop.sound = PopBtn(3, function()
-        if pop.entry then OC.SoundMenu(pop.sound, pop.entry, function() PopSync() f.Sync() end) end
-    end)
-    pop.when = PopBtn(4, function()
-        if pop.entry and OC.DotDuration(pop.entry.name) then OC.NextSoundWhen(pop.entry) PopSync() end
-    end)
-    pop.slot = PopBtn(5, function()
-        local e = pop.entry
-        if not e then return end
-        local cur = OC.Slot(e)
-        local nxt = OC.NextSlot(cur)
-        OC.Place(e.key, nxt, nil)
-        OC.Relayout()
-    end)
-    pop.remove = PopBtn(6, function()
-        local e = pop.entry
-        pop.entry = nil
-        pop:Hide()
-        if e and e.custom then OC.Remove(e) OC.Relayout() end
-    end)
-    f:SetScript("OnHide", function() pop:Hide() end)
-
-    -- Treffer ueber die Mausposition (6.92.1.0): IsMouseOver meldete beim
-    -- Loslassen nach dem Ziehen nichts - Spalten wechselten nicht.
-    local function Hit(fr)
-        if not (fr and fr:IsShown() and _G.GetCursorPosition) then return false end
-        local x, y = _G.GetCursorPosition()
-        local sc = fr:GetEffectiveScale() or 1
-        x, y = x / sc, y / sc
-        local l, r, t, b = fr:GetLeft(), fr:GetRight(), fr:GetTop(), fr:GetBottom()
-        if not (l and r and t and b) then return false end
-        return x >= l and x <= r and y >= b and y <= t
-    end
-    local function ColUnderMouse()
-        for _, col in ipairs(f.cols) do if Hit(col) then return col end end
-        return nil
-    end
-
-    local function Line(i)
-        local l = CreateFrame("Button", nil, f)
-        l:SetSize(colW - 8, ROW_H - 4)
-        -- Ueber den Spalten (6.93.2.0): die Spalten nehmen die Maus fuer das
-        -- Hineinziehen aus dem Zauberbuch und lagen auf gleicher Ebene ueber
-        -- den Zeilen - kein Klick, kein Ziehen kam an.
-        l:SetFrameLevel(f:GetFrameLevel() + 10)
-        l.hl = l:CreateTexture(nil, "BACKGROUND")
-        l.hl:SetAllPoints(l)
-        l.hl:SetColorTexture(1, 1, 1, 0)
-        l.icon = l:CreateTexture(nil, "ARTWORK")
-        l.icon:SetSize(ROW_H - 6, ROW_H - 6)
-        l.icon:SetPoint("LEFT", l, "LEFT", 2, 0)
-        l.icon:SetTexCoord(0.08, 0.92, 0.08, 0.92)
-        l.name = K.NewText(l, 12)
-        l.name:SetPoint("LEFT", l.icon, "RIGHT", 6, 0)
-        l.name:SetPoint("RIGHT", l, "RIGHT", -62, 0)
-        l.name:SetJustifyH("LEFT")
-        if l.name.SetWordWrap then l.name:SetWordWrap(false) end
-        l.mark = K.NewText(l, 11)
-        l.mark:SetPoint("RIGHT", l, "RIGHT", -4, 0)
-        l.mark:SetTextColor(unpack(C.textMuted))
-        l:RegisterForClicks("LeftButtonUp", "RightButtonUp")
-        l:SetScript("OnEnter", function(self)
-            local c = C.accent
-            self.hl:SetColorTexture(c[1], c[2], c[3], 0.15)
-            local tt = _G.GameTooltip
-            if not (tt and self.entry and self.entry.id) then return end
-            tt:SetOwner(self, "ANCHOR_RIGHT")
-            if self.entry.item then pcall(tt.SetItemByID, tt, self.entry.id)
-            else pcall(tt.SetSpellByID, tt, self.entry.id) end
-            tt:AddLine("Klick: Rang, Leuchten, Ton · Ziehen: ordnen oder in eine andere Spalte" .. (self.entry.custom and " · Rechtsklick: entfernen" or ""), 0.6, 0.6, 0.6, true)
-            tt:Show()
-        end)
-        l:SetScript("OnLeave", function(self)
-            self.hl:SetColorTexture(1, 1, 1, 0)
-            if _G.GameTooltip then _G.GameTooltip:Hide() end
-        end)
-        l:RegisterForDrag("LeftButton")
-        l:SetScript("OnDragStart", function(self)
-            f.dragKey = self.entry and self.entry.key
-            self:SetAlpha(0.4)
-            pop:Hide()
-            if self.entry then OC.GhostStart(self.entry, f) end
-        end)
-        l:SetScript("OnDragStop", function(self)
-            self:SetAlpha(1)
-            OC.GhostStop()
-            local from = f.dragKey
-            f.dragKey = nil
-            if not from then return end
-            local target
-            for _, o in ipairs(f.lines) do
-                if o:IsShown() and o ~= self and o.entry and Hit(o) then target = o break end
-            end
-            if target then
-                OC.Place(from, OC.Slot(target.entry), target.entry.key)
-            else
-                local col = ColUnderMouse()
-                if col then OC.Place(from, col.slot, nil) end
-            end
-            OC.Relayout()
-        end)
-        l:SetScript("OnClick", function(self, button)
-            if not self.entry then return end
-            if button == "RightButton" then
-                if self.entry.custom then OC.Remove(self.entry) OC.Relayout() end
-                return
-            end
-            if pop.entry == self.entry and pop:IsShown() then pop:Hide() pop.entry = nil return end
-            pop.entry = self.entry
-            pop:ClearAllPoints()
-            pop:SetScale(self:GetEffectiveScale() / (UIParent:GetEffectiveScale() or 1))
-            pop:SetPoint("TOPLEFT", self, "TOPRIGHT", 6, 0)
-            PopSync()
-            pop:Show()
-        end)
-        l:SetScript("OnReceiveDrag", f.Drop)
-        f.lines[i] = l
-        return l
-    end
-
-    f.Sync = function()
-        local count = {}
-        for _, col in ipairs(f.cols) do count[col.slot] = 0 end
-        local colOf = {}
-        for ci, col in ipairs(f.cols) do colOf[col.slot] = col end
-        local i = 0
-        for _, e in ipairs(OC.known) do
-            local sl = OC.Slot(e)
-            local col = colOf[sl]
-            if col then
-                i = i + 1
-                local l = f.lines[i] or Line(i)
-                l.entry = e
-                l:ClearAllPoints()
-                l:SetPoint("TOPLEFT", col, "TOPLEFT", 4, -HEAD_H - count[sl] * ROW_H)
-                l:SetFrameLevel(col:GetFrameLevel() + 10)
-                count[sl] = (count[sl] or 0) + 1
-                l.icon:SetTexture(e.tex)
-                if l.icon.SetDesaturated then l.icon:SetDesaturated(sl == "off") end
-                local label = e.rank and (e.name .. " (" .. e.rank .. ")") or e.name
-                l.name:SetText(label)
-                l.name:SetTextColor(unpack(sl == "off" and C.textMuted or C.textBright))
-                l.mark:SetText(OC.SoundOf(e) ~= "none" and "Ton" or "")
-                l:Show()
-            end
-        end
-        for j = i + 1, #f.lines do f.lines[j]:Hide() end
-        for _, col in ipairs(f.cols) do
-            col.head:SetText(OC.SlotText(col.slot) .. "  ·  " .. (count[col.slot] or 0) .. (col.slot ~= "off" and "   · Menü ›" or ""))
-        end
-        if pop:IsShown() then PopSync() end
-    end
-    return f
-end
-
--- Menue einer eigenen Reihe (Kopf der Spalte).
+-- Menue einer Reihe (Kopf ihrer Bahn auf der Buehne, ui/cdstage.lua).
 function OC.RowMenu(owner, id)
     local d = OC.ExtraDef(id)
     if id == "off" then return end
@@ -2675,7 +2409,8 @@ end
 
 function OC.GhostStop()
     if not ghost then return end
-    if ghost.hit then ghost.hit.hl:SetColorTexture(1, 1, 1, 0) end
+    local hit = _G.rawget(ghost, "hit")
+    if hit and hit.hl then hit.hl:SetColorTexture(1, 1, 1, 0) end
     ghost.hit, ghost.list = nil, nil
     ghost:Hide()
 end
@@ -2712,12 +2447,15 @@ end
 
 -- Seite neu bauen, wenn die Liste waechst oder schrumpft (Hoehe steht beim Bau fest).
 function OC.Relayout()
+    -- 1.0.9.0: die Buehne passt sich an, solange ihre Hoehe bleibt.
+    local ST = WeintCodex.UICooldownStage
+    if ST and ST.Refit and ST.Refit() then return end
     local O = WeintCodex.UIOptions
     if O and O.Rebuild then
         local ok, done = pcall(O.Rebuild)
         if ok and done then return end
     end
-    if OC.list then OC.list.Sync() end
+    if ST and ST.current then ST.current.Sync() end
 end
 
 local function px(v) return string.format("%d px", v) end
@@ -2855,9 +2593,11 @@ function OC.BuildSection(B)
                     print(WeintCodex.ColorText("accent", "[WeintCodex]") .. " " .. why)
                 end
             end })
-    B:Note("So geht's: Jede Spalte ist eine Reihe auf dem Bildschirm – „Wichtig“ große Symbole, „Weitere“ kleine, eigene Reihen in ihrer Größe, „Aus“ wird nicht gezeigt. Eigene Reihen legst du oben an. Klick auf den Kopf einer Spalte („Menü ›“): Größe, Anordnung, Symbole je Zeile, Abstand, nur im Kampf – bei eigenen Reihen auch umbenennen und löschen. Zauber mit der Maus greifen und auf einen anderen Zauber ziehen: er landet davor, auch in einer anderen Spalte; auf freie Fläche einer Spalte: ans Ende. Die Reihenfolge in der Spalte ist die auf dem Bildschirm. Klick auf einen Zauber: Rang, Leuchten, Ton und Spalte einstellen.")
-    B:Row({ type = "custom", height = ListHeight(), create = CreateList })
-    B:Note("Alle Zauber deines Zauberbuchs, dazu was du selbst hinzufügst. Ziehen ordnet innerhalb einer Spalte oder schiebt in eine andere; ein Klick öffnet Rang, Leuchten und Ton des Zaubers. „Ton“ rechts heißt: dieser Zauber spielt einen Ton, wenn er bereit ist. Buffs kommen aus den Buffzeiten.")
+    -- 1.0.9.0: die Buehne (ui/cdstage.lua) statt der Spaltenliste.
+    local ST = WeintCodex.UICooldownStage
+    B:Note("So sieht es im Spiel aus – mit laufenden Uhren. Fähigkeiten greifen und an die Stelle ziehen, an der sie stehen sollen; eine Marke zeigt, wo sie landen. In den Vorrat gezogen: nicht zeigen. Klick: Darstellung (Symbol oder Balken), Farbe, Rang, Leuchten, Ton. Rechtsklick: Symbol ↔ Balken. Ein Balken läuft erst über die Wirkung (DoT, Buff), dann über die Abklingzeit. Aus Zauberbuch oder Taschen direkt auf eine Reihe ziehen: hinzufügen.")
+    local O = WeintCodex.UIOptions
+    B:Row({ type = "custom", height = ST.Height((O and O.CONTENT_W) or 560), create = function(parent, width) return ST.Create(parent, width) end })
 end
 
 -- An das Modul "Erinnerungen" haengen.

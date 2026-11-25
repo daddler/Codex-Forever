@@ -666,6 +666,33 @@ Seit 6.2.0.0:
   unter „Erweitert“ (≤ 15 sichtbar). **Ungemessen auf Forever:** ob die
   Dauer im Kampf geheim ist (dann leuchtet im Kampf nichts), ob
   `GetSpellBaseCooldown` existiert (sonst nur die Voreinstellung in der Liste).
+  **Seit 1.0.9.0 (Wunsch: „Vorschau wie bei den Namensplaketten, per Drag &
+  Drop direkt in die Leiste; Balken mit Laufzeit, individuell wie bei
+  WeakAuras“):**
+  - *Buehne* (`ui/cdstage.lua`) statt der Spaltenliste: je Reihe mit Zaubern
+    eine Bahn, darin die Reihe gezeichnet von `OC.DrawSpells` selbst
+    (`row._preview`: spielt keinen Ton, merkt sich keinen Zustand), mit
+    laufenden Uhren; zu breit → verkleinert, nie abgeschnitten. Darunter der
+    Vorrat („Aus“). Ziehen mit Marke (`ST.Target`: nächstes Teil, links/
+    oberhalb seiner Mitte = davor), Ablegen über `OC.Place`; Klick:
+    Kontextmenü (Darstellung, Balkenfarbe, Rang, Leuchten, Ton, Reihe);
+    Rechtsklick: Symbol ↔ Balken; Kopf der Bahn: `OC.RowMenu` (jetzt auch
+    Balkenbreite/-höhe); aus Zauberbuch/Taschen auf eine Bahn: hinzufügen,
+    genau dorthin. **Eine Bühne je Sitzung** (`ST.current`, wiederverwendet):
+    die Einstellungsseite baut bei `O.Rebuild` alle Rahmen neu – das tut
+    `OC.Relayout` nur noch, wenn sich die Höhe der Bühne ändert (`ST.Refit`).
+  - *Darstellung je Fähigkeit* (`ocd.display[key] = "bar"`, ab Werk Symbol):
+    Reihen mischen Symbole und Balken (`OC.Layout`: reine Rechnung, je Teil
+    eigene Größe, Zeilen/Spalten mittig). Ein Balken zeigt erst die
+    **Wirkung** (`OC.EffectOf`: eigener DoT `OC.DotOn`, eigener Buff aus
+    `BT.active` – Dauern aus Classic, aus dem eigenen Wirken, nie eine
+    gelesene Aura), dann die **Abklingzeit** (offene Werte des Clients,
+    sonst `OC.EstimateEnd` aus eigenem Wirken und gelernter Länge), dann
+    „bereit“. Unbekannt (geheim, nie selbst gewirkt) = leer mit „?“, nie
+    „bereit“. Farbe der Wirkung je Fähigkeit (`ocd.barColor`, Liste wie das
+    Leuchten), Abklingzeit/bereit: `GameColors.ocdCooldown`/`ocdReady`. Der
+    Balken zählt nur während einer Laufzeit über sein eigenes OnUpdate,
+    Text nur bei geänderter Zahl. **Ungeprüft im Spiel**, wie alles hier.
 * **Debuffs am Zielrahmen: die Symbole des Spiels** (6.4.0.3,
   `targetAuraSource`). Eigene Symbole bleiben im Kampf leer (siehe
   6.3.0.2). Der Zielrahmen des Spiels bleibt deshalb am Leben, alles an
