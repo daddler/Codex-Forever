@@ -441,7 +441,6 @@ WeintCodex.TownData = {
             { 37.9, 30.9, "flight", "A" },
             { 34.8, 30.9, "flight", "H" },
             { 41.5, 75.0, "repair", "A" },
-            { 38.8, 28.5, "auction", "AH" },
         },
         [1428] = {
             { 85.2, 68.4, "repair", "A" },

@@ -39,7 +39,12 @@ local n = 0
 for _, m in ipairs(maps) do
     out[#out + 1] = "        [" .. m .. "] = {"
     for _, e in ipairs(ns.TownNPCs[m] or {}) do
-        if KEEP[e[3]] then
+        -- Naowh fuehrt "Master Smith Burninate" (Thoriumbruderschaft, Sengende
+        -- Schlucht) als Auktionator - dort gibt es keins (Spieler mit Bild,
+        -- 1.0.9.1). Auktionshaus nur, wenn Name oder Titel "Auctioneer" sagt.
+        local fake = e[3] == "auction" and not (tostring(e[4] or ""):find("Auctioneer", 1, true)
+            or tostring(e[5] or ""):find("Auctioneer", 1, true))
+        if KEEP[e[3]] and not fake then
             n = n + 1
             out[#out + 1] = string.format("            { %.1f, %.1f, %q, %s%s },", e[1], e[2], e[3], q(e[7]), e[6] and (", " .. q(e[6])) or "")
         end
