@@ -692,7 +692,10 @@ Seit 6.2.0.0:
     „bereit“. Farbe der Wirkung je Fähigkeit (`ocd.barColor`, Liste wie das
     Leuchten), Abklingzeit/bereit: `GameColors.ocdCooldown`/`ocdReady`. Der
     Balken zählt nur während einer Laufzeit über sein eigenes OnUpdate,
-    Text nur bei geänderter Zahl. **Ungeprüft im Spiel**, wie alles hier.
+    Text nur bei geänderter Zahl. Dritte Darstellung `both`: Symbol fest, je
+    laufende Wirkung ein Balken daneben. Mehrere Wirkungen zugleich
+    (Falken, `OC.Effects`) = je eine ein Balken; Gruppen auch über den Namen
+    (`g.names`). **Ungeprüft im Spiel**, wie alles hier.
 * **Debuffs am Zielrahmen: die Symbole des Spiels** (6.4.0.3,
   `targetAuraSource`). Eigene Symbole bleiben im Kampf leer (siehe
   6.3.0.2). Der Zielrahmen des Spiels bleibt deshalb am Leben, alles an

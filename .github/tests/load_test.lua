@@ -27298,6 +27298,52 @@ do
     Check(ok, "Abklingzeitmanager: Balken je Fähigkeit (Wirkung, Abklingzeit, bereit), gemischte Reihen" .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 1.0.9.0 (Spieler mit Tooltip "Falke beschwoeren": 6 s Abklingzeit, 18 s je
+-- Falke, bis zu zwei): ueber den Namen erkannt, je laufender Falke ein Balken.
+do
+    local OC, BT = WeintCodex.UIOwnCooldowns, WeintCodex.UIBuffTimes
+    local oldGroups, oldActive, oldT, oldKnown, oldSlot = BT.Groups, BT.active, _G.GetTime, OC.known, OC.Slot
+    local ok, err = pcall(function()
+        local g = { key = "falcon", duration = 18, stack = 2, spells = {}, names = { "Falke beschwören" } }
+        BT.Groups = function() return { g } end
+        local t = 100
+        _G.GetTime = function() return t end
+        local e = { key = "fk:1", name = "Falke beschwören", id = 987654, tex = 1, preset = "big" }
+        assert(OC.BuffGroup(e) == g and OC.HasEffect(e), "Falken nicht über den Namen erkannt")
+        BT.active = { falcon = { start = 96, duration = 18, earlier = { 90 } } }
+        local starts = {}
+        local n, dur = OC.Effects(e, starts)
+        assert(n == 2 and dur == 18 and starts[1] == 90 and starts[2] == 96, "zwei Falken nicht beide gezählt")
+        OC.known = { e }
+        OC.Slot = function() return "big" end
+        OC.SetDisplay(e, "bar")
+        local row = CreateFrame("Frame", nil, UIParent)
+        row.icons = {}
+        OC.DrawSpells(row, "big", 40, true)
+        assert(row.items[1].isBar and row.items[2] and row.items[2].isBar and row.items[2]._e == e, "nicht je Falke ein Balken")
+        assert(math.abs(row.items[1].sb:GetValue() - 8 / 18) < 0.01 and math.abs(row.items[2].sb:GetValue() - 14 / 18) < 0.01,
+            "Laufzeit der Falken falsch: " .. row.items[1].sb:GetValue() .. " / " .. row.items[2].sb:GetValue())
+        -- Der erste ist weg: ein Balken.
+        t = 109
+        OC.DrawSpells(row, "big", 40, true)
+        assert(row.items[1].isBar and not row.items[2], "abgelaufener Falke bleibt")
+        -- Symbol + Balken der Wirkung: Symbol fest, daneben je Falke ein Balken.
+        t = 100
+        OC.SetDisplay(e, "both")
+        OC.DrawSpells(row, "big", 40, true)
+        assert(not row.items[1].isBar and row.items[2].isBar and row.items[3].isBar and not row.items[4],
+            "Symbol + zwei Balken erwartet")
+        assert(OC.NextDisplay(e) == "icon", "Rechtsklick kommt nicht zum Symbol zurück")
+        t = 120
+        OC.DrawSpells(row, "big", 40, true)
+        assert(not row.items[1].isBar and not row.items[2], "Balken bleiben ohne Falken")
+        OC.SetDisplay(e, "icon")
+    end)
+    -- Auch nach einem Fehler zurueck - sonst reissen die folgenden Pruefungen mit.
+    BT.Groups, BT.active, _G.GetTime, OC.known, OC.Slot = oldGroups, oldActive, oldT, oldKnown, oldSlot
+    Check(ok, "Abklingzeitmanager: Falken über den Namen, je Falke ein Balken" .. (ok and "" or (": " .. tostring(err))))
+end
+
 -- 1.0.9.0: Buehne des Abklingzeitmanagers - Vorschau wie im Spiel, Ziehen
 -- an eine Stelle, Vorrat, Rechtsklick Symbol/Balken, eine Buehne je Sitzung.
 do

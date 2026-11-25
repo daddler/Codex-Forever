@@ -28,7 +28,13 @@ nicht zusammen.
   `OC.EstimateEnd`), dann bereit; unbekannt = leer mit „?“. Farbe der
   Wirkung je Fähigkeit (`ocd.barColor`), neue Farben
   `GameColors.ocdCooldown`/`ocdReady`; Balkenbreite/-höhe je Reihe im Menü
-  der Reihe (`barWidth`, `barHeight`).
+  der Reihe (`barWidth`, `barHeight`). Dritte Darstellung `both` („Symbol +
+  Balken der Wirkung“, nur mit bekannter Wirkdauer): Symbol fest, je laufende
+  Wirkung ein Balken daneben (`b._inst`). Mehrere Wirkungen zugleich
+  (`OC.Effects`: `BT.active[..].earlier` + aktuelle) = je eine ein Balken.
+  `OC.BuffGroup` erkennt Gruppen auch über den Namen (`g.names`,
+  `BT.byId`) – „Falke beschwören“ (Forever, Nummer unbekannt; Spieler mit
+  Tooltip: 18 s je Falke, bis zu zwei, 6 s Abklingzeit).
 - `/wcui speicher`: „Interne Tabellen der Dateien“ – jede Datei unter
   `core/`, `modules/`, `ui/` meldet ihre Tabellen der obersten Ebene am
   Dateiende über `WeintCodex.Hold(datei, function() … end)` an (131

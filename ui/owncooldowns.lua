@@ -624,16 +624,29 @@ end
 -- aus dem eigenen Wirken gerechnet, nie aus einer gelesenen Aura), danach
 -- ueber die ABKLINGZEIT bis "bereit". Jede Reihe kann beides mischen.
 --------------------------------------------------
-OC.DISPLAY_TEXT = { icon = "Symbol", bar = "Balken" }
+-- "both" (Spieler: "die Falken individuell in eine Leiste, aber die
+-- Laufzeit der Falken in Balken"): das Symbol steht fest und zeigt die
+-- Abklingzeit; solange Wirkungen laufen, steht daneben je Wirkung ein Balken.
+OC.DISPLAY_TEXT = { icon = "Symbol", bar = "Balken", both = "Symbol + Balken der Wirkung" }
 function OC.Display(e)
     local m = Mem()
-    return (m and m.display[e.key] == "bar") and "bar" or "icon"
+    local v = m and m.display[e.key]
+    if v == "bar" then return "bar" end
+    if v == "both" and OC.HasEffect(e) then return "both" end
+    return "icon"
 end
 function OC.SetDisplay(e, v)
     local m = Mem()
     if not m then return end
-    m.display[e.key] = (v == "bar") and "bar" or nil
+    m.display[e.key] = (v == "bar" or v == "both") and v or nil
     OC.Refresh()
+end
+-- Rechtsklick auf der Buehne: Symbol -> Balken -> (mit Wirkung) beides -> Symbol.
+function OC.NextDisplay(e)
+    local cur = OC.Display(e)
+    if cur == "icon" then return "bar" end
+    if cur == "bar" and OC.HasEffect(e) then return "both" end
+    return "icon"
 end
 OC.BAR_COLOR_DEFAULT = "blue"
 OC.BAR_WIDTHS = { 100, 140, 180, 220, 260, 320 }
@@ -659,18 +672,45 @@ function OC.BarRGB(e)
 end
 
 -- Gruppe der Buffzeiten, zu der der Zauber gehoert (jeder Rang), oder nil.
+-- 1.0.9.0 (Spieler mit Tooltip: "Falke beschwoeren" - 6 s Abklingzeit, 18 s
+-- je Falke, bis zu zwei): Forever-Zauber ohne bekannte Nummer fuehren die
+-- Buffzeiten ueber den Namen (g.names, BT.byId nach dem ersten Wirken).
 function OC.BuffGroup(e)
     local BT = WeintCodex.UIBuffTimes
-    if not (BT and BT.Groups and e and e.id) then return nil end
+    if not (BT and BT.Groups and e and (e.id or e.name)) then return nil end
+    local known = e.id and BT.byId and BT.byId[e.id]
+    if known and known.duration and not known.variable then return known end
     for _, g in ipairs(BT.Groups()) do
         if g.duration and not g.variable then
             for _, id in ipairs(g.spells or {}) do
                 if id == e.id then return g end
                 if e.ranks then for _, r in ipairs(e.ranks) do if r == id then return g end end end
             end
+            for _, sn in ipairs(g.names or {}) do
+                if sn == e.name then return g end
+            end
         end
     end
     return nil
+end
+
+-- Alle laufenden Wirkungen (Falken: bis zu zwei, jede mit eigener Uhr):
+-- Startzeiten in `out`, aelteste zuerst; Anzahl und Dauer.
+function OC.Effects(e, out)
+    for i = #out, 1, -1 do out[i] = nil end
+    if not e or e.item then return 0, nil end
+    local ds, dd = OC.DotOn(e.name)
+    if ds then out[1] = ds return 1, dd end
+    local g = OC.BuffGroup(e)
+    local BT = WeintCodex.UIBuffTimes
+    local a = g and BT and BT.active and BT.active[g.key]
+    if not (a and type(a.start) == "number" and type(a.duration) == "number") then return 0, nil end
+    local now = _G.GetTime and Plain(_G.GetTime()) or 0
+    for _, st0 in ipairs(a.earlier or {}) do
+        if type(st0) == "number" and now < st0 + a.duration then out[#out + 1] = st0 end
+    end
+    if now < a.start + a.duration then out[#out + 1] = a.start end
+    return #out, a.duration
 end
 
 -- Hat die Faehigkeit eine bekannte Wirkdauer? (Sonst zeigt ihr Balken nur
@@ -1474,13 +1514,21 @@ local function Visible()
     return true
 end
 
+local effBuf = {}
 -- Balken einer Faehigkeit zeichnen: Wirkung, sonst Abklingzeit, sonst bereit.
+-- b._inst: der wievielte laufende Falke (je Wirkung ein Balken).
 -- Unbekannt (geheim, nie selbst gewirkt) ist leer mit "?", nie "bereit".
 function OC.DrawBar(b, e, st, numbers)
     local GC = WeintCodex.GameColors
     if b._nameKey ~= e.key then b._nameKey = e.key b.name:SetText(e.name or "") end
     b._numbers = numbers
-    local es, ed = OC.EffectOf(e)
+    local es, ed
+    if b._inst then
+        local n, dur = OC.Effects(e, effBuf)
+        if n > 0 then es, ed = effBuf[math.min(b._inst, n)], dur end
+    else
+        es, ed = OC.EffectOf(e)
+    end
     local endAt, dur, phase
     if es then
         phase, endAt, dur = "effect", es + ed, ed
@@ -1520,8 +1568,35 @@ local function DrawSpells(row, slot, size, show)
             if OC.Slot(e) == slot then
                 n = n + 1
                 local b
-                if OC.Display(e) == "bar" then nb = nb + 1 b = NeedBar(row, nb) else ni = ni + 1 b = NeedIcon(row, ni) end
-                items[n], b._e = b, e
+                if OC.Display(e) == "bar" then
+                    -- Mehrere Wirkungen zugleich (Falken): je eine ein Balken,
+                    -- aelteste zuerst; sonst einer.
+                    local k = OC.Effects(e, effBuf)
+                    nb = nb + 1
+                    b = NeedBar(row, nb)
+                    b._inst = k > 1 and 1 or nil
+                    items[n], b._e = b, e
+                    for inst = 2, k do
+                        n, nb = n + 1, nb + 1
+                        local b2 = NeedBar(row, nb)
+                        b2._inst, b2._e = inst, e
+                        items[n] = b2
+                    end
+                else
+                    ni = ni + 1
+                    b = NeedIcon(row, ni)
+                    items[n], b._e = b, e
+                    -- Symbol + je laufender Wirkung ein Balken daneben.
+                    if OC.Display(e) == "both" then
+                        local k = OC.Effects(e, effBuf)
+                        for inst = 1, k do
+                            n, nb = n + 1, nb + 1
+                            local b2 = NeedBar(row, nb)
+                            b2._inst, b2._e = inst, e
+                            items[n] = b2
+                        end
+                    end
+                end
             end
         end
         if n == 0 and row._unlock then
@@ -1604,7 +1679,9 @@ local function DrawSpells(row, slot, size, show)
             if b.isBar then
                 OC.DrawBar(b, e, st, numbers)
             else
-                b.state:SetText("")
+                -- Mehrere Wirkungen zugleich (Falken): ihre Zahl am Symbol.
+                local k = (not e.item) and OC.Effects(e, effBuf) or 0
+                b.state:SetText(k > 1 and tostring(k) or "")
             end
             b:Show()
         else   -- Gestaltungsmodus ohne Zauber: ein Platzhalter
@@ -2595,7 +2672,7 @@ function OC.BuildSection(B)
             end })
     -- 1.0.9.0: die Buehne (ui/cdstage.lua) statt der Spaltenliste.
     local ST = WeintCodex.UICooldownStage
-    B:Note("So sieht es im Spiel aus – mit laufenden Uhren. Fähigkeiten greifen und an die Stelle ziehen, an der sie stehen sollen; eine Marke zeigt, wo sie landen. In den Vorrat gezogen: nicht zeigen. Klick: Darstellung (Symbol oder Balken), Farbe, Rang, Leuchten, Ton. Rechtsklick: Symbol ↔ Balken. Ein Balken läuft erst über die Wirkung (DoT, Buff), dann über die Abklingzeit. Aus Zauberbuch oder Taschen direkt auf eine Reihe ziehen: hinzufügen.")
+    B:Note("So sieht es im Spiel aus – mit laufenden Uhren. Fähigkeiten greifen und an die Stelle ziehen, an der sie stehen sollen; eine Marke zeigt, wo sie landen. In den Vorrat gezogen: nicht zeigen. Klick: Darstellung, Farbe, Rang, Leuchten, Ton. Rechtsklick: Symbol → Balken → Symbol + Balken der Wirkung. Ein Balken läuft erst über die Wirkung (DoT, Buff, Falken – je Falke einer), dann über die Abklingzeit; „Symbol + Balken der Wirkung“ lässt das Symbol stehen und zeigt nur, solange etwas wirkt, die Balken daneben. Aus Zauberbuch oder Taschen direkt auf eine Reihe ziehen: hinzufügen.")
     local O = WeintCodex.UIOptions
     B:Row({ type = "custom", height = ST.Height((O and O.CONTENT_W) or 560), create = function(parent, width) return ST.Create(parent, width) end })
 end

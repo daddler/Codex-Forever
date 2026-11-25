@@ -19,7 +19,7 @@
 -- BEDIENUNG. Ziehen: an eine Stelle einer Reihe (eine Marke zeigt, wo es
 -- landet) oder in den Vorrat (ausblenden). Klick: Menue der Faehigkeit
 -- (Darstellung, Balkenfarbe, Rang, Leuchten, Ton, Reihe). Rechtsklick:
--- Symbol <-> Balken. Klick auf den Kopf einer Bahn: Einstellungen der
+-- Symbol -> Balken -> Symbol + Balken der Wirkung. Klick auf den Kopf einer Bahn: Einstellungen der
 -- Reihe. Aus Zauberbuch oder Taschen auf eine Bahn ziehen: hinzufuegen,
 -- genau dorthin.
 --------------------------------------------------
@@ -190,11 +190,11 @@ function ST.Menu(owner, e)
     MU.CreateContextMenu(owner, function(_, root)
         if root.CreateTitle then root:CreateTitle(e.rank and (e.name .. " (" .. e.rank .. ")") or e.name) end
         local disp = root:CreateButton("Darstellung: " .. OC.DISPLAY_TEXT[OC.Display(e)])
-        for _, v in ipairs({ "icon", "bar" }) do
+        for _, v in ipairs(OC.HasEffect(e) and { "icon", "bar", "both" } or { "icon", "bar" }) do
             disp:CreateRadio(OC.DISPLAY_TEXT[v], function() return OC.Display(e) == v end,
                 function() OC.SetDisplay(e, v) OC.Relayout() end)
         end
-        if OC.Display(e) == "bar" then
+        if OC.Display(e) ~= "icon" then
             local col = root:CreateButton(OC.HasEffect(e) and "Farbe der Wirkung" or "Farbe (ohne bekannte Wirkdauer)")
             for _, c in ipairs(OC.GLOW_COLORS) do
                 local v = c.value
@@ -334,7 +334,7 @@ function ST.Attach(stage, b)
         if drag.key or not self._e then return end
         if OC.FromCursor() then ST.DropCursor(stage) return end
         if button == "RightButton" then
-            OC.SetDisplay(self._e, OC.Display(self._e) == "bar" and "icon" or "bar")
+            OC.SetDisplay(self._e, OC.NextDisplay(self._e))
             OC.Relayout()
             return
         end
@@ -348,8 +348,8 @@ function ST.Attach(stage, b)
         if e.item then pcall(tt.SetItemByID, tt, e.id) else pcall(tt.SetSpellByID, tt, e.id) end
         tt:AddLine(" ")
         tt:AddLine("Ziehen: in eine Reihe oder in den Vorrat · Klick: Einstellungen · Rechtsklick: "
-            .. (OC.Display(e) == "bar" and "als Symbol" or "als Balken"), 0.6, 0.6, 0.65, true)
-        if OC.Display(e) == "bar" and not OC.HasEffect(e) then
+            .. OC.DISPLAY_TEXT[OC.NextDisplay(e)], 0.6, 0.6, 0.65, true)
+        if OC.Display(e) ~= "icon" and not OC.HasEffect(e) then
             tt:AddLine("Für diese Fähigkeit kennt WeintCodex keine Wirkdauer – der Balken zeigt nur die Abklingzeit.", 0.6, 0.6, 0.65, true)
         end
         tt:Show()
