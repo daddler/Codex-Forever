@@ -86,6 +86,8 @@ local function Mem()
     st.ocd.rank = st.ocd.rank or {}       -- je Zauber gewaehlter Rang (Nummer)
     st.ocd.glowOf = st.ocd.glowOf or {}   -- je Zauber Leuchten an/aus (nil = Vorgabe)
     st.ocd.sound = st.ocd.sound or {}     -- je Zauber Ton, wenn bereit
+    st.ocd.display = st.ocd.display or {} -- je Zauber "bar" (Balken) oder nil (Symbol), 1.0.9.0
+    st.ocd.barColor = st.ocd.barColor or {} -- je Zauber Farbe der Wirkung im Balken
     return st.ocd
 end
 OC.Mem = Mem
@@ -614,6 +616,84 @@ function OC.SetSlot(e, slot)
     OC.Refresh()
 end
 
+--------------------------------------------------
+-- Darstellung je Faehigkeit (1.0.9.0, Wunsch: "ob Balken oder Symbol -
+-- wie bei WeakAuras"). Ein Balken laeuft erst ueber die WIRKUNG ab (eigener
+-- DoT auf dem Ziel, eigener Buff aus den Buffzeiten - Dauern aus Classic,
+-- aus dem eigenen Wirken gerechnet, nie aus einer gelesenen Aura), danach
+-- ueber die ABKLINGZEIT bis "bereit". Jede Reihe kann beides mischen.
+--------------------------------------------------
+OC.DISPLAY_TEXT = { icon = "Symbol", bar = "Balken" }
+function OC.Display(e)
+    local m = Mem()
+    return (m and m.display[e.key] == "bar") and "bar" or "icon"
+end
+function OC.SetDisplay(e, v)
+    local m = Mem()
+    if not m then return end
+    m.display[e.key] = (v == "bar") and "bar" or nil
+    OC.Refresh()
+end
+OC.BAR_COLOR_DEFAULT = "blue"
+OC.BAR_WIDTHS = { 100, 140, 180, 220, 260, 320 }
+OC.BAR_HEIGHTS = { 12, 16, 20, 24, 28, 32 }
+function OC.BarColor(e)
+    local m = Mem()
+    local v = m and m.barColor[e.key]
+    for _, c in ipairs(OC.GLOW_COLORS or {}) do if c.value == v then return v end end
+    return OC.BAR_COLOR_DEFAULT
+end
+function OC.SetBarColor(e, v)
+    local m = Mem()
+    if not m then return end
+    m.barColor[e.key] = (v ~= OC.BAR_COLOR_DEFAULT) and v or nil
+    OC.Refresh()
+end
+function OC.BarRGB(e)
+    local want = OC.BarColor(e)
+    for _, c in ipairs(OC.GLOW_COLORS) do
+        if c.value == want then return C[c.token] or C.infoBright end
+    end
+    return C.infoBright
+end
+
+-- Gruppe der Buffzeiten, zu der der Zauber gehoert (jeder Rang), oder nil.
+function OC.BuffGroup(e)
+    local BT = WeintCodex.UIBuffTimes
+    if not (BT and BT.Groups and e and e.id) then return nil end
+    for _, g in ipairs(BT.Groups()) do
+        if g.duration and not g.variable then
+            for _, id in ipairs(g.spells or {}) do
+                if id == e.id then return g end
+                if e.ranks then for _, r in ipairs(e.ranks) do if r == id then return g end end end
+            end
+        end
+    end
+    return nil
+end
+
+-- Hat die Faehigkeit eine bekannte Wirkdauer? (Sonst zeigt ihr Balken nur
+-- die Abklingzeit.)
+function OC.HasEffect(e)
+    if not e or e.item then return false end
+    return (OC.DotDuration(e.name) or OC.BuffGroup(e)) and true or false
+end
+
+-- Laufende Wirkung: Start, Dauer (eigene Zahlen) - oder nil.
+function OC.EffectOf(e)
+    if not e or e.item then return nil end
+    local ds, dd = OC.DotOn(e.name)
+    if ds then return ds, dd end
+    local g = OC.BuffGroup(e)
+    local BT = WeintCodex.UIBuffTimes
+    local a = g and BT and BT.active and BT.active[g.key]
+    if a and type(a.start) == "number" and type(a.duration) == "number" then
+        local now = _G.GetTime and Plain(_G.GetTime()) or 0
+        if now < a.start + a.duration then return a.start, a.duration end
+    end
+    return nil
+end
+
 -- Leuchten je Zauber (6.93.0.0): "ready" = wenn bereit, "dot" = wenn der
 -- eigene DoT auf dem Ziel fehlt oder gleich auslaeuft, "off". Alte
 -- Speicherstaende (true/false) gelten als "ready"/"off".
@@ -1016,6 +1096,7 @@ end
 local slotNumbers
 local function Icon(parent)
     local b = CreateFrame("Frame", nil, parent)
+    b.isBar = false
     b.icon = b:CreateTexture(nil, "ARTWORK")
     b.icon:SetAllPoints(b)
     b.icon:SetTexCoord(0.08, 0.92, 0.08, 0.92)
@@ -1044,7 +1125,122 @@ local function Icon(parent)
 end
 
 local function Ensure(row, n)
-    for i = #row.icons + 1, n do row.icons[i] = Icon(row) end
+    for i = #row.icons + 1, n do
+        row.icons[i] = Icon(row)
+        if row.onNew then row.onNew(row.icons[i]) end
+    end
+end
+
+-- Balken (1.0.9.0): Symbol links, Leiste mit Name und Restzeit. Laeuft eine
+-- Wirkung oder Abklingzeit mit bekannter Laenge, zaehlt ein OnUpdate am
+-- Balken selbst herunter - nur dann, und ohne Tabellen je Bild; der Text
+-- wird nur neu gesetzt, wenn sich die angezeigte Zahl aendert.
+function OC.BarTime(left)
+    if left >= 60 then return string.format("%d:%02d", math.floor(left / 60), math.floor(left % 60)) end
+    if left >= 10 then return tostring(math.floor(left)) end
+    return string.format("%.1f", left)
+end
+local function BarTick(self)
+    local endAt, dur = self._endAt2, self._dur2
+    if not (endAt and dur and dur > 0) then self:SetScript("OnUpdate", nil) return end
+    local left = endAt - Now()
+    if left <= 0 then
+        self:SetScript("OnUpdate", nil)
+        self.sb:SetValue(0)
+        OC.pending = true
+        return
+    end
+    self.sb:SetValue(left / dur)
+    local key = left >= 10 and -math.floor(left) or math.floor(left * 10)
+    if key ~= self._tkey then
+        self._tkey = key
+        self.time:SetText(self._numbers and OC.BarTime(left) or "")
+    end
+end
+OC.BarTick = BarTick
+
+local function Bar(parent)
+    local b = CreateFrame("Frame", nil, parent)
+    b.isBar = true
+    b.icon = b:CreateTexture(nil, "ARTWORK")
+    b.icon:SetPoint("TOPLEFT", b, "TOPLEFT", 0, 0)
+    b.icon:SetPoint("BOTTOMLEFT", b, "BOTTOMLEFT", 0, 0)
+    b.icon:SetTexCoord(0.08, 0.92, 0.08, 0.92)
+    b.sb = K.NewBar(b)
+    b.sb:SetMinMaxValues(0, 1)
+    b.sb:SetValue(0)
+    b.sb:SetPoint("TOPLEFT", b.icon, "TOPRIGHT", 1, 0)
+    b.sb:SetPoint("BOTTOMRIGHT", b, "BOTTOMRIGHT", 0, 0)
+    b.track = b:CreateTexture(nil, "BACKGROUND")
+    b.track:SetAllPoints(b.sb)
+    local tr = WeintCodex.GameColors.barTrack
+    b.track:SetColorTexture(tr[1], tr[2], tr[3], tr[4])
+    -- Unsichtbare Uhr: Clock() liest und setzt die Abklingzeit wie am Symbol.
+    b.cd = CreateFrame("Cooldown", nil, b, "CooldownFrameTemplate")
+    b.cd:SetAllPoints(b.icon)
+    b.cd:SetAlpha(0)
+    local top = CreateFrame("Frame", nil, b)
+    top:SetAllPoints(b)
+    top:SetFrameLevel((b.sb:GetFrameLevel() or 1) + 2)
+    K.Border(top, 1, 0, 0, 0, 1, "OVERLAY")
+    b.name = K.NewText(top, 11)
+    b.name:SetPoint("LEFT", b.sb, "LEFT", 4, 0)
+    b.name:SetPoint("RIGHT", b.sb, "RIGHT", -34, 0)
+    b.name:SetJustifyH("LEFT")
+    if b.name.SetWordWrap then b.name:SetWordWrap(false) end
+    b.time = K.NewText(top, 11)
+    b.time:SetPoint("RIGHT", b.sb, "RIGHT", -4, 0)
+    b.time:SetJustifyH("RIGHT")
+    b.state = b.time
+    b.glow = K.Glow(b, { layer = "BACKGROUND", spread = 5, color = C.successBright, shown = false })
+    local ag = b.glow.tex:CreateAnimationGroup()
+    ag:SetLooping("BOUNCE")
+    local a = ag:CreateAnimation("Alpha")
+    a:SetFromAlpha(1)
+    a:SetToAlpha(0.25)
+    a:SetDuration(0.6)
+    if a.SetSmoothing then a:SetSmoothing("IN_OUT") end
+    b.pulse = ag
+    b:Hide()
+    return b
+end
+OC.NewBar = Bar
+
+local function NeedIcon(row, i)
+    Ensure(row, i)
+    return row.icons[i]
+end
+-- Felder der Reihe ueber rawget: an Rahmen der Pruef-Attrappe liefern
+-- unbekannte Felder Funktionen, im Client nil.
+local function Field(row, key)
+    local v = _G.rawget(row, key)
+    if type(v) ~= "table" then v = {} row[key] = v end
+    return v
+end
+local function NeedBar(row, i)
+    Field(row, "bars")
+    for j = #row.bars + 1, i do
+        row.bars[j] = Bar(row)
+        if row.onNew then row.onNew(row.bars[j]) end
+    end
+    return row.bars[i]
+end
+
+-- Groesse eines Balkens: Breite und Hoehe je Reihe (RowOpt barWidth,
+-- barHeight; ohne Wahl aus der Symbolgroesse).
+function OC.BarSize(slot, s)
+    local w = tonumber(OC.RowOpt(slot, "barWidth")) or 180
+    local h = tonumber(OC.RowOpt(slot, "barHeight")) or math.max(14, math.floor(s * 0.6 + 0.5))
+    return w, h
+end
+local function SizeBar(b, w, h)
+    if b._w == w and b._h == h then return end
+    b._w, b._h = w, h
+    b:SetSize(w, h)
+    b.icon:SetWidth(h)
+    local fs = math.max(8, math.min(16, math.floor(h * 0.6)))
+    K.SetFont(b.name, fs)
+    K.SetFont(b.time, fs)
 end
 
 -- Anordnung (6.90.1.0, Wunsch): waagerecht oder senkrecht, umbrechen nach
@@ -1080,33 +1276,82 @@ function OC.SetRowOpt(slot, key, v)
 end
 OC.ROW_LABEL = { buffs = "Buffs", debuffs = "Eigene Debuffs" }
 
+-- Anordnung gemischter Reihen (1.0.9.0): jedes Teil hat seine Groesse
+-- (Symbol s x s, Balken Breite x Hoehe). Waagerecht: Zeilen zu "je Zeile"
+-- Teilen, jede Zeile mittig; senkrecht: Spalten, jede mittig. Reine
+-- Rechnung - ohne place nur die Groesse (fuer die Hoehe der Buehne).
+local lineW, lineH = {}, {}
+function OC.Layout(n, sizeOf, gap, per, vert, place)
+    if per <= 0 or per > n then per = math.max(1, n) end
+    local lines = math.max(1, math.ceil(n / per))
+    local total1, total2 = 0, 0   -- Laenge (laengste Zeile), Breite (Summe der Zeilen)
+    for l = 1, lines do
+        local a, z = (l - 1) * per + 1, math.min(n, l * per)
+        local len, thick = 0, 0
+        for i = a, z do
+            local w, h = sizeOf(i)
+            if vert then w, h = h, w end
+            len = len + w + (i > a and gap or 0)
+            if h > thick then thick = h end
+        end
+        lineW[l], lineH[l] = len, thick
+        if len > total1 then total1 = len end
+        total2 = total2 + thick + (l > 1 and gap or 0)
+    end
+    if place then
+        local off = 0
+        for l = 1, lines do
+            local a, z = (l - 1) * per + 1, math.min(n, l * per)
+            local pos = (total1 - lineW[l]) / 2
+            for i = a, z do
+                local w, h = sizeOf(i)
+                local along = vert and h or w
+                if vert then place(i, off, -pos) else place(i, pos, -off) end
+                pos = pos + along + gap
+            end
+            off = off + lineH[l] + gap
+        end
+    end
+    if vert then return total2, total1 end
+    return total1, total2
+end
+
 local function Arrange(row, n, s, slot)
     local gap = tonumber(OC.RowOpt(slot, "gap")) or 4
     local per = tonumber(OC.RowOpt(slot, "perLine")) or 0
-    if per <= 0 or per > n then per = math.max(1, n) end
-    local lines = math.max(1, math.ceil(n / per))
     local vert = OC.RowOpt(slot, "vertical") and true or false
+    local bw, bh = OC.BarSize(slot, s)
+    local items = _G.rawget(row, "items")
+    if type(items) ~= "table" then items = row.icons end
+    -- Welche Plaetze Balken sind, als Zahl (bis 52 Teile; darueber immer neu).
+    local mask = 0
+    for i = 1, math.min(n, 52) do if items[i] and items[i].isBar then mask = mask + 2 ^ (i - 1) end end
     -- 1.0.5.43 (/wcui speicher: 3,6 ms/s): nur neu anordnen, wenn sich
-    -- etwas geaendert hat - nicht bei jedem Takt.
+    -- etwas geaendert hat - nicht bei jedem Takt. Dieselben Teile an
+    -- denselben Plaetzen: row._layItems merkt sich, welches Teil wo stand.
     local L = row._lay
-    if L and L.n == n and L.s == s and L.gap == gap and L.per == per and L.vert == vert then return end
-    if not L then L = {} row._lay = L end
-    L.n, L.s, L.gap, L.per, L.vert = n, s, gap, per, vert
-    local long, short = per * s + (per - 1) * gap, lines * s + (lines - 1) * gap
-    if vert then row:SetSize(math.max(s, short), math.max(s, long)) else row:SetSize(math.max(s, long), math.max(s, short)) end
-    for i = 1, n do
-        local b = row.icons[i]
-        b:SetSize(s, s)
-        b:ClearAllPoints()
-        local line, pos = math.floor((i - 1) / per), (i - 1) % per
-        local inLine = math.min(per, n - line * per)
-        local shift = (per - inLine) * (s + gap) / 2
-        if vert then
-            b:SetPoint("TOPLEFT", row, "TOPLEFT", line * (s + gap), -(shift + pos * (s + gap)))
-        else
-            b:SetPoint("TOPLEFT", row, "TOPLEFT", shift + pos * (s + gap), -line * (s + gap))
-        end
+    if L and n <= 52 and L.n == n and L.s == s and L.gap == gap and L.per == per and L.vert == vert
+       and L.bw == bw and L.bh == bh and L.mask == mask then
+        local same = true
+        for i = 1, n do if row._layItems[i] ~= items[i] then same = false break end end
+        if same then return end
     end
+    if not L then L = {} row._lay = L row._layItems = {} end
+    L.n, L.s, L.gap, L.per, L.vert, L.bw, L.bh, L.mask = n, s, gap, per, vert, bw, bh, mask
+    for i = 1, n do row._layItems[i] = items[i] end
+    for i = n + 1, #row._layItems do row._layItems[i] = nil end
+    local function sizeOf(i)
+        local b = items[i]
+        if b and b.isBar then return bw, bh end
+        return s, s
+    end
+    local w, h = OC.Layout(n, sizeOf, gap, per, vert, function(i, x, y)
+        local b = items[i]
+        if b.isBar then SizeBar(b, bw, bh) else b:SetSize(s, s) end
+        b:ClearAllPoints()
+        b:SetPoint("TOPLEFT", row, "TOPLEFT", x, y)
+    end)
+    row:SetSize(math.max(s, w), math.max(s, h))
 end
 
 -- Uhr des Spiels; gibt "ready"/"cd"/nil (weiss nicht) zurueck.
@@ -1166,6 +1411,14 @@ function OC.Estimate(e)
     return now < t + len and "cd" or "ready"
 end
 
+-- Wie OC.Estimate, aber mit Zahlen fuer den Balken: Ende, Laenge - oder nil.
+function OC.EstimateEnd(e)
+    if OC.Estimate(e) ~= "cd" then return nil end
+    local t, len = OC.lastCast[e.name], OC.cdLen[e.name]
+    if not (t and len) then return nil end
+    return t + len, len
+end
+
 function OC.ItemClock(b, id)
     local f = (_G.C_Container and _G.C_Container.GetItemCooldown) or _G.GetItemCooldown
     if not f then b.cd:Clear() return nil end
@@ -1215,23 +1468,70 @@ local function Visible()
     return true
 end
 
+-- Balken einer Faehigkeit zeichnen: Wirkung, sonst Abklingzeit, sonst bereit.
+-- Unbekannt (geheim, nie selbst gewirkt) ist leer mit "?", nie "bereit".
+function OC.DrawBar(b, e, st, numbers)
+    local GC = WeintCodex.GameColors
+    if b._nameKey ~= e.key then b._nameKey = e.key b.name:SetText(e.name or "") end
+    b._numbers = numbers
+    local es, ed = OC.EffectOf(e)
+    local endAt, dur, phase
+    if es then
+        phase, endAt, dur = "effect", es + ed, ed
+    elseif st == "cd" then
+        if type(b._endAt) == "number" and b._endAt ~= math.huge and type(b._start) == "number" and b._endAt > b._start then
+            endAt, dur = b._endAt, b._endAt - b._start
+        else
+            endAt, dur = OC.EstimateEnd(e)
+        end
+        phase = endAt and "cd" or "cdq"
+    elseif st == "ready" then
+        phase = "ready"
+    else
+        phase = "unknown"
+    end
+    b.phase = phase
+    local c = (phase == "effect" and OC.BarRGB(e)) or (phase == "ready" and GC.ocdReady) or GC.ocdCooldown
+    K.PaintBar(b.sb, c[1], c[2], c[3])
+    if phase == "effect" or phase == "cd" then
+        b._endAt2, b._dur2, b._tkey = endAt, dur, nil
+        b:SetScript("OnUpdate", BarTick)
+        BarTick(b)
+    else
+        b:SetScript("OnUpdate", nil)
+        b.sb:SetValue(phase == "ready" and 1 or 0)
+        b.time:SetText(phase == "ready" and "bereit" or phase == "cdq" and "läuft" or "?")
+    end
+    return phase
+end
+
 local function DrawSpells(row, slot, size, show)
-    local n = 0
+    local items = Field(row, "items")
+    Field(row, "bars")
+    local n, ni, nb = 0, 0, 0
     if show or row._unlock then
         for _, e in ipairs(OC.known) do
-            if OC.Slot(e) == slot then n = n + 1 end
+            if OC.Slot(e) == slot then
+                n = n + 1
+                local b
+                if OC.Display(e) == "bar" then nb = nb + 1 b = NeedBar(row, nb) else ni = ni + 1 b = NeedIcon(row, ni) end
+                items[n], b._e = b, e
+            end
         end
-        if n == 0 and row._unlock then n = 1 end
+        if n == 0 and row._unlock then
+            n, ni = 1, 1
+            items[1] = NeedIcon(row, 1)
+            items[1]._e = nil
+        end
     end
-    Ensure(row, n)
+    for j = n + 1, #items do items[j] = nil end
     Arrange(row, n, size, slot)
     local numbers, glow = OC.Get("numbers") and true or false, OC.Get("glow") and true or false
     local i = 0
-    for _, e in ipairs(OC.known) do
-        if i >= n then break end
-        if OC.Slot(e) == slot then
+    for k = 1, n do
+        local b, e = items[k], items[k]._e
+        if e then
             i = i + 1
-            local b = row.icons[i]
             b.icon:SetTexture(e.tex)
             OC.CountdownShown(b.cd, numbers)
             local st, rawD
@@ -1276,36 +1576,43 @@ local function DrawSpells(row, slot, size, show)
             if b.icon.SetDesaturated then b.icon:SetDesaturated(grey) end
             local v = grey and 0.55 or 1
             b.icon:SetVertexColor(v, v, v)
-            -- Ton: beim Wechsel auf "bereit" bzw. wenn der DoT auslaeuft
-            local was, wasDot = OC.prev[e.key], OC.prevDot[e.key]
-            if st then OC.prev[e.key] = st end
-            -- Auslaufen nur auf demselben Ziel - ein Zielwechsel ist kein Ablauf
-            local tg = OC.TargetGUID and OC.TargetGUID() or "?"
-            wasDot = wasDot and wasDot == tg
-            OC.prevDot[e.key] = ds and tg or false
-            local snd = OC.SoundOf(e)
-            if snd ~= "none" then
-                local when = OC.SoundWhen(e)
-                if (when == "ready" and was == "cd" and st == "ready")
-                   or (when == "dot" and wasDot and not ds) then
-                    OC.PlaySound(snd, e)
+            -- Ton: beim Wechsel auf "bereit" bzw. wenn der DoT auslaeuft.
+            -- Die Vorschau der Einstellungen (row._preview) spielt nie und
+            -- merkt sich nichts - sonst klaengen Toene doppelt oder gar nicht.
+            if not row._preview then
+                local was, wasDot = OC.prev[e.key], OC.prevDot[e.key]
+                if st then OC.prev[e.key] = st end
+                -- Auslaufen nur auf demselben Ziel - ein Zielwechsel ist kein Ablauf
+                local tg = OC.TargetGUID and OC.TargetGUID() or "?"
+                wasDot = wasDot and wasDot == tg
+                OC.prevDot[e.key] = ds and tg or false
+                local snd = OC.SoundOf(e)
+                if snd ~= "none" then
+                    local when = OC.SoundWhen(e)
+                    if (when == "ready" and was == "cd" and st == "ready")
+                       or (when == "dot" and wasDot and not ds) then
+                        OC.PlaySound(snd, e)
+                    end
                 end
             end
-            b.state:SetText("")
+            if b.isBar then
+                OC.DrawBar(b, e, st, numbers)
+            else
+                b.state:SetText("")
+            end
+            b:Show()
+        else   -- Gestaltungsmodus ohne Zauber: ein Platzhalter
+            b.icon:SetTexture(134400)
+            b.cd:Clear()
+            OC.ShowGlow(b, false)
+            b.state:SetText(OC.SlotText(slot))
             b:Show()
         end
     end
-    if i < n then   -- Gestaltungsmodus ohne Zauber: ein Platzhalter
-        local b = row.icons[1]
-        b.icon:SetTexture(134400)
-        b.cd:Clear()
-        OC.ShowGlow(b, false)
-        b.state:SetText(OC.SlotText(slot))
-        b:Show()
-        i = 1
-    end
-    for j = i + 1, #row.icons do row.icons[j]:Hide() end
+    for j = ni + 1, #row.icons do row.icons[j]:Hide() end
+    for j = nb + 1, #row.bars do row.bars[j]:SetScript("OnUpdate", nil) row.bars[j]:Hide() end
 end
+OC.DrawSpells = DrawSpells
 
 local function DrawBuffs(row, size, show)
     local BT = WeintCodex.UIBuffTimes
@@ -2261,6 +2568,21 @@ function OC.RowMenu(owner, id)
         for _, g in ipairs({ 0, 2, 4, 6, 8, 12 }) do
             gap:CreateRadio(g .. " px", function() return (tonumber(OC.RowOpt(id, "gap")) or 4) == g end,
                 function() OC.SetRowOpt(id, "gap", g) end)
+        end
+        if id ~= "buffs" and id ~= "debuffs" then
+            -- 1.0.9.0: Groesse der Balken dieser Reihe.
+            local bw = root:CreateButton("Balkenbreite")
+            for _, w in ipairs(OC.BAR_WIDTHS) do
+                bw:CreateRadio(w .. " px", function() return select(1, OC.BarSize(id, OC.RowOpt(id, "size"))) == w end,
+                    function() OC.SetRowOpt(id, "barWidth", w) end)
+            end
+            local bh = root:CreateButton("Balkenhöhe")
+            bh:CreateRadio("passend zur Symbolgröße", function() return OC.RowOpt(id, "barHeight") == nil end,
+                function() OC.SetRowOpt(id, "barHeight", nil) end)
+            for _, h in ipairs(OC.BAR_HEIGHTS) do
+                bh:CreateRadio(h .. " px", function() return OC.RowOpt(id, "barHeight") == h end,
+                    function() OC.SetRowOpt(id, "barHeight", h) end)
+            end
         end
         root:CreateCheckbox("Nur im Kampf zeigen", function() return OC.RowOpt(id, "combatOnly") and true or false end,
             function() OC.SetRowOpt(id, "combatOnly", not OC.RowOpt(id, "combatOnly")) end)

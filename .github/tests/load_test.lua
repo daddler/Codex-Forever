@@ -27225,6 +27225,79 @@ do
     Check(ok, "Plaketten: Bosse der neuen Dungeons über ihre NPC-Nummer" .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 1.0.9.0: Abklingzeitmanager - Balken je Faehigkeit (erst Wirkung, dann
+-- Abklingzeit), gemischte Reihen, Anordnung als reine Rechnung.
+do
+    local OC = WeintCodex.UIOwnCooldowns
+    local ok, err = pcall(function()
+        -- Anordnung: Symbol 40 und Balken 180 x 24, Abstand 4.
+        local sizes = { { 40, 40 }, { 180, 24 } }
+        local function sz(i) return sizes[i][1], sizes[i][2] end
+        local pos = {}
+        local w, h = OC.Layout(2, sz, 4, 0, false, function(i, x, y) pos[i] = { x, y } end)
+        assert(w == 224 and h == 40, "waagerecht: " .. w .. "x" .. h)
+        assert(pos[1][1] == 0 and pos[2][1] == 44, "Plätze waagerecht falsch")
+        w, h = OC.Layout(2, sz, 4, 0, true)
+        assert(w == 180 and h == 68, "senkrecht: " .. w .. "x" .. h)
+        w, h = OC.Layout(2, sz, 4, 1, false)
+        assert(w == 180 and h == 68, "eins je Zeile: " .. w .. "x" .. h)
+        -- Darstellung je Faehigkeit, gemerkt je Charakter.
+        local e1 = { key = "t:1", name = "Testgift", id = 1978, tex = 1, preset = "big" }
+        local e2 = { key = "t:2", name = "Testschlag", id = 78, tex = 2, preset = "big" }
+        assert(OC.Display(e1) == "icon", "ab Werk nicht Symbol")
+        OC.SetDisplay(e1, "bar")
+        assert(OC.Display(e1) == "bar" and OC.Mem().display["t:1"] == "bar", "Balken nicht gemerkt")
+        -- Wirkung zuerst, dann Abklingzeit, dann bereit; unbekannt nie bereit.
+        local oldT, oldDot = _G.GetTime, OC.DotOn
+        local t = 100
+        _G.GetTime = function() return t end
+        local dot = { 90, 20 }
+        OC.DotOn = function(name) if name == "Testgift" and dot then return dot[1], dot[2] end end
+        local b = OC.NewBar(UIParent)
+        assert(OC.DrawBar(b, e1, "cd", true) == "effect", "Wirkung nicht zuerst")
+        assert(math.abs(b.sb:GetValue() - 0.5) < 0.01 and b.time:GetText() == "10", "Wirkung: " .. b.sb:GetValue() .. " " .. tostring(b.time:GetText()))
+        dot = nil
+        b._start, b._endAt = 100, 130
+        t = 111
+        assert(OC.DrawBar(b, e1, "cd", true) == "cd", "danach nicht die Abklingzeit")
+        assert(math.abs(b.sb:GetValue() - 19 / 30) < 0.01, "Abklingzeit: " .. b.sb:GetValue())
+        assert(OC.DrawBar(b, e1, "ready", true) == "ready" and b.sb:GetValue() == 1 and b.time:GetText() == "bereit", "bereit falsch")
+        assert(OC.DrawBar(b, e1, nil, true) == "unknown" and b.sb:GetValue() == 0 and b.time:GetText() == "?", "unbekannt als bereit")
+        -- Buff aus den Buffzeiten als Wirkung.
+        local BT = WeintCodex.UIBuffTimes
+        local oldGroups, oldActive = BT.Groups, BT.active
+        BT.Groups = function() return { { key = "tg", duration = 30, spells = { 778 } } } end
+        BT.active = { tg = { start = 105, duration = 30 } }
+        local s0, d0 = OC.EffectOf({ key = "t:3", name = "Testbuff", id = 778 })
+        assert(s0 == 105 and d0 == 30, "Buff nicht als Wirkung")
+        assert(OC.HasEffect({ key = "t:3", name = "Testbuff", id = 778 }), "Buff ohne Wirkdauer")
+        BT.Groups, BT.active = oldGroups, oldActive
+        -- Gemischte Reihe: ein Balken, ein Symbol, Groesse aus beiden.
+        local oldKnown, oldSlot = OC.known, OC.Slot
+        OC.known = { e1, e2 }
+        OC.Slot = function() return "big" end
+        local row = CreateFrame("Frame", nil, UIParent)
+        row.icons = {}
+        OC.SetRowOpt("big", "size", 40)
+        OC.SetRowOpt("big", "barWidth", 180)
+        OC.SetRowOpt("big", "barHeight", 24)
+        OC.SetRowOpt("big", "vertical", false)
+        OC.SetRowOpt("big", "perLine", 0)
+        OC.SetRowOpt("big", "gap", 4)
+        OC.DrawSpells(row, "big", 40, true)
+        assert(row.items[1].isBar and not row.items[2].isBar, "Reihe nicht gemischt")
+        local rw, rh = row:GetWidth(), row:GetHeight()
+        assert(rw == 224 and rh == 40, "Reihe: " .. tostring(rw) .. "x" .. tostring(rh))
+        OC.SetDisplay(e1, "icon")
+        OC.DrawSpells(row, "big", 40, true)
+        assert(not row.items[1].isBar and not row.bars[1]:IsShown(), "Balken bleibt nach Umschalten")
+        OC.known, OC.Slot, OC.DotOn, _G.GetTime = oldKnown, oldSlot, oldDot, oldT
+        OC.Mem().rowOpt.big = nil
+        OC.Mem().display["t:1"] = nil
+    end)
+    Check(ok, "Abklingzeitmanager: Balken je Fähigkeit (Wirkung, Abklingzeit, bereit), gemischte Reihen" .. (ok and "" or (": " .. tostring(err))))
+end
+
 -- 1.0.8.27: der Versand-Takt der Post laeuft nicht im Leerlauf.
 do
     local PO = WeintCodex.UIPostal
