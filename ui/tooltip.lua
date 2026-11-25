@@ -155,3 +155,6 @@ boot:SetScript("OnEvent", WeintCodex.Measured("Tooltip", function()
         if not ok then K.Report("tooltip", err) end
     end
 end))
+
+-- /wcui speicher: interne Tabellen dieser Datei (1.0.8.27).
+WeintCodex.Hold("ui/tooltip.lua", function() return { styled = styled } end)

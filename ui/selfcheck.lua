@@ -881,3 +881,6 @@ function SC.Run()
     SC.last = { bad = bad, open = open }
     return out
 end
+
+-- /wcui speicher: interne Tabellen dieser Datei (1.0.8.27).
+WeintCodex.Hold("ui/selfcheck.lua", function() return { CHECKS = CHECKS, THREAT_FIELDS = THREAT_FIELDS, threatVals = threatVals } end)

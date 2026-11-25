@@ -2678,3 +2678,6 @@ talentEv:SetScript("OnEvent", WeintCodex.Measured("Erinnerungen", function(_, ev
         _G.C_Timer.After(3, function() pcall(R.UpdateTalentNote) end)
     end
 end))
+
+-- /wcui speicher: interne Tabellen dieser Datei (1.0.8.27).
+WeintCodex.Hold("ui/reminders.lua", function() return { KIND_TEXT = KIND_TEXT, resolved = resolved, weaponItemCache = weaponItemCache, bagCache = bagCache, bagNoAt = bagNoAt, auraTips = auraTips, draft = draft } end)

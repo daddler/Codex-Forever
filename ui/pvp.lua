@@ -596,3 +596,6 @@ function PV.Report(f, out)
         (d and d.cardBottom) and string.format("bei %.0f", d.cardBottom) or "am Rand")
     return out
 end
+
+-- /wcui speicher: interne Tabellen dieser Datei (1.0.8.27).
+WeintCodex.Hold("ui/pvp.lua", function() return { layouts = layouts, WHITE = WHITE } end)

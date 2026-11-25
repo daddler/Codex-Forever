@@ -1539,3 +1539,6 @@ K.Register({
         end },
     },
 })
+
+-- /wcui speicher: interne Tabellen dieser Datei (1.0.8.27).
+WeintCodex.Hold("ui/actionbars.lua", function() return { skinned = skinned, hotkeyHooked = hotkeyHooked, cut = cut, fadeAlpha = fadeAlpha, hookedAlpha = hookedAlpha, ART_KEYS = ART_KEYS, EDGE_KEYS = EDGE_KEYS, MICRO_PARTS = MICRO_PARTS, registered = registered, MAIN_BARS = MAIN_BARS } end)

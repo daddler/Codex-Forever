@@ -1068,3 +1068,6 @@ ev:SetScript("OnEvent", WeintCodex.Measured("Beute", function(_, _, itemID)
     if page and page:IsShown() then LB.Redraw() end
 end))
 LB.events = ev
+
+-- /wcui speicher: interne Tabellen dieser Datei (1.0.8.27).
+WeintCodex.Hold("modules/lootbook.lua", function() return { instCache = instCache, bossCache = bossCache, info = info, pending = pending } end)

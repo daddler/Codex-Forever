@@ -1551,3 +1551,6 @@ K.Register({
         end },
     },
 })
+
+-- /wcui speicher: interne Tabellen dieser Datei (1.0.8.27).
+WeintCodex.Hold("ui/minimap.lua", function() return { DECORATIONS = DECORATIONS, known = known, watched = watched, queued = queued, TIME_NAMES = TIME_NAMES, knobs = knobs, arcHooked = arcHooked, skins = skins, closeHooked = closeHooked, foreign = foreign, hookedTouch = hookedTouch, TOUCH_METHODS = TOUCH_METHODS } end)

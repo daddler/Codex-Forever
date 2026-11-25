@@ -166,3 +166,6 @@ function LR.Report(out)
         LR.LABEL, LR.STYLE.name, n, #LR.FRAMES, colored)
     return out
 end
+
+-- /wcui speicher: interne Tabellen dieser Datei (1.0.8.27).
+WeintCodex.Hold("ui/lootroll.lua", function() return { done = done } end)

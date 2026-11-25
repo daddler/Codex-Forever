@@ -153,3 +153,6 @@ function GM.Report(f, out)
         GM.LABEL, GM.STYLE.name, m.y and "gefunden" or "FEHLT", m.groups or 0)
     return out
 end
+
+-- /wcui speicher: interne Tabellen dieser Datei (1.0.8.27).
+WeintCodex.Hold("ui/gamemenu.lua", function() return { menus = menus } end)

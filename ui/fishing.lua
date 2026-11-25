@@ -527,3 +527,6 @@ K.Listen(function(kind, key)
         if not FI.On() and state.session then FI.EndSession() end
     end
 end)
+
+-- /wcui speicher: interne Tabellen dieser Datei (1.0.8.27).
+WeintCodex.Hold("ui/fishing.lua", function() return { MODS = MODS } end)

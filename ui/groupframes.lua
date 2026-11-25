@@ -1494,3 +1494,6 @@ K.Register({
         end },
     },
 })
+
+-- /wcui speicher: interne Tabellen dieser Datei (1.0.8.27).
+WeintCodex.Hold("ui/groupframes.lua", function() return { rankSets = rankSets, byUnit = byUnit, allButtons = allButtons, Btn = Btn, headers = headers, anchors = anchors, testButtons = testButtons } end)

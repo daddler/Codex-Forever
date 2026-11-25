@@ -588,3 +588,6 @@ end)
 local boot = CreateFrame("Frame")
 boot:RegisterEvent("PLAYER_LOGIN")
 boot:SetScript("OnEvent", WeintCodex.Measured("raidtools", function() RT.Start() end))
+
+-- /wcui speicher: interne Tabellen dieser Datei (1.0.8.27).
+WeintCodex.Hold("ui/raidtools.lua", function() return { secure = secure } end)

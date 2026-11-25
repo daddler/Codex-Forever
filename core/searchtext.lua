@@ -226,3 +226,6 @@ function ST.Rank(list)
     end)
     return list
 end
+
+-- /wcui speicher: interne Tabellen dieser Datei (1.0.8.27).
+WeintCodex.Hold("core/searchtext.lua", function() return { FOLD = FOLD, ENDINGS = ENDINGS } end)

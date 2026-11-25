@@ -1125,7 +1125,7 @@ end
 
 local Pump
 Pump = function()
-    if not job.co then pump:SetScript("OnUpdate", nil) return end
+    if not job.co or NV.OnTaxi() then job.co = nil pump:SetScript("OnUpdate", nil) return end
     deadline = Clock() + NV.BUDGET
     local ok, path, len = coroutine.resume(job.co)
     deadline = huge
@@ -1178,8 +1178,27 @@ function NV.GateFor(c, sN, sW, gN, gW)
     return gN, gW
 end
 
+-- 1.0.8.27 (Bericht im Flug Daemmerwald -> Loch Modan: "Gelaendekarte"
+-- 71 ms je Sekunde, 227 KB/s Abfall): auf dem Greifen rueckte der Spieler
+-- schneller vom Weg ab, als eine Suche fertig wurde - alle drei Sekunden
+-- begann eine neue. Im Flug laeuft keine Suche; eine laufende wird
+-- verworfen. Nach der Landung sucht der naechste Takt neu.
+NV.stats.taxi = 0
+function NV.OnTaxi()
+    local f = _G.UnitOnTaxi
+    return type(f) == "function" and K.Bool(f("player"), false) or false
+end
+
 function NV.Path(c, sN, sW, gN, gW)
     if not NV.Available(c) then return nil end
+    if NV.OnTaxi() then
+        if job.co then
+            job.co = nil
+            pump:SetScript("OnUpdate", nil)
+            NV.stats.taxi = NV.stats.taxi + 1
+        end
+        return nil
+    end
     gN, gW = NV.GateFor(c, sN, sW, gN, gW)
     local e = Find(c, gN, gW)
     local have = e and e.path or nil
@@ -1297,3 +1316,6 @@ function NV.Steer(path, pN, pW)
     end
     return path[#path - 1], path[#path], rest, bestI
 end
+
+-- /wcui speicher: interne Tabellen dieser Datei (1.0.8.27).
+WeintCodex.Hold("ui/navmesh.lua", function() return { B64 = B64, states = states, DX = DX, DY = DY, ORTH_X = ORTH_X, ORTH_Y = ORTH_Y, job = job, result = result, memo = memo } end)

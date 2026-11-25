@@ -1471,3 +1471,6 @@ ev:SetScript("OnEvent", WeintCodex.Measured("Klickzauber", function(_, event)
     local GG = WeintCodex.UIGameGroup
     if not (GG and GG.active) then ApplySoon() end
 end))
+
+-- /wcui speicher: interne Tabellen dieser Datei (1.0.8.27).
+WeintCodex.Hold("ui/clickcast.lua", function() return { applied = applied, hooked = hooked, allClicks = allClicks, ATTR_ACTION = ATTR_ACTION, clickHooked = clickHooked, keyButtons = keyButtons, wheelHooked = wheelHooked, draft = draft, MOUSE = MOUSE } end)

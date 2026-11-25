@@ -128,3 +128,6 @@ local GB = CP.New({
 })
 GB.EMBLEM = EMBLEM
 WeintCodex.UIGuildBank = GB
+
+-- /wcui speicher: interne Tabellen dieser Datei (1.0.8.27).
+WeintCodex.Hold("ui/bank.lua", function() return { EMBLEM = EMBLEM } end)

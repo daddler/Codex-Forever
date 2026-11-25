@@ -11,7 +11,19 @@ nicht zusammen.
 
 ## [1.0.8.27] – 2026-11-25
 
+### Behoben
+- Geländekarte (`ui/navmesh.lua`): auf dem Greifen (`UnitOnTaxi`) startet
+  `NV.Path` keine Suche, eine laufende wird verworfen (`NV.OnTaxi`,
+  Zähler `NV.stats.taxi`). Anlass: im Flug „Geländekarte“ 71 ms/s, 227 KB/s –
+  jede Suche wurde vom Abrücken vom Weg ersetzt, bevor sie fertig war.
+
 ### Hinzugefügt
+- `/wcui speicher`: „Interne Tabellen der Dateien“ – jede Datei unter
+  `core/`, `modules/`, `ui/` meldet ihre Tabellen der obersten Ebene am
+  Dateiende über `WeintCodex.Hold(datei, function() … end)` an (131
+  Dateien, erzeugt aus `local x = {}`-Zeilen); geschätzt wie die übrigen
+  Daten. Anlass: das Wachstum lag weder in Fenstern noch in den an
+  `WeintCodex` hängenden Tabellen.
 - `/wcui speicher` (`ui/kit.lua`): ab 20 s nach dem Betreten der Welt zählt
   jede Anlage eines Fensters, Bildes (`CreateTexture`, `CreateMaskTexture`,
   `CreateLine`) oder Textes, deren Aufrufer in WeintCodex liegt – je Datei

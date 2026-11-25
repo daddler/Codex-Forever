@@ -236,3 +236,6 @@ function SB.Report(f, out)
     if line then out[#out + 1] = "   " .. SB.LABEL .. ", " .. S.LineReport(line) end
     return out
 end
+
+-- /wcui speicher: interne Tabellen dieser Datei (1.0.8.27).
+WeintCodex.Hold("ui/spellbook.lua", function() return { books = books, heads = heads } end)

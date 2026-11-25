@@ -247,3 +247,6 @@ function TT.StatusLines()
     end
     return out
 end
+
+-- /wcui speicher: interne Tabellen dieser Datei (1.0.8.27).
+WeintCodex.Hold("ui/totems.lua", function() return { buttons = buttons } end)

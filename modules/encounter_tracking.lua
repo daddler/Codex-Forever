@@ -602,3 +602,6 @@ function WeintCodex.EncounterTracking.SavedLockouts()
 
     return out
 end
+
+-- /wcui speicher: interne Tabellen dieser Datei (1.0.8.27).
+WeintCodex.Hold("modules/encounter_tracking.lua", function() return { LFR_DIFFICULTY_IDS = LFR_DIFFICULTY_IDS, registeredInstances = registeredInstances } end)

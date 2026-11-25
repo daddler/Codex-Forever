@@ -5948,6 +5948,21 @@ do
             raw = { graph = { [1] = h0, [2] = h1 }, grid = { [1] = "Q+", [2] = "Q+" }, fcell = {} } }
         local dp, dlen = NV.Search(95, 3.5 * cs, 0.5 * cs, NV.TILE + 0.5 * cs, 0.5 * cs)
         assert(dp and dlen and dlen < 1.5 * cs, "Umweg ueber die Eingaenge: " .. tostring(dlen) .. " statt ~" .. cs)
+        -- 1.0.8.27: auf dem Greifen keine Suche - eine laufende wird verworfen.
+        NV.Reset()
+        local oldTaxi = _G.UnitOnTaxi
+        local onTaxi = false
+        _G.UnitOnTaxi = function() return onTaxi end
+        assert(NV.Path(99, 0.5 * cs, 1.5 * cs, NV.TILE + 3.5 * cs, 1.5 * cs) == nil, "sofort fertig")
+        local started = NV.stats.started
+        onTaxi = true
+        assert(NV.Path(99, 0.5 * cs, 1.5 * cs, NV.TILE + 3.5 * cs, 1.5 * cs) == nil and NV.stats.taxi >= 1,
+            "laufende Suche im Flug nicht verworfen: " .. tostring(NV.stats.taxi) .. " " .. tostring(NV.stats.started - started) .. " " .. tostring(NV.OnTaxi()))
+        NV.Path(99, 0.6 * cs, 1.5 * cs, NV.TILE + 3.5 * cs, 1.0 * cs)
+        for _ = 1, 50 do NV.Pump() end
+        assert(NV.stats.started == started, "im Flug neue Suche begonnen")
+        onTaxi = false
+        _G.UnitOnTaxi = oldTaxi
         -- Verteilt: NV.Path startet, Pump rechnet fertig.
         NV.Reset()
         assert(NV.Path(99, 0.5 * cs, 1.5 * cs, NV.TILE + 3.5 * cs, 1.5 * cs) == nil, "sofort fertig")
@@ -27208,6 +27223,27 @@ do
     end)
     _G.UnitGUID = keep
     Check(ok, "Plaketten: Bosse der neuen Dungeons über ihre NPC-Nummer" .. (ok and "" or (": " .. tostring(err))))
+end
+
+-- 1.0.8.27: interne Tabellen der Dateien stehen im Bericht - auch eine,
+-- die eine Datei nach dem Anmelden ersetzt hat.
+do
+    local K = WeintCodex.UIKit
+    local ok, err = pcall(function()
+        local files = 0
+        for _, h in ipairs(WeintCodex.Holds()) do if h[1] == "ui/navmesh.lua" then files = files + 1 end end
+        assert(files == 1, "ui/navmesh.lua meldet seine Tabellen nicht an")
+        local grow = {}
+        WeintCodex.Hold("test/leck.lua", function() return { grow = grow } end)
+        grow = {}
+        for i = 1, 3000 do grow[i] = { "Eintrag " .. i } end
+        local rep = table.concat(K.HeldReport(), "\n")
+        assert(rep:find("Interne Tabellen der Dateien", 1, true) and rep:find("test/leck.lua: grow", 1, true),
+            "wachsende Tabelle fehlt im Bericht: " .. rep)
+        local holds = WeintCodex.Holds()
+        table.remove(holds)
+    end)
+    Check(ok, "/wcui speicher: interne Tabellen der Dateien" .. (ok and "" or (": " .. tostring(err))))
 end
 
 -- 1.0.8.27: wer legt waehrend des Spiels an - je Ort, Helfer aus ui/kit.lua

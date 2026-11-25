@@ -86,3 +86,6 @@ ev:SetScript("OnEvent", WeintCodex.Measured("Gegenstandsstufe", function(_, even
     CI.Update()
 end))
 CI.events = ev
+
+-- /wcui speicher: interne Tabellen dieser Datei (1.0.8.27).
+WeintCodex.Hold("ui/charilvl.lua", function() return { labels = labels } end)

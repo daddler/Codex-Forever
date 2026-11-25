@@ -3157,3 +3157,6 @@ K.Listen(function(kind, module, key)
         pcall(BM.ApplyGameWarnings)
     end
 end)
+
+-- /wcui speicher: interne Tabellen dieser Datei (1.0.8.27).
+WeintCodex.Hold("ui/bossmod.lua", function() return { timers = timers, order = order, handles = handles, castStarted = castStarted, castStartedAt = castStartedAt, castSpellOf = castSpellOf, effectOf = effectOf, effectWarned = effectWarned, pending = pending } end)

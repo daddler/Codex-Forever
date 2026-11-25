@@ -113,3 +113,6 @@ ML = CP.New({
 })
 ML.TEXTS, ML.ROWS = TEXTS, ROWS
 WeintCodex.UIMail = ML
+
+-- /wcui speicher: interne Tabellen dieser Datei (1.0.8.27).
+WeintCodex.Hold("ui/mail.lua", function() return { TEXTS = TEXTS } end)

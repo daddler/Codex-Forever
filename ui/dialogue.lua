@@ -2034,3 +2034,6 @@ do
         end)
     end))
 end
+
+-- /wcui speicher: interne Tabellen dieser Datei (1.0.8.27).
+WeintCodex.Hold("ui/dialogue.lua", function() return { stats = stats } end)

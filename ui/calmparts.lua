@@ -283,3 +283,6 @@ end
 
 -- Fuer Pruefung und Bericht: alle Fenster, die aus Bausteinen bestehen.
 CP.hosts = CP.hosts or {}
+
+-- /wcui speicher: interne Tabellen dieser Datei (1.0.8.27).
+WeintCodex.Hold("ui/calmparts.lua", function() return { NONE = NONE } end)

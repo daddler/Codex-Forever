@@ -548,3 +548,6 @@ function S.PlaceRect(t, host, x1, y1, x2, y2)
     t:SetPoint("TOPLEFT", host, "TOPLEFT", x1, y1)
     t:SetPoint("BOTTOMRIGHT", host, "TOPLEFT", x2, y2)
 end
+
+-- /wcui speicher: interne Tabellen dieser Datei (1.0.8.27).
+WeintCodex.Hold("ui/style.lua", function() return { BLACK = BLACK, scoped = scoped } end)

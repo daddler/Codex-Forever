@@ -494,3 +494,6 @@ K.Listen(function(kind, module, key)
         DP.Warn(key:find("ispel", 1, true) ~= nil)
     end
 end)
+
+-- /wcui speicher: interne Tabellen dieser Datei (1.0.8.27).
+WeintCodex.Hold("ui/dispel.lua", function() return { MODS = MODS, said = said, typesBuf = typesBuf } end)

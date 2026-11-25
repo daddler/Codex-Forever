@@ -788,3 +788,6 @@ function WeintCodex.Onboarding.Check()
         sd.onboarding.lastSeenVersion = WeintCodex.Version
     end
 end
+
+-- /wcui speicher: interne Tabellen dieser Datei (1.0.8.27).
+WeintCodex.Hold("core/onboarding.lua", function() return { buttonRow = buttonRow, closedListeners = closedListeners, visibleSteps = visibleSteps } end)

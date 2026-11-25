@@ -698,3 +698,6 @@ function BP.ShowBag(f)
     f.Foot:SetText("Klick auf einen Schritt: Karte, Weg und Questpfeil rechts.")
     f.drawnWidth = Plain(f:GetWidth())
 end
+
+-- /wcui speicher: interne Tabellen dieser Datei (1.0.8.27).
+WeintCodex.Hold("modules/books.lua", function() return { rows = rows } end)

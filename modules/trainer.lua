@@ -1145,3 +1145,6 @@ function TR.GrimoireBooks(level)
     end
     return out
 end
+
+-- /wcui speicher: interne Tabellen dieser Datei (1.0.8.27).
+WeintCodex.Hold("modules/trainer.lua", function() return { pending = pending, rows = rows } end)

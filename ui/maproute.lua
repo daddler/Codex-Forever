@@ -504,3 +504,6 @@ end))
 pcall(ev.RegisterEvent, ev, "ADDON_LOADED")
 -- Schon geladen (Weltkarte gehoert bei manchen Clients zum Grundbestand).
 if _G.WorldMapFrame then MP.EnsureDriver() end
+
+-- /wcui speicher: interne Tabellen dieser Datei (1.0.8.27).
+WeintCodex.Hold("ui/maproute.lua", function() return { drawn = drawn, zoneCache = zoneCache } end)

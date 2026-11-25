@@ -551,3 +551,6 @@ ev:SetScript("OnEvent", WeintCodex.Measured("Verzauberungen", function() EN.dirt
 
 local gen = K.Module and K.Module("general")
 if gen and gen.defaults and gen.defaults.enchantHint == nil then gen.defaults.enchantHint = true end
+
+-- /wcui speicher: interne Tabellen dieser Datei (1.0.8.27).
+WeintCodex.Hold("ui/enchants.lua", function() return { descs = descs, dots = dots, painted = painted } end)

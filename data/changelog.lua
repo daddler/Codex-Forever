@@ -25,7 +25,8 @@ WeintCodex_ChangelogData = {
         version = "1.0.8.27",
         date    = "25.11.2026",
         notes   = {
-            "|cff7C6CFF/wcui speicher findet Speicherlecks|r – der Bericht nennt jetzt, welche Stelle von WeintCodex seit dem Einloggen neue Fenster, Bilder und Texte angelegt hat, und wie viele. Wächst der Speicher beim längeren Spielen, zeigt das die Ursache.",
+            "|cff7C6CFFQuestpfeil ruht im Flug|r – auf dem Greifen suchte die Geländekarte ununterbrochen neue Wege, weil man schneller vorankam, als eine Suche fertig wurde. Das kostete im Flug spürbar Leistung. Jetzt sucht sie erst nach der Landung wieder.",
+            "|cff7C6CFF/wcui speicher findet Speicherlecks|r – der Bericht nennt jetzt, welche Stelle von WeintCodex seit dem Einloggen neue Fenster, Bilder und Texte angelegt hat, und wie groß die Tabellen sind, die jede Datei für sich behält. Wächst der Speicher beim längeren Spielen, zeigt das die Ursache.",
         },
     },
     {

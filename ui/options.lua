@@ -2225,3 +2225,6 @@ function O.HookGameMenu()
     return true
 end
 O.HookGameMenu()
+
+-- /wcui speicher: interne Tabellen dieser Datei (1.0.8.27).
+WeintCodex.Hold("ui/options.lua", function() return { Builder = Builder, sideRows = sideRows, current = current, built = built, viewsOf = viewsOf, headToggles = headToggles, Recorder = Recorder, UMLAUT = UMLAUT } end)

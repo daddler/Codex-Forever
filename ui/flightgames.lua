@@ -2318,3 +2318,6 @@ if mod then
     -- 6.103.0.0: Rang 24 statt 33 - Thema Welt & Karte, nicht Handel.
     if type(mod.pageOrder) == "table" then mod.pageOrder.flugspiele = 24 end
 end
+
+-- /wcui speicher: interne Tabellen dieser Datei (1.0.8.27).
+WeintCodex.Hold("ui/flightgames.lua", function() return { pop = pop, bqueue = bqueue } end)

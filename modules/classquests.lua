@@ -883,3 +883,6 @@ ev:SetScript("OnEvent", WeintCodex.Measured("classquests", function(_, event, id
     CQ.Redraw()
 end))
 CQ.events = ev
+
+-- /wcui speicher: interne Tabellen dieser Datei (1.0.8.27).
+WeintCodex.Hold("modules/classquests.lua", function() return { pending = pending, loadingItems = loadingItems, FACTION = FACTION, used = used } end)

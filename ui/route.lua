@@ -1454,3 +1454,6 @@ function RT.Inspect(out)
         out[#out + 1] = "   Fehler beim letzten Planen: " .. tostring(RT.lastError)
     end
 end
+
+-- /wcui speicher: interne Tabellen dieser Datei (1.0.8.27).
+WeintCodex.Hold("ui/route.lua", function() return { TELE = TELE, lineMemo = lineMemo, last = last, prevSample = prevSample, reminded = reminded, ACCEPT = ACCEPT } end)

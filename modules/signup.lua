@@ -886,3 +886,6 @@ end
 function WeintCodex.Signup.Refresh(data)
     WeintCodex.Signup.RefreshDay("wednesday", data)
 end
+
+-- /wcui speicher: interne Tabellen dieser Datei (1.0.8.27).
+WeintCodex.Hold("modules/signup.lua", function() return { dayLabels = dayLabels, activePlayerRows = activePlayerRows } end)

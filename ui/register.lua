@@ -1022,3 +1022,6 @@ function RG.New(cfg)
 
     return R
 end
+
+-- /wcui speicher: interne Tabellen dieser Datei (1.0.8.27).
+WeintCodex.Hold("ui/register.lua", function() return { WHITE = WHITE } end)

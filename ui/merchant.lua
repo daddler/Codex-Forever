@@ -168,3 +168,6 @@ function MC.Report(f, out)
         m.money and "auf Innenfläche" or "nicht gefunden", m.tabs or 0)
     return out
 end
+
+-- /wcui speicher: interne Tabellen dieser Datei (1.0.8.27).
+WeintCodex.Hold("ui/merchant.lua", function() return { shops = shops } end)

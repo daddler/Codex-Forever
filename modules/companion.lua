@@ -1066,3 +1066,6 @@ sheetWatcher:SetScript("OnEvent", WeintCodex.Measured("companion", function(_, e
     ScheduleCharacterSheet(event == "PLAYER_ENTERING_WORLD" and 8 or 3)
 
 end))
+
+-- /wcui speicher: interne Tabellen dieser Datei (1.0.8.27).
+WeintCodex.Hold("modules/companion.lua", function() return { INBOX_HANDLERS = INBOX_HANDLERS, queue = queue } end)

@@ -868,3 +868,6 @@ function WeintCodex.Access.Reset(confirmed)
     Say(WeintCodex.ColorText("success", RESET_DONE))
 
 end
+
+-- /wcui speicher: interne Tabellen dieser Datei (1.0.8.27).
+WeintCodex.Hold("core/access.lua", function() return { TIER_ORDER = TIER_ORDER } end)

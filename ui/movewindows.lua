@@ -425,3 +425,6 @@ ev:SetScript("OnEvent", WeintCodex.Measured("Fenster verschieben", function(_, e
     end
 end))
 MW.events = ev
+
+-- /wcui speicher: interne Tabellen dieser Datei (1.0.8.27).
+WeintCodex.Hold("ui/movewindows.lua", function() return { hooked = hooked, moving = moving, pending = pending, default = default, mine = mine, open = open } end)

@@ -283,3 +283,6 @@ K.Listen(function(kind, moduleKey, key)
     if kind == "unlock" then P.Force("unlock", moduleKey) end
     if kind == "setting" and moduleKey == "general" then P.Apply(true) end
 end)
+
+-- /wcui speicher: interne Tabellen dieser Datei (1.0.8.27).
+WeintCodex.Hold("ui/presence.lua", function() return { forcedBy = forcedBy } end)

@@ -488,3 +488,6 @@ K.Listen(function(kind, key)
         CA.ApplyHide(K.InCombat())
     end
 end)
+
+-- /wcui speicher: interne Tabellen dieser Datei (1.0.8.27).
+WeintCodex.Hold("ui/combataids.lua", function() return { treeByName = treeByName, tags = tags } end)

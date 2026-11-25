@@ -1108,6 +1108,18 @@ function K.HeldReport()
         if type(v) == "table" then data[#data + 1] = { "WeintCodex." .. tostring(k), K.HeldSize(v, seen, budget) } end
     end
     top("Daten und Teile des Addons (geschätzt, ohne Fenster)", data, 15)
+    -- 1.0.8.27: Tabellen, die die Dateien fuer sich behalten (WeintCodex.Hold).
+    local inner = {}
+    local holdsOf = WeintCodex.Holds and WeintCodex.Holds() or {}
+    for _, h in ipairs(holdsOf) do
+        local ok, t = pcall(h[2])
+        if ok and type(t) == "table" then
+            for name, v in pairs(t) do
+                if type(v) == "table" then inner[#inner + 1] = { h[1] .. ": " .. tostring(name), K.HeldSize(v, seen, budget) } end
+            end
+        end
+    end
+    top("Interne Tabellen der Dateien (geschätzt)", inner, 15)
     if (budget.widgets or 0) > 0 then
         out[#out + 1] = string.format("   (%d Fenster und Bilder übersprungen - die zählt der nächste Abschnitt)", budget.widgets)
     end
@@ -2778,3 +2790,6 @@ boot:SetScript("OnEvent", WeintCodex.Measured("Grundlage", function(_, event)
     end
     K.SweepProfile()
 end))
+
+-- /wcui speicher: interne Tabellen dieser Datei (1.0.8.27).
+WeintCodex.Hold("ui/kit.lua", function() return { posFast = posFast, rects = rects, EMPTY = EMPTY, reported = reported, listeners = listeners, afterCombat = afterCombat, queued = queued, bars = bars, shadows = shadows, kacheln = kacheln, flats = flats, hookedParents = hookedParents, movers = movers, others = others } end)

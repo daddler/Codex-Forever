@@ -2432,3 +2432,6 @@ K.Register({
     OnSetting = OnSetting,
     pages = pages,
 })
+
+-- /wcui speicher: interne Tabellen dieser Datei (1.0.8.27).
+WeintCodex.Hold("ui/unitframes.lua", function() return { UNITS = UNITS, quietBars = quietBars, frames = frames, Frame = Frame, holders = holders, HEALTH = HEALTH, POWER = POWER, PREDICTION = PREDICTION, FULL = FULL } end)

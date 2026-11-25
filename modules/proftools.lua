@@ -2983,3 +2983,6 @@ function PT.LinkLines()
     for _, l in ipairs(PT.flow) do out[#out + 1] = "  " .. l end
     return out
 end
+
+-- /wcui speicher: interne Tabellen dieser Datei (1.0.8.27).
+WeintCodex.Hold("modules/proftools.lua", function() return { queue = queue, senders = senders, staging = staging, madeCache = madeCache, LTONE = LTONE, used = used, editRows = editRows, TONES = TONES, hooked = hooked, marks = marks } end)

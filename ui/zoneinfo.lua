@@ -296,3 +296,6 @@ local boot = CreateFrame("Frame")
 boot:RegisterEvent("PLAYER_LOGIN")
 boot:SetScript("OnEvent", WeintCodex.Measured("zoneinfo", function() Apply() end))
 ZI.boot = boot
+
+-- /wcui speicher: interne Tabellen dieser Datei (1.0.8.27).
+WeintCodex.Hold("ui/zoneinfo.lua", function() return { lines = lines } end)

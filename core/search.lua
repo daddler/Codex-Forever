@@ -643,3 +643,6 @@ end)
 frame:HookScript("OnHide", function()
     WeintCodex.SearchResults:Hide()
 end)
+
+-- /wcui speicher: interne Tabellen dieser Datei (1.0.8.27).
+WeintCodex.Hold("core/search.lua", function() return { NO_FUZZY = NO_FUZZY, resultRows = resultRows, currentMatches = currentMatches } end)

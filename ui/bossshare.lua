@@ -460,3 +460,6 @@ end))
 
 local mod = K.Module(KEY)
 if mod and mod.defaults.bossShare == nil then mod.defaults.bossShare = true end
+
+-- /wcui speicher: interne Tabellen dieser Datei (1.0.8.27).
+WeintCodex.Hold("ui/bossshare.lua", function() return { seqParts = seqParts, targets = targets, OK_DIST = OK_DIST } end)

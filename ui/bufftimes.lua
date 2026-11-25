@@ -838,3 +838,6 @@ function BT.BuildPage(B)
         end
     end
 end
+
+-- /wcui speicher: interne Tabellen dieser Datei (1.0.8.27).
+WeintCodex.Hold("ui/bufftimes.lua", function() return { nameGroup = nameGroup, EMPTY_NAMES = EMPTY_NAMES, byNameFound = byNameFound, EMPTY = EMPTY } end)

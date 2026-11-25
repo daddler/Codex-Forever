@@ -457,3 +457,6 @@ function GG.Inspect()
     if GX and GX.Lines then for _, l in ipairs(GX.Lines()) do out[#out + 1] = l end end
     return out
 end
+
+-- /wcui speicher: interne Tabellen dieser Datei (1.0.8.27).
+WeintCodex.Hold("ui/gamegroup.lua", function() return { styled = styled } end)

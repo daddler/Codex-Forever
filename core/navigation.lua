@@ -2726,3 +2726,6 @@ function WeintCodex.ResetToHome()
 
     WeintCodex.ShowHome()
 end
+
+-- /wcui speicher: interne Tabellen dieser Datei (1.0.8.27).
+WeintCodex.Hold("core/navigation.lua", function() return { tabFeature = tabFeature, tabButtons = tabButtons, sidebarGroups = sidebarGroups, pendingItemRows = pendingItemRows } end)

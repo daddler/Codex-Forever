@@ -737,3 +737,6 @@ function WeintCodex.Materials.GetFullBankExportString()
 
     return table.concat(parts, ":")
 end
+
+-- /wcui speicher: interne Tabellen dieser Datei (1.0.8.27).
+WeintCodex.Hold("modules/materials.lua", function() return { activeMatRows = activeMatRows } end)

@@ -120,3 +120,6 @@ function LT.Report(f, out)
         w.card and (w.card.on and "auf Fläche" or "zu") or "nicht gefunden")
     return out
 end
+
+-- /wcui speicher: interne Tabellen dieser Datei (1.0.8.27).
+WeintCodex.Hold("ui/loot.lua", function() return { windows = windows } end)

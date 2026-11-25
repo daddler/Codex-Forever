@@ -225,3 +225,6 @@ function CP.Refresh()
         frame:Hide()
     end
 end
+
+-- /wcui speicher: interne Tabellen dieser Datei (1.0.8.27).
+WeintCodex.Hold("ui/compass.lua", function() return { st = st } end)

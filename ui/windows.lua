@@ -3053,3 +3053,6 @@ boot:SetScript("OnEvent", WeintCodex.Measured("windows", function(_, event, name
     Run(W.Apply)
     W.HookAll()
 end))
+
+-- /wcui speicher: interne Tabellen dieser Datei (1.0.8.27).
+WeintCodex.Hold("ui/windows.lua", function() return { LARGE_PATTERNS = LARGE_PATTERNS, done = done, stats = stats, BLACK = BLACK, WHOLE = WHOLE, KEEP_ATLAS = KEEP_ATLAS, barDone = barDone, entries = entries, edged = edged, headerDone = headerDone, listHeads = listHeads, seen = seen, slotDone = slotDone, tabDone = tabDone, lit = lit, spellDone = spellDone, toned = toned, desat = desat, tabSkin = tabSkin, btnSkin = btnSkin, STATE_GETTERS = STATE_GETTERS, popupDone = popupDone, statDone = statDone, soft = soft, softRoot = softRoot, navDone = navDone, softOverlay = softOverlay, mapParts = mapParts, SIDE_KEYS = SIDE_KEYS, sideDone = sideDone, FLAG_ORDER = FLAG_ORDER, LIGHT_ORDER = LIGHT_ORDER, insetDone = insetDone, insetKeep = insetKeep, ownBgDone = ownBgDone, listDone = listDone, subName = subName, stepName = stepName, scrollHooked = scrollHooked, hookedWin = hookedWin, tick = tick, hookedShow = hookedShow } end)

@@ -1124,3 +1124,6 @@ K.Listen(function(kind, a)
         E.OpenSettings(a)
     end
 end)
+
+-- /wcui speicher: interne Tabellen dieser Datei (1.0.8.27).
+WeintCodex.Hold("ui/editmode.lua", function() return { buttons = buttons, A = A } end)

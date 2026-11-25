@@ -171,3 +171,6 @@ function QL.Report(f, out)
         dc and (dc.on and "auf Fläche, Schrift hell" or "zu") or "nicht gefunden")
     return out
 end
+
+-- /wcui speicher: interne Tabellen dieser Datei (1.0.8.27).
+WeintCodex.Hold("ui/questlog.lua", function() return { cols = cols, details = details } end)

@@ -319,3 +319,6 @@ local mod = K.Module(KEY)
 if mod then
     if mod.defaults.clickPick == nil then mod.defaults.clickPick = true end
 end
+
+-- /wcui speicher: interne Tabellen dieser Datei (1.0.8.27).
+WeintCodex.Hold("ui/reminderpick.lua", function() return { st = st } end)

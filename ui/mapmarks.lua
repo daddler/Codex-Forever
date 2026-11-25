@@ -820,3 +820,6 @@ end
 K.Listen(function(kind, key)
     if (kind == "active" or kind == "setting") and key == KEY then Apply() end
 end)
+
+-- /wcui speicher: interne Tabellen dieser Datei (1.0.8.27).
+WeintCodex.Hold("ui/mapmarks.lua", function() return { WANT = WANT, names = names, forMap = forMap, RANK = RANK, visible = visible, pins = pins, mmInfo = mmInfo, BLACK = BLACK, holders = holders, mmPins = mmPins } end)

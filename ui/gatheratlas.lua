@@ -1665,3 +1665,6 @@ end
 K.Listen(function(kind, key)
     if (kind == "active" or kind == "setting") and key == KEY then GA.Apply() end
 end)
+
+-- /wcui speicher: interne Tabellen dieser Datei (1.0.8.27).
+WeintCodex.Hold("ui/gatheratlas.lua", function() return { MAPKEY = MAPKEY, MINIKEY = MINIKEY, zoneOf = zoneOf, aspects = aspects, stopWorld = stopWorld, tracker = tracker, queue = queue, senders = senders, backlog = backlog, entries = entries, routeEntries = routeEntries, sig = sig } end)

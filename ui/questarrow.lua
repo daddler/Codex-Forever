@@ -2499,3 +2499,6 @@ K.Register({
         end },
     },
 })
+
+-- /wcui speicher: interne Tabellen dieser Datei (1.0.8.27).
+WeintCodex.Hold("ui/questarrow.lua", function() return { COMPASS = COMPASS, planCache = planCache, navOut = navOut, terr = terr, scan = scan, hold = hold, ease = ease, cache = cache, aim = aim, cmp = cmp, advanced = advanced } end)

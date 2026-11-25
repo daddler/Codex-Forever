@@ -82,3 +82,6 @@ local TR = CP.New({
 })
 TR.NAMES = NAMES
 WeintCodex.UITrade = TR
+
+-- /wcui speicher: interne Tabellen dieser Datei (1.0.8.27).
+WeintCodex.Hold("ui/trade.lua", function() return { NAMES = NAMES } end)

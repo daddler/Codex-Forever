@@ -786,3 +786,6 @@ _G.BINDING_NAME_CLICK_WeintCodexBlessButton_LeftButton = "Segen verteilen (Palad
 K.Listen(function(kind, key)
     if (kind == "active" or kind == "setting") and key == KEY then PB.Apply() end
 end)
+
+-- /wcui speicher: interne Tabellen dieser Datei (1.0.8.27).
+WeintCodex.Hold("ui/paladinbuffs.lua", function() return { chains = chains, names = names, gnames = gnames, PARTY = PARTY, RAID = RAID, SOLO = SOLO } end)

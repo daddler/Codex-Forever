@@ -481,3 +481,6 @@ K.Listen(function(kind, module, key)
     if NP and NP.RecolorAll then NP.RecolorAll() end
 end)
 NC.Rebuild()
+
+-- /wcui speicher: interne Tabellen dieser Datei (1.0.8.27).
+WeintCodex.Hold("ui/npccolors.lua", function() return { CASTER_CLASS = CASTER_CLASS, search = search } end)

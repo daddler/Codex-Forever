@@ -921,3 +921,6 @@ K.Listen(function(kind, key, sub)
         end
     end
 end)
+
+-- /wcui speicher: interne Tabellen dieser Datei (1.0.8.27).
+WeintCodex.Hold("ui/everyday.lua", function() return { PANELS = PANELS, scaled = scaled } end)

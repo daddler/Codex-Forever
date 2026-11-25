@@ -1180,3 +1180,6 @@ ev:SetScript("OnEvent", WeintCodex.Measured("Willkommen", function(_, _, isIniti
         _G.C_Timer.After(1.5, WL.MaybeAsk)
     end
 end))
+
+-- /wcui speicher: interne Tabellen dieser Datei (1.0.8.27).
+WeintCodex.Hold("ui/welcome.lua", function() return { cards = cards } end)

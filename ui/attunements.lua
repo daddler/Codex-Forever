@@ -212,3 +212,6 @@ do
         end
     end
 end
+
+-- /wcui speicher: interne Tabellen dieser Datei (1.0.8.27).
+WeintCodex.Hold("ui/attunements.lua", function() return { lines = lines } end)

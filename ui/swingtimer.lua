@@ -173,3 +173,6 @@ do
         end
     end
 end
+
+-- /wcui speicher: interne Tabellen dieser Datei (1.0.8.27).
+WeintCodex.Hold("ui/swingtimer.lua", function() return { bars = bars } end)

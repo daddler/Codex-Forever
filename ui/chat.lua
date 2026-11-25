@@ -1235,3 +1235,6 @@ K.Register({
         end },
     },
 })
+
+-- /wcui speicher: interne Tabellen dieser Datei (1.0.8.27).
+WeintCodex.Hold("ui/chat.lua", function() return { done = done, tabClickHooked = tabClickHooked, rightHooked = rightHooked, editFaded = editFaded } end)

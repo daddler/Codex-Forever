@@ -301,3 +301,6 @@ if mod then
         if mod.defaults[k] == nil then mod.defaults[k] = v end
     end
 end
+
+-- /wcui speicher: interne Tabellen dieser Datei (1.0.8.27).
+WeintCodex.Hold("ui/levelup.lua", function() return { badges = badges } end)

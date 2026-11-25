@@ -168,3 +168,6 @@ CT = CP.New({
 })
 CT.TRAINER_TEX, CT.own, CT.BAR_PARTS, CT.bars = TRAINER_TEX, own, BAR_PARTS, bars
 WeintCodex.UIClassTrainer = CT
+
+-- /wcui speicher: interne Tabellen dieser Datei (1.0.8.27).
+WeintCodex.Hold("ui/classtrainer.lua", function() return { own = own, BAR_PARTS = BAR_PARTS, bars = bars } end)

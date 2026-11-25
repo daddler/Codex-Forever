@@ -315,3 +315,6 @@ K.Listen(function(kind, key, opt)
         end
     end
 end)
+
+-- /wcui speicher: interne Tabellen dieser Datei (1.0.8.27).
+WeintCodex.Hold("ui/glanz.lua", function() return { bars = bars, areaOpt = areaOpt, pending = pending } end)

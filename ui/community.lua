@@ -276,3 +276,6 @@ function CO.Report(f, out)
         CO.LABEL, CO.STYLE.name, parts, d.edit and "flach" or "nicht gefunden", d.rows or 0, d.panes or 0, d.edges or 0)
     return out
 end
+
+-- /wcui speicher: interne Tabellen dieser Datei (1.0.8.27).
+WeintCodex.Hold("ui/community.lua", function() return { frames = frames } end)

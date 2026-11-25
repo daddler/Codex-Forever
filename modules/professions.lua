@@ -1975,3 +1975,6 @@ do
         pcall(tdp.AddTooltipPostCall, e.Item, WeintCodex.Measured("Berufe: Sammeln", OnGatherItem))
     end
 end
+
+-- /wcui speicher: interne Tabellen dieser Datei (1.0.8.27).
+WeintCodex.Hold("modules/professions.lua", function() return { parsed = parsed, CAP_RANK = CAP_RANK, pending = pending, used = used, nfCache = nfCache, srcCache = srcCache, FAC = FAC, TONE = TONE } end)

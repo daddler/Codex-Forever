@@ -310,3 +310,6 @@ if mod then
         if not ok then K.Report("instanzen", err) end
     end
 end
+
+-- /wcui speicher: interne Tabellen dieser Datei (1.0.8.27).
+WeintCodex.Hold("ui/grouptools.lua", function() return { rows = rows } end)

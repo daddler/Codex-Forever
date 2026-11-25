@@ -435,3 +435,6 @@ function Bar:ShowPreview(on)
     self._latency:Hide()
     self:Show()
 end
+
+-- /wcui speicher: interne Tabellen dieser Datei (1.0.8.27).
+WeintCodex.Hold("ui/castbar.lua", function() return { Bar = Bar } end)

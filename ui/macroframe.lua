@@ -134,3 +134,6 @@ function MF.Report(f, out)
         MF.LABEL, MF.STYLE.name, n, m.tabs or 0)
     return out
 end
+
+-- /wcui speicher: interne Tabellen dieser Datei (1.0.8.27).
+WeintCodex.Hold("ui/macroframe.lua", function() return { frames = frames, slots = slots } end)

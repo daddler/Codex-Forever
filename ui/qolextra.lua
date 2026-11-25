@@ -596,3 +596,6 @@ end
 K.Listen(function(kind, key)
     if (kind == "active" or kind == "setting") and key == KEY and QX.enabled then QX.Apply() end
 end)
+
+-- /wcui speicher: interne Tabellen dieser Datei (1.0.8.27).
+WeintCodex.Hold("ui/qolextra.lua", function() return { hmBars = hmBars, feedLines = feedLines, reminded = reminded } end)

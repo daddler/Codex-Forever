@@ -128,3 +128,6 @@ function TM.Scene(f)
     local ok, _, t = pcall(_G.UnitClass, "player")
     return TM.ClassScene(preview, ok and K.Plain(t) or nil)
 end
+
+-- /wcui speicher: interne Tabellen dieser Datei (1.0.8.27).
+WeintCodex.Hold("ui/transmog.lua", function() return { BLACK = BLACK } end)

@@ -488,3 +488,6 @@ if mod then
         if mod.defaults[k] == nil then mod.defaults[k] = v end
     end
 end
+
+-- /wcui speicher: interne Tabellen dieser Datei (1.0.8.27).
+WeintCodex.Hold("ui/groupextra.lua", function() return { over = over, list = list, PARTY_UNITS = PARTY_UNITS, RAID_UNITS = RAID_UNITS } end)

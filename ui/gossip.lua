@@ -110,3 +110,6 @@ function GS.Report(f, out)
     out[#out + 1] = string.format("   %s (Stil %s): Kante in Gold, kein Schein der Klasse%s", label, GS.STYLE.name, card)
     return out
 end
+
+-- /wcui speicher: interne Tabellen dieser Datei (1.0.8.27).
+WeintCodex.Hold("ui/gossip.lua", function() return { windows = windows } end)

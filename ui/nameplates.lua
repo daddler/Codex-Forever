@@ -3336,3 +3336,6 @@ K.Register({
         end },
     },
 })
+
+-- /wcui speicher: interne Tabellen dieser Datei (1.0.8.27).
+WeintCodex.Hold("ui/nameplates.lua", function() return { S = S, parked = parked, dimmed = dimmed, partsOf = partsOf, inPlace = inPlace, dimHooked = dimHooked, movedList = movedList, objectPlates = objectPlates, byPlate = byPlate, SLOTS = SLOTS, TEXT_KEYS = TEXT_KEYS, questCache = questCache, RAID_UNITS = RAID_UNITS } end)

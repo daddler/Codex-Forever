@@ -188,3 +188,6 @@ function AH.Report(f, out)
         AH.LABEL, AH.STYLE.name, m.lists or 0, nh, m.money or 0, m.tabs or 0)
     return out
 end
+
+-- /wcui speicher: interne Tabellen dieser Datei (1.0.8.27).
+WeintCodex.Hold("ui/auction.lua", function() return { frames = frames, lists = lists, heads = heads } end)

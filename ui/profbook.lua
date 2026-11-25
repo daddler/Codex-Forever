@@ -236,3 +236,6 @@ function PB.Report(f, out)
     out[#out + 1] = string.format("   %s, Titel: %s", PB.LABEL, names ~= "" and names or "keine")
     return out
 end
+
+-- /wcui speicher: interne Tabellen dieser Datei (1.0.8.27).
+WeintCodex.Hold("ui/profbook.lua", function() return { WHITE = WHITE, pages = pages, cards = cards } end)

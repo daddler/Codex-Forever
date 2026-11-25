@@ -1029,3 +1029,6 @@ end
 K.Listen(function(kind, key)
     if (kind == "active" or kind == "setting") and key == KEY then Apply() end
 end)
+
+-- /wcui speicher: interne Tabellen dieser Datei (1.0.8.27).
+WeintCodex.Hold("ui/auctionprices.lua", function() return { SETTING = SETTING, found = found, SIDE_LABEL = SIDE_LABEL } end)

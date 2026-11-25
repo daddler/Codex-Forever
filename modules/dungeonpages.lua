@@ -3285,3 +3285,6 @@ function WeintCodex.DungeonPages.Show()
 
     BuildTree(f)
 end
+
+-- /wcui speicher: interne Tabellen dieser Datei (1.0.8.27).
+WeintCodex.Hold("modules/dungeonpages.lua", function() return { cardArt = cardArt, pendingItems = pendingItems, FACTION_TEXT = FACTION_TEXT, CLASS_TEXT = CLASS_TEXT, questMarks = questMarks, SUMMARY_ORDER = SUMMARY_ORDER, counts = counts, INVITE_WEEKDAYS = INVITE_WEEKDAYS } end)

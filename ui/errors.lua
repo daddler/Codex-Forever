@@ -583,3 +583,6 @@ ev:SetScript("OnEvent", WeintCodex.Measured("Fehlerfenster", function(_, event, 
     ER.Announce(ER.Record("blocked", msg, stack, extra and (extra .. "\n" .. sit) or sit))
 end))
 ER.events = ev
+
+-- /wcui speicher: interne Tabellen dieser Datei (1.0.8.27).
+WeintCodex.Hold("ui/errors.lua", function() return { shown = shown, session = session, trace = trace } end)

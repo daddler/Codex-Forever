@@ -922,3 +922,6 @@ function SH.ImportFrom(text)
     SH.ShowChoice(data)
     return true
 end
+
+-- /wcui speicher: interne Tabellen dieser Datei (1.0.8.27).
+WeintCodex.Hold("ui/share.lua", function() return { DEC = DEC } end)

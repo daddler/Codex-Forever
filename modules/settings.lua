@@ -802,3 +802,6 @@ function WeintCodex.Settings.Refresh()
     end
     Render()
 end
+
+-- /wcui speicher: interne Tabellen dieser Datei (1.0.8.27).
+WeintCodex.Hold("modules/settings.lua", function() return { toggleRows = toggleRows } end)

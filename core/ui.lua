@@ -3582,3 +3582,6 @@ do
         SlashCmdList["WEINTCODEXRL"] = function() WeintCodex.ReloadPrompt() end
     end
 end
+
+-- /wcui speicher: interne Tabellen dieser Datei (1.0.8.27).
+WeintCodex.Hold("core/ui.lua", function() return { accentSlots = accentSlots, armed = armed, detached = detached, fades = fades, gripMarks = gripMarks } end)

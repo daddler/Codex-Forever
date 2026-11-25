@@ -26,6 +26,18 @@ function WeintCodex.Measured(name, fn)
     end
 end
 
+-- 1.0.8.27 (Bericht nach laengerem Spielen: nach dem Aufraeumen 78-106 statt
+-- 55 MB, Fenster und Bilder erklaeren es nicht): die Schaetzung sah nur, was
+-- an WeintCodex haengt - nicht die Tabellen, die eine Datei fuer sich behaelt
+-- (local x = {} auf oberster Ebene). Jede Datei meldet sie am Ende hier an,
+-- als Funktion: sie liefert die Tabellen, wie sie beim Bericht SIND (auch
+-- wenn eine Datei sie inzwischen ersetzt hat). Gelesen nur von /wcui speicher.
+local holds = {}
+function WeintCodex.Hold(file, get)
+    if type(file) == "string" and type(get) == "function" then holds[#holds + 1] = { file, get } end
+end
+function WeintCodex.Holds() return holds end
+
 SLASH_WEINTCODEX1 = "/wc"
 SLASH_WEINTCODEX2 = "/weintcodex"
 
@@ -525,3 +537,6 @@ local loader = CreateFrame("Frame")
 loader:RegisterEvent("ADDON_LOADED")
 loader:RegisterEvent("PLAYER_LOGIN")
 loader:SetScript("OnEvent", WeintCodex.Measured("Start", OnEvent))
+
+-- /wcui speicher: interne Tabellen dieser Datei (1.0.8.27).
+WeintCodex.Hold("core/main.lua", function() return { holds = holds } end)

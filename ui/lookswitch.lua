@@ -422,3 +422,6 @@ do
     end))
     LS.events = ev
 end
+
+-- /wcui speicher: interne Tabellen dieser Datei (1.0.8.27).
+WeintCodex.Hold("ui/lookswitch.lua", function() return { LOOK_NAMES = LOOK_NAMES } end)

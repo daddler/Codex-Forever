@@ -444,3 +444,6 @@ K.Listen(function(kind, key)
 end)
 
 GT.HookMenu()
+
+-- /wcui speicher: interne Tabellen dieser Datei (1.0.8.27).
+WeintCodex.Hold("ui/gathertrack.lua", function() return { stats = stats, hidden = hidden } end)

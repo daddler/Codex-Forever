@@ -943,3 +943,6 @@ watch:SetScript("OnEvent", K.Measured("Auren", function()
         end
     end)
 end))
+
+-- /wcui speicher: interne Tabellen dieser Datei (1.0.8.27).
+WeintCodex.Hold("ui/auras.lua", function() return { objects = objects, Obj = Obj, pending = pending } end)

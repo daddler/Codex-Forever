@@ -1625,3 +1625,6 @@ if mod then
     mod.pages[#mod.pages + 1] = { key = "post", label = "Post", build = Build }
     if mod.pageOrder then mod.pageOrder.post = 30.5 end
 end
+
+-- /wcui speicher: interne Tabellen dieser Datei (1.0.8.27).
+WeintCodex.Hold("ui/postal.lua", function() return { hooked = hooked, draft = draft } end)

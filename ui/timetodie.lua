@@ -308,3 +308,6 @@ function TD.Report()
     return string.format("Sterbezeit: %d Lebensstände, %d geheim (keine Zeit), %d DoTs gewirkt",
         s.samples, s.secret, s.dots)
 end
+
+-- /wcui speicher: interne Tabellen dieser Datei (1.0.8.27).
+WeintCodex.Hold("ui/timetodie.lua", function() return { hist = hist, dots = dots, spellCache = spellCache, channeled = channeled, shown = shown } end)

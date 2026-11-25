@@ -736,3 +736,6 @@ K.Listen(function(kind, key)
         PV.RefreshPlates()
     end
 end)
+
+-- /wcui speicher: interne Tabellen dieser Datei (1.0.8.27).
+WeintCodex.Hold("ui/pvpframes.lua", function() return { marks = marks, byName = byName } end)

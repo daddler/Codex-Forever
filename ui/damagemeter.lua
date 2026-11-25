@@ -2798,3 +2798,6 @@ K.Register({
         end },
     },
 })
+
+-- /wcui speicher: interne Tabellen dieser Datei (1.0.8.27).
+WeintCodex.Hold("ui/damagemeter.lua", function() return { windows = windows, Win = Win, auras = auras, dirty = dirty } end)

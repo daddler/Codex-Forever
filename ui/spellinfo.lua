@@ -167,3 +167,6 @@ local mod = K.Module(KEY)
 if mod then
     if mod.defaults.spellEfficiency == nil then mod.defaults.spellEfficiency = true end
 end
+
+-- /wcui speicher: interne Tabellen dieser Datei (1.0.8.27).
+WeintCodex.Hold("ui/spellinfo.lua", function() return { shown = shown } end)

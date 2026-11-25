@@ -990,3 +990,6 @@ ev:SetScript("OnEvent", WeintCodex.Measured("Wildtierkunde", function(_, event, 
     end
 end))
 BL.events = ev
+
+-- /wcui speicher: interne Tabellen dieser Datei (1.0.8.27).
+WeintCodex.Hold("modules/beasts.lua", function() return { FOLD = FOLD, TRAINING = TRAINING, mapState = mapState } end)

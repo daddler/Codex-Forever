@@ -1685,3 +1685,6 @@ K.Register({
         end },
     },
 })
+
+-- /wcui speicher: interne Tabellen dieser Datei (1.0.8.27).
+WeintCodex.Hold("ui/bags.lua", function() return { heads = heads, slots = slots, catHeads = catHeads } end)

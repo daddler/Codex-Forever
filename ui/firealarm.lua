@@ -539,3 +539,6 @@ local boot = CreateFrame("Frame")
 boot:RegisterEvent("PLAYER_LOGIN")
 boot:SetScript("OnEvent", WeintCodex.Measured("Raus da", function() Apply() end))
 FA.boot = boot
+
+-- /wcui speicher: interne Tabellen dieser Datei (1.0.8.27).
+WeintCodex.Hold("ui/firealarm.lua", function() return { stats = stats } end)

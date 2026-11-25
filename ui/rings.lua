@@ -1162,3 +1162,6 @@ end
 K.Listen(function(kind, key, what)
     if (kind == "active" or kind == "setting") and key == KEY and what ~= "ringEdit" then RG.Schedule() end
 end)
+
+-- /wcui speicher: interne Tabellen dieser Datei (1.0.8.27).
+WeintCodex.Hold("ui/rings.lua", function() return { frames = frames, edit = edit } end)

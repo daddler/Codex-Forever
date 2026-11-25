@@ -199,3 +199,6 @@ if mod then
         end
     end
 end
+
+-- /wcui speicher: interne Tabellen dieser Datei (1.0.8.27).
+WeintCodex.Hold("ui/buffskin.lua", function() return { done = done } end)

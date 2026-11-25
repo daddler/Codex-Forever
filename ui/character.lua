@@ -875,3 +875,6 @@ function CS.ReportScene(e, out)
             tostring(m.sceneLevel), tostring(m.slotLevel))
     end
 end
+
+-- /wcui speicher: interne Tabellen dieser Datei (1.0.8.27).
+WeintCodex.Hold("ui/character.lua", function() return { BLACK = BLACK, layout = layout, labelDone = labelDone, slotState = slotState } end)

@@ -2175,3 +2175,6 @@ function WeintCodex.Calendar.Show(collect)
     -- Startansicht ist das Monatsraster (Entwurf 2d).
     WeintCodex.Navigation.ActivateFirst()
 end
+
+-- /wcui speicher: interne Tabellen dieser Datei (1.0.8.27).
+WeintCodex.Hold("modules/calendar.lua", function() return { activePreviewRows = activePreviewRows } end)
