@@ -1125,6 +1125,7 @@ function K.HeldReport()
                 c.frames and (c.frames .. " Fenster") or "Fenster unbekannt", c.ms or 0)
         end
     end
+    K.MadeReport(out, 10)
     if K.framesMade then
         out[#out + 1] = string.format("Fenster seit dem Laden angelegt (alle Addons und das Spiel): %d", K.framesMade)
     end
@@ -1147,9 +1148,93 @@ end
 -- also mit Abfall), Zeit und neue Fenster. Fenster zaehlt ein nachgestellter
 -- Haken an CreateFrame (hooksecurefunc veraendert den Aufruf nicht).
 K.enableCost = {}
+
+-- 1.0.8.27 (Bericht nach laengerem Spielen: nach dem Aufraeumen 106 statt
+-- 55 MB, 2300 Fenster mehr als nach dem Einloggen): WER legt waehrend des
+-- Spiels Fenster, Bilder und Texte an? Ab K.MADE_AFTER Sekunden nach dem
+-- Betreten der Welt zaehlt jede Anlage, deren Aufrufer in WeintCodex liegt,
+-- je Datei und Zeile (erste Zeile ausserhalb von ui/kit.lua - die Helfer
+-- zaehlen beim Aufrufer). Eine Stelle, die immer weiter anlegt statt
+-- wiederzuverwenden, steht dann oben. Nur nachgestellte Haken
+-- (hooksecurefunc), nichts am Aufruf veraendert.
+K.MADE_AFTER = 20
+K.MADE_MAX = 400            -- verschiedene Orte hoechstens
+K.made = { on = false, at = {}, places = 0, f = 0, t = 0, s = 0 }
+function K.MadeWhere(stack)
+    if type(stack) ~= "string" then return nil end
+    for file, ln in stack:gmatch("WeintCodex[/\\]([%w_/\\]-%.lua)[^:\n]*:(%d+)") do
+        if not file:find("kit%.lua$") then return file:gsub("\\", "/") .. ":" .. ln end
+    end
+    return nil
+end
+function K.CountMade(kind)
+    local M = K.made
+    if not M.on then return end
+    local ds = _G.debugstack
+    if type(ds) ~= "function" then return end
+    local ok, stack = pcall(ds, 3, 8, 0)
+    local where = ok and K.MadeWhere(stack)
+    if not where then return end
+    M[kind] = M[kind] + 1
+    local e = M.at[where]
+    if not e then
+        if M.places >= K.MADE_MAX then where = "(weitere Orte)" e = M.at[where] end
+        if not e then
+            e = { f = 0, t = 0, s = 0 }
+            M.at[where] = e
+            M.places = M.places + 1
+        end
+    end
+    e[kind] = e[kind] + 1
+end
+function K.StartMade()
+    local M = K.made
+    M.on, M.at, M.places, M.f, M.t, M.s = true, {}, 0, 0, 0, 0
+end
+function K.MadeReport(out, max)
+    local M = K.made
+    if not M.on then return end
+    out[#out + 1] = string.format("Seit dem Einloggen von WeintCodex angelegt: %d Fenster, %d Bilder, %d Texte", M.f, M.t, M.s)
+    local list = {}
+    for where, e in pairs(M.at) do list[#list + 1] = { where, e, e.f + e.t + e.s } end
+    table.sort(list, function(a, b) return a[3] > b[3] end)
+    for i = 1, math.min(max or 10, #list) do
+        local e = list[i][2]
+        out[#out + 1] = string.format("   %s: %d Fenster, %d Bilder, %d Texte", list[i][1], e.f, e.t, e.s)
+    end
+end
+
 if _G.hooksecurefunc and type(_G.CreateFrame) == "function" then
     K.framesMade = 0
-    pcall(_G.hooksecurefunc, "CreateFrame", function() K.framesMade = K.framesMade + 1 end)
+    pcall(_G.hooksecurefunc, "CreateFrame", function()
+        K.framesMade = K.framesMade + 1
+        if K.made.on then K.CountMade("f") end
+    end)
+    -- Bilder und Texte: die Methoden der gaengigen Fensterarten. Jede Art
+    -- hat im Client ihre eigene Methodentabelle; doppelt gehakt wird nie.
+    local hooked = {}
+    local function OnTex() if K.made.on then K.CountMade("t") end end
+    local function OnText() if K.made.on then K.CountMade("s") end end
+    for _, kind in ipairs({ "Frame", "Button", "StatusBar", "CheckButton", "Cooldown", "ScrollFrame", "Slider", "EditBox" }) do
+        local ok, f = pcall(_G.CreateFrame, kind)
+        local mt = ok and type(f) == "table" and _G.getmetatable(f)
+        local idx = type(mt) == "table" and mt.__index
+        if type(idx) == "table" and not hooked[idx] then
+            hooked[idx] = true
+            for _, m in ipairs({ "CreateTexture", "CreateMaskTexture", "CreateLine" }) do
+                if type(idx[m]) == "function" then pcall(_G.hooksecurefunc, idx, m, OnTex) end
+            end
+            if type(idx.CreateFontString) == "function" then pcall(_G.hooksecurefunc, idx, "CreateFontString", OnText) end
+        end
+        if ok and type(f) == "table" and f.Hide then f:Hide() end
+    end
+    K.framesMade = 0
+    local starter = CreateFrame("Frame")
+    starter:RegisterEvent("PLAYER_ENTERING_WORLD")
+    starter:SetScript("OnEvent", function(self)
+        self:UnregisterAllEvents()
+        if _G.C_Timer and _G.C_Timer.After then _G.C_Timer.After(K.MADE_AFTER, K.StartMade) end
+    end)
 end
 
 function K.Activate(moduleKey)

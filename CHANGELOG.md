@@ -9,6 +9,17 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.0.8.27] – 2026-11-25
+
+### Hinzugefügt
+- `/wcui speicher` (`ui/kit.lua`): ab 20 s nach dem Betreten der Welt zählt
+  jede Anlage eines Fensters, Bildes (`CreateTexture`, `CreateMaskTexture`,
+  `CreateLine`) oder Textes, deren Aufrufer in WeintCodex liegt – je Datei
+  und Zeile (`K.CountMade`, `K.MadeWhere`; Helfer aus `ui/kit.lua` zählen
+  beim Aufrufer). Nachgestellte Haken an `CreateFrame` und an den
+  Methodentabellen der gängigen Fensterarten. Anlass: nach längerem Spielen
+  106 statt 55 MB nach dem Aufräumen, 2300 Fenster mehr (alle Addons).
+
 ## [1.0.8.26] – 2026-11-24
 
 ### Geändert

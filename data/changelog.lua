@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.0.8.27",
+        date    = "25.11.2026",
+        notes   = {
+            "|cff7C6CFF/wcui speicher findet Speicherlecks|r – der Bericht nennt jetzt, welche Stelle von WeintCodex seit dem Einloggen neue Fenster, Bilder und Texte angelegt hat, und wie viele. Wächst der Speicher beim längeren Spielen, zeigt das die Ursache.",
+        },
+    },
+    {
         version = "1.0.8.26",
         date    = "24.11.2026",
         notes   = {

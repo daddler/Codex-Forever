@@ -27210,6 +27210,37 @@ do
     Check(ok, "Plaketten: Bosse der neuen Dungeons über ihre NPC-Nummer" .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 1.0.8.27: wer legt waehrend des Spiels an - je Ort, Helfer aus ui/kit.lua
+-- zaehlen beim Aufrufer, Fremdes gar nicht.
+do
+    local K = WeintCodex.UIKit
+    local ok, err = pcall(function()
+        local st1 = '[string "@Interface/AddOns/WeintCodex/ui/kit.lua"]:120: in function `NewText\'\n'
+            .. '[string "@Interface/AddOns/WeintCodex/ui/maproute.lua"]:77: in function `Draw\'\n'
+        assert(K.MadeWhere(st1) == "ui/maproute.lua:77", "Ort falsch: " .. tostring(K.MadeWhere(st1)))
+        assert(K.MadeWhere("Interface\\AddOns\\WeintCodex\\ui\\bags.lua:12: in function") == "ui/bags.lua:12", "Rückstriche")
+        assert(K.MadeWhere('[string "@Interface/AddOns/Fremd/x.lua"]:5: in function') == nil, "fremdes Addon gezählt")
+        local oldDS = _G.debugstack
+        local stack = st1
+        _G.debugstack = function() return stack end
+        local wasOn = K.made.on
+        K.StartMade()
+        for _ = 1, 3 do K.CountMade("t") end
+        K.CountMade("f")
+        stack = '[string "@Interface/AddOns/Anders/a.lua"]:1: in x'
+        K.CountMade("s")
+        _G.debugstack = oldDS
+        local e = K.made.at["ui/maproute.lua:77"]
+        assert(e and e.t == 3 and e.f == 1 and K.made.s == 0, "falsch gezählt")
+        local out = {}
+        K.MadeReport(out, 5)
+        assert(out[1]:find("1 Fenster, 3 Bilder, 0 Texte", 1, true) and out[2]:find("ui/maproute.lua:77", 1, true),
+            "Bericht: " .. table.concat(out, " | "))
+        K.made.on = wasOn
+    end)
+    Check(ok, "/wcui speicher: Anlagen nach dem Einloggen je Ort" .. (ok and "" or (": " .. tostring(err))))
+end
+
 -- 1.0.8.26: Urteil je Atlasname einmal - und neu, wenn sich die Liste aendert.
 do
     local W = WeintCodex.UIWindows
