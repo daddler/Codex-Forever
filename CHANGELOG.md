@@ -17,6 +17,10 @@ nicht zusammen.
   Zähler `NV.stats.taxi`). Anlass: im Flug „Geländekarte“ 71 ms/s, 227 KB/s –
   jede Suche wurde vom Abrücken vom Weg ersetzt, bevor sie fertig war.
 
+- Post (`ui/postal.lua`): der Takt für „An mehrere“ (`PO.multiTick`) läuft
+  nur während eines solchen Versands. Anlass: „Post“ 143 Aufrufe/s und bis
+  42 KB/s ohne offenen Briefkasten.
+
 ### Hinzugefügt
 - `/wcui speicher`: „Interne Tabellen der Dateien“ – jede Datei unter
   `core/`, `modules/`, `ui/` meldet ihre Tabellen der obersten Ebene am

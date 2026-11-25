@@ -26,6 +26,7 @@ WeintCodex_ChangelogData = {
         date    = "25.11.2026",
         notes   = {
             "|cff7C6CFFQuestpfeil ruht im Flug|r – auf dem Greifen suchte die Geländekarte ununterbrochen neue Wege, weil man schneller vorankam, als eine Suche fertig wurde. Das kostete im Flug spürbar Leistung. Jetzt sucht sie erst nach der Landung wieder.",
+            "|cff7C6CFFPost ruht ohne Briefkasten|r – ein Taktgeber der Post lief in jedem Bild mit, auch ohne Versand. Jetzt nur noch, solange ein Brief an mehrere Empfänger unterwegs ist.",
             "|cff7C6CFF/wcui speicher findet Speicherlecks|r – der Bericht nennt jetzt, welche Stelle von WeintCodex seit dem Einloggen neue Fenster, Bilder und Texte angelegt hat, und wie groß die Tabellen sind, die jede Datei für sich behält. Wächst der Speicher beim längeren Spielen, zeigt das die Ursache.",
         },
     },

@@ -27225,6 +27225,18 @@ do
     Check(ok, "Plaketten: Bosse der neuen Dungeons über ihre NPC-Nummer" .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 1.0.8.27: der Versand-Takt der Post laeuft nicht im Leerlauf.
+do
+    local PO = WeintCodex.UIPostal
+    local ok, err = pcall(function()
+        assert(PO.multiTick and not PO.multiTick:IsShown(), "Post-Takt läuft ohne Versand")
+        PO.multiTick:Show()
+        PO.multiTick:GetScript("OnUpdate")(PO.multiTick, 0.1)
+        assert(not PO.multiTick:IsShown(), "Post-Takt hält ohne Versand nicht an")
+    end)
+    Check(ok, "Post: Takt nur beim Versand an mehrere" .. (ok and "" or (": " .. tostring(err))))
+end
+
 -- 1.0.8.27: interne Tabellen der Dateien stehen im Bericht - auch eine,
 -- die eine Datei nach dem Anmelden ersetzt hat.
 do

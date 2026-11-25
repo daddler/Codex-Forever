@@ -1005,13 +1005,18 @@ function PO.SendMulti(names)
     local have = _G.GetMoney and tonumber(Plain(_G.GetMoney())) or 0
     if total > have then return false, "Nicht genug Gold: nötig " .. Money(total) .. "." end
     multi = { names = names, i = 0, subject = subject, body = body, money = money }
+    if PO.multiTick then PO.multiTick:Show() end
     return true, string.format("Sende an %d Empfänger (zusammen %s) …", #names, Money(total))
 end
 
+-- 1.0.8.27 (/wcui speicher: "Post" 143 Aufrufe/s, auch ohne Briefkasten):
+-- der Takt laeuft nur, solange ein Versand an mehrere laeuft.
 local multiTick = CreateFrame("Frame")
+multiTick:Hide()
+PO.multiTick = multiTick
 local macc = 0
-multiTick:SetScript("OnUpdate", WeintCodex.Measured("Post", function(_, el)
-    if not multi then return end
+multiTick:SetScript("OnUpdate", WeintCodex.Measured("Post", function(self, el)
+    if not multi then self:Hide() return end
     macc = macc + (el or 0)
     if macc < 1.2 then return end
     macc = 0
