@@ -12,29 +12,59 @@ nicht zusammen.
 ## [1.0.9.0] – 2026-11-25
 
 ### Hinzugefügt
-- Abklingzeitmanager: **Bühne** (`ui/cdstage.lua`, neu) statt der
-  Spaltenliste auf der Seite Erinnerungen → Abklingzeitmanager. Je Reihe
-  eine Bahn mit der Reihe wie im Spiel (`OC.DrawSpells`, `row._preview`:
-  kein Ton, kein Zustand), Vorrat für „Aus“, Ziehen mit Einfügemarke
-  (`ST.Target`, `ST.Track`, Ablegen über `OC.Place`), Kontextmenü je
-  Fähigkeit (`ST.Menu`), Rechtsklick Symbol ↔ Balken, Hinzufügen per Ziehen
-  aus Zauberbuch/Taschen an die Stelle. Eine Bühne je Sitzung
-  (`ST.current`); `OC.Relayout` baut die Seite nur bei geänderter Höhe neu
-  (`ST.Refit`). Die alte Spaltenliste (`CreateList`) ist entfernt.
+- Abklingzeitmanager **neu aufgebaut** (Spieler: „alles oben einsehbar …
+  das Einzustellende viel zu weit unten“). Drei Teile auf der Seite
+  Erinnerungen → Abklingzeitmanager:
+  - **Bühne** (`ui/cdstage.lua`, neu) fest oben über dem Bildlauf –
+    neue **Vorschau je Seite** in `ui/options.lua` (`pages[i].preview(host,
+    Breite)`, `b.pagePrev`, `O.SetPreviewHeight`, `O.PreviewRoom`; nur auf
+    ihrer Seite sichtbar). Je Reihe eine Bahn mit der Reihe wie im Spiel
+    (`OC.DrawSpells`, `row._preview`: kein Ton, kein Zustand); zu hoch =
+    als Ganzes verkleinert (`ST.Fit`, mind. 50 %). Ziehen mit Einfügemarke
+    (`ST.Target`, `ST.Track`, `OC.Place`), Hinzufügen per Ziehen aus
+    Zauberbuch/Taschen an die Stelle; eine Bühne je Sitzung (`ST.current`).
+  - **Auswahl** (`ST.CreateInspector`) gleich darunter: Klick auf eine
+    Fähigkeit oder einen Bahnkopf (`ST.Select`, Rahmen `selBox` bzw. helle
+    Bahn) zeigt alle Einstellungen – je Fähigkeit Reihe, Darstellung,
+    Laufzeit-Balken (wo, was, wenn nichts läuft), Farbe, Leuchten, Rang,
+    Ton; je Reihe Symbolgröße, Richtung, je Zeile, Abstand, Balkenlänge/-dicke,
+    liegend/stehend, leeren/füllen, Symbol/Name am Balken, nur im Kampf.
+    Rechtsklick: Schnellmenü (`ST.Menu`, `OC.RowMenu`).
+  - **Vorrat** (`ST.CreatePool`) darunter; außerhalb des sichtbaren
+    Bildlaufs nimmt er nichts an (`pool.clip`).
+  Allgemeines und die kleinen Helfer stehen unter den Feineinstellungen;
+  die alten Regler „Größe: Wichtig/Weitere“, „Anordnung“, „Symbole je
+  Zeile“ sind fort (die Auswahl stellt das je Reihe ein; gespeicherte Werte
+  gelten weiter als Vorgabe). Mit „Blizzard“ oder „Keiner“ zeigt die Seite
+  statt Auswahl und Vorrat nur einen Hinweis.
 - Abklingzeitmanager: **Darstellung je Fähigkeit** Symbol oder Balken
   (`ocd.display`), gemischte Reihen (`OC.Layout`, reine Rechnung; `Arrange`
   ordnet Teile verschiedener Größe). Balken: Wirkung (`OC.EffectOf`: eigener
   DoT, eigener Buff aus `BT.active`), dann Abklingzeit (Client offen, sonst
   `OC.EstimateEnd`), dann bereit; unbekannt = leer mit „?“. Farbe der
   Wirkung je Fähigkeit (`ocd.barColor`), neue Farben
-  `GameColors.ocdCooldown`/`ocdReady`; Balkenbreite/-höhe je Reihe im Menü
-  der Reihe (`barWidth`, `barHeight`). Dritte Darstellung `both` („Symbol +
-  Balken der Wirkung“, nur mit bekannter Wirkdauer): Symbol fest, je laufende
-  Wirkung ein Balken daneben (`b._inst`). Mehrere Wirkungen zugleich
+  `GameColors.ocdCooldown`/`ocdReady`. Mehrere Wirkungen zugleich
   (`OC.Effects`: `BT.active[..].earlier` + aktuelle) = je eine ein Balken.
   `OC.BuffGroup` erkennt Gruppen auch über den Namen (`g.names`,
   `BT.byId`) – „Falke beschwören“ (Forever, Nummer unbekannt; Spieler mit
   Tooltip: 18 s je Falke, bis zu zwei, 6 s Abklingzeit).
+- Abklingzeitmanager: **Laufzeit-Balken** getrennt vom Symbol
+  (`ocd.track[key]` = Reihe oder `"self"` direkt daneben, `ocd.trackWhat`
+  `effect`/`cd`/`both`, `ocd.trackIdle`, Reihenfolge `ocd.trackOrder`;
+  `OC.Track`, `OC.PlaceTrack`, `OC.TrackedInto`, Zeichnen über `AddTrack`
+  und `OC.DrawBar(…, what)`). Steht auch, wenn das Symbol „Aus“ ist.
+  Laufzeit-Balken haben kein Leuchten und keinen Ton (das macht die
+  Fähigkeit selbst); die Vorschau zeigt wartende blass (`b._ghost`).
+  Umschalt + Ziehen legt nur den Balken (`ST.Begin(…, track)`), einen
+  Laufzeit-Balken in den Vorrat ziehen nimmt ihn weg. Der Zwischenstand
+  „Symbol + Balken der Wirkung“ (`display = "both"`, nie veröffentlicht)
+  wird einmal zu `track = "self"` (`ocd.trackV`).
+- Abklingzeitmanager: **Reihen** neu je Reihe (`m.rowOpt`): Richtung
+  (`reverse` zu `vertical`: nach rechts/links/unten/oben, `OC.Direction`,
+  `OC.SetDirection`; `OC.Layout(…, rev)` spiegelt in der Zeile),
+  `barVertical` (stehende Balken: Symbol unten, Leiste wächst nach oben,
+  ohne Namen; `OC.BarSize` gibt dann Dicke × Länge), `barFill`
+  (`fill`: Balken füllen sich), `barIcon`, `barName` (`OC.SizeBar`).
 - `/wcui speicher`: „Interne Tabellen der Dateien“ – jede Datei unter
   `core/`, `modules/`, `ui/` meldet ihre Tabellen der obersten Ebene am
   Dateiende über `WeintCodex.Hold(datei, function() … end)` an (131

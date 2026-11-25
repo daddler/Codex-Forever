@@ -27327,17 +27327,51 @@ do
         t = 109
         OC.DrawSpells(row, "big", 40, true)
         assert(row.items[1].isBar and not row.items[2], "abgelaufener Falke bleibt")
-        -- Symbol + Balken der Wirkung: Symbol fest, daneben je Falke ein Balken.
+        -- Symbol fest, Laufzeit der Falken als Balken direkt daneben ("self").
         t = 100
-        OC.SetDisplay(e, "both")
+        OC.SetDisplay(e, "icon")
+        OC.SetTrack(e, "self")
+        assert(OC.Track(e) == "self" and OC.TrackWhat(e) == "effect", "Laufzeit-Balken nicht gemerkt")
         OC.DrawSpells(row, "big", 40, true)
         assert(not row.items[1].isBar and row.items[2].isBar and row.items[3].isBar and not row.items[4],
-            "Symbol + zwei Balken erwartet")
-        assert(OC.NextDisplay(e) == "icon", "Rechtsklick kommt nicht zum Symbol zurück")
+            "Symbol + zwei Laufzeit-Balken erwartet")
+        assert(row.items[2]._track == "effect" and row.items[3]._inst == 2, "Laufzeit-Balken nicht je Falke")
         t = 120
         OC.DrawSpells(row, "big", 40, true)
-        assert(not row.items[1].isBar and not row.items[2], "Balken bleiben ohne Falken")
-        OC.SetDisplay(e, "icon")
+        assert(not row.items[1].isBar and not row.items[2], "Laufzeit-Balken bleiben ohne Falken")
+        -- "Leer stehen lassen": ein Balken, ohne Wirkung leer.
+        OC.SetTrackIdle(e, true)
+        OC.DrawSpells(row, "big", 40, true)
+        assert(row.items[2] and row.items[2].phase == "idle" and row.items[2].sb:GetValue() == 0, "leer stehender Balken falsch")
+        OC.SetTrackIdle(e, false)
+        -- Die Vorschau zeigt ihn blass, damit man ihn greifen kann.
+        row._preview = true
+        OC.DrawSpells(row, "big", 40, true)
+        assert(row.items[2] and row.items[2]._ghost and row.items[2]:GetAlpha() < 1, "Vorschau zeigt den Laufzeit-Balken nicht")
+        row._preview = nil
+        -- In eine andere Reihe: dort die Balken, hier nur das Symbol.
+        t = 100
+        OC.SetTrack(e, "small")
+        BT.active = { falcon = { start = 96, duration = 18, earlier = { 90 } } }   -- Refresh raeumt Abgelaufenes
+        OC.DrawSpells(row, "big", 40, true)
+        assert(not row.items[1].isBar and not row.items[2], "Balken stehen noch neben dem Symbol")
+        local row2 = CreateFrame("Frame", nil, UIParent)
+        row2.icons = {}
+        OC.DrawSpells(row2, "small", 28, true)
+        assert(row2.items[1] and row2.items[1]._track and row2.items[2] and row2.items[2]._track and not row2.items[3],
+            "Laufzeit-Balken nicht in der anderen Reihe: " .. #row2.items .. " " .. tostring(OC.Mem().track[e.key]) .. " " .. tostring(row2.items[1] and row2.items[1]._track))
+        -- Auch wenn das Symbol gar nicht gezeigt wird.
+        OC.Slot = function() return "off" end
+        OC.DrawSpells(row2, "small", 28, true)
+        assert(row2.items[1] and row2.items[1]._track, "ohne Symbol kein Laufzeit-Balken")
+        OC.Slot = function() return "big" end
+        -- Fuellen statt leeren.
+        OC.SetRowOpt("small", "barFill", "fill")
+        OC.DrawSpells(row2, "small", 28, true)
+        assert(math.abs(row2.items[1].sb:GetValue() - 10 / 18) < 0.01, "Füllen: " .. row2.items[1].sb:GetValue())
+        OC.Mem().rowOpt.small = nil
+        OC.SetTrack(e, nil)
+        OC.Mem().trackOrder = {}
     end)
     -- Auch nach einem Fehler zurueck - sonst reissen die folgenden Pruefungen mit.
     BT.Groups, BT.active, _G.GetTime, OC.known, OC.Slot = oldGroups, oldActive, oldT, oldKnown, oldSlot
@@ -27345,27 +27379,31 @@ do
 end
 
 -- 1.0.9.0: Buehne des Abklingzeitmanagers - Vorschau wie im Spiel, Ziehen
--- an eine Stelle, Vorrat, Rechtsklick Symbol/Balken, eine Buehne je Sitzung.
+-- an eine Stelle, Vorrat, Klick waehlt aus, eine Buehne je Sitzung; mit
+-- Umschalt nur ein Laufzeit-Balken; Auswahl mit allen Einstellungen.
 do
     local OC, ST = WeintCodex.UIOwnCooldowns, WeintCodex.UICooldownStage
+    local m = OC.Mem()
+    local saveSpells, saveOrder, saveDisp, saveMode = m.spells, m.order, m.display, m.mode
+    local saveTrack, saveTOrder = m.track, m.trackOrder
+    local oldKnown, oldRel, oldTarget = OC.known, OC.Relayout, ST.Target
     local ok, err = pcall(function()
-        assert(ST and ST.Create, "ui/cdstage.lua nicht geladen")
-        local m = OC.Mem()
-        local saveSpells, saveOrder, saveDisp = m.spells, m.order, m.display
-        m.spells, m.order, m.display = {}, {}, {}
+        assert(ST and ST.Create and ST.CreateInspector and ST.CreatePool, "ui/cdstage.lua nicht geladen")
+        m.spells, m.order, m.display, m.mode, m.track, m.trackOrder = {}, {}, {}, "weintcodex", {}, {}
         local e1 = { key = "st:1", name = "Eins", id = 1001, tex = 1, preset = "big" }
         local e2 = { key = "st:2", name = "Zwei", id = 1002, tex = 2, preset = "big" }
         local e3 = { key = "st:3", name = "Drei", id = 1003, tex = 3, preset = "off" }
-        local oldKnown = OC.known
         OC.known = { e1, e2, e3 }
         local prevBefore = OC.prev["st:1"]
         -- Der Client nennt "bereit" offen - die Spielreihe wuerde es sich merken.
         local oldCS = _G.C_Spell
         _G.C_Spell = { GetSpellCooldown = function() return { startTime = 0, duration = 0 } end }
         local stage = ST.Create(UIParent, 560)
+        local pool = ST.CreatePool(UIParent, 560)
+        stage.Sync()
         _G.C_Spell = oldCS
         assert(#stage.lanes == #ST.SpellSlots() and #stage.lanes >= 2, "Bahnen fehlen")
-        assert(stage.pool.btns[1]._e == e3 and stage.pool.btns[1]:IsShown(), "Vorrat zeigt nicht, was aus ist")
+        assert(pool == stage.pool and pool.btns[1]._e == e3 and pool.btns[1]:IsShown(), "Vorrat zeigt nicht, was aus ist")
         local big = stage.bySlot.big
         assert(big.row._preview and big.row.items[1]._e == e1 and big.row.items[2]._e == e2, "Reihe Wichtig nicht wie im Spiel")
         assert(OC.prev["st:1"] == prevBefore, "Vorschau merkt sich Zustände (Töne)")
@@ -27378,9 +27416,11 @@ do
         end
         local i1, i2 = Box(10, 50, 100, 60), Box(54, 94, 100, 60)
         i1._e, i2._e = e1, e2
+        local t1 = Box(98, 140, 100, 60)   -- ein Laufzeit-Balken von Eins
+        t1._e, t1._track = e1, "cd"
         local lane = Box(0, 560, 110, 50)
         lane.slot, lane.row = "big", Box(0, 560, 100, 60)
-        lane.row.items = { i1, i2 }
+        lane.row.items = { i1, i2, t1 }
         local fake = { pool = Box(0, 560, 40, 0), lanes = { lane } }
         local oldGCP = _G.GetCursorPosition
         local cx, cy = 20, 80
@@ -27392,20 +27432,33 @@ do
         assert(sl == "big" and before == "st:2", "links vom zweiten: nicht davor")
         cx = 90
         sl, before = ST.Target(fake, "st:3")
-        assert(sl == "big" and before == nil, "rechts vom letzten: nicht ans Ende")
+        assert(sl == "big" and before == nil, "rechts vom letzten: nicht ans Ende (Laufzeit-Balken zählt mit)")
         cx = 40
         sl, before = ST.Target(fake, "st:1")
         assert(sl == "big" and before == "st:2", "sich selbst als Ziel")
+        -- Laufzeit-Balken ziehen: nur Laufzeit-Balken sind Nachbarn.
+        cx = 100
+        sl, before = ST.Target(fake, "st:2", true)
+        assert(sl == "big" and before == "st:1", "Laufzeit-Balken: Nachbar nicht der andere Laufzeit-Balken")
+        -- Richtung nach links: links von der Mitte ist "dahinter".
+        OC.SetRowOpt("big", "reverse", true)
+        cx = 20
+        sl, before = ST.Target(fake, "st:3")
+        assert(sl == "big" and before == "st:2", "nach links: Seite nicht gespiegelt")
+        OC.SetRowOpt("big", "reverse", nil)
         cx, cy = 100, 20
         assert(ST.Target(fake, "st:1") == "off", "Vorrat nicht erkannt")
+        -- Aus dem Bild gerollter Vorrat nimmt nichts an.
+        fake.pool.clip = Box(0, 560, 300, 200)
+        assert(ST.Target(fake, "st:1") == nil, "Vorrat ausserhalb des Bildlaufs nimmt an")
         _G.GetCursorPosition = oldGCP
         -- Ablegen: Drei aus dem Vorrat vor Zwei.
-        local oldTarget, oldRel = ST.Target, OC.Relayout
-        ST.Target = function() return "big", "st:2" end
         OC.Relayout = function() end
+        ST.Target = function() return "big", "st:2" end
         ST.Begin(stage, e3)
         assert(ST.Finish(), "Ablegen ohne Wirkung")
         assert(OC.Slot(e3) == "big", "nicht in die Reihe gelegt")
+        assert(ST.sel.kind == "entry" and ST.sel.id == "st:3", "Abgelegtes nicht ausgewählt")
         local pos = {}
         for i, e in ipairs(OC.known) do pos[e.key] = i end
         assert(pos["st:1"] < pos["st:3"] and pos["st:3"] < pos["st:2"], "nicht an die Stelle gelegt")
@@ -27413,19 +27466,85 @@ do
         ST.Begin(stage, e1)
         ST.Finish()
         assert(OC.Slot(e1) == "off", "in den Vorrat gezogen: nicht aus")
+        -- Mit Umschalt: nur ein Laufzeit-Balken, das Symbol bleibt, wo es ist.
+        ST.Target = function() return "small", nil end
+        ST.Begin(stage, e2, true)
+        ST.Finish()
+        assert(OC.Slot(e2) == "big" and OC.Track(e2) == "small", "Laufzeit-Balken nicht gelegt oder Symbol mitgezogen")
+        ST.Target = function() return "big", nil end
+        ST.Begin(stage, e2, true)
+        ST.Finish()
+        assert(OC.Track(e2) == "self", "in die eigene Reihe: nicht direkt daneben")
+        ST.Target = function() return "off", nil end
+        ST.Begin(stage, e2, true)
+        ST.Finish()
+        assert(OC.Track(e2) == nil and OC.Slot(e2) == "big", "Laufzeit-Balken im Vorrat nicht entfernt")
         ST.Target = oldTarget
-        -- Rechtsklick: Symbol <-> Balken.
+        -- Klick waehlt aus; die Auswahl zeigt die Einstellungen der Faehigkeit.
         stage.Sync()
+        local insp = ST.CreateInspector(UIParent, 560)
         local it = stage.bySlot.big.row.items[1]
         local who = it._e
-        it:GetScript("OnMouseUp")(it, "RightButton")
-        assert(OC.Display(who) == "bar", "Rechtsklick macht keinen Balken")
-        OC.Relayout = oldRel
-        OC.known = oldKnown
-        m.spells, m.order, m.display = saveSpells, saveOrder, saveDisp
-        stage:Hide()
+        it:GetScript("OnMouseUp")(it, "LeftButton")
+        assert(ST.sel.kind == "entry" and ST.sel.id == who.key, "Klick wählt nicht aus")
+        assert(insp.entry:IsShown() and not insp.row:IsShown(), "Auswahl zeigt nicht die Fähigkeit")
+        assert(stage.selBox:IsShown(), "Auswahl auf der Bühne nicht markiert")
+        local spec
+        for _, sp in ipairs(insp.entry.specs) do if sp.label == "Laufzeit zusätzlich als eigener Balken" then spec = sp end end
+        assert(spec, "Einstellung für den Laufzeit-Balken fehlt")
+        spec.set("small")
+        assert(OC.Track(who) == "small", "Auswahl legt keinen Laufzeit-Balken an")
+        spec.set("none")
+        assert(OC.Track(who) == nil, "Auswahl nimmt den Laufzeit-Balken nicht weg")
+        -- Kopf der Bahn: die Reihe mit Richtung, Balken liegend/stehend.
+        stage.bySlot.big:GetScript("OnClick")(stage.bySlot.big, "LeftButton")
+        assert(ST.sel.kind == "row" and ST.sel.id == "big" and insp.row:IsShown(), "Kopf wählt die Reihe nicht")
+        assert(stage.bySlot.big.sel:IsShown(), "gewählte Reihe nicht hell")
+        for _, sp in ipairs(insp.row.specs) do
+            if sp.label == "Richtung" then sp.set("up") end
+            if sp.label == "Balken liegen oder stehen" then sp.set("v") end
+        end
+        assert(OC.Direction("big") == "up" and OC.RowOpt("big", "vertical") and OC.RowOpt("big", "reverse"), "Richtung nicht gesetzt")
+        assert(OC.RowOpt("big", "barVertical") == true, "stehende Balken nicht gesetzt")
+        local bw, bh = OC.BarSize("big", 40)
+        assert(bw < bh, "stehender Balken nicht hoch: " .. bw .. "x" .. bh)
+        OC.Mem().rowOpt.big = nil
+        ST.Select("row", "big")
     end)
-    Check(ok, "Abklingzeitmanager: Bühne – Vorschau, Ziehen an eine Stelle, Vorrat, Rechtsklick" .. (ok and "" or (": " .. tostring(err))))
+    OC.Relayout, OC.known, ST.Target = oldRel, oldKnown, oldTarget
+    m.spells, m.order, m.display, m.mode, m.track, m.trackOrder = saveSpells, saveOrder, saveDisp, saveMode, saveTrack, saveTOrder
+    if ST.current then ST.current:Hide() end
+    Check(ok, "Abklingzeitmanager: Bühne – Vorschau, Ziehen, Laufzeit-Balken mit Umschalt, Vorrat, Auswahl" .. (ok and "" or (": " .. tostring(err))))
+end
+
+-- 1.0.9.0: Richtung einer Reihe (nach links/oben) als reine Rechnung, und
+-- die Buehne fest oben als Vorschau der Seite.
+do
+    local OC = WeintCodex.UIOwnCooldowns
+    local ok, err = pcall(function()
+        local function sz() return 40, 40 end
+        local pos = {}
+        local w = OC.Layout(2, sz, 4, 0, false, function(i, x, y) pos[i] = { x, y } end, true)
+        assert(w == 84 and pos[1][1] == 44 and pos[2][1] == 0, "nach links: das erste steht nicht rechts")
+        OC.Layout(2, sz, 4, 0, true, function(i, x, y) pos[i] = { x, y } end, true)
+        assert(pos[1][2] == -44 and pos[2][2] == 0, "nach oben: das erste steht nicht unten")
+        -- Seite mit Vorschau: fest ueber dem Bildlauf, nur auf ihrer Seite.
+        local m = K.Module("reminders")
+        local idx
+        for i, p in ipairs(m.pages) do if p.key == "abklingzeitmanager" then idx = i end end
+        assert(idx and m.pages[idx].preview, "Seite ohne Vorschau")
+        UO.Show("reminders", idx)
+        local b = UO.built.reminders
+        local host = b.pagePrev and b.pagePrev[idx]
+        assert(host and host:IsShown(), "Vorschau der Seite fehlt")
+        assert(WeintCodex.UICooldownStage.current.host == host, "Bühne nicht in der Vorschau")
+        UO.SetPreviewHeight(host, 123)
+        assert(host:GetHeight() == 123, "Höhe der Vorschau folgt nicht")
+        local other = idx == 1 and 2 or 1
+        UO.Show("reminders", other)
+        assert(not host:IsShown(), "Vorschau steht auf einer anderen Seite")
+    end)
+    Check(ok, "Abklingzeitmanager: Richtung nach links/oben, Bühne fest oben nur auf ihrer Seite" .. (ok and "" or (": " .. tostring(err))))
 end
 
 -- 1.0.8.27: der Versand-Takt der Post laeuft nicht im Leerlauf.

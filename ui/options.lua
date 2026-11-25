@@ -641,6 +641,7 @@ local function Label(parent, font, size, tone)
     return fs
 end
 
+local Layout     -- unten; ShowPage braucht sie fuer die Vorschau je Seite
 local headToggle, headEyebrow, headTitle, headDesc
 local unlockBtn, resetBtn, reloadBtn, reloadNote
 
@@ -688,6 +689,9 @@ local function ShowPage()
     for k, other in pairs(built) do
         if other.tabs then other.tabs:SetShown(k == key and #Mod(k).pages > 1) end
         if other.preview then other.preview:SetShown(k == key) end
+        if other.pagePrev then
+            for i, h in pairs(other.pagePrev) do if h then h:SetShown(k == key and i == current.page) end end
+        end
         for i, p in pairs(other.pages) do
             p.frame:SetShown(k == key and i == current.page)
         end
@@ -712,6 +716,29 @@ local function ShowPage()
         b.pages[current.page] = page
     end
     page.frame:Show()
+    -- Vorschau je Seite (1.0.9.0, Abklingzeitmanager: "alles oben einsehbar,
+    -- wie es gerade aussieht"): steht fest ueber dem Bildlauf wie die
+    -- Vorschau eines Moduls, aber nur auf ihrer Seite. def.preview(host,
+    -- Breite) liefert Rahmen und Hoehe; spaeter O.SetPreviewHeight.
+    local def = m.pages[current.page]
+    b.pagePrev = b.pagePrev or {}
+    if not b.preview and def and def.preview and b.pagePrev[current.page] == nil then
+        local host = CreateFrame("Frame", nil, frame)
+        host:SetSize(CONTENT_W, 100)
+        local ok, pv, ph = pcall(def.preview, host, CONTENT_W)
+        if ok and pv then
+            pv:SetPoint("TOPLEFT", host, "TOPLEFT", 0, 0)
+            host.previewHeight = ph or 100
+            host:SetHeight(host.previewHeight)
+            b.pagePrev[current.page] = host
+        else
+            if not ok then K.Report(key, pv) end
+            host:Hide()
+            b.pagePrev[current.page] = false
+        end
+    end
+    if b.pagePrev[current.page] then b.pagePrev[current.page]:Show() end
+    Layout()
     -- 6.26.9.3: jede Seite blendet weich ein, wie der Codex beim Wechsel.
     if frame and frame:IsShown() and not (WeintCodex.fades and WeintCodex.fades[frame]) then
         WeintCodex.FadeIn(page.frame)
@@ -760,7 +787,7 @@ function O.SetAdvanced(on)
     end
 end
 
-local function Layout()
+Layout = function()
     -- Hoehe des Bildlaufbereichs: was unter Kopf, Reitern und Vorschau
     -- uebrig bleibt.
     local key = current.module
@@ -772,14 +799,38 @@ local function Layout()
         top = top + th + 10
     end
     O.tabsBottom = top   -- fuer den Prueflauf: hier beginnt, was unter der Leiste steht
-    if b.preview then
-        b.preview:ClearAllPoints()
-        b.preview:SetPoint("TOPLEFT", frame, "TOPLEFT", SIDE_W + PAD, -top)
-        top = top + (b.previewHeight or 0) + 12
+    local pv, ph = b.preview, b.previewHeight
+    if not pv and b.pagePrev and b.pagePrev[current.page] then
+        pv = b.pagePrev[current.page]
+        ph = pv.previewHeight
+    end
+    if pv then
+        pv:ClearAllPoints()
+        pv:SetPoint("TOPLEFT", frame, "TOPLEFT", SIDE_W + PAD, -top)
+        top = top + (ph or 0) + 12
     end
     scroller:ClearAllPoints()
     scroller:SetPoint("TOPLEFT", frame, "TOPLEFT", SIDE_W + PAD, -top)
     scroller:SetPoint("BOTTOMRIGHT", frame, "BOTTOMRIGHT", -PAD, FOOT_H + 8)
+end
+
+-- Neue Hoehe einer Vorschau je Seite (die Buehne des Abklingzeitmanagers
+-- waechst mit ihren Reihen): der Bildlauf darunter rueckt nach.
+function O.SetPreviewHeight(host, h)
+    if not (host and type(h) == "number") then return end
+    if host.previewHeight == h then return end
+    host.previewHeight = h
+    host:SetHeight(h)
+    if frame and host:IsShown() then Layout() end
+end
+
+-- Platz fuer eine Vorschau je Seite: so viel, dass unter ihr noch
+-- O.PREVIEW_KEEP Bildpunkte Einstellungen stehen.
+O.PREVIEW_KEEP = 220
+function O.PreviewRoom()
+    local fh = frame and frame:GetHeight() or H
+    fh = (type(fh) == "number" and fh > 0) and fh or H
+    return math.max(140, math.floor(fh - HEAD_H - TABS_H - 10 - FOOT_H - 8 - 12 - O.PREVIEW_KEEP))
 end
 
 -- Seiten nach Thema (6.26.7.0, Beta-Test: "Komfort logischer, themen-

@@ -432,9 +432,12 @@ function CD.BuildPage(B)
     -- Blizzards oder WeintCodex Abklingzeitenmanager"), ui/owncooldowns.lua.
     local OC = WeintCodex.UIOwnCooldowns
     if OC and OC.ModeRow then
-        B:Section("Welcher Abklingzeitmanager?", "Blizzard: der Manager des Spiels (unten im WeintCodex-Stil). WeintCodex: eigene Reihen mit fertiger Auswahl für deine Klasse – die Anzeige des Spiels wird dafür ausgeschaltet und beim Zurückwechseln wieder so gestellt wie vorher. Keiner: beide aus.")
         OC.ModeRow(B)
-        OC.BuildSection(B)
+        if OC.Active() then
+            OC.BuildSection(B)
+        else
+            B:Note("WeintCodex: eigene Reihen mit fertiger Auswahl für deine Klasse – oben siehst du sie, sobald du ihn wählst; die Anzeige des Spiels wird dafür ausgeschaltet und beim Zurückwechseln wieder so gestellt wie vorher. Blizzard: der Manager des Spiels (unten im WeintCodex-Stil). Keiner: beide aus.")
+        end
     end
     -- Ausgegraut, solange nicht "Blizzard" gewaehlt ist (6.92.0.0, Wunsch).
     local notGame = function() return OC and OC.Mode and OC.Mode() ~= "blizzard" or false end
@@ -468,7 +471,13 @@ do
     local m = K.Module(KEY)
     if m then
         for k, v in pairs(defaults) do m.defaults[k] = v end
-        m.pages[#m.pages + 1] = { key = "abklingzeitmanager", label = "Abklingzeitmanager", build = CD.BuildPage }
+        -- 1.0.9.0: die Buehne fest oben (Vorschau je Seite, ui/cdstage.lua).
+        m.pages[#m.pages + 1] = { key = "abklingzeitmanager", label = "Abklingzeitmanager", build = CD.BuildPage,
+            preview = function(host, width)
+                local ST = WeintCodex.UICooldownStage
+                if not (ST and ST.CreatePreview) then return nil end
+                return ST.CreatePreview(host, width)
+            end }
         CD.PAGE = #m.pages
         local enable, onSetting = m.Enable, m.OnSetting
         m.Enable = function(...)

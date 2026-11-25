@@ -669,18 +669,43 @@ Seit 6.2.0.0:
   **Seit 1.0.9.0 (Wunsch: „Vorschau wie bei den Namensplaketten, per Drag &
   Drop direkt in die Leiste; Balken mit Laufzeit, individuell wie bei
   WeakAuras“):**
-  - *Buehne* (`ui/cdstage.lua`) statt der Spaltenliste: je Reihe mit Zaubern
-    eine Bahn, darin die Reihe gezeichnet von `OC.DrawSpells` selbst
-    (`row._preview`: spielt keinen Ton, merkt sich keinen Zustand), mit
-    laufenden Uhren; zu breit → verkleinert, nie abgeschnitten. Darunter der
-    Vorrat („Aus“). Ziehen mit Marke (`ST.Target`: nächstes Teil, links/
-    oberhalb seiner Mitte = davor), Ablegen über `OC.Place`; Klick:
-    Kontextmenü (Darstellung, Balkenfarbe, Rang, Leuchten, Ton, Reihe);
-    Rechtsklick: Symbol ↔ Balken; Kopf der Bahn: `OC.RowMenu` (jetzt auch
-    Balkenbreite/-höhe); aus Zauberbuch/Taschen auf eine Bahn: hinzufügen,
-    genau dorthin. **Eine Bühne je Sitzung** (`ST.current`, wiederverwendet):
-    die Einstellungsseite baut bei `O.Rebuild` alle Rahmen neu – das tut
-    `OC.Relayout` nur noch, wenn sich die Höhe der Bühne ändert (`ST.Refit`).
+  - *Aufbau der Seite* (zweiter Wurf, Spieler: „grundsätzlich neu … alles
+    oben einsehbar, wie es gerade aussieht; das Einzustellende war viel zu
+    weit unten“): **Bühne** fest oben über dem Bildlauf als **Vorschau je
+    Seite** (`ui/options.lua`: `pages[i].preview(host, Breite)` → Rahmen,
+    Höhe; `b.pagePrev`, nur auf ihrer Seite; `O.SetPreviewHeight` rückt den
+    Bildlauf nach, `O.PreviewRoom` lässt darunter `O.PREVIEW_KEEP` px frei –
+    passt die Bühne nicht, wird sie als Ganzes verkleinert, `ST.Fit`, mind.
+    50 %). Gleich darunter die **Auswahl** (`ST.CreateInspector`, eine
+    eigene Zeile der Seite, Bedienelemente aus `core/ui.lua`): Klick auf
+    eine Fähigkeit oder einen Bahnkopf (`ST.Select`), und dort stehen alle
+    ihre Einstellungen – kein Kontextmenü mehr nötig (Rechtsklick bleibt
+    als Schnellmenü). Dann der **Vorrat** (`ST.CreatePool`; außerhalb des
+    sichtbaren Bildlaufs nimmt er nichts an, `pool.clip`). Bühne, Auswahl
+    und Vorrat werden je Sitzung einmal gebaut und bei `O.Rebuild` nur neu
+    eingehängt; `OC.Relayout` → `ST.Refit` baut die Seite nur neu, wenn sich
+    die Höhe des Vorrats ändert. Mit „Blizzard“/„Keiner“ zeigt die Bühne
+    einen Satz statt der Reihen, die Seite keine Auswahl.
+  - *Bühne* (`ui/cdstage.lua`): je Reihe mit Zaubern eine Bahn, darin die
+    Reihe gezeichnet von `OC.DrawSpells` selbst (`row._preview`: spielt
+    keinen Ton, merkt sich keinen Zustand), mit laufenden Uhren; zu breit →
+    verkleinert, nie abgeschnitten. Ziehen mit Marke (`ST.Target`: nächstes
+    Teil gleicher Art, links/oberhalb seiner Mitte = davor, bei Richtung
+    links/oben gespiegelt), Ablegen über `OC.Place`; **Umschalt + Ziehen**
+    legt nur einen Laufzeit-Balken (`OC.PlaceTrack`); aus Zauberbuch/Taschen
+    auf eine Bahn: hinzufügen, genau dorthin.
+  - *Laufzeit-Balken* (`ocd.track[key]` = Reihe oder `"self"`): unabhängig
+    davon, wo das Symbol steht (auch „Aus“), zeigt eine Fähigkeit ihre
+    Laufzeit zusätzlich als Balken – `trackWhat` Wirkung / Abklingzeit /
+    beides nacheinander, `trackIdle`: leer stehen lassen statt ausblenden.
+    Je laufende Wirkung einer (Falken). Kein Leuchten, kein Ton (das macht
+    die Fähigkeit). Die Vorschau zeigt wartende blass (`b._ghost`), damit
+    man sie greifen kann. Reihenfolge in fremden Reihen: `ocd.trackOrder`.
+  - *Reihen* (`m.rowOpt[slot]`): Größe, Richtung (`vertical` + `reverse`),
+    je Zeile, Abstand, Balkenlänge/-dicke (`barWidth`/`barHeight`),
+    `barVertical` (stehend: Symbol unten, Leiste wächst nach oben, ohne
+    Namen – ein Name quer passt nicht), `barFill` (füllen statt leeren),
+    `barIcon`, `barName`, nur im Kampf.
   - *Darstellung je Fähigkeit* (`ocd.display[key] = "bar"`, ab Werk Symbol):
     Reihen mischen Symbole und Balken (`OC.Layout`: reine Rechnung, je Teil
     eigene Größe, Zeilen/Spalten mittig). Ein Balken zeigt erst die
@@ -692,8 +717,7 @@ Seit 6.2.0.0:
     „bereit“. Farbe der Wirkung je Fähigkeit (`ocd.barColor`, Liste wie das
     Leuchten), Abklingzeit/bereit: `GameColors.ocdCooldown`/`ocdReady`. Der
     Balken zählt nur während einer Laufzeit über sein eigenes OnUpdate,
-    Text nur bei geänderter Zahl. Dritte Darstellung `both`: Symbol fest, je
-    laufende Wirkung ein Balken daneben. Mehrere Wirkungen zugleich
+    Text nur bei geänderter Zahl. Mehrere Wirkungen zugleich
     (Falken, `OC.Effects`) = je eine ein Balken; Gruppen auch über den Namen
     (`g.names`). **Ungeprüft im Spiel**, wie alles hier.
 * **Debuffs am Zielrahmen: die Symbole des Spiels** (6.4.0.3,
