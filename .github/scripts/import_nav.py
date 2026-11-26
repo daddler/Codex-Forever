@@ -30,8 +30,12 @@ Umrechnung je Kartenabschnitt (ADT-Kachel, cells x cells Zellen):
   fcell   zu jeder Ebene die Zelle (wie bisher aus den Ebenen gerechnet).
   graph   neu: binaer (Varints, zwoelf Stroeme). Alt: je Eingang
           Zelle/Knoten(3) Schicht(1) Teil(2) Kanten(1), je Kante
-          Richtung(1) Ziel(2) Kosten(2) Laufen(2). Nur die Grundkanten,
-          nicht die Strassen-Kanten.
+          Richtung(1) Ziel(2) Kosten(2) Laenge(2). Seit 1.0.10.4 alle
+          Kanten (auch die Strassen-Kanten); Kosten = Laenge mal Aufschlag
+          abseits der Strasse (Data/RoadEdges.lua, OFFROAD), Laenge echt.
+  road    1.0.10.4: Strassenanteil je Zelle (Data/RoadCells.lua, aus den
+          Bodentexturen des Clients gebacken) und je Knoten
+          (RoadNodeCoverage); ui/navmesh.lua schlaegt abseits auf.
 
 Aufruf:
     python3 -I .github/scripts/import_nav.py <Ordner ShortestPathForever>
@@ -448,8 +452,10 @@ def perimeter_cell(place, C):
     return place - (4 * C - 4)
 
 
-def decode_graph(s, C, ny, k):
-    """Neues Wegenetz -> Knoten [(Zelle, Schicht, Teil, [(Richtung, Ziel, Kosten, Laufen)])]."""
+def decode_graph(s, C, ny, k, prefs=None):
+    """Neues Wegenetz -> Knoten [(Zelle, Schicht, Teil, [(Richtung, Ziel, Kosten, Laenge)])].
+    1.0.10.4: alle Kanten (Grund- und Strassenkanten); Kosten = Laenge mal
+    Strassenaufschlag der Kante (prefs, in Kantenreihenfolge), Laenge echt."""
     cs = TILE / C
     n, pos = varint(s, 0)
     p, size = [0] * 13, 0
@@ -478,12 +484,15 @@ def decode_graph(s, C, ny, k):
             p[j] += degree + extra
         rows.append(row)
     nodes = []
+    edge_index = [0]
     for ordinal, r in enumerate(rows):
         x, y = r["cell"] // C, r["cell"] % C
         local, prev = ordinal, {}
         tp, wp, sp = r[7], r[8], r[9]
         edges = []
         for e in range(r["deg"]):
+            gi = edge_index[0]
+            edge_index[0] += 1
             if e == r["base"]:
                 local, prev = ordinal, {}
             off = s[r["off"] + e]
@@ -503,11 +512,14 @@ def decode_graph(s, C, ny, k):
                 dx, dy = off // 3 - 1, off % 3 - 1
                 dist = math.sqrt(2) if dx and dy else 1
             walk = math.floor(dist * cs + 0.5) + w
-            if e < r["base"]:
-                edges.append((off, t, walk + sw, walk))
-            else:
+            real = walk + sw
+            pref = prefs[gi] if prefs is not None and gi < len(prefs) else OFFROAD
+            edges.append((off, t, int(math.floor(real * pref + 0.5)), real, e >= r["base"]))
+            if e >= r["base"]:
                 count("road_edges")
         nodes.append((r["cell"], r["layer"], r["comp"], edges))
+    if prefs is not None and len(prefs) not in (0, edge_index[0]):
+        count("road_ratio_mismatch")
     return nodes, end
 
 
@@ -528,15 +540,80 @@ def encode_graph(nodes, nfirst_of, C, k):
             else:
                 local = f0 + layer - 1
         if len(edges) > 63:
-            count("edges_cut", len(edges) - 63)
-            edges = sorted(edges, key=lambda e: e[2])[:63]
+            # Grundkanten immer (sie tragen den Zusammenhang), Strassenkanten
+            # nach Kosten in die freien Plaetze.
+            base = sorted((e for e in edges if not e[4]), key=lambda e: e[2])
+            road = sorted((e for e in edges if e[4]), key=lambda e: e[2])
+            keep = (base + road)[:63]
+            count("edges_cut", len(edges) - len(keep))
+            count("edges_cut_base", max(0, len(base) - 63))
+            edges = keep
         head.append(enc(local, 3) + B64[min(layer, 63)] + enc(min(comp, 4095), 2) + B64[len(edges)])
-        for off, t, cost, walk in edges:
+        for off, t, cost, walk, _road in edges:
             if cost >= 4096 or walk >= 4096 or cost < 0:
                 count("cost_clamped")
             body.append(B64[off] + enc(t, 2) + enc(max(0, min(cost, 4095)), 2) + enc(max(0, min(walk, 4095)), 2))
         count("edges", len(edges))
     return "".join(head) + "".join(body)
+
+
+# --------------------------------------------------------------- Strassen
+
+OFFROAD = 1.5   # ein Meter abseits der Strasse zaehlt so viel (Shortest Path: Voreinstellung)
+
+
+def read_road_tables(path):
+    """Data/RoadCells.lua bzw. RoadEdges.lua -> {Tabelle: {Karte: {k: Text}}} (nur gelesen)."""
+    out, table, m = {}, None, None
+    if not os.path.exists(path):
+        return out
+    with open(path, encoding="utf-8") as f:
+        for line in f:
+            t = re.match(r"^ns\.(\w+) = \{", line)
+            if t:
+                table = out.setdefault(t.group(1), {})
+                continue
+            mm = re.match(r"^\t\[(\d+)\] = \{", line)
+            if mm and table is not None:
+                m = table.setdefault(int(mm.group(1)), {})
+                continue
+            e = re.match(r'^\t\t\[(\d+)\] = "([^"]*)",', line)
+            if e and m is not None:
+                m[int(e.group(1))] = e.group(2)
+    return out
+
+
+def road_prefs(s):
+    """Kantenfaktoren eines Abschnitts (Gehen): "=" + Anzahl(2) Standardkanten
+    (abseits), sonst vier Zeichen, das erste ist die Wahl."""
+    out, pos = [], 0
+    while pos < len(s):
+        if s[pos] == "=":
+            out += [OFFROAD] * num(s, pos + 1, 2)
+            pos += 3
+        else:
+            out.append(1 + VAL[s[pos]] / 63 * (OFFROAD - 1))
+            pos += 4
+    return out
+
+
+def road_field(cells, nodes, C):
+    """Strassenanteil je Zelle (0-63, ein Zeichen je Zelle, C*C) und dahinter
+    nach "|" die Ausnahmen je Knoten (Knoten(3) Anteil(1)); oder None."""
+    cov = [0] * (C * C)
+    lc, pos = 0, 0
+    s = cells or ""
+    while pos + 2 < len(s):
+        run, c = num(s, pos, 2), VAL[s[pos + 2]]
+        pos += 3
+        if c:
+            for i in range(lc, min(lc + run, C * C)):
+                cov[i] = c
+        lc += run
+    if not any(cov) and not nodes:
+        return None
+    text = "".join(B64[c] for c in cov).rstrip("A")
+    return text + ("|" + nodes if nodes else "")
 
 
 # --------------------------------------------------------------- Lauf
@@ -559,11 +636,20 @@ def read_map(nav, m):
     return head, fields
 
 
-def convert_map(head, fields):
+def convert_map(head, fields, roads=None, m=None):
     C = int(head["cells"])
     ny = int(head["ny"])
     ff = int(head.get("floorFormat", 0))
-    out = {"graph": {}, "grid": {}, "fcell": {}, "floor": {}, "height": {}}
+    out = {"graph": {}, "grid": {}, "fcell": {}, "floor": {}, "height": {}, "road": {}}
+    roads = roads or {}
+    rc = roads.get("RoadCells", {}).get(m, {})
+    re_ = roads.get("RoadEdges", {}).get(m, {})
+    rn = roads.get("RoadNodeCoverage", {}).get(m, {})
+    for key in set(rc) | set(rn):
+        rf = road_field(rc.get(key), rn.get(key), C)
+        if rf:
+            out["road"][key] = pack(rf)
+            count("road_clusters")
     nfirst = {}
     vals = {}
     for key, blocks in fields["grid"].items():
@@ -589,7 +675,8 @@ def convert_map(head, fields):
         out["height"][key] = [lit_raw(base64.b64decode(b)) for b in blocks]
     for key, blocks in fields["graph"].items():
         raw = unpack(blocks)
-        nodes, end = decode_graph(raw, C, ny, key - 1)
+        prefs = road_prefs(re_[key]) if key in re_ else None
+        nodes, end = decode_graph(raw, C, ny, key - 1, prefs)
         if end != len(raw):
             count("graph_tail_mismatch")
         if len(nodes) >= 4096:
@@ -601,9 +688,9 @@ def convert_map(head, fields):
 def write_map(m, head, out, files, outdir):
     header = (f"WeintCodex.NavData[{m}] = WeintCodex.NavData[{m}] or {{ cx0 = {head['cx0']}, cy0 = {head['cy0']}, "
               f"nx = {head['nx']}, ny = {head['ny']}, cells = {head['cells']}, swim = {head['swim']}, "
-              f"zstep = {head.get('zstep', 2)}, bin = true, graph = {{}}, grid = {{}}, fcell = {{}}, floor = {{}}, height = {{}} }}")
+              f"zstep = {head.get('zstep', 2)}, bin = true, offroad = {OFFROAD}, graph = {{}}, grid = {{}}, fcell = {{}}, floor = {{}}, height = {{}}, road = {{}} }}")
     rows = []
-    for kind in ("graph", "grid", "fcell", "floor", "height"):
+    for kind in ("graph", "grid", "fcell", "floor", "height", "road"):
         for k, v in sorted(out[kind].items()):
             body = v if isinstance(v, str) else "{ " + ", ".join(v) + " }"
             rows.append((kind, f"    [{k}] = {body},"))
@@ -651,12 +738,14 @@ def main():
     nav = os.path.join(sys.argv[1], "Nav")
     maps = sorted({int(m.group(1)) for f in os.listdir(nav) for m in [re.match(r"Nav(\d+)\.lua$", f)] if m})
     # Erst alles umrechnen, dann ersetzen - ein Fehler laesst data/nav stehen.
+    roads = read_road_tables(os.path.join(sys.argv[1], "Data", "RoadCells.lua"))
+    roads.update(read_road_tables(os.path.join(sys.argv[1], "Data", "RoadEdges.lua")))
     tmp = tempfile.mkdtemp(prefix="nav_")
     files, total = [], 0
     try:
         for m in maps:
             head, fields = read_map(nav, m)
-            total += write_map(m, head, convert_map(head, fields), files, tmp)
+            total += write_map(m, head, convert_map(head, fields, roads, m), files, tmp)
         os.makedirs(OUT, exist_ok=True)
         for old in os.listdir(OUT):
             if old.endswith(".lua"):

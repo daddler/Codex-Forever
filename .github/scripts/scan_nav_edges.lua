@@ -25,7 +25,7 @@ for _, f in ipairs(files) do dofile(root .. "/data/nav/" .. f) end
 -- Rohe Felder je Kontinent entpacken.
 local function Unpack(D)
     local out = io.open(tmp, "wb")
-    for _, field in ipairs({ "graph", "grid", "fcell", "floor", "height" }) do
+    for _, field in ipairs({ "graph", "grid", "fcell", "floor", "height", "road" }) do
         for k, b in pairs(D[field] or {}) do
             if type(b) == "string" then b = { b } end
             for i, s in ipairs(b) do out:write(field, " ", k, " ", i, " ", #s, "\n", s) end
@@ -47,7 +47,7 @@ w.write("end\n")
 ]]
     local pf = io.open(tmp .. ".py", "w") pf:write(py) pf:close()
     assert(os.execute('python3 -I "' .. tmp .. '.py" "' .. tmp .. '"') == 0, "python3")
-    local R = { graph = {}, grid = {}, fcell = {}, floor = {}, height = {} }
+    local R = { graph = {}, grid = {}, fcell = {}, floor = {}, height = {}, road = {} }
     dofile(tmp .. ".lua")(R)
     os.remove(tmp .. ".lua") os.remove(tmp .. ".py")
     return R
@@ -88,7 +88,8 @@ for _, c in ipairs(conts) do
                 for _ = 1, NV.Num(s, 3 + iu * 7 + 6, 1) do
                     local off = NV.Num(s, pos, 1)
                     local kt = k + (math.floor(off / 3) - 1) * st.ny + off % 3 - 1
-                    local iv, cost = NV.Num(s, pos + 1, 2), NV.Num(s, pos + 3, 2)
+                    -- 1.0.10.4: echte Laenge (pos + 5); pos + 3 traegt den Strassenaufschlag.
+                    local iv, cost = NV.Num(s, pos + 1, 2), NV.Num(s, pos + 5, 2)
                     if kt == k then
                         local _, lb = NV.NodeLocal(st, k * 4096 + iv)
                         local za, zb = la and Z(la), lb and Z(lb)

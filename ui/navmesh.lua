@@ -40,6 +40,8 @@ NV.LOOKAHEAD = 30      -- der Pfeil zeigt so weit voraus auf den Weg
 NV.CORNER = 6          -- so nah an einer Ecke: schon um sie herum zeigen
 NV.CUT = 5             -- Ecken bis so weit neben der Sichtlinie gelten als gerade (6.83.1.0)
 NV.CACHE = 600         -- entpackte Wegenetze im Speicher (je rund 1 KB)
+NV.OFFROAD = 1.5       -- 1.0.10.4: ein Meter abseits der Strasse zaehlt so viel (Daten: D.offroad)
+NV.HEUR_SHARE = 0.5    -- so viel des Aufschlags geht in die Schaetzung zum Ziel
 NV.CELLS = 24          -- entpackte Gitter mit Ebenen im Speicher (1.0.10.1: 8 - zu wenig,
                        -- eine Route entpackte sie immer wieder; 1.0.10.3: 24, geraeumt erst im Leerlauf)
 
@@ -101,7 +103,13 @@ local function State(c)
     local D = WeintCodex.NavData and WeintCodex.NavData[c]
     if not D then return nil end
     st = { D = D, C = D.cells, cs = NV.TILE / D.cells, nx = D.nx, ny = D.ny, cx0 = D.cx0, cy0 = D.cy0,
-        swim = D.swim or 3, clusters = {} }
+        swim = D.swim or 3, clusters = {}, off = D.road and (D.offroad or NV.OFFROAD) or 1, rf = {} }
+    -- 1.0.10.4: Aufschlag je Strassenanteil 0-63 (63 = ganz Strasse = 1).
+    for cov = 0, 63 do st.rf[cov] = 1 + (st.off - 1) * (1 - cov / 63) end
+    -- Gewicht der Schaetzung zum Ziel: mit Aufschlag kostet ein Meter bis zu
+    -- st.off - die blosse Luftlinie liess lange Suchen an NV.MAX_EXPAND
+    -- scheitern. Etwas darueber: zielstrebiger, nicht mehr streng der beste Weg.
+    st.hw = 1 + (st.off - 1) * NV.HEUR_SHARE
     states[c] = st
     return st
 end
@@ -160,7 +168,7 @@ function NV.Cells(st, cl)
                 if c2 and c2.cells and (not vu or c2.cellsUsed < vu) then victim, vu = c2, c2.cellsUsed end
             end
         end
-        if victim then victim.cells, victim.surf = nil, nil cellsCount = cellsCount - 1 else cellsCount = 0 end
+        if victim then victim.cells, victim.surf, victim.road, victim.roadN = nil, nil, nil, nil cellsCount = cellsCount - 1 else cellsCount = 0 end
     end
     local g = Field(st.D, "grid", cl.k + 1)
     if not g then cl.cells = false return nil end
@@ -178,11 +186,41 @@ function NV.Cells(st, cl)
         end
     end
     cl.cells = table.concat(parts)
+    NV.DecodeRoad(st, cl)
     cellsCount = cellsCount + 1
     useTick = useTick + 1
     cl.cellsUsed = useTick
     return cl.cells
 end
+
+-- 1.0.10.4 (Wunsch: "Wege priorisieren statt durch die Praerie"):
+-- Strassenanteil je Zelle (cl.road, ein Zeichen 0-63 je Zelle, fehlend = 0)
+-- und je Knoten (cl.roadN, Ausnahmen fuer Ebenen). Lebt mit dem Gitter.
+function NV.DecodeRoad(st, cl)
+    cl.road, cl.roadN = false, nil
+    if st.off == 1 then return end
+    local s = Field(st.D, "road", cl.k + 1)
+    if not s or s == "" then return end
+    local bar = s:find("|", 1, true)
+    cl.road = bar and s:sub(1, bar - 1) or s
+    if bar then
+        local n = {}
+        for i = bar + 1, #s - 3, 4 do n[Num(s, i, 3)] = B64[byte(s, i + 3)] end
+        cl.roadN = n
+    end
+end
+
+-- Aufschlag fuer Knoten `node` in Zelle `cell` (1 ohne Strassendaten).
+local function RoadF(st, cl, node, cell)
+    if st.off == 1 then return 1 end
+    local cov = cl.roadN and cl.roadN[node]
+    if not cov then
+        local b = cl.road and byte(cl.road, cell + 1)
+        cov = b and B64[b] or 0
+    end
+    return st.rf[cov]
+end
+NV.RoadF = RoadF
 
 -- Den am laengsten nicht gebrauchten Abschnitt freigeben.
 function NV.Evict()
@@ -218,7 +256,7 @@ function NV.Trim(keepGraphs, keepCells)
             end
         end
         if not victim then cellsCount = 0 break end
-        victim.cells, victim.surf = nil, nil
+        victim.cells, victim.surf, victim.road, victim.roadN = nil, nil, nil, nil
         cellsCount = cellsCount - 1
     end
     if cachedCount <= keepGraphs then return end
@@ -570,6 +608,7 @@ function NV.Grid(st, cl, start, into, target)
         local v = NodeWalk(cl, sf, CC, b)
         if v == 0 then return end
         local nd = d + (dir <= 4 and 1 or 1.4142) * (v == 2 and st.swim or 1)
+            * RoadF(st, cl, b, NodeCellOf(sf, CC, b))
         if not dist[b] or nd < dist[b] then
             dist[b], prev[b] = nd, a
             local hb = 0
@@ -782,6 +821,11 @@ local function Wipe(t) for key in pairs(t) do t[key] = nil end end
 -- nicht schon schwimmt - Wasser zu kreuzen. Schritt fuer Schritt durch die
 -- Zellen, die die Linie zwischen den Mitten beruehrt; trifft sie genau eine
 -- Ecke, reicht einer der beiden Umwege (wie in der Suche).
+local function OnRoad(road, c)
+    local v = byte(road, c + 1)
+    return v ~= nil and B64[v] > 0
+end
+
 local function Sees(cl, C, a, b)
     local x, y = floor(a / C), a % C
     local x1, y1 = floor(b / C), b % C
@@ -789,7 +833,14 @@ local function Sees(cl, C, a, b)
     local sx, sy = x1 > x and 1 or -1, y1 > y and 1 or -1
     local dirX, dirY = sx > 0 and 1 or 2, sy > 0 and 3 or 4
     local water = Walk(cl, a) == 2
-    local function Ok(c) local v = Walk(cl, c) return v == 1 or (v == 2 and water) end
+    -- 1.0.10.4: zaehlt die Zellen abseits der Strasse, die die Linie kreuzt
+    -- (zweiter Rueckgabewert; Pull vergleicht mit dem ersetzten Stueck).
+    local road, offCount = cl.road, 0
+    local function Ok(c)
+        local v = Walk(cl, c)
+        if road and not OnRoad(road, c) then offCount = offCount + 1 end
+        return v == 1 or (v == 2 and water)
+    end
     local ix, iy = 0, 0
     local cur = a
     while ix < nx or iy < ny do
@@ -811,7 +862,7 @@ local function Sees(cl, C, a, b)
             cur, ix, iy = d, ix + 1, iy + 1
         end
     end
-    return true
+    return true, offCount
 end
 NV.Sees = Sees
 
@@ -832,14 +883,24 @@ local function Pull(cl, C, cells, list)
         for i = 2, n do list[#list + 1] = cells[i] end
         return list
     end
+    -- 1.0.10.4: eine gerade Linie darf nicht mehr Zellen abseits der Strasse
+    -- kreuzen als das Stueck, das sie ersetzt (sonst schnitte das Glaetten
+    -- die Strasse ab, die die Suche gewaehlt hat).
+    local road = cl.road
+    local function Off(c) return (road and not OnRoad(road, c)) and 1 or 0 end
     local anchor, i = 1, 2
+    local offRun = Off(cells[2] or cells[1])
     while i <= n do
         Slice()
-        if i < n and i - anchor < NV.PULL and Sees(cl, C, cells[anchor], cells[i + 1]) then
-            i = i + 1
+        local ok, offLine = false, 0
+        if i < n and i - anchor < NV.PULL then ok, offLine = Sees(cl, C, cells[anchor], cells[i + 1]) end
+        local offNext = i < n and offRun + Off(cells[i + 1]) or offRun
+        if ok and (not road or offLine <= offNext) then
+            i, offRun = i + 1, offNext
         else
             list[#list + 1] = cells[i]
             anchor, i = i, i + 1
+            offRun = cells[i] and Off(cells[i]) or 0
         end
     end
     return list
@@ -942,7 +1003,9 @@ function NV.Bridge(st, ka, ca, kb, cb, out, limit)
                             or (GW(ax, ay + DY[oy]) ~= 0 and Open(ax, ay, oy) and Open(ax, ay + DY[oy], ox))
                     end
                     if open then
+                        local _, clb2, cb2 = Split(bx, by)
                         local nd = d + (dir <= 4 and 1 or 1.4142) * (v == 2 and st.swim or 1)
+                            * RoadF(st, clb2, cb2, cb2)
                         local b = GKey(bx, by)
                         if (not dist[b] or nd < dist[b]) and (not limit or nd <= limit) then
                             dist[b], prev[b] = nd, a
@@ -1045,7 +1108,7 @@ function NV.Search(c, sN, sW, gN, gW)
         if cost then
             g[id] = cost
             local n, w = NV.NodePos(st, id)
-            HeapPush(heap, cost + sqrt((n - gN) ^ 2 + (w - gW) ^ 2), id)
+            HeapPush(heap, cost + sqrt((n - gN) ^ 2 + (w - gW) ^ 2) * st.hw, id)
         end
     end
     local expanded = 0
@@ -1055,7 +1118,15 @@ function NV.Search(c, sN, sW, gN, gW)
         local gu = g[u]
         local ku, iu = floor(u / 4096), u % 4096
         local cl = NV.Cluster(st, ku)
-        if cl and f - 0.01 <= gu + 1e9 then
+        -- 1.0.10.4: veraltete Eintraege (der Eingang wurde seither billiger
+        -- erreicht) ueberspringen - sie zaehlten bisher gegen NV.MAX_EXPAND,
+        -- mit Strassenaufschlag so oft, dass lange Suchen scheiterten.
+        local stale = false
+        if cl then
+            local un, uw = NV.NodePos(st, u)
+            stale = un ~= nil and f > gu + sqrt((un - gN) ^ 2 + (uw - gW) ^ 2) * st.hw + 0.01
+        end
+        if cl and not stale then
             expanded = expanded + 1
             if expanded > NV.MAX_EXPAND then return nil end
             Slice()
@@ -1079,7 +1150,7 @@ function NV.Search(c, sN, sW, gN, gW)
                     local n, w = NV.NodePos(st, v)
                     if n then
                         g[v], from[v] = nd, u
-                        HeapPush(heap, nd + sqrt((n - gN) ^ 2 + (w - gW) ^ 2), v)
+                        HeapPush(heap, nd + sqrt((n - gN) ^ 2 + (w - gW) ^ 2) * st.hw, v)
                     end
                 end
                 pos = pos + 7

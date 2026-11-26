@@ -6025,6 +6025,36 @@ do
         local _, ac = NV.Locate(st97, aN, aW)
         assert(NV.Sees(cl97, 8, 1 * 8 + 0, ac), "Pfeil zeigt durch die Wand")
         WeintCodex.NavData[97] = nil
+        -- 1.0.10.4: Strassen. Freies Feld 8 x 8, Strasse in Zeile y = 2; von
+        -- (0,3) nach (7,3) geradeaus waeren 7 Zellen abseits (x 1,5 = 10,5),
+        -- ueber die Strasse 9,5 - der Weg nimmt die Strasse, und das Glaetten
+        -- schneidet sie nicht wieder ab.
+        local free, road = {}, {}
+        for x = 0, 7 do
+            for y = 0, 7 do
+                free[#free + 1] = "Q"
+                road[#road + 1] = (y == 2) and "/" or "A"
+            end
+        end
+        local function RoadRun(useRoad, cid)
+            WeintCodex.NavData[cid] = { cx0 = 0, cy0 = 0, nx = 1, ny = 1, cells = 8, swim = 3,
+                graph = {}, grid = {}, fcell = {}, road = useRoad and {} or nil, offroad = useRoad and 1.5 or nil,
+                raw = { graph = { [1] = E(0, 2) }, grid = { [1] = table.concat(free) }, fcell = {},
+                        road = { [1] = table.concat(road) } } }
+            local rp = NV.Search(cid, 0.5 * c8, 3.5 * c8, 7.5 * c8, 3.5 * c8)
+            local onRoad = 0
+            for i = 3, #rp - 2, 2 do
+                if math.abs(rp[i + 1] - 2.5 * c8) < 0.01 then onRoad = onRoad + 1 end
+            end
+            WeintCodex.NavData[cid] = nil
+            return rp, onRoad
+        end
+        local rp, onRoad = RoadRun(true, 93)
+        assert(rp and onRoad >= 2, "Weg folgt nicht der Strasse: " .. tostring(onRoad))
+        assert(math.abs(rp[#rp] - 3.5 * c8) < 0.01, "Ziel verfehlt")
+        -- Ohne Strassendaten: geradeaus wie bisher.
+        local _, straight = RoadRun(false, 92)
+        assert(straight == 0, "ohne Strassen ueber die Strasse")
         -- 6.40.1.0: Ebenen. Grund nur an den Enden begehbar, dazwischen zwei
         -- Ebenen (Bruecke) mit Uebergaengen +y/-y: der Weg fuehrt darueber.
         WeintCodex.NavData[96] = { cx0 = 0, cy0 = 0, nx = 1, ny = 1, cells = 4, swim = 3, zstep = 2,
