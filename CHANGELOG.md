@@ -9,6 +9,17 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.0.10.2] – 2026-11-26
+
+### Behoben
+- Codex-Knöpfe an Fenstern des Spiels (`ui/codexlinks.lua`): sichtbar nur,
+  wenn das Fenster samt Eltern sichtbar ist (`CL.HostVisible`, `IsVisible`).
+  Der Ruf-Reiter blieb nach dem Schließen des Charakterfensters für sich
+  „gezeigt“; jedes Auffrischen legte den Knopf (an `UIParent`) über die Welt.
+- Weltkarte: die Reihe der Titelknöpfe beginnt links vom sichtbaren
+  `MaximizeMinimizeFrame` (`CL.TitleEdge`, `CL.TITLE_NEIGHBOURS`), sonst
+  am Kreuz.
+
 ## [1.0.10.1] – 2026-11-26
 
 ### Geändert

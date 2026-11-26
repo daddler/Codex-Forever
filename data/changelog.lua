@@ -22,6 +22,14 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.0.10.2",
+        date    = "26.11.2026",
+        notes   = {
+            "|cff7C6CFFKein schwebender Knopf mehr|r – „WeintCodex: Ruf-Belohnungen“ blieb manchmal mitten auf dem Bildschirm stehen, nachdem das Charakterfenster beim Ruf geschlossen wurde, und ging nur mit /reload weg. Jetzt erscheint er nur, wenn der Ruf-Reiter wirklich offen ist.",
+            "|cff7C6CFFWeltkarte|r – der Codex-Knopf liegt nicht mehr halb über dem Knopf zum Maximieren, sondern links daneben.",
+        },
+    },
+    {
         version = "1.0.10.1",
         date    = "26.11.2026",
         notes   = {
