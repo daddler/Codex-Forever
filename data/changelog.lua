@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.0.10.5",
+        date    = "26.11.2026",
+        notes   = {
+            "|cff7C6CFFDornen und Feuerschild|r – wirkt der Wichtel eines Hexers Feuerschild auf dich, überschreibt das deine Dornen. Die Erinnerung „Dornen fehlt“ gibt sich damit jetzt zufrieden, statt die ganze Instanz im Bild zu stehen. Das gilt auch für Erinnerungen, die du selbst angelegt hast.",
+        },
+    },
+    {
         version = "1.0.10.4",
         date    = "26.11.2026",
         notes   = {

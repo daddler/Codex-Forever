@@ -9,6 +9,14 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.0.10.5] – 2026-11-26
+
+### Behoben
+- Erinnerungen (`ui/reminders.lua`): Feuerschild des Wichtels (2947, 8316,
+  8317, 11770, 11771 und Name, Art classic) gilt für Dornen (`R.ALSO`).
+  `R.Also` prüft auch Text und aufgelösten Zauber; `R.PlayerAura` fragt den
+  Ersatz auch bei einzelnen, selbst angelegten Regeln ohne `any`.
+
 ## [1.0.10.4] – 2026-11-26
 
 ### Geändert
