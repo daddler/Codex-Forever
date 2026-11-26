@@ -5977,6 +5977,17 @@ do
         assert(NV.HeightsAt(12345, 0, 0) == nil, "Hoehe ohne Karte")
         local sN, sW, rest = NV.Steer(p2, 0.5 * cs, 1.5 * cs)
         assert(sN > 0.5 * cs and rest > 0, "Pfeil nicht voraus")
+        -- 1.0.10.1: nach einer Suche aufraeumen; danach geht es weiter.
+        local st99 = NV.State(99)
+        assert(next(st99.clusters) ~= nil, "nichts entpackt")
+        NV.Trim(0, 0)
+        assert(next(st99.clusters) == nil, "nach dem Aufraeumen noch Abschnitte im Speicher")
+        local p3 = NV.Search(99, 0.5 * cs, 1.5 * cs, NV.TILE + 3.5 * cs, 1.5 * cs)
+        assert(p3 and #p3 == #p2, "nach dem Aufraeumen anderer Weg")
+        NV.Trim(1, 0)
+        local held = 0
+        for _, cl in pairs(st99.clusters) do if cl then held = held + 1 assert(not cl.cells and not cl.surf, "Gitter behalten") end end
+        assert(held == 1, "nicht auf ein Wegenetz geraeumt: " .. held)
         -- 6.37.1.0: Wand quer durch den Abschnitt, Luecke nur am Rand - die
         -- geglaettete Linie geht durch die Luecke, kein Stueck kreuzt die Wand.
         local cells = {}

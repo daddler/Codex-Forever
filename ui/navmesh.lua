@@ -40,7 +40,8 @@ NV.LOOKAHEAD = 30      -- der Pfeil zeigt so weit voraus auf den Weg
 NV.CORNER = 6          -- so nah an einer Ecke: schon um sie herum zeigen
 NV.CUT = 5             -- Ecken bis so weit neben der Sichtlinie gelten als gerade (6.83.1.0)
 NV.CACHE = 600         -- entpackte Wegenetze im Speicher (je rund 1 KB)
-NV.CELLS = 32          -- entpackte Gitter im Speicher (je rund 4,5 KB)
+NV.CELLS = 8           -- entpackte Gitter mit Ebenen im Speicher (1.0.10.1: vorher 32 -
+                       -- ein Abschnitt mit Ebenen wie Ironforge kostet entpackt ~0,5 MB)
 
 local byte, floor, sqrt, huge = string.byte, math.floor, math.sqrt, math.huge
 local coroutine, os = _G.coroutine, _G.os
@@ -198,6 +199,42 @@ function NV.Evict()
     else
         cachedCount = 0
     end
+end
+
+-- 1.0.10.1 (/wcui speicher: Gelaendekarte 17,7 MB): nach einer Suche nur
+-- die zuletzt gebrauchten behalten - waehrend der Suche braucht es viele
+-- Wegenetze, danach nur die um Start und Ziel (fuer das naechste Neusuchen).
+NV.CACHE_IDLE = 150    -- Wegenetze nach einer Suche
+NV.CELLS_IDLE = 3      -- Gitter mit Ebenen nach einer Suche
+function NV.Trim(keepGraphs, keepCells)
+    keepGraphs, keepCells = keepGraphs or NV.CACHE_IDLE, keepCells or NV.CELLS_IDLE
+    while cellsCount > keepCells do
+        local victim, vu
+        for _, s2 in pairs(states) do
+            for _, c2 in pairs(s2.clusters) do
+                if c2 and c2.cells and (not vu or c2.cellsUsed < vu) then victim, vu = c2, c2.cellsUsed end
+            end
+        end
+        if not victim then cellsCount = 0 break end
+        victim.cells, victim.surf = nil, nil
+        cellsCount = cellsCount - 1
+    end
+    if cachedCount <= keepGraphs then return end
+    -- Ein Durchlauf und eine Sortierung (NV.Evict je Stueck waere ~600 x 450
+    -- Schritte in einem Bild).
+    local list = {}
+    for _, st in pairs(states) do
+        for k, cl in pairs(st.clusters) do
+            if cl then list[#list + 1] = { cl.used, st, k } end
+        end
+    end
+    table.sort(list, function(a, b) return a[1] > b[1] end)
+    for i = keepGraphs + 1, #list do
+        local st, k = list[i][2], list[i][3]
+        if st.clusters[k].cells then cellsCount = cellsCount - 1 end
+        st.clusters[k] = nil
+    end
+    cachedCount = math.min(#list, keepGraphs)
 end
 
 -- Lage einer Zelle (0-basiert) im Abschnitt k: Norden, Westen.
@@ -372,20 +409,21 @@ local function AddLink(lk, a, b, dir)
     l[#l + 1] = dir
 end
 
--- Ebenen eines Abschnitts: cl.surf = { fat, fval, first, lk } oder false.
+-- Ebenen eines Abschnitts: cl.surf = { fat, fval, first, lkAt, lkL } oder false.
+local NO_LINKS = {} -- Abschnitte ohne Ebenen teilen sich die leere Liste (nie beschrieben)
 function NV.Surf(st, cl)
     if cl.surf ~= nil then return cl.surf end
     if not NV.Cells(st, cl) then cl.surf = false return false end
     local fs = Field(st.D, "floor", cl.k + 1)
     local C = st.C
     local CC = C * C
-    local sf = { fat = {}, fval = {}, first = {}, lk = {} }
+    local sf = { fat = {}, fval = {}, first = {}, lk = {}, lkAt = NO_LINKS, lkL = NO_LINKS }
     -- 1.0.5.63: die Hoehen bleiben (sf.zb Grund, sf.fz Ebenen, in Einheiten
     -- des Spiels) - NV.HeightsAt liest sie fuer "hoeher/tiefer" am Pfeil.
     local hs = Field(st.D, "height", cl.k + 1)
     local zb = hs and Heights(st, cl, hs) or {}
     sf.zb = zb
-    if not fs or fs == "" then cl.surf = sf return sf end
+    if not fs or fs == "" then sf.lk = nil cl.surf = sf return sf end
     local fz, steps = {}, {}
     sf.fz = fz
     local node, pos = CC, 4
@@ -459,6 +497,19 @@ function NV.Surf(st, cl)
     for _, o in ipairs(own) do
         if o[2] < CC then AddLink(sf.lk, o[2], o[1], REV[o[3]]) end
     end
+    -- 1.0.10.1 (/wcui speicher: Gelaendekarte 17,7 MB): eine kleine Tabelle
+    -- je Knoten kostete in Ironforge 960 KB von 1,4 MB. Jetzt flach:
+    -- lkAt[Knoten] = Anfang * 4096 + Anzahl in lkL, lkL[i] = Ziel * 8 + Richtung - 1.
+    local at, list, n = {}, {}, 0
+    for a, l in pairs(sf.lk) do
+        local cnt = #l / 2
+        at[a] = (n + 1) * 4096 + cnt
+        for j = 1, #l, 2 do
+            n = n + 1
+            list[n] = l[j] * 8 + l[j + 1] - 1
+        end
+    end
+    sf.lk, sf.lkAt, sf.lkL = nil, at, list
     cl.surf = sf
     return sf
 end
@@ -495,7 +546,7 @@ function NV.Grid(st, cl, start, into, target)
     end
     local tc = target and NodeCellOf(sf, CC, target)
     local tx, ty = tc and floor(tc / C), tc and tc % C
-    local lk = sf.lk
+    local lkAt, lkL = sf.lkAt, sf.lkL
     local function Relax(a, b, dir, d)
         local v = NodeWalk(cl, sf, CC, b)
         if v == 0 then return end
@@ -546,9 +597,13 @@ function NV.Grid(st, cl, start, into, target)
                     end
                 end
             end
-            local l = lk[a]
-            if l then
-                for j = 1, #l, 2 do Relax(a, l[j], l[j + 1], d) end
+            local at = lkAt[a]
+            if at then
+                local i0 = floor(at / 4096)
+                for j = i0, i0 + at % 4096 - 1 do
+                    local v = lkL[j]
+                    Relax(a, floor(v / 8), v % 8 + 1, d)
+                end
             end
         end
     end
@@ -1134,6 +1189,7 @@ Pump = function()
         NV.stats.failed = NV.stats.failed + 1
         Remember(job.c, job.gN, job.gW, nil, nil, job.sN, job.sW)
         pump:SetScript("OnUpdate", nil)
+        NV.Trim()
         return
     end
     if coroutine.status(job.co) == "dead" then
@@ -1141,6 +1197,7 @@ Pump = function()
         if path then NV.stats.done = NV.stats.done + 1 else NV.stats.failed = NV.stats.failed + 1 end
         Remember(job.c, job.gN, job.gW, path, len, job.sN, job.sW)
         pump:SetScript("OnUpdate", nil)
+        NV.Trim()
     end
 end
 Pump = K.Measured and K.Measured("Geländekarte", Pump) or Pump
