@@ -5,7 +5,7 @@
 -- aendern; neu erzeugen.
 --
 -- Quelle (nur fuer Betreuer): SkillUp Forever 1.14.17, nur Daten.
--- Schwellen: wago.tools DB2, wow_classic_beta 1.60.1.70959, 2026-11-17.
+-- Schwellen: wago.tools DB2, wow_classic_beta 1.60.1.71091, 2026-11-24.
 -- Raenge: CMaNGOS classic-db (Lehrer, Buch, Quest) - Art `classic`.
 --
 -- P.SU_THRESH[Zauber] = "Lernen Gelb Gruen Grau" ersetzt die Zeile aus
@@ -324,7 +324,7 @@ P.SU_THRESH = {
     [9820] = "160 185 197 210",
     [9916] = "200 200 212 225",
     [9942] = "215 215 225 235",
-    [9957] = "225 225 235 245",
+    [9957] = "205 225 235 245",
     [9972] = "235 235 245 255",
     [9979] = "240 240 250 260",
     [9980] = "240 240 250 260",

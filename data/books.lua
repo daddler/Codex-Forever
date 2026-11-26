@@ -19,6 +19,7 @@ WeintCodex.BooksData = {
     -- { Abgabequest, Gegenstand, Fraktion (0 beide, 1 Allianz, 2 Horde), Name, Karte, x, y }
     books = {
         { 79095, 208185, 2, "The Apothecary's Metaphysical Primer", 1420, 59.4, 52.3 },
+        { 79096, 210177, 2, "Ataeric: On Arcane Curiosities", 1421, 43.4, 41.2 },
         { 78127, 209844, 0, "The Dalaran Digest, Vol. 23", 1421, 63.5, 63.1 },
         { 79094, 207972, 2, "The Lessons of Ta'zo", 1454, 38.7, 78.4 },
         { 78145, 209847, 0, "Arcanic Systems Manual", 1413, 56.3, 8.8 },

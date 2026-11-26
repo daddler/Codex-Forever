@@ -161,6 +161,10 @@ local function SlashCodex(msg)
         return
     end
 
+    if verb == "feuerwerk" or verb == "fireworks" then
+        if WeintCodex.Fireworks then WeintCodex.Fireworks.Celebrate() end
+        return
+    end
     if verb == "endgame" or verb == "60" or verb == "level60" or verb == "stufe60" then
         Open("endgame")
         return

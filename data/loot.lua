@@ -9,7 +9,7 @@
 --   Art `classic` fuer Classic-Inhalte, `community` fuer neue Inhalte
 --   von Forever (Instanzen und Gegenstaende ab Nummer 100000).
 -- Namen, Symbole und Qualitaet der Gegenstaende liefert der Client.
--- 61 Bereiche, 604 Bosse/Gruppen, 4719 Eintraege, 3640 Gegenstaende.
+-- 61 Bereiche, 605 Bosse/Gruppen, 4728 Eintraege, 3647 Gegenstaende.
 -- FORMAT:
 --   i[n] = Schluessel, Rubrik (d Dungeon, r Schlachtzug, f Ruf, p PvP, s Sets),
 --          Art, Gebiet/Fraktion (Nummer oder 0), Name, Stufen  (Tabulator)
@@ -190,14 +190,15 @@ WeintCodex.LootData = {
             "Doans Geldkassette		7146",
         },
         [11] = {
-            "Herod	3975	7719:33,7718:34,10330:14,7717:14",
-            "Trash		5819,7755,7727,7728,7759,7754,10332,1992,2262,7787,7729,7761,7752,8226,7786,5756,7736,8225,7753,7730,7757,10333,10329,23192",
+            "Herod	3975	7719:33,7718:34,10330:14,7717:14,274295",
+            "Trash		5819,7755,7727,7728,7759,7754,10332,1992,2262,7787,7729,7761,7752,8226,7786,5756,7736,8225,7753,7730,7757,10333,10329,23192,7758,7760",
         },
         [12] = {
             "Hochinquisitor Schönufer	4542	19507:34,19508:32,19509:32",
             "Scharlachroter Kommandant Mograine	3976	7724:20,10330:15,7726:43,7723:19",
-            "Hochinquisitorin Weißsträhne	3977	7720:38,7722:37,7721:19",
+            "Hochinquisitorin Weißsträhne	3977	7720:38,7722:37,7721:19,7495,8157",
             "Trash		5819,7755,7727,7728,7759,7760,7754,10332,1992,2262,7787,7729,7761,7752,8226,7786,5756,7736,8225,7753,7730,7758,7757,10328,10331,10329",
+            "Quest Rewards - Alliance Only		6829,6830,6831,11262",
         },
         [13] = {
             "Tuten'kash	7355	10776:34,10775:32,10777:30",

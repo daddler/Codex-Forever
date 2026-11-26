@@ -302,6 +302,9 @@ def build_quests(nf, cx):
                 continue
             q = {"id": qid, "name": name, "faction": FACTION.get(side, "both")}
             r = db["q"].get(qid)
+            # Kurze Datensaetze (ohne Stufe/Mindeststufe) gelten als unbekannt.
+            if r and (len(r) < 3 or not str(r[1]).lstrip("-").isdigit() or not str(r[2]).lstrip("-").isdigit()):
+                r = None
             level, req = (int(r[1]), int(r[2])) if r else (0, 0)
             if r:
                 stats["db"] += 1

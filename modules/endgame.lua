@@ -28,7 +28,7 @@ local C = WeintCodex.Colors
 EG.HEAD = 84
 EG.ROW_H = 44
 EG.MIN_DUNGEON = 55       -- Dungeons, deren Bereich bis mindestens hierhin reicht
-EG.cat = "att"
+EG.cat = "next"
 EG.sel = nil              -- Schluessel der gewaehlten Zeile
 
 -- Dungeon-Set 1 (Tier 0) und 2 (Tier 0.5) je Klasse - Setnummern wie in
@@ -39,7 +39,9 @@ EG.T05 = { WARRIOR = 511, PALADIN = 516, HUNTER = 515, ROGUE = 512, PRIEST = 514
            SHAMAN = 519, MAGE = 517, WARLOCK = 518, DRUID = 513 }
 
 EG.CATS = {
+    { key = "next", label = "Als Nächstes" },
     { key = "att",  label = "Einstimmungen" },
+    { key = "t05",  label = "Tier 0.5 (Questreihe)" },
     { key = "tier", label = "Tier 0" },
     { key = "dung", label = "Dungeons ab Stufe 55" },
     { key = "rep",  label = "Ruf" },
@@ -106,6 +108,89 @@ function EG.AttLine(e)
 end
 
 --------------------------------------------------
+-- Tier 0.5: die Questreihe zu Dungeon-Set 2 (data/tier05.lua, ab 1.0.10.0)
+--------------------------------------------------
+-- Ein Schritt ist erledigt, wenn der Client eine seiner Quests als
+-- abgeschlossen meldet (bei "einer von" reicht eine, bei Klassenquests die
+-- von Forever oder die aus Classic). Namen: Client, sonst Questdatenbank.
+
+local function QuestRec(id)
+    local QH = WeintCodex.UIQuestHelper
+    return QH and QH.Quest and QH.Quest(id) or nil
+end
+function EG.QuestTitle(id)
+    local ql = _G.C_QuestLog
+    local t = ql and Ask(ql.GetTitleForQuestID, id)
+    if type(t) == "string" and t ~= "" then return t end
+    local r = QuestRec(id)
+    return r and r[1] or ("Quest " .. id)
+end
+local function Side()
+    local f = Faction()
+    return f == "Horde" and "H" or (f == "Alliance" and "A") or nil
+end
+
+-- { { ids = {..}, any = bool, name, level, giver } } fuer Klasse und Seite.
+function EG.Tier05Steps(class, side)
+    local d = WeintCodex.Tier05Data
+    class, side = class or EG.Class(), side or Side()
+    if not (d and class and side) then return nil end
+    local mine = d.class[side] and d.class[side][class]
+    local out = {}
+    for _, s in ipairs(d.steps) do
+        local ids, any
+        if type(s) == "number" then ids = { s }
+        elseif type(s) == "string" then ids = mine and mine[s] or nil any = true
+        elseif s.any then ids, any = s.any, true
+        elseif s[side] then ids = { s[side] } end
+        if ids and #ids > 0 then
+            local r = QuestRec(ids[1])
+            out[#out + 1] = { ids = ids, any = any and #ids > 1 and type(s) == "table" and s.any ~= nil,
+                name = EG.QuestTitle(ids[1]), level = r and r[3] or nil,
+                giver = r and r[6] and r[6][1] or nil }
+        end
+    end
+    return out
+end
+
+-- Stand eines Schritts: true/false/nil (Client antwortet nicht).
+function EG.StepDone(step)
+    local QH = WeintCodex.UIQuestHelper
+    if not (QH and QH.Done) then return nil end
+    local any = false
+    for _, id in ipairs(step.ids) do
+        local v = QH.Done(id)
+        if v == true then return true end
+        if v == false then any = true end
+    end
+    if any then return false end
+    return nil
+end
+
+-- { steps, done, total, next, index, known }
+function EG.Tier05()
+    local steps = EG.Tier05Steps()
+    if not steps then return nil end
+    local st = { steps = steps, done = 0, total = #steps, known = true }
+    for i, s in ipairs(steps) do
+        local d = EG.StepDone(s)
+        s.state = d
+        if d == true then st.done = st.done + 1
+        else
+            if d == nil then st.known = false end
+            if not st.next then st.next, st.index = s, i end
+        end
+    end
+    return st
+end
+
+function EG.GuideStep(step)
+    local AT = WeintCodex.UIAttunements
+    if not (AT and step) then return false end
+    return AT.Guide({ giver = step.giver, name = step.name })
+end
+
+--------------------------------------------------
 -- Tier 0
 --------------------------------------------------
 
@@ -163,8 +248,6 @@ function EG.Tier(class)
     end
     local D = WeintCodex.LootData
     out.status = D and D.SET_STATUS and D.SET_STATUS[setId]
-    local next5 = class and EG.T05[class]
-    out.t05 = D and D.SET_STATUS and next5 and D.SET_STATUS[next5]
     return out
 end
 
@@ -229,6 +312,91 @@ function EG.Factions()
 end
 
 --------------------------------------------------
+-- Als Naechstes: aus dem Stand im Spiel, das Dringendste zuerst
+--------------------------------------------------
+-- Keine Ratschlaege, nur Folgerungen aus Daten und Client: was abgabebereit
+-- ist, was im Questlog steht, der naechste Schritt jeder begonnenen Kette,
+-- fehlende Teile und Belohnungen, die du schon kaufen kannst.
+
+EG.T05_NOTES = {
+    [8961] = "Auf Forever verlangt dieser Schritt einen anderen Gegenstand als in Classic: ihn lässt Asharell fallen, in einer Höhle in der Brennenden Steppe (72.4, 68.5).",
+}
+EG.NEXT_MAX = 8
+
+function EG.Next()
+    local out = {}
+    local lvl = EG.Level() or 0
+    local AT = WeintCodex.UIAttunements
+    local function Add(l) if #out < EG.NEXT_MAX then l.key = "next:" .. (#out + 1) out[#out + 1] = l end end
+    -- 1. Abgabebereite Dungeonquests
+    for _, e in ipairs(EG.Dungeons()) do
+        local n = e.counts.ready or 0
+        if n > 0 then
+            local d = e.dungeon
+            Add({ name = n .. (n == 1 and " Quest" or " Quests") .. " abgeben: " .. EG.DungeonName(d), sub = "erledigt, wartet beim Geber",
+                color = "success", why = "Diese Quests sind fertig – beim Geber abgeben bringt Erfahrung oder Belohnung.",
+                go = { text = "Zum Dungeon", fn = function() EG.GoDungeon(d.id) end } })
+        end
+    end
+    -- 2./4. Einstimmungen: erst was im Questlog steht, dann was beginnen kann
+    local att = EG.Attunements()
+    for pass = 1, 2 do
+        for _, e in ipairs(att) do
+            local st, nx = e.st, e.st.next
+            local inLog = st.state == "log"
+            local fits = st.state == "open" and nx and (nx.level or 0) <= lvl + 2
+            if nx and ((pass == 1 and inLog) or (pass == 2 and fits)) then
+                Add({ name = (st.done > 0 and "Weiter: " or "Beginnen: ") .. e.att.name,
+                    sub = "Schritt " .. (st.done + 1) .. " von " .. st.total .. ": " .. nx.name .. (inLog and " – im Questlog" or ""),
+                    color = "accent", entry = e, why = "Die Einstimmung öffnet " .. e.att.name .. ". Rechts die ganze Kette.",
+                    go = (AT and AT.GiverPlace(nx.giver)) and { text = "Pfeil zum Geber", fn = function() AT.Guide(nx) end } or nil })
+            end
+        end
+        -- 3. Tier 0.5 nach den Einstimmungen im Questlog
+        if pass == 1 then
+            local t5 = EG.Tier05()
+            if t5 and t5.next and lvl >= 58 then
+                local nx = t5.next
+                Add({ name = "Tier 0.5: Schritt " .. t5.index .. " von " .. t5.total, sub = nx.name,
+                    color = "accent", why = "Die Questreihe zu Dungeon-Set 2 deiner Klasse. Alle Schritte unter „Tier 0.5“.",
+                    go = (AT and AT.GiverPlace(nx.giver)) and { text = "Pfeil zum Geber", fn = function() EG.GuideStep(nx) end } or nil })
+            end
+        end
+    end
+    -- 5. Tier 0: was fehlt, und wo das erste davon faellt
+    local t = EG.Tier()
+    if t and t.known and t.have < #t.items then
+        local first
+        for _, it in ipairs(t.items) do if it.owned == false and it.drop then first = it break end end
+        Add({ name = "Tier 0: " .. (#t.items - t.have) .. " von " .. #t.items .. " Teilen fehlen",
+            sub = first and ("z. B. " .. (ItemName(first.id) or ("Gegenstand " .. first.id)) .. " – " .. first.drop) or (t.name or ""),
+            color = "textNormal", why = "Dein Dungeon-Set 1. Unter „Tier 0“ jedes Teil mit Fundort.",
+            go = { text = "Tier 0 zeigen", fn = function() EG.cat, EG.sel = "tier", nil EG.Show() end } })
+    end
+    -- 6. Ruf: Belohnungen, die du schon kaufen kannst
+    for _, e in ipairs(EG.Factions()) do
+        if e.reach > 0 then
+            local fid = e.fid
+            Add({ name = "Ruf: " .. e.name, sub = e.reach .. " von " .. e.total .. " Belohnungen mit deinem Ruf erhältlich",
+                color = "textNormal", why = "Was der Rüstmeister dir mit deiner Rufstufe schon verkauft.",
+                go = { text = "Belohnungen", fn = function() EG.GoRep(fid) end } })
+        end
+    end
+    return out
+end
+
+function EG.GoDungeon(id)
+    local DP, nav = WeintCodex.DungeonPages, WeintCodex.Navigation
+    if nav and nav.GoToTab then nav.GoToTab("dungeons") end
+    if DP and DP.Select then DP.Select(id) end
+end
+function EG.GoRep(fid)
+    local BP, nav = WeintCodex.BooksPage, WeintCodex.Navigation
+    if BP then BP.cat, BP.repSel = "rep", fid end
+    if nav and nav.GoToTab then nav.GoToTab("buecher") end
+end
+
+--------------------------------------------------
 -- Zusammenfassung oben
 --------------------------------------------------
 
@@ -240,6 +408,8 @@ function EG.Summary()
         if e.st.state == "done" then done = done + 1 elseif e.st.state == "unknown" then unknown = true end
     end
     if #att > 0 then parts[#parts + 1] = "Einstimmungen " .. (unknown and "?" or tostring(done)) .. "/" .. #att end
+    local t5 = EG.Tier05()
+    if t5 then parts[#parts + 1] = "Tier 0.5 " .. (t5.known and tostring(t5.done) or "?") .. "/" .. t5.total end
     local t = EG.Tier()
     if t then parts[#parts + 1] = "Tier 0 " .. (t.known and tostring(t.have) or "?") .. "/" .. #t.items end
     return table.concat(parts, "  ·  ")
@@ -348,7 +518,21 @@ end
 -- Die Zeilen der gewaehlten Rubrik: { key, name, sub, color, go = { text, fn }, item }
 function EG.Lines(cat)
     local out = {}
-    if cat == "att" then
+    if cat == "next" then
+        return EG.Next()
+    elseif cat == "t05" then
+        local t5 = EG.Tier05()
+        for i, st in ipairs(t5 and t5.steps or {}) do
+            local cur = t5.next == st
+            local AT = WeintCodex.UIAttunements
+            out[#out + 1] = { key = "t05:" .. i, name = i .. ". " .. st.name .. (st.any and " (eine von " .. #st.ids .. ")" or ""),
+                sub = ((st.state == true and "erledigt") or (st.state == nil and "Stand unbekannt") or (cur and "als Nächstes") or "offen")
+                    .. (st.level and (" · Stufe " .. st.level) or "") .. (EG.T05_NOTES[st.ids[1]] and " · Hinweis rechts" or ""),
+                color = (st.state == true and "success") or (cur and "accent") or "textMuted", t05 = st,
+                go = (st.state ~= true and AT and AT.GiverPlace(st.giver)) and { text = "Pfeil zum Geber", fn = function() EG.GuideStep(st) end } or nil }
+        end
+        return out
+    elseif cat == "att" then
         local AT = WeintCodex.UIAttunements
         for _, e in ipairs(EG.Attunements()) do
             local st = e.st
@@ -419,7 +603,13 @@ local function SidebarItems()
         tier = t and { text = (t.known and t.have or "?") .. "/" .. #t.items, color = (t.have == #t.items) and "success" or "textMuted" } or nil,
         dung = { text = tostring(#EG.Dungeons()), color = "textMuted" },
         rep = { text = tostring(#EG.Factions()), color = "textMuted" },
+        next = { text = tostring(#EG.Next()), color = "accent" },
     }
+    local t5 = EG.Tier05()
+    if t5 then
+        status.t05 = { text = (t5.known and t5.done or "?") .. "/" .. t5.total,
+                       color = (t5.done == t5.total) and "success" or "textMuted" }
+    end
     for _, c in ipairs(EG.CATS) do
         local key = c.key
         items[#items + 1] = { label = c.label, status = status[key],
@@ -451,6 +641,8 @@ function EG.Inspector(line)
         }
     end
     local blocks = { { type = "header", text = line.name } }
+    if line.why then blocks[#blocks + 1] = { type = "text", text = line.why } end
+    if line.sub and line.key and line.key:find("^next:") then blocks[#blocks + 1] = { type = "text", text = line.sub } end
     if line.entry and line.entry.chain then
         local e = line.entry
         local items = {}
@@ -468,6 +660,23 @@ function EG.Inspector(line)
             { label = "Schritte", value = e.st.done .. " von " .. e.st.total },
         }}
         blocks[#blocks + 1] = { type = "list", title = "Die Kette", items = items }
+    elseif line.t05 then
+        local st = line.t05
+        local AT = WeintCodex.UIAttunements
+        local who
+        if AT then who = select(4, AT.GiverPlace(st.giver)) end
+        local rows = {
+            { label = "Stand", value = (st.state == true and "erledigt") or (st.state == nil and "unbekannt") or "offen" },
+            { label = "Stufe", value = st.level and tostring(st.level) or "?" },
+            { label = "Geber", value = who or "unbekannt" },
+        }
+        blocks[#blocks + 1] = { type = "rows", rows = rows }
+        if st.any then
+            local items = {}
+            for _, id in ipairs(st.ids) do items[#items + 1] = { label = EG.QuestTitle(id) } end
+            blocks[#blocks + 1] = { type = "list", title = "Eine davon – je nachdem, was Bodley dir gibt", items = items }
+        end
+        if EG.T05_NOTES[st.ids[1]] then blocks[#blocks + 1] = { type = "text", text = EG.T05_NOTES[st.ids[1]] } end
     elseif line.tierItem then
         local t = EG.Tier()
         blocks[#blocks + 1] = { type = "rows", rows = {
@@ -521,8 +730,14 @@ function EG.Show()
             goal = "Für deine Klasse kennt der Bestand kein Dungeon-Set."
         else
             goal = (t.name or "Dungeon-Set 1") .. ": " .. (t.known and t.have or "?") .. " von " .. #t.items .. " Teilen"
-                .. (t.t05 == 0 and " · Dungeon-Set 2 (Tier 0.5): laut gesammelten Daten noch nicht in Forever" or "")
         end
+    elseif EG.cat == "t05" then
+        local t5 = EG.Tier05()
+        goal = t5 and ("Die Questreihe zu Dungeon-Set 2 für deine Klasse – ab Stufe 58, mit Tier 0 als Voraussetzung. "
+            .. (t5.known and t5.done or "?") .. " von " .. t5.total .. " Schritten.")
+            or "Für deine Klasse und Fraktion kennt der Bestand keine Tier-0.5-Reihe."
+    elseif EG.cat == "next" then
+        goal = "Was du jetzt tun kannst – aus deinem Stand im Spiel, das Dringendste zuerst. " .. EG.Summary()
     elseif EG.cat == "dung" then
         goal = "Dungeons, deren Stufenbereich bis mindestens " .. EG.MIN_DUNGEON .. " reicht, mit dem Stand ihrer Quests."
     elseif EG.cat == "rep" then

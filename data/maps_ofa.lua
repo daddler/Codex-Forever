@@ -13,8 +13,6 @@ local FLIGHT = {   -- { Karte, x, y, Fraktion, Klasse }
     { 1450, 44.3, 45.9, "AH", "DRUID" },   -- Bunthen Plainswind
     { 1450, 44.2, 45.2, "AH", "DRUID" },   -- Silva Fil'naveth
     { 2482, 68.7, 46.8, "AH" },   -- Fayran Elthas
-    { 2548, 59.6, 45.1, "H" },   -- Grakna
-    { 2548, 60.6, 81.5, "A" },   -- Gretchen Mayberry
 }
 local CROSS = {    -- { Karte, x, y, Richtung, Zielkarte }
     { 1448, 0.650, 0.084, -0.345, 1450 },

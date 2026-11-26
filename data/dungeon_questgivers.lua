@@ -14,14 +14,14 @@ if not (J and J.PLACES and J.DATA) then return end
 local NEW = {
     [1394] = { map = 1458, x = 0.578, y = 0.654, who = "Parqual Fintallas" }, -- scarlet_monastery: Final Passage
     [1442] = { map = 1439, x = 0.374, y = 0.401, who = "Thundris Windwirker" }, -- blackfathom_deeps: Seeking the Kor Gem
-    [1654] = { map = 1426, x = 0.525, y = 0.369, who = "Jordan Stilwell" }, -- shadowfang_keep: The Test of Righteousness
+    [1654] = { map = 1426, x = 0.525, y = 0.369, who = "Jordan Stilwell" }, -- blackfathom_deeps: The Test of Righteousness
+    [1782] = { map = 1453, x = 0.646, y = 0.372, who = "Furen Longbeard" }, -- razorfen_kraul: Furen's Armor
+    [1848] = { map = 1413, x = 0.572, y = 0.303, who = "Thun'grim Firegaze" }, -- razorfen_kraul: Brutal Hauberk
     [1951] = { map = 1441, x = 0.783, y = 0.757, who = "Magus Tirth" }, -- scarlet_monastery: Rituals of Power
     [1956] = { map = 1445, x = 0.461, y = 0.571, who = "Tabetha" }, -- uldaman: Power in Uldaman
     [2769] = { map = 1455, x = 0.679, y = 0.461, who = "Klockmort Spannerspan" }, -- zulfarrak: The Brassbolts Brothers
     [2948] = { map = 1455, x = 0.364, y = 0.036, who = "Talvash del Kissel" }, -- gnomeregan: Gnome Improvement
     [2950] = { map = 1454, x = 0.76, y = 0.254, who = "Nogg" }, -- gnomeregan: Nogg's Ring Redo
-    [3369] = { map = 1413, x = 0.482, y = 0.328, who = "Falla Sagewind" }, -- wailing_caverns: In Nightmares
-    [3370] = { map = 1413, x = 0.482, y = 0.328, who = "Falla Sagewind" }, -- wailing_caverns: In Nightmares
     [3906] = { map = 1418, x = 0.033, y = 0.483, who = "Thunderheart" }, -- blackrock_depths: Disharmony of Flame
     [4143] = { map = 1444, x = 0.451, y = 0.256, who = "Gregan Brewspewer" }, -- sunken_temple: Haze of Evil
     [4262] = { map = 1428, x = 0.854, y = 0.701, who = "Jalinda Sprig" }, -- blackrock_depths: Overmaster Pyron
@@ -36,6 +36,7 @@ local NEW = {
     [7581] = { map = 1419, x = 0.341, y = 0.501, who = "Daio der Klapprige" }, -- dire_maul: The Prison's Bindings
     [7629] = { map = 1428, x = 0.124, y = 0.316, who = "Gorzeeki Wildeyes" }, -- scholomance: Imp Delivery
     [7631] = { map = 1428, x = 0.127, y = 0.316, who = "Mor'zul Bloodbringer" }, -- dire_maul: Dreadsteed of Xoroth
+    [7643] = { map = 1453, x = 0.484, y = 0.502, who = "Lord Grayson Shadowbreaker" }, -- dire_maul: Ancient Equine Spirit
     [7647] = { map = 1453, x = 0.484, y = 0.502, who = "Lord Grayson Shadowbreaker" }, -- scholomance: Judgment and Redemption
     [7848] = { map = 1427, x = 0.321, y = 0.947, who = "Lothos Riftwaker" }, -- blackrock_depths: Attunement to the Core
     [8232] = { map = 1447, x = 0.424, y = 0.426, who = "Ogtinc" }, -- sunken_temple: The Green Drake
@@ -57,6 +58,8 @@ local NEW = {
     [79360] = { map = 1441, x = 0.461, y = 0.517, who = "Rau Cliffrunner" }, -- razorfen_kraul: Elemental Aid
     [79946] = { map = 1453, x = 0.485, y = 0.491, who = "Katharina die Reine" }, -- scarlet_monastery: A Brother In Need
     [80411] = { map = 1416, x = 0.845, y = 0.803, who = "Fahrad" }, -- zulfarrak: The Talisman of Kazdor
+    [81790] = { map = 1448, x = 0.447, y = 0.52, who = "Gregory" }, -- blackrock_depths: Materials of Significance
+    [82084] = { map = 1458, x = 0.734, y = 0.33, who = "Owen Thadd" }, -- zulfarrak: A Lesson in Literacy
     [84330] = { map = 1423, x = 0.534, y = 0.585, who = "Orthas" }, -- stratholme: A Wee Bit O' Necromancy
     [92065] = { map = 1447, x = 0.423, y = 0.201, who = "Torhüter Donnerschrei" }, -- blackmaw_hold: Blackmaw Reclamation
     [92066] = { map = 1447, x = 0.413, y = 0.201, who = "Hüter des Wissens Nok" }, -- blackmaw_hold: The Twin Bears
@@ -98,6 +101,7 @@ local NEW = {
     [95928] = { map = 1412, x = 0.35, y = 0.221, who = "Mayena Earthseeker" }, -- shapers_terrace: Crystalline Elements
     [96076] = { map = 1434, x = 0.285, y = 0.759, who = "Pix Xizzix" }, -- dire_maul: In Demand - Ancient Elven Curiosities
     [96078] = { map = 1434, x = 0.323, y = 0.277, who = "Kin'weelay" }, -- drowned_city: A Tale Spun Around the Fire
+    [96246] = { map = 1447, x = 0.42, y = 0.389, who = "Ekkal" }, -- blackmaw_hold: Blackmaw Pouches
     [96264] = { map = 1455, x = 0.471, y = 0.138, who = "Veyric Thunderhame" }, -- razorfen_kraul: Elemental Aid
     [96332] = { map = 1445, x = 0.703, y = 0.189, who = "Sergeant Ulka" }, -- alcaz_island_prison: A Little Payback
     [96334] = { map = 1445, x = 0.703, y = 0.189, who = "Sergeant Ulka" }, -- alcaz_island_prison: Blood Red Bandanas
@@ -114,13 +118,13 @@ local NEW = {
     [96776] = { map = 1412, x = 0.326, y = 0.242, who = "Olana Brighthoof" }, -- maraudon: An'she's Radiance
     [97049] = { map = 1458, x = 0.475, y = 0.733, who = "Chemiker Fuely" }, -- shapers_terrace: Essence of Seeping Slimes
     [97130] = { map = 1416, x = 0.154, y = 0.741, who = "Erzmagier Timear" }, -- drowned_city: Ancient Gurubashi Secrets
+    [97169] = { map = 1455, x = 0.471, y = 0.138, who = "Eldrun Stormbreaker" }, -- scholomance: The Darkreaver Menace
     [97173] = { map = 1416, x = 0.154, y = 0.741, who = "Erzmagier Timear" }, -- blackmaw_hold: Blackmaw Magic
     [97196] = { map = 1412, x = 0.346, y = 0.23, who = "Sutara Plainstalker" }, -- razorfen_downs: The Coldbringer's Eye
     [97197] = { map = 1412, x = 0.334, y = 0.226, who = "Alaana Stormwalker" }, -- blackrock_depths: Fragment of the Firelands
     [97198] = { map = 1412, x = 0.334, y = 0.226, who = "Muln Earthfury" }, -- blackmaw_hold: Blackmaw Magic
     [97289] = { map = 1458, x = 0.488, y = 0.693, who = "Apothekermeister Faranell" }, -- ruins_of_lordaeron: Unending Torment
     [97290] = { map = 1458, x = 0.459, y = 0.617, who = "Unfertige Monstrosität" }, -- ruins_of_lordaeron: Unending Torment
-    [97291] = { map = 1458, x = 0.488, y = 0.693, who = "Apothekermeister Faranell" }, -- ruins_of_lordaeron: Unending Torment
     [97292] = { map = 1458, x = 0.488, y = 0.693, who = "Apothekermeister Faranell" }, -- ruins_of_lordaeron: Unending Torment
     [97327] = { map = 1447, x = 0.42, y = 0.389, who = "Ekkal" }, -- blackmaw_hold: Blackmaw Pouches
     [98824] = { map = 1437, x = 0.388, y = 0.524, who = "Ausgrabungsleiter Whelgar" }, -- excavation_site: Prehistoric Prism
@@ -139,4 +143,4 @@ for _, d in pairs(J.DATA) do for _, q in ipairs(d.quests or {}) do
     local p = NEW[q.id] or MOVED[q.id]
     if p and not q.giver and not q.giverNpc then q.giverNpc = { name = p.who, map = p.map, x = p.x, y = p.y } end
 end end
-J.GIVERS_NEW, J.GIVERS_MOVED = 113, 5
+J.GIVERS_NEW, J.GIVERS_MOVED = 117, 5

@@ -181,6 +181,8 @@ data/nav_blocked.lua
 data/questdb.lua
 data/questspots_nf.lua
 data/attunements.lua
+# Tier-0.5-Questreihe (erzeugt, community), gelesen von modules/endgame.lua (1.0.10.0).
+data/tier05.lua
 data/fieldjournal.lua
 data/reprewards.lua
 data/talenttrees.lua
@@ -249,6 +251,8 @@ modules/books.lua
 modules/reppage.lua
 # Endgame: Einstimmungen, Tier 0, Dungeons ab 55, Ruf (1.0.10.0).
 modules/endgame.lua
+# Stufe 60: Feuerwerk und Begruessung (1.0.10.0).
+modules/fireworks.lua
 # Startseite (6.11.0.0): fragt Lehrer, Quests und Dungeons - nach ihnen.
 modules/home.lua
 

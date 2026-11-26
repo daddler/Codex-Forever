@@ -11557,8 +11557,9 @@ do
         -- 6.14.0.0: dazu der Eingang (Westfalen) - fuenf Geber, ein Eingang.
         -- Dungeon Journal 1.6.3: dazu Jordan Stilwell (Paladinquest 1806).
         -- 1.0.8.23: Geber aus dem Questbestand (Forever) - drei mehr.
-        assert(DP.mapLinks == 10 and DP.entranceLinks == 1,
-            "Kartenlinks in The Deadmines: " .. tostring(DP.mapLinks) .. " statt 10, Eingaenge " .. tostring(DP.entranceLinks))
+        -- 1.0.10.0: Bestaende vom 26.11. - ein Geber mehr.
+        assert(DP.mapLinks == 11 and DP.entranceLinks == 1,
+            "Kartenlinks in The Deadmines: " .. tostring(DP.mapLinks) .. " statt 11, Eingaenge " .. tostring(DP.entranceLinks))
         -- 1.0.8.23: neue Geber und in Forever versetzte.
         assert((J.GIVERS_NEW or 0) > 100, "Geber aus dem Questbestand fehlen")
         local afadra = J.Place(96394)
@@ -30122,7 +30123,30 @@ do
         local t = EG.Tier()
         assert(t and t.set == 181 and #t.items == 8, "Tier 0 des Magiers falsch")
         assert(t.have == 1 and t.known, "eigenes Teil nicht gezählt: " .. tostring(t.have))
-        assert(t.t05 == 0, "Tier 0.5 nicht als 'noch nicht in Forever' erkannt")
+        -- Tier 0.5: Kette je Klasse und Fraktion, Stand je Schritt vom Client.
+        local oF, QH = _G.UnitFactionGroup, WeintCodex.UIQuestHelper
+        local oDone = QH.Done
+        _G.UnitFactionGroup = function() return "Alliance", "Allianz" end
+        local doneSet = { [8907] = true, [8922] = true }   -- Klassenquest (Classic-Nummer) und der zweite Schritt
+        QH.Done = function(id) return doneSet[id] and true or false end
+        local steps = EG.Tier05Steps()
+        assert(steps and #steps == 29, "Tier 0.5: Schritte " .. tostring(steps and #steps))
+        assert(steps[1].ids[1] == 84149 and steps[1].ids[2] == 8907, "erste Quest nicht die des Magiers (Allianz)")
+        assert(steps[2].ids[1] == 8922, "Fraktionsschritt nicht nach Allianz gewaehlt")
+        local hs = EG.Tier05Steps("MAGE", "H")
+        assert(hs[1].ids[1] == 84157 and hs[2].ids[1] == 8923, "Horde: falsche Quests")
+        local anyStep
+        for _, st in ipairs(steps) do if st.any then anyStep = st end end
+        assert(anyStep and #anyStep.ids == 4, "Wahl 'eine von vier' fehlt")
+        local t5 = EG.Tier05()
+        assert(t5.done == 2 and t5.index == 3 and t5.known, "Stand Tier 0.5: " .. t5.done .. " / " .. tostring(t5.index))
+        local nxt = EG.Next()
+        local hasT5 = false
+        for _, l in ipairs(nxt) do if l.name:find("Tier 0.5", 1, true) then hasT5 = true end end
+        assert(hasT5, "Als Naechstes ohne Tier 0.5 (Stufe 58)")
+        QH.Done = function() return nil end
+        assert(EG.Tier05().known == false, "unbekannter Stand als offen gezaehlt")
+        QH.Done, _G.UnitFactionGroup = oDone, oF
         _G.C_Item = {}
         local t2 = EG.Tier()
         assert(t2 and not t2.known and t2.items[1].owned == nil, "unbekannt als 'fehlt' gezählt")
@@ -30148,6 +30172,55 @@ do
     end)
     _G.UnitClass, _G.C_Item, _G.UnitLevel = oClass, oCount, oLevel
     Check(ok, "Endgame: Tier 0 der Klasse, Dungeons ab 55, Einstimmungen, Seite" .. (ok and "" or (": " .. tostring(err))))
+end
+
+-- 1.0.10.0: Stufe 60 - Feuerwerk (Bahnen als Formel, Teile wiederverwendet)
+-- und Begruessung einmal je Charakter.
+do
+    local FW = WeintCodex.Fireworks
+    local sv = _G.WeintCodex_SavedData
+    local oL = _G.UnitLevel
+    local ok, err = pcall(function()
+        assert(FW and FW.Play, "modules/fireworks.lua nicht geladen")
+        assert(not FW.OnLevelUp(59), "Feuerwerk vor Stufe 60")
+        -- Die Begruessung kommt nach FW.TOAST_DELAY - die Attrappe ruft den Wecker auf.
+        local oT = _G.C_Timer
+        local delays = {}
+        _G.C_Timer = { After = function(d, fn) delays[#delays + 1] = d if d == FW.TOAST_DELAY then fn() end end }
+        local okUp = FW.OnLevelUp(60)
+        _G.C_Timer = oT
+        assert(okUp and FW.playing, "kein Feuerwerk auf Stufe 60")
+        assert(delays[1] == FW.TOAST_DELAY and FW.toast and FW.toast:IsShown(), "keine Begruessung nach dem Feuerwerk: "
+            .. tostring(delays[1]) .. " " .. tostring(FW.toast) .. " " .. tostring(FW.toast and FW.toast:IsShown()))
+        local r = FW.rockets[1]
+        local made = #FW.rockets
+        FW.Step(r.t0 + FW.RISE + 0.5)
+        assert(r.sparks[1]:IsShown(), "Funken nach dem Platzen nicht zu sehen")
+        local dx, dy = FW.SparkPos({ vx = 0, vy = 0 }, 1)
+        assert(dx == 0 and dy < 0, "Funken fallen nicht")
+        FW.Step(FW.DURATION)
+        assert(not FW.playing and not r.sparks[1]:IsShown(), "Feuerwerk hoert nicht auf")
+        FW.Play()
+        assert(#FW.rockets == made, "Teile neu gebaut statt wiederverwendet")
+        FW.Stop()
+        -- Schon 60 beim Einloggen: Begruessung einmal, ohne Feuerwerk.
+        FW.HideToast()
+        local st = FW.Store()
+        st.greeted = {}
+        _G.UnitLevel = function() return 60 end
+        assert(FW.OnLogin() and not FW.playing, "Begruessung beim Einloggen fehlt oder mit Feuerwerk")
+        assert(not FW.OnLogin(), "Begruessung zweimal")
+        _G.UnitLevel = function() return 42 end
+        st.greeted = {}
+        assert(not FW.OnLogin(), "Begruessung unter Stufe 60")
+        -- Der Knopf oeffnet die Rubrik auf "Als Naechstes".
+        assert(FW.OpenEndgame() and WeintCodex.Navigation.CurrentTab() == "endgame" and WeintCodex.Endgame.cat == "next",
+            "Knopf oeffnet nicht Endgame")
+        FW.HideToast()
+    end)
+    _G.UnitLevel = oL
+    if sv and sv.endgame then sv.endgame.greeted = {} end
+    Check(ok, "Stufe 60: Feuerwerk, Begruessung einmal je Charakter, Knopf zur Rubrik" .. (ok and "" or (": " .. tostring(err))))
 end
 
 if failures == 0 then

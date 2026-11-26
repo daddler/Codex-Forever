@@ -5,7 +5,7 @@
 -- neu erzeugen. Ergaenzt data/dungeon_journal.lua und den Abgleich mit
 -- ForeverGuide (data/dungeon_journal_fg.lua) ueber J.MergeNaowh().
 --
--- Stand: Daten des Addons vom 20 Nov 2026, Client-Build 1.60.1.71037.
+-- Stand: Daten des Addons vom 24 Nov 2026, Client-Build 1.60.1.71091.
 -- HERKUNFT (nur fuer Betreuer): Beute und Dropchancen von Wowhead Forever
 -- und wowsrc.com, Bosse und Stufen aus den Clienttabellen, "noch nicht im
 -- Spiel" aus ItemSparse und dem, was der Server schickt. Im Spiel steht nur
@@ -1385,8 +1385,8 @@ J.NF_LOOT = {
             { 273116, nil, nil, nil },
         },
         snowtalon = {
-            { 280027, "Crownroar Chestplate", "Brust, Platte", 3, chance = 54 },
             { 280026, "Albinofur Grips", "Hände, Kette", 3, chance = 46 },
+            { 280027, "Crownroar Chestplate", "Brust, Platte", 3, chance = 54 },
         },
     },
     stratholme = {
@@ -1536,6 +1536,7 @@ J.NF_LOOT = {
             { 13404, "Mask of the Unforgiven", "Kopf, Leder", 3, chance = 16 },
             { 13405, "Wailing Nightbane Pauldrons", "Schulter, Platte", 3, chance = 16 },
             { 13409, "Tearfall Bracers", "Handgelenke, Stoff", 3, chance = 15 },
+            { 16717, "Wildheart Gloves", "Hände, Leder", 3, chance = 15 },
         },
         timmy_the_cruel = {
             { 13400, "Vambraces of the Sadist", "Handgelenke, Platte", 3, chance = 20 },
@@ -1553,6 +1554,7 @@ J.NF_LOOT = {
         },
         avatar_of_hakkar = {
             { 12462, "Embrace of the Wind Serpent", "Brust, Stoff", 4, chance = 1 },
+            { 252871, nil, nil, nil },
         },
         dreamscythe = {
             { 12243, "Smoldering Claw", "Zweihändig, Stangenwaffe", 3, chance = 8 },
@@ -2035,6 +2037,7 @@ J.NF_OTHERS = {
             { 287023, nil, nil, nil },
             { 287024, nil, nil, nil },
             { 287025, nil, nil, nil },
+            { 287026, nil, nil, nil },
         } },
     },
     blackfathom_deeps = {
@@ -2062,6 +2065,14 @@ J.NF_OTHERS = {
             { 280086, nil, nil, nil, chance = 54 },
             { 280085, nil, nil, nil, chance = 43 },
         } },
+        { name = "Sabella No-Eyes", note = "Seltener Gegner", items = {
+            { 280083, nil, nil, nil, chance = 52 },
+            { 280084, nil, nil, nil, chance = 44 },
+        } },
+        { name = "Mopes", note = "Seltener Gegner", items = {
+            { 280082, nil, nil, nil, chance = 61 },
+            { 280081, nil, nil, nil, chance = 39 },
+        } },
         { name = "Gegner unterwegs", items = {
             { 287036, nil, nil, nil },
             { 287032, nil, nil, nil },
@@ -2072,6 +2083,8 @@ J.NF_OTHERS = {
             { 287033, nil, nil, nil },
             { 251453, nil, nil, nil },
             { 252893, nil, nil, nil },
+            { 287031, nil, nil, nil },
+            { 287035, nil, nil, nil },
         } },
     },
     blackrock_depths = {
@@ -2529,10 +2542,10 @@ J.NF_OTHERS = {
         } },
         { name = "Vitrix", items = {
             { 280032, "Bolt's Charged Eyeball", "Schmuck", 3, chance = 24 },
-            { 280026, "Albinofur Grips", "Hände, Kette", 3, chance = 19 },
             { 280029, "Cinderedge Crescent", "Einhändig, Axt", 3, chance = 17 },
             { 280031, "Sparklance Wand", "Distanz, Zauberstab", 3, chance = 16 },
             { 280028, "Heartflame Gauntlets", "Hände, Platte", 3, chance = 13 },
+            { 280026, "Albinofur Grips", "Hände, Kette", 3, chance = 19 },
             { 280027, "Crownroar Chestplate", "Brust, Platte", 3, chance = 11 },
         } },
         { name = "Izha'Rel and Tor'Rel", items = {
@@ -2540,10 +2553,15 @@ J.NF_OTHERS = {
             { 280013, nil, nil, nil },
             { 280012, nil, nil, nil },
         } },
+        { name = "King Op", note = "Seltener Gegner", items = {
+            { 280026, "Albinofur Grips", "Hände, Kette", 3, chance = 45 },
+            { 280027, "Crownroar Chestplate", "Brust, Platte", 3, chance = 55 },
+        } },
         { name = "Gegner unterwegs", items = {
             { 287037, nil, nil, nil },
             { 287044, nil, nil, nil },
             { 287045, nil, nil, nil },
+            { 252938, nil, nil, nil },
         } },
     },
     stratholme = {
@@ -2843,7 +2861,7 @@ J.NOT_YET = {
 J.NF_QUESTS = {
     alcaz_island_prison = {
         { id = 96337, name = "More Valuable Than Gold", level = 53, requires = 48, faction = "both", turninNpc = { name = "Connerys Truhe", map = 1436, x = 0.434, y = 0.679 } },
-        { id = 96377, name = "State Secrets", level = 53, requires = 48, faction = "alliance", turninNpc = { name = "Renzik \"Das Messer\"", map = 1453, x = 0.783, y = 0.711 } },
+        { id = 96377, name = "State Secrets", level = 53, requires = 48, faction = "alliance", giverNpc = { name = "Renzik \"Das Messer\"", map = 1453, x = 0.783, y = 0.711 }, turninNpc = { name = "Renzik \"Das Messer\"", map = 1453, x = 0.783, y = 0.711 } },
         { id = 96772, name = "The Dragon's Journal", level = 53, requires = 46, faction = "alliance", giverNpc = { name = "Erzmagier Lan'dalock", map = 1416, x = 0.153, y = 0.739 }, turninNpc = { name = "Erzmagier Lan'dalock", map = 1416, x = 0.153, y = 0.739 } },
         { id = 95309, name = "No Orc Left Behind", level = 53, requires = 48, faction = "horde", giverNpc = { name = "Sergeant Ulka", map = 1445, x = 0.703, y = 0.189 } },
         { id = 95454, name = "The Honor of the Kor'kron", level = 53, requires = 48, faction = "horde" },
@@ -2865,20 +2883,22 @@ J.NF_QUESTS = {
         { id = 92066, name = "The Twin Bears", level = 55, requires = 47, faction = "both", giverNpc = { name = "Hüter des Wissens Nok", map = 1447, x = 0.413, y = 0.201 }, turninNpc = { name = "Hüter des Wissens Nok", map = 1447, x = 0.413, y = 0.201 } },
         { id = 92069, name = "Claws That Rend, Tusks that Gore", level = 58, requires = 45, faction = "both", giverNpc = { name = "Ogtinc", map = 1447, x = 0.424, y = 0.426 }, turninNpc = { name = "Ogtinc", map = 1447, x = 0.424, y = 0.426 } },
         { id = 97327, name = "Blackmaw Pouches", level = 60, requires = 55, faction = "both", giverNpc = { name = "Ekkal", map = 1447, x = 0.42, y = 0.389 }, turninNpc = { name = "Ekkal", map = 1447, x = 0.42, y = 0.389 } },
-        { id = 92065, name = "Blackmaw Reclamation", level = 60, requires = 47, faction = "both", giverNpc = { name = "Torhüter Donnerschrei", map = 1447, x = 0.423, y = 0.201 } },
+        { id = 92065, name = "Blackmaw Reclamation", level = 60, requires = 47, faction = "both", giverNpc = { name = "Torhüter Donnerschrei", map = 1447, x = 0.423, y = 0.201 }, turninNpc = { name = "Torhüter Donnerschrei", map = 1447, x = 0.423, y = 0.201 } },
         { id = 92070, name = "A Lost Memento", level = 55, requires = 47, faction = "both", turninNpc = { name = "Unele", map = 1447, x = 0.432, y = 0.181 } },
     },
     blackrock_depths = {
-        { id = 3906, name = "Disharmony of Flame", level = 52, requires = 48, faction = "horde", giverNpc = { name = "Thunderheart", map = 1418, x = 0.033, y = 0.483 }, turninNpc = { name = "Thunderheart", map = 1418, x = 0.033, y = 0.483 } },
+        { id = 3906, name = "Disharmony of Flame", level = 48, requires = 48, faction = "horde" },
         { id = 97197, name = "Fragment of the Firelands", level = 55, requires = 46, faction = "horde", giverNpc = { name = "Alaana Stormwalker", map = 1412, x = 0.334, y = 0.226 }, turninNpc = { name = "Alaana Stormwalker", map = 1412, x = 0.334, y = 0.226 } },
         { id = 4262, name = "Overmaster Pyron", level = 52, requires = 48, faction = "alliance", giverNpc = { name = "Jalinda Sprig", map = 1428, x = 0.854, y = 0.701 }, turninNpc = { name = "Jalinda Sprig", map = 1428, x = 0.854, y = 0.701 } },
-        { id = 7848, name = "Attunement to the Core", level = 60, requires = 55, faction = "both", giverNpc = { name = "Lothos Riftwaker", map = 1427, x = 0.321, y = 0.947 }, turninNpc = { name = "Lothos Riftwaker", map = 1427, x = 0.321, y = 0.947 } },
+        { id = 81790, name = "Materials of Significance", level = 53, requires = 45, faction = "alliance", classes = { "PALADIN" }, giverNpc = { name = "Gregory", map = 1448, x = 0.447, y = 0.52 }, turninNpc = { name = "Gregory", map = 1448, x = 0.447, y = 0.52 } },
+        { id = 7848, name = "Attunement to the Core", level = 55, requires = 55, faction = "both" },
         { id = 4295, name = "Rocknot's Ale", level = 42, requires = 42, faction = "both" },
     },
     dire_maul = {
         { id = 5526, name = "Shards of the Felvine", level = 60, requires = 56, faction = "both", giverNpc = { name = "Rabine Saturna", map = 1450, x = 0.517, y = 0.451 }, turninNpc = { name = "Rabine Saturna", map = 1450, x = 0.517, y = 0.451 } },
         { id = 7463, name = "Arcane Refreshment", level = 60, requires = 60, faction = "both", classes = { "MAGE" } },
         { id = 98830, name = "The Broken Glaive", level = 52, requires = 52, faction = "both" },
+        { id = 7631, name = "Dreadsteed of Xoroth", level = 60, requires = 60, faction = "both", classes = { "WARLOCK" }, giverNpc = { name = "Mor'zul Bloodbringer", map = 1428, x = 0.127, y = 0.316 } },
     },
     drowned_city = {
         { id = 95770, name = "Locating the Lost City", level = 40, requires = 30, faction = "horde", giverNpc = { name = "Kin'weelay", map = 1434, x = 0.323, y = 0.277 }, turninNpc = { name = "Kin'weelay", map = 1434, x = 0.323, y = 0.277 } },
@@ -2889,7 +2909,7 @@ J.NF_QUESTS = {
         { id = 95647, name = "Lost in the Thicket Things", level = 31, requires = 24, faction = "alliance", giverNpc = { name = "Caitlin Grassman", map = 1437, x = 0.119, y = 0.588 } },
         { id = 95810, name = "Lost Relic Carry", level = 31, requires = 24, faction = "alliance", turninNpc = { name = "Ausgrabungsleiter Whelgar", map = 1437, x = 0.388, y = 0.524 } },
         { id = 95737, name = "Seeking Caitlin", level = 31, requires = 24, faction = "alliance", giverNpc = { name = "Llana", map = 1440, x = 0.35, y = 0.485 }, turninNpc = { name = "Caitlin Grassman", map = 1437, x = 0.119, y = 0.588 } },
-        { id = 95663, name = "Dragonmaw Rumors", level = 31, requires = 24, faction = "horde", giverNpc = { name = "Zaruk", map = 1417, x = 0.745, y = 0.356 } },
+        { id = 95663, name = "Dragonmaw Rumors", level = 31, requires = 24, faction = "horde", giverNpc = { name = "Zaruk", map = 1417, x = 0.745, y = 0.356 }, turninNpc = { name = "Todespirscheragent", map = 1437, x = 0.515, y = 0.593 } },
         { id = 95664, name = "Elder Knowledge", level = 31, requires = 24, faction = "horde", turninNpc = { name = "Bashana Runetotem", map = 1456, x = 0.711, y = 0.342 } },
     },
     kroldok_stronghold = {
@@ -2902,11 +2922,12 @@ J.NF_QUESTS = {
         { id = 94973, name = "Krol'dok Moulding", level = 41, requires = 38, faction = "horde", turninNpc = { name = "Kreza Darkthorn", map = 2548, x = 0.599, y = 0.46 } },
         { id = 94983, name = "Twilight Mementos", level = 42, requires = 38, faction = "alliance", giverNpc = { name = "Sergeant Riftan", map = 2548, x = 0.307, y = 0.491 }, turninNpc = { name = "Sergeant Riftan", map = 2548, x = 0.307, y = 0.491 } },
         { id = 94980, name = "Krol'dok Moulding", level = 41, requires = 38, faction = "alliance", turninNpc = { name = "Alphonse Dumas", map = 2548, x = 0.645, y = 0.82 } },
-        { id = 94969, name = "Krol'dok No More!", level = 42, requires = 40, faction = "alliance" },
+        { id = 94969, name = "Krol'dok No More!", level = 40, requires = 40, faction = "alliance" },
     },
     maraudon = {
         { id = 96776, name = "An'she's Radiance", level = 51, requires = 43, faction = "horde", giverNpc = { name = "Olana Brighthoof", map = 1412, x = 0.326, y = 0.242 }, turninNpc = { name = "Olana Brighthoof", map = 1412, x = 0.326, y = 0.242 } },
         { id = 93404, name = "Rot and Regret", level = 49, requires = 35, faction = "both", giverNpc = { name = "Waldemar", map = 2652, x = 0.697, y = 0.718 }, turninNpc = { name = "Waldemar", map = 2652, x = 0.697, y = 0.718 } },
+        { id = 81790, name = "Materials of Significance", level = 53, requires = 45, faction = "alliance", classes = { "PALADIN" }, giverNpc = { name = "Gregory", map = 1448, x = 0.447, y = 0.52 }, turninNpc = { name = "Gregory", map = 1448, x = 0.447, y = 0.52 } },
     },
     razorfen_downs = {
         { id = 97196, name = "The Coldbringer's Eye", level = 41, requires = 34, faction = "horde", giverNpc = { name = "Sutara Plainstalker", map = 1412, x = 0.346, y = 0.23 }, turninNpc = { name = "Sutara Plainstalker", map = 1412, x = 0.346, y = 0.23 } },
@@ -2917,9 +2938,10 @@ J.NF_QUESTS = {
         { id = 1951, name = "Rituals of Power", level = 40, requires = 30, faction = "both", classes = { "MAGE" }, giverNpc = { name = "Magus Tirth", map = 1441, x = 0.783, y = 0.757 }, turninNpc = { name = "Tabetha", map = 1445, x = 0.461, y = 0.571 } },
     },
     scholomance = {
-        { id = 5505, name = "The Key to Scholomance", level = 60, requires = 55, faction = "alliance", giverNpc = { name = "Alchimist Arbington", map = 1422, x = 0.427, y = 0.838 }, turninNpc = { name = "Alchimist Arbington", map = 1422, x = 0.427, y = 0.838 } },
+        { id = 5505, name = "The Key to Scholomance", level = 60, requires = 60, faction = "alliance" },
         { id = 5511, name = "The Key to Scholomance", level = 60, requires = 55, faction = "horde", giverNpc = { name = "Hochexekutor Derrington", map = 1420, x = 0.831, y = 0.689 }, turninNpc = { name = "Hochexekutor Derrington", map = 1420, x = 0.831, y = 0.689 } },
-        { id = 7668, name = "The Darkreaver Menace", level = 58, requires = 58, faction = "horde", classes = { "SHAMAN" } },
+        { id = 8258, name = "The Darkreaver Menace", level = 60, requires = 60, faction = "horde", classes = { "SHAMAN" }, giverNpc = { name = "Sagorne Creststrider", map = 1454, x = 0.387, y = 0.359 }, turninNpc = { name = "Sagorne Creststrider", map = 1454, x = 0.387, y = 0.359 } },
+        { id = 97169, name = "The Darkreaver Menace", level = 60, requires = 58, faction = "alliance", classes = { "SHAMAN" }, giverNpc = { name = "Eldrun Stormbreaker", map = 1455, x = 0.471, y = 0.138 }, turninNpc = { name = "Eldrun Stormbreaker", map = 1455, x = 0.471, y = 0.138 } },
     },
     shadowfang_keep = {
         { id = 95036, name = "A Moon-Kissed Blade", level = 25, requires = 20, faction = "horde", classes = { "PALADIN" }, giverNpc = { name = "Lumina Windsinger", map = 1421, x = 0.434, y = 0.41 }, turninNpc = { name = "Trevan Rol", map = 1421, x = 0.434, y = 0.411 } },
@@ -2939,7 +2961,7 @@ J.NF_QUESTS = {
         { id = 95036, name = "A Moon-Kissed Blade", level = 25, requires = 20, faction = "horde", classes = { "PALADIN" }, giverNpc = { name = "Lumina Windsinger", map = 1421, x = 0.434, y = 0.41 }, turninNpc = { name = "Trevan Rol", map = 1421, x = 0.434, y = 0.411 } },
     },
     uldaman = {
-        { id = 1956, name = "Power in Uldaman", level = 40, requires = 35, faction = "both", classes = { "MAGE" }, giverNpc = { name = "Tabetha", map = 1445, x = 0.461, y = 0.571 }, turninNpc = { name = "Tabetha", map = 1445, x = 0.461, y = 0.571 } },
+        { id = 1956, name = "Power in Uldaman", level = 35, requires = 35, faction = "both", classes = { "MAGE" } },
     },
     upper_blackrock_spire = {
         { id = 6821, name = "Eye of the Emberseer", level = 60, requires = 56, faction = "both", giverNpc = { name = "Fürst Hydraxis", map = 1447, x = 0.793, y = 0.737 }, turninNpc = { name = "Fürst Hydraxis", map = 1447, x = 0.793, y = 0.737 } },
@@ -2947,6 +2969,7 @@ J.NF_QUESTS = {
     zulfarrak = {
         { id = 96775, name = "Zum'rah's Head", level = 46, requires = 42, faction = "horde", giverNpc = { name = "Mazu'kon", map = 1412, x = 0.325, y = 0.207 }, turninNpc = { name = "Mazu'kon", map = 1412, x = 0.325, y = 0.207 } },
         { id = 96770, name = "The Witch Doctor's Head", level = 46, requires = 39, faction = "alliance", giverNpc = { name = "Erzmagier Lan'dalock", map = 1416, x = 0.153, y = 0.739 }, turninNpc = { name = "Erzmagier Lan'dalock", map = 1416, x = 0.153, y = 0.739 } },
+        { id = 80411, name = "The Talisman of Kazdor", level = 50, requires = 45, faction = "both", classes = { "ROGUE" }, giverNpc = { name = "Fahrad", map = 1416, x = 0.845, y = 0.803 }, turninNpc = { name = "Fahrad", map = 1416, x = 0.845, y = 0.803 } },
     },
 }
 

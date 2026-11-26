@@ -466,6 +466,40 @@ Rezepte · Gilde · Planer · Merkliste · Abklingzeiten.
 - **Abklingzeiten:** welche Rezepte eine haben, sagt der Client beim
   Herstellen (`SavedData.profCD`), keine feste Liste.
 
+## Endgame *(Navigation „Endgame“, Gruppe Leveln, seit 1.0.10.0)*
+
+Wunsch des Besitzers: „eine Rubrik Level 60 oder Endgame“, „so intuitiv wie
+möglich, mit Level 60 wird man abgeholt“. Vorher geprüft: keines der
+verglichenen Addons hat einen Leitfaden für Stufe 60 – darum **kein** Text
+„mach erst X, dann Y“. `modules/endgame.lua` führt zusammen, was belegt ist;
+der Stand kommt vom Client, unbekannt bleibt „?“.
+
+- **Als Nächstes** (Startseite der Rubrik, `EG.Next`): nur Folgerungen aus
+  Daten und Client, höchstens acht – abgabebereite Dungeonquests, Einstimmungen
+  im Questlog, der nächste Tier-0.5-Schritt (ab 58), Einstimmungen, die zur
+  Stufe passen, fehlende Tier-0-Teile mit Fundort, Ruf-Belohnungen, die man
+  schon kaufen kann. Jede Zeile mit Knopf (Questpfeil, Dungeon, Beute, Ruf).
+- **Einstimmungen**: Ketten wie im Tracker (`ui/attunements.lua`).
+- **Tier 0.5**: `data/tier05.lua` **erzeugt** von
+  `.github/scripts/import_naowh_tier05.lua` aus Naowh Forever 1.4.11
+  (Discovery, dort seit 1.4.11 öffentlich; ForeverDungeonJournal hatte sie
+  vorher nur unveröffentlicht – nicht übernommen). Nur Reihenfolge, Wahl je
+  Fraktion, „eine von“, Klassenquests; Namen und Geber aus `data/questdb.lua`
+  und dem Client. Ein Schritt gilt als erledigt, wenn eine seiner Quests es
+  ist (`EG.StepDone`: true/false/nil).
+- **Tier 0**: Dungeon-Set 1 der Klasse (`EG.T0`, Setnummern wie in Classic),
+  Teile aus `data/loot.lua`, Besitz über `GetItemCount(id, true)`.
+- **Dungeons ab 55** und **Ruf** (`modules/reppage.lua`).
+
+**Stufe 60** (`modules/fireworks.lua`): beim Aufstieg auf die Höchststufe
+(`GetMaxPlayerLevel`, sonst 60) ein Feuerwerk – sechs Raketen abwechselnd
+links und rechts, je 48 Funken, Farben der Palette, nur `media/ui/disc`
+additiv, Bahnen als Formel der Zeit (keine Tabellen je Bild) – und nach
+2,6 s der Kasten „Stufe 60!“ mit „Endgame öffnen“ (Rubrik auf „Als
+Nächstes“). Wer schon 60 ist, bekommt den Kasten einmal je Charakter beim
+Einloggen (`SavedData.endgame.greeted`), ohne Feuerwerk. `/wc feuerwerk`
+spielt beides ab.
+
 ## Entdecken: Bücher und Gemütlicher Schlafsack
 
 **Seit 1.5.0.0** heißt der Eintrag in der Navigation „Entdecken“ (Kennung
