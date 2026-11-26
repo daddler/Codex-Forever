@@ -29459,6 +29459,7 @@ do
         local oS = tb.SetFrameStrata
         tb.SetFrameStrata = function(self, v) strata = v return oS(self, v) end
         th.IsShown = function() return true end
+        th.IsVisible = function() return true end
         CL.Refresh(tl)
         tb.SetFrameStrata = oS
         assert(strata == "HIGH", "Titelknopf liegt unter der Titelleiste: " .. tostring(strata))
@@ -29505,6 +29506,19 @@ do
             assert(pt and pt[1] == "RIGHT" and pt[2] == scanBtn and pt[3] == "LEFT", "Codex-Knopf liegt auf dem Scan-Knopf")
             ba:Hide()
         end
+        -- 1.0.10.1: Charakterfenster mit offenem Ruf-Reiter geschlossen - der
+        -- Reiter bleibt fuer sich "gezeigt", ist aber nicht sichtbar. Ein
+        -- spaeteres Auffrischen darf den Knopf nicht ueber die Welt legen.
+        rep.IsShown = function() return true end
+        rep.IsVisible = function() return false end
+        b2:Show()
+        CL.Refresh(l2)
+        assert(not b2:IsShown(), "Ruf-Knopf ohne sichtbares Fenster gezeigt")
+        CL.RefreshAll()
+        assert(not b2:IsShown(), "Ruf-Knopf nach dem Auffrischen gezeigt")
+        rep.IsVisible = function() return true end
+        CL.Refresh(l2)
+        assert(b2:IsShown(), "Ruf-Knopf bei offenem Reiter nicht gezeigt")
         b1:Hide() b2:Hide()
         -- Beruf aus dem Fenster (Titel "Erste Hilfe"), auch ohne Abfrage des
         -- Spiels; Codex landet genau dort, auch wenn vorher ein anderer Beruf

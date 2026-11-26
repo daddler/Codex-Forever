@@ -453,11 +453,23 @@ function CL.Gold(b)
     return b
 end
 
+-- 1.0.10.1 (Bild eines Spielers: "WeintCodex: Ruf-Belohnungen" schwebte
+-- ueber der Welt, nur /reload half): der Ruf-Reiter bleibt fuer sich
+-- "gezeigt" (IsShown), wenn das Charakterfenster mit ihm offen geschlossen
+-- wird. Jedes spaetere Auffrischen (Fenster des Spiels geladen, Beute,
+-- Gruppe) zeigte den Knopf - er haengt an UIParent - und kein OnHide kam
+-- mehr. Sichtbar heisst: das Fenster UND alle darueber (IsVisible).
+function CL.HostVisible(host)
+    if type(host) ~= "table" then return false end
+    if host.IsVisible then return K.Bool(Plain(host:IsVisible()), false) end
+    return host.IsShown and K.Bool(Plain(host:IsShown()), false) or false
+end
+
 function CL.Refresh(link)
     local b = CL.buttons[link]
     local host = _G[link.host]
     if not (b and type(host) == "table") then return end
-    local show = CL.On() and host.IsShown and K.Bool(host:IsShown(), false)
+    local show = CL.On() and CL.HostVisible(host)
         and (not link.when or link.when()) and true or false
     if show then b:SetText(link.label()) end   -- passt die Breite an
     b:SetShown(show)
