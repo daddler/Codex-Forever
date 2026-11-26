@@ -23173,6 +23173,20 @@ do
         G.C_UnitAuras = { GetAuraDataBySpellName = function() return nil end, GetPlayerAuraBySpellID = function() return nil end }
         local hit = R.Check({ kind = "buff", spell = "324", any = { "324" } })
         assert(hit and hit.text:find("Wasserschild", 1, true), "Text nennt Wasserschild nicht: " .. tostring(hit and hit.text))
+        -- 1.0.10.5: Feuerschild des Wichtels gilt fuer Dornen - auch bei
+        -- einer selbst angelegten Regel mit dem Namen als Text, ohne `any`.
+        R.Resolve = function(x)
+            if x == "Dornen" or x == "9756" then return { id = 9756, name = "Dornen" } end
+            if x == "8316" then return { id = 8316, name = "Feuerschild" } end
+        end
+        local fire = true
+        G.C_UnitAuras = { GetAuraDataBySpellName = function() return nil end,
+                          GetPlayerAuraBySpellID = function(id) if fire and id == 8316 then return { icon = 1 } end end }
+        assert(R.Check({ kind = "buff", spell = "Dornen" }) == nil, "Feuerschild nicht als Dornen erkannt")
+        assert(R.Check({ kind = "buff", spell = "9756" }) == nil, "Feuerschild bei Regel mit Nummer nicht erkannt")
+        fire = false
+        local th = R.Check({ kind = "buff", spell = "Dornen" })
+        assert(th and th.text == "Dornen fehlt", "ohne Feuerschild keine Erinnerung: " .. tostring(th and th.text))
         R.Resolve = oRes
         G.GetTime, G.C_UnitAuras = oT, oUA
     end)

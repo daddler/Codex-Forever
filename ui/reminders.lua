@@ -529,6 +529,16 @@ R.ALSO = {
                             "Greater Blessing of Sanctuary", "Blessing of Salvation", "Blessing of Light",
                             "Blessing of Sanctuary" } },
 }
+-- 1.0.10.5 (Meldung mit Bild, Druide in der Gruppe mit Hexer: "der Wichtel
+-- castet automatisch Feuerschild auf mich, das ueberschreibt meine Dornen -
+-- die Erinnerung steht die ganze Instanz im Bild"): Feuerschild des
+-- Wichtels gilt fuer Dornen mit. Alle Raenge (IDs aus Classic, Art classic)
+-- und die Namen - auch fuer selbst angelegte Regeln, die den Zauber als Text
+-- tragen (R.Also prueft Nummer, Text und aufgeloesten Namen).
+do
+    local fireShield = { ids = { "2947", "8316", "8317", "11770", "11771" }, names = { "Feuerschild", "Fire Shield" } }
+    for _, k in ipairs({ "467", "782", "1075", "8914", "9756", "9910", "Dornen", "Thorns" }) do R.ALSO[k] = fireShield end
+end
 
 -- DAS SPIEL SAGT NEIN, auch bei Zaubern (1.0.6.8): wirkt der Spieler den
 -- Buff einer Regel auf sich und das Spiel antwortet "Ein maechtigerer
@@ -580,11 +590,21 @@ function R.Also(rule)
     for _, t in ipairs(rule.any or { rule.spell }) do
         local x = R.ALSO[tostring(t)]
         if x then return x end
+        -- Selbst angelegt: Text oder ein anderer Rang - ueber den aufgeloesten Zauber.
+        local sp = t ~= nil and R.Resolve(t)
+        if sp then
+            x = (sp.id and R.ALSO[tostring(sp.id)]) or (type(sp.name) == "string" and R.ALSO[sp.name])
+            if x then return x end
+        end
     end
     return nil
 end
 
 function R.PlayerAura(rule)
+    -- 1.0.10.5: auch eine einzelne (selbst angelegte) Regel kennt ihren Ersatz.
+    if type(rule.any) ~= "table" and not rule.plain and rule.spell ~= nil and R.Also(rule) then
+        return R.PlayerAura({ any = { rule.spell } })
+    end
     if type(rule.any) == "table" then
         -- Einer der Reihe genuegt; "weiss nicht" schlaegt "fehlt".
         local result = false
@@ -599,7 +619,7 @@ function R.PlayerAura(rule)
             end
         end
         for _, t in ipairs(list) do
-            local a = R.PlayerAura({ spell = t })
+            local a = R.PlayerAura({ spell = t, plain = true })
             if a then return a end
             if a == nil and R.Resolve(t) and R.Resolve(t).name then result = nil end
         end
