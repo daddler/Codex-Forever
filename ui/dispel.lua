@@ -260,6 +260,11 @@ local function InCombat() return _G.InCombatLockdown and K.Bool(_G.InCombatLockd
 local function NewCell(parent, unit)
     local c = CreateFrame("Frame", nil, parent)
     c.unit = unit
+    -- 1.0.9.2 (Spielerin: "immer nur ein Kasten, und das bin ich"):
+    -- RegisterUnitWatch fragt das ATTRIBUT "unit" des Rahmens, nicht ein
+    -- Lua-Feld. Ohne Attribut galt jedes Mitglied als nicht vorhanden -
+    -- sichtbar blieb nur das eigene Feld (das hat keine Ueberwachung).
+    c:SetAttribute("unit", unit)
     c.sq = {}
     for i = 1, DP.MAX_SQ do
         local ok, b = pcall(CreateFrame, "Button", nil, c, "SecureUnitButtonTemplate")

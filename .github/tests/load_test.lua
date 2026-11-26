@@ -22881,6 +22881,12 @@ do
         assert(sq:GetAttribute("type") == "spell" and type(sq:GetAttribute("spell")) == "string"
             and sq:GetAttribute("type1") == nil, "Feld wirkt nicht mit jeder Maustaste")
         assert(sq:GetAttribute("useOnKeyDown") == false, "Feld loest beim Druecken aus (nie)")
+        -- 1.0.9.2 (Spielerin: "nur ein Kasten, und das bin ich"): die
+        -- Ueberwachung des Spiels liest das Attribut "unit" - ohne es blieben
+        -- alle anderen Felder versteckt.
+        for _, c in ipairs(DP.cells) do
+            assert(c:GetAttribute("unit") == c.unit, "Feld " .. c.unit .. " ohne Attribut unit - bleibt unsichtbar")
+        end
         K.Set("groupframes", "dispelBar", false)
         DP.ApplyBar()
         DP.Resolve = oR
