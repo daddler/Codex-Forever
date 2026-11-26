@@ -22,6 +22,14 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.0.10.4",
+        date    = "26.11.2026",
+        notes   = {
+            "|cff7C6CFFQuestpfeil nimmt lieber die Straße|r – statt quer durch die Prärie führt der Weg jetzt über Straßen, wenn der Umweg klein ist. Abseits der Straße zählt jeder Meter anderthalbfach; auch die geglättete Linie bleibt auf der Straße.",
+            "|cff7C6CFFVerzauberungen im Charakterfenster|r – der Tooltip nannte bei vielen Rezepten eine falsche Fertigkeit (z. B. 70 statt 15). Jetzt stehen dort dieselben Werte wie auf der Seite Berufe, und damit stimmen auch die Vorschläge und „Stärkste passende Verzauberung“.",
+        },
+    },
+    {
         version = "1.0.10.3",
         date    = "26.11.2026",
         notes   = {

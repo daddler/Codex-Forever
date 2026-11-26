@@ -9,6 +9,26 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.0.10.4] – 2026-11-26
+
+### Geändert
+- **Straßen im Routenplaner** (`ui/navmesh.lua`, `import_nav.py`): Feld
+  `road` je Abschnitt (Straßenanteil je Zelle und je Knoten aus Shortest Path
+  Forever `Data/RoadCells.lua`/`RoadEdges.lua`, nur Daten), Kanten mit
+  Aufschlag abseits (`D.offroad` 1,5) in den Kosten, echte Länge daneben;
+  Straßenkanten dazu, Grundkanten nie gekürzt. `RoadF` in `NV.Grid` und
+  `NV.Bridge`, Glätten kreuzt nie mehr Zellen abseits als das ersetzte
+  Stück. Die Suche überspringt veraltete Einträge (sonst scheiterten lange
+  Suchen an `NV.MAX_EXPAND`), Schätzung zum Ziel × `st.hw`. Offline über
+  300 Strecken: Straßenanteil 7,4 → 18,7 %, Wege +1,4 %; ohne Straßendaten
+  unverändert. Daten 23,7 statt 20,9 MB.
+
+### Behoben
+- Verzauberungen (`ui/enchants.lua`): Rezepte über
+  `WeintCodex.Professions.Recipes` statt roh aus `P.RAW` – 50 von 172 hatten
+  im Tooltip eine veraltete Lernstufe, Vorschläge und „stärkste“ folgten
+  daraus.
+
 ## [1.0.10.3] – 2026-11-26
 
 ### Behoben
