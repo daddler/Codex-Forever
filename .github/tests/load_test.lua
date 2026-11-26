@@ -5984,6 +5984,18 @@ do
         assert(next(st99.clusters) == nil, "nach dem Aufraeumen noch Abschnitte im Speicher")
         local p3 = NV.Search(99, 0.5 * cs, 1.5 * cs, NV.TILE + 3.5 * cs, 1.5 * cs)
         assert(p3 and #p3 == #p2, "nach dem Aufraeumen anderer Weg")
+        -- 1.0.10.3: aufgeraeumt wird erst nach NV.IDLE_TRIM ms ohne Suche
+        -- (nach jeder Suche geraeumt hiess: die naechste entpackt alles neu).
+        do
+            local j = NV._job
+            local t0 = 1e6
+            j.co, j.doneAt, j.trimmed = nil, t0, false
+            assert(not NV.IdleTrim(t0 + NV.IDLE_TRIM - 1), "vor der Zeit aufgeraeumt")
+            assert(NV.IdleTrim(t0 + NV.IDLE_TRIM + 1), "im Leerlauf nicht aufgeraeumt")
+            assert(not NV.IdleTrim(t0 + 2 * NV.IDLE_TRIM), "zweimal aufgeraeumt")
+            j.trimmed = nil
+        end
+        NV.Search(99, 0.5 * cs, 1.5 * cs, NV.TILE + 3.5 * cs, 1.5 * cs)
         NV.Trim(1, 0)
         local held = 0
         for _, cl in pairs(st99.clusters) do if cl then held = held + 1 assert(not cl.cells and not cl.surf, "Gitter behalten") end end
@@ -29503,6 +29515,23 @@ do
             mm:Hide()
             CL.Place(probe2, map, "title")
             assert(pt and pt[2] == map.BorderFrame.CloseButton, "ohne Maximieren nicht am Kreuz")
+            -- 1.0.10.3: Zauberbuch - ein Knopf ohne bekannten Namen in der
+            -- Zeile des Kreuzes, direkt links davon; ein grosser Rahmen
+            -- daneben (Suchfeld) zaehlt nicht.
+            local sb = CreateFrame("Frame", "WeintCodexTestSpells", UIParent)
+            local function Box(f, l, r, t, b)
+                f.GetLeft = function() return l end f.GetRight = function() return r end
+                f.GetTop = function() return t end f.GetBottom = function() return b end
+            end
+            sb.CloseButton = CreateFrame("Button", nil, sb) Box(sb.CloseButton, 560, 584, 730, 706) sb.CloseButton:Show()
+            local maxBtn = CreateFrame("Button", nil, sb) Box(maxBtn, 534, 558, 730, 706) maxBtn:Show()
+            local search = CreateFrame("Frame", nil, sb) Box(search, 360, 534, 728, 700) search:Show()
+            local oldKids = sb.GetChildren
+            sb.GetChildren = function() return sb.CloseButton, maxBtn, search end
+            assert(CL.TitleEdge(sb) == maxBtn, "Maximieren ohne Namen nicht erkannt")
+            maxBtn:Hide()
+            assert(CL.TitleEdge(sb) == sb.CloseButton, "Suchfeld als Knopf der Titelleiste genommen")
+            sb.GetChildren = oldKids
         end
         -- 1.0.8.7: steht dort schon ein eigener Knopf (Preise scannen), reiht
         -- sich der Codex-Knopf links davon ein, statt darueber zu liegen.

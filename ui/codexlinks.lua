@@ -295,19 +295,63 @@ end
 
 -- 1.0.10.2 (Rueckmeldung: "bei der Karte ist der Button halb ueber dem
 -- Maximieren-Knopf"): links neben dem Kreuz kann noch ein Knopf des Spiels
--- stehen (Weltkarte: Maximieren/Verkleinern). Die Reihe beginnt links vom
--- aeussersten sichtbaren davon; ohne ihn am Kreuz.
-CL.TITLE_NEIGHBOURS = { "MaximizeMinimizeFrame" }
+-- stehen (Weltkarte, Zauberbuch: Maximieren/Verkleinern). 1.0.10.3 (Bild:
+-- im Zauberbuch weiter verdeckt - dort heisst er anders): erst bekannte
+-- Namen, dann jeder kleine sichtbare Knopf des Fensters, der in der Zeile
+-- des Kreuzes direkt links davon steht - so weit nach links, wie die Reihe geht.
+CL.TITLE_NEIGHBOURS = { "MaximizeMinimizeFrame", "MaxMinButtonFrame", "MaximizeMinimizeButton",
+    "MaximizeButton", "MinimizeButton" }
+CL.NEIGHBOUR_MAX = 40   -- px: groesser ist kein Knopf der Titelleiste
+CL.NEIGHBOUR_GAP = 10   -- px: hoechstens so weit links vom vorigen
+
+local function Num(f, m)
+    local fn = f and f[m]
+    if type(fn) ~= "function" then return nil end
+    local ok, v = pcall(fn, f)
+    v = ok and Plain(v) or nil
+    return type(v) == "number" and v or nil
+end
+
+-- Der Knopf direkt links von `edge` in derselben Zeile, oder nil.
+function CL.LeftNeighbour(host, edge)
+    local el, et, eb = Num(edge, "GetLeft"), Num(edge, "GetTop"), Num(edge, "GetBottom")
+    if not (el and et and eb) then return nil end
+    local mid = (et + eb) / 2
+    local best, bestR
+    for _, owner in ipairs({ host, host.BorderFrame }) do
+        if type(owner) == "table" and owner.GetChildren then
+            local kids = { owner:GetChildren() }
+            for _, k in ipairs(kids) do
+                if k ~= edge and type(k) == "table" and CL.HostVisible(k) then
+                    local l, r, t, bt = Num(k, "GetLeft"), Num(k, "GetRight"), Num(k, "GetTop"), Num(k, "GetBottom")
+                    if l and r and t and bt and r - l <= CL.NEIGHBOUR_MAX and t - bt <= CL.NEIGHBOUR_MAX
+                       and mid <= t and mid >= bt and r <= el + 2 and r >= el - CL.NEIGHBOUR_GAP
+                       and (not bestR or r > bestR) then
+                        best, bestR = k, r
+                    end
+                end
+            end
+        end
+    end
+    return best
+end
+
 function CL.TitleEdge(host)
     local close = CL.CloseOf(host)
     if not close or type(host) ~= "table" then return close end
+    local edge = close
     for _, key in ipairs(CL.TITLE_NEIGHBOURS) do
         for _, owner in ipairs({ host, host.BorderFrame }) do
             local nb = type(owner) == "table" and _G.rawget(owner, key) or nil
-            if type(nb) == "table" and nb.GetObjectType and CL.HostVisible(nb) then return nb end
+            if edge == close and type(nb) == "table" and nb.GetObjectType and CL.HostVisible(nb) then edge = nb end
         end
     end
-    return close
+    for _ = 1, 4 do
+        local nb = CL.LeftNeighbour(host, edge)
+        if not nb then break end
+        edge = nb
+    end
+    return edge
 end
 
 -- Der Titel des Fensters (FontString) oder nil.

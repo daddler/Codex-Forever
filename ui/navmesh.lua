@@ -40,8 +40,8 @@ NV.LOOKAHEAD = 30      -- der Pfeil zeigt so weit voraus auf den Weg
 NV.CORNER = 6          -- so nah an einer Ecke: schon um sie herum zeigen
 NV.CUT = 5             -- Ecken bis so weit neben der Sichtlinie gelten als gerade (6.83.1.0)
 NV.CACHE = 600         -- entpackte Wegenetze im Speicher (je rund 1 KB)
-NV.CELLS = 8           -- entpackte Gitter mit Ebenen im Speicher (1.0.10.1: vorher 32 -
-                       -- ein Abschnitt mit Ebenen wie Ironforge kostet entpackt ~0,5 MB)
+NV.CELLS = 24          -- entpackte Gitter mit Ebenen im Speicher (1.0.10.1: 8 - zu wenig,
+                       -- eine Route entpackte sie immer wieder; 1.0.10.3: 24, geraeumt erst im Leerlauf)
 
 local byte, floor, sqrt, huge = string.byte, math.floor, math.sqrt, math.huge
 local coroutine, os = _G.coroutine, _G.os
@@ -201,9 +201,11 @@ function NV.Evict()
     end
 end
 
--- 1.0.10.1 (/wcui speicher: Gelaendekarte 17,7 MB): nach einer Suche nur
--- die zuletzt gebrauchten behalten - waehrend der Suche braucht es viele
--- Wegenetze, danach nur die um Start und Ziel (fuer das naechste Neusuchen).
+-- 1.0.10.1 (/wcui speicher: Gelaendekarte 17,7 MB): nur die zuletzt
+-- gebrauchten behalten. 1.0.10.3 (Bericht: Gelaendekarte 323 KB/s Abfall,
+-- weniger Bilder je Sekunde): NICHT nach jeder Suche - die naechste
+-- entpackte dann alles neu. Erst wenn NV.IDLE_TRIM ms keine Suche lief
+-- (NV.IdleTrim aus NV.Path).
 NV.CACHE_IDLE = 150    -- Wegenetze nach einer Suche
 NV.CELLS_IDLE = 3      -- Gitter mit Ebenen nach einer Suche
 function NV.Trim(keepGraphs, keepCells)
@@ -325,6 +327,19 @@ local function Clock()
     if f then return f() end
     return os.clock() * 1000
 end
+
+NV.IDLE_TRIM = 30000
+
+-- Laeuft nichts und lief seit NV.IDLE_TRIM ms nichts: einmal aufraeumen.
+function NV.IdleTrim(now)
+    local j = NV._job
+    if not j or j.co or j.trimmed ~= false or not j.doneAt then return false end
+    if (now or Clock()) - j.doneAt < NV.IDLE_TRIM then return false end
+    j.trimmed = true
+    NV.Trim()
+    return true
+end
+
 local ops = 0
 local function Slice()
     ops = ops + 1
@@ -402,29 +417,25 @@ local function Heights(st, cl, hs)
     return z
 end
 
-local function AddLink(lk, a, b, dir)
-    local l = lk[a]
-    if not l then l = {} lk[a] = l end
-    l[#l + 1] = b
-    l[#l + 1] = dir
-end
-
 -- Ebenen eines Abschnitts: cl.surf = { fat, fval, first, lkAt, lkL } oder false.
 local NO_LINKS = {} -- Abschnitte ohne Ebenen teilen sich die leere Liste (nie beschrieben)
+-- Arbeitslisten fuer den Aufbau (wiederverwendet, nur bis zur Fuellmarke gelesen).
+local linkA, linkV, revA, revV, linkUsed, linkSteps = {}, {}, {}, {}, {}, {}
+local REV = { 2, 1, 4, 3, 8, 7, 6, 5 }
 function NV.Surf(st, cl)
     if cl.surf ~= nil then return cl.surf end
     if not NV.Cells(st, cl) then cl.surf = false return false end
     local fs = Field(st.D, "floor", cl.k + 1)
     local C = st.C
     local CC = C * C
-    local sf = { fat = {}, fval = {}, first = {}, lk = {}, lkAt = NO_LINKS, lkL = NO_LINKS }
+    local sf = { fat = {}, fval = {}, first = {}, lkAt = NO_LINKS, lkL = NO_LINKS }
     -- 1.0.5.63: die Hoehen bleiben (sf.zb Grund, sf.fz Ebenen, in Einheiten
     -- des Spiels) - NV.HeightsAt liest sie fuer "hoeher/tiefer" am Pfeil.
     local hs = Field(st.D, "height", cl.k + 1)
     local zb = hs and Heights(st, cl, hs) or {}
     sf.zb = zb
-    if not fs or fs == "" then sf.lk = nil cl.surf = sf return sf end
-    local fz, steps = {}, {}
+    if not fs or fs == "" then cl.surf = sf return sf end
+    local fz, steps = {}, linkSteps
     sf.fz = fz
     local node, pos = CC, 4
     for _ = 1, Num(fs, 1, 3) do
@@ -467,15 +478,23 @@ function NV.Surf(st, cl)
         if x < 0 or y < 0 or x >= C or y >= C then return nil end
         return x * C + y
     end
-    local REV = { 2, 1, 4, 3, 8, 7, 6, 5 }
-    local own = {}
+    -- 1.0.10.3 (Bericht: 323 KB/s Abfall der Gelaendekarte): beim Aufbau
+    -- keine Tabelle je Uebergang mehr (vorher je Knoten eine Liste und je
+    -- eigenem Uebergang ein Dreier). Gesammelt in festen Arbeitslisten,
+    -- dann nach Knoten einsortiert - Reihenfolge je Knoten wie vorher:
+    -- Masken, ausdrueckliche, dann die Umkehrungen.
+    local LA, LV, RA, RV, used = linkA, linkV, revA, revV, linkUsed
+    local n, r = 0, 0
     for f = CC, last - 1 do
         local bits, lc = steps[f], sf.fat[f]
         for d = 1, 8 do
             if bits % 2 == 1 then
                 local nc = Neighbour(lc, d)
                 local t = nc and Surface(nc, nil, fz[f])
-                if t and t ~= f then AddLink(sf.lk, f, t, d) own[#own + 1] = { f, t, d } end
+                if t and t ~= f then
+                    n = n + 1 LA[n], LV[n] = f, t * 8 + d - 1
+                    if t < CC then r = r + 1 RA[r], RV[r] = t, f * 8 + REV[d] - 1 end
+                end
             end
             bits = floor(bits / 2)
         end
@@ -489,27 +508,27 @@ function NV.Surf(st, cl)
         local nc = lc and DX[d] and Neighbour(lc, d)
         local t = nc and Surface(nc, layer)
         if t then
-            AddLink(sf.lk, nd, t, d)
-            if nd >= CC then own[#own + 1] = { nd, t, d } end
+            n = n + 1 LA[n], LV[n] = nd, t * 8 + d - 1
+            if nd >= CC and t < CC then r = r + 1 RA[r], RV[r] = t, nd * 8 + REV[d] - 1 end
         end
     end
     -- Grundflaeche zu den Ebenen: die Umkehrung.
-    for _, o in ipairs(own) do
-        if o[2] < CC then AddLink(sf.lk, o[2], o[1], REV[o[3]]) end
+    for i = 1, r do n = n + 1 LA[n], LV[n] = RA[i], RV[i] end
+    -- 1.0.10.1 (/wcui speicher: Gelaendekarte 17,7 MB): flach statt einer
+    -- Tabelle je Knoten - lkAt[Knoten] = Anfang * 4096 + Anzahl in lkL,
+    -- lkL[i] = Ziel * 8 + Richtung - 1.
+    local at, list = {}, {}
+    for i = 1, n do local x = LA[i] at[x] = (at[x] or 0) + 1 end
+    local base = 0
+    for x, cnt in pairs(at) do at[x] = (base + 1) * 4096 + cnt used[x] = base base = base + cnt end
+    for i = 1, n do
+        local x = LA[i]
+        local k = used[x] + 1
+        used[x] = k
+        list[k] = LV[i]
     end
-    -- 1.0.10.1 (/wcui speicher: Gelaendekarte 17,7 MB): eine kleine Tabelle
-    -- je Knoten kostete in Ironforge 960 KB von 1,4 MB. Jetzt flach:
-    -- lkAt[Knoten] = Anfang * 4096 + Anzahl in lkL, lkL[i] = Ziel * 8 + Richtung - 1.
-    local at, list, n = {}, {}, 0
-    for a, l in pairs(sf.lk) do
-        local cnt = #l / 2
-        at[a] = (n + 1) * 4096 + cnt
-        for j = 1, #l, 2 do
-            n = n + 1
-            list[n] = l[j] * 8 + l[j + 1] - 1
-        end
-    end
-    sf.lk, sf.lkAt, sf.lkL = nil, at, list
+    for x in pairs(used) do used[x] = nil end
+    sf.lkAt, sf.lkL = at, list
     cl.surf = sf
     return sf
 end
@@ -1189,7 +1208,7 @@ Pump = function()
         NV.stats.failed = NV.stats.failed + 1
         Remember(job.c, job.gN, job.gW, nil, nil, job.sN, job.sW)
         pump:SetScript("OnUpdate", nil)
-        NV.Trim()
+        job.doneAt, job.trimmed = Clock(), false
         return
     end
     if coroutine.status(job.co) == "dead" then
@@ -1197,7 +1216,7 @@ Pump = function()
         if path then NV.stats.done = NV.stats.done + 1 else NV.stats.failed = NV.stats.failed + 1 end
         Remember(job.c, job.gN, job.gW, path, len, job.sN, job.sW)
         pump:SetScript("OnUpdate", nil)
-        NV.Trim()
+        job.doneAt, job.trimmed = Clock(), false
     end
 end
 Pump = K.Measured and K.Measured("Geländekarte", Pump) or Pump
@@ -1247,6 +1266,7 @@ function NV.OnTaxi()
 end
 
 function NV.Path(c, sN, sW, gN, gW)
+    NV.IdleTrim()
     if not NV.Available(c) then return nil end
     if NV.OnTaxi() then
         if job.co then
