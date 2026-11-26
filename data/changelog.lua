@@ -22,6 +22,16 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.0.10.0",
+        date    = "26.11.2026",
+        notes   = {
+            "|cff7C6CFFNeue Rubrik „Endgame“|r – links in der Spalte, mit einer Krone. Ganz oben „Als Nächstes“: was du jetzt tun kannst, aus deinem Stand im Spiel – abgabebereite Dungeonquests, Einstimmungen im Questlog, der nächste Schritt deiner Questreihen, fehlende Tier-0-Teile mit Fundort und Ruf-Belohnungen, die du schon kaufen kannst. Jede Zeile mit Knopf: Questpfeil, Dungeon, Beute oder Rüstmeister.",
+            "|cff7C6CFFTier 0.5 Schritt für Schritt|r – die ganze Questreihe zu Dungeon-Set 2 für deine Klasse und Fraktion, mit Stand, Geber und Questpfeil. Dazu Einstimmungen, dein Tier-0-Set (was du hast, wo der Rest fällt), die Dungeons ab Stufe 55 mit ihren Quests und dein Ruf.",
+            "|cff7C6CFFStufe 60 mit Feuerwerk|r – erreichst du die Höchststufe, steigt ein kleines Feuerwerk über den Bildschirm, danach führt dich ein Kasten direkt ins Endgame. Wer schon 60 ist, bekommt den Hinweis einmal beim Einloggen. Zum Ansehen: /wc feuerwerk.",
+            "|cff7C6CFFNeue Daten|r – Quests und Questgeber, neue Klassenquests, Rare-Gegner in Blackmaw Hold und Shaper's Terrace mit Beute, Berufe (z. B. Wolltaschen brauchen fünf Ballen), ein weiteres Buch der Bibliothek, Sets und neue Flugpunkte in der Mondlichtung.",
+        },
+    },
+    {
         version = "1.0.9.2",
         date    = "26.11.2026",
         notes   = {

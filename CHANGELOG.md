@@ -9,6 +9,33 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.0.10.0] – 2026-11-26
+
+### Hinzugefügt
+- Rubrik **Endgame** (`modules/endgame.lua`, Navigation Leveln nach Beute,
+  Symbol `media/icons/nav_endgame.tga` aus `.github/scripts/make_nav_endgame.py`;
+  `/wc endgame`, `/wc 60`). Die Spalte rückt zusammen (`NAV_ITEM_H` 33,
+  `NAV_ITEM_GAP` 1): 15 Einträge, 670 von 684 px, kein Rollen.
+  Unterseiten: **Als Nächstes** (`EG.Next`, nur Folgerungen aus Daten und
+  Client), Einstimmungen (`ui/attunements.lua`), **Tier 0.5**
+  (`data/tier05.lua`, erzeugt von `.github/scripts/import_naowh_tier05.lua`
+  aus Naowh Forever 1.4.11 Discovery, `community`; Namen/Geber aus
+  `data/questdb.lua` und dem Client; `EG.StepDone` true/false/nil), Tier 0
+  (`EG.T0`, Teile aus `data/loot.lua`, `GetItemCount(id, true)`), Dungeons
+  ab 55, Ruf.
+- **Stufe 60** (`modules/fireworks.lua`): Feuerwerk beim Aufstieg auf
+  `GetMaxPlayerLevel()` (6 Raketen, je 48 Funken, `media/ui/disc` additiv,
+  Bahnen als Formel, Teile einmal gebaut), nach 2,6 s Kasten „Stufe 60!“ mit
+  „Endgame öffnen“; schon 60: Kasten einmal je Charakter beim Einloggen
+  (`SavedData.endgame.greeted`). `/wc feuerwerk`.
+
+### Geändert
+- Bestände vom 26.11. neu eingelesen: ForeverGuide 1.39.24, Naowh Forever
+  1.4.11, OneForAll 6.2.17, QuestieDB 1.1.6, AtlasLootClassic 1.5.1,
+  Shortest Path Forever 1.45.12 (Reisedaten). `import_naowh.py`: kurze
+  Datensätze der Questdatenbank gelten als unbekannt (brach ab).
+  Geländekarte (`import_nav.py`) nicht neu: neues Datenformat, Skript bricht ab.
+
 ## [1.0.9.2] – 2026-11-26
 
 ### Behoben
