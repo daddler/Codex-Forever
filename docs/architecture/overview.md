@@ -355,8 +355,10 @@ gegeneinander:
 | `Navigation.SubNavBudget()` | was ihr zusteht |
 | `Navigation.MeasureSidebar(items)` | wie hoch eine Liste **würde**, ohne sie zu bauen |
 
-Stand heute: Navigationsspalte 678 von 684 px (14 Einträge, seit
-„Beute“ wieder voll; der Prüflauf lässt keinen 15. zu), Unternavigation im
+Stand heute: Navigationsspalte 670 von 684 px (15 Einträge; seit
+„Beute“ voll, in 1.0.10.0 auf Wunsch des Besitzers „Endgame“ dazu – dafür
+rücken die Einträge zusammen, `NAV_ITEM_H` 33, `NAV_ITEM_GAP` 1; der
+Prüflauf lässt keinen 16. zu), Unternavigation im
 schlimmsten Fall (Dungeons, grösster Stufenabschnitt) 642 von 716 px. Der
 Prüflauf verlangt zusätzlich **Luft für einen weiteren Eintrag** — ohne
 das fällt erst der Eintrag auf, der schon nicht mehr passt, und dann

@@ -68,6 +68,12 @@ local tabs = {
     -- data/loot.lua, Namen vom eigenen Client. Nimmt den Platz, den
     -- 6.61.1.0 freigegeben hatte - die Spalte ist damit wieder VOLL.
     { id = "beute",      icon = ICON_PATH .. "nav_beute",      label = "Beute" },
+    -- 1.0.10.0 (Wunsch: "eine Rubrik Level 60 oder Endgame auf der linken
+    -- Seite"): Einstimmungen, Tier 0, Dungeons ab 55, Ruf (modules/
+    -- endgame.lua). Ohne feature: Stand aus dem eigenen Client. Dafuer
+    -- ruecken die Eintraege zusammen (NAV_ITEM_H 35 -> 33, NAV_ITEM_GAP
+    -- 2 -> 1) - die Spalte passt weiter ohne Rollen.
+    { id = "endgame",    icon = ICON_PATH .. "nav_endgame",    label = "Endgame" },
 
     -- Bewusst OHNE feature: der Gruppencheck liest ausschliesslich die
     -- Ausruestung der Leute, die gerade neben einem stehen. Das ist keine
@@ -152,8 +158,8 @@ end
 
 local tabButtons = {}
 
-local NAV_ITEM_H   = 35   -- 6.25.0.0: 38 -> 35, Platz fuer "Taschen" und Luft fuer einen weiteren
-local NAV_ITEM_GAP = 2
+local NAV_ITEM_H   = 33   -- 6.25.0.0: 38 -> 35; 1.0.10.0: 33, Platz fuer "Endgame"
+local NAV_ITEM_GAP = 1
 local NAV_PAD      = 12
 local NAV_GROUP_H  = 24   -- Gruppenlabel inkl. 4 px Abstand darunter
 local NAV_GROUP_TOP= 13   -- Luft ueber einer neuen Gruppe (ausser der ersten)
@@ -2518,6 +2524,10 @@ function WeintCodex.Navigation.SwitchTo(tabId)
     elseif tabId == "beute" then
         if WeintCodex.LootBook and WeintCodex.LootBook.Show then
             WeintCodex.LootBook.Show()
+        end
+    elseif tabId == "endgame" then
+        if WeintCodex.Endgame and WeintCodex.Endgame.Show then
+            WeintCodex.Endgame.Show()
         end
     elseif tabId == "anmeldung" then
         WeintCodex.Navigation.ShowPlanning(sub)

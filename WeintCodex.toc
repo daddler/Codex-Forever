@@ -247,6 +247,8 @@ modules/sleepingbag.lua
 modules/books.lua
 # Ruf-Belohnungen auf der Seite Entdecken (1.0.8.10).
 modules/reppage.lua
+# Endgame: Einstimmungen, Tier 0, Dungeons ab 55, Ruf (1.0.10.0).
+modules/endgame.lua
 # Startseite (6.11.0.0): fragt Lehrer, Quests und Dungeons - nach ihnen.
 modules/home.lua
 

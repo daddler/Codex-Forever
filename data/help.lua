@@ -44,6 +44,9 @@ P["nav:dungeons"] = { title = "Dungeons",
 P["nav:beute"] = { title = "Beute",
     text = "Beute aus Dungeons und Schlachtzügen zum Nachschlagen, mit Wunschliste. Keine Wertung, was besser ist.",
     words = "loot drop wunschliste items" }
+P["nav:endgame"] = { title = "Endgame",
+    text = "Was zu Stufe 60 gehört: deine Einstimmungen Schritt für Schritt, das Tier-0-Set deiner Klasse (was du hast, wo der Rest fällt), die Dungeons ab Stufe 55 mit ihren Quests und dein Ruf. Der Stand kommt aus dem Spiel.",
+    words = "stufe 60 level 60 max endlevel einstimmung attunement tier set onyxia ruf" }
 P["nav:gruppe"] = { title = "Gruppencheck",
     text = "Prüft vor dem Pull, ob in der Gruppe alle da sind und was fehlt. Mit /wc gruppe prüfen sofort.",
     words = "gruppe check ready bereit" }

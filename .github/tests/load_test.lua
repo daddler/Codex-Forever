@@ -439,7 +439,10 @@ Check(navUsed <= navBudget,
 -- und dass nichts mehr dazukommt, ohne dass diese Zahl angefasst wird.
 -- 6.61.1.0 gab einen Platz frei, "Beute" (modules/lootbook.lua) hat ihn
 -- genommen: 14 Eintraege, 6 px frei - wieder voll.
-Check(#WeintCodex.Navigation.Tabs() <= 14,
+-- 1.0.10.0 (Entscheidung des Projektinhabers: "eine Rubrik Endgame auf
+-- der linken Seite"): 15 Eintraege, dafuer rueckt die Spalte zusammen
+-- (NAV_ITEM_H 33, NAV_ITEM_GAP 1) - sie passt weiter ohne Rollen.
+Check(#WeintCodex.Navigation.Tabs() <= 15,
     "Navigationsspalte voll (seit 6.59.0.0): neuer Eintrag nur gegen einen alten ("
     .. (navBudget - navUsed) .. " px frei)")
 
@@ -21066,7 +21069,7 @@ do
     local nav = WeintCodex.Navigation
     local ok, err = pcall(function()
         local want = {
-            { "uebersicht", "Leveln" }, { "charakter" }, { "lehrer" }, { "berufe" }, { "taschen" }, { "buecher" }, { "dungeons" }, { "beute" },
+            { "uebersicht", "Leveln" }, { "charakter" }, { "lehrer" }, { "berufe" }, { "taschen" }, { "buecher" }, { "dungeons" }, { "beute" }, { "endgame" },
             { "gruppe", "Gruppe" }, { "raids" }, { "anmeldung" },
             { "materialien", "Gilde" },
             { "companion", "System" }, { "settings" },
@@ -30103,6 +30106,48 @@ do
         _G.SUI, _G.SUI_Mover_Minimap, _G.SUI_BottomAnchor = nil, nil, nil
     end)
     Check(ok, "Minikarte: Diagnose" .. (ok and "" or (": " .. tostring(err))))
+end
+
+-- 1.0.10.0: Rubrik Endgame - Tier 0 der eigenen Klasse (hast du / fehlt /
+-- unbekannt), Dungeons ab 55, Einstimmungen, die Seite baut sich.
+do
+    local EG = WeintCodex.Endgame
+    local oClass, oCount, oLevel = _G.UnitClass, _G.C_Item, _G.UnitLevel
+    local ok, err = pcall(function()
+        assert(EG and EG.Show, "modules/endgame.lua nicht geladen")
+        _G.UnitClass = function() return "Magier", "MAGE" end
+        _G.UnitLevel = function() return 58 end
+        local have = { [16686] = true }
+        _G.C_Item = { GetItemCount = function(id) return have[id] and 1 or 0 end }
+        local t = EG.Tier()
+        assert(t and t.set == 181 and #t.items == 8, "Tier 0 des Magiers falsch")
+        assert(t.have == 1 and t.known, "eigenes Teil nicht gezählt: " .. tostring(t.have))
+        assert(t.t05 == 0, "Tier 0.5 nicht als 'noch nicht in Forever' erkannt")
+        _G.C_Item = {}
+        local t2 = EG.Tier()
+        assert(t2 and not t2.known and t2.items[1].owned == nil, "unbekannt als 'fehlt' gezählt")
+        _G.C_Item = { GetItemCount = function(id) return have[id] and 1 or 0 end }
+        for _, e in ipairs(EG.Dungeons()) do
+            assert((e.dungeon.maxLevel or 0) >= EG.MIN_DUNGEON, "Dungeon unter Stufe 55: " .. tostring(e.dungeon.id))
+        end
+        assert(#EG.Dungeons() > 0, "keine Dungeons ab 55")
+        assert(#EG.Attunements() == #WeintCodex.AttunementData.list, "Einstimmungen fehlen")
+        for _, cat in ipairs(EG.CATS) do
+            EG.cat = cat.key
+            EG.Show()
+            local lines = EG.Lines(cat.key)
+            if lines[1] then
+                EG.sel = lines[1].key
+                EG.Show()
+                assert(EG.rows[1]:IsShown(), cat.key .. ": Zeile nicht gezeigt")
+            end
+            EG.sel = nil
+        end
+        EG.cat = "att"
+        assert(EG.Summary():find("Tier 0 1/8", 1, true), "Zusammenfassung: " .. EG.Summary())
+    end)
+    _G.UnitClass, _G.C_Item, _G.UnitLevel = oClass, oCount, oLevel
+    Check(ok, "Endgame: Tier 0 der Klasse, Dungeons ab 55, Einstimmungen, Seite" .. (ok and "" or (": " .. tostring(err))))
 end
 
 if failures == 0 then

@@ -63,6 +63,7 @@ local PAGES = {
     { id = "buecher",     label = "Entdecken" },
     { id = "dungeons",    label = "Dungeons" },
     { id = "beute",       label = "Beute" },
+    { id = "endgame",     label = "Endgame" },
     { id = "gruppe",      label = "Gruppencheck" },
     { id = "raids",       label = "Schlachtzüge" },
     { id = "anmeldung",   label = "Raidplanung" },

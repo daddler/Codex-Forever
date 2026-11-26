@@ -179,7 +179,9 @@ internet; any further outward message needs the same explicit request.
   „Bücher“) and got one slot back in 6.61.1.0 (Anmeldung + Kalender merged
   into „Raidplanung“, `Navigation.ShowPlanning`, gated per group via
   `PLAN_FEATURES`) and is **full again** since „Beute“ took that slot
-  (14 entries, 678 of 684 px): a new entry there must replace or merge an old one, or
+  (14 entries, 678 of 684 px); in 1.0.10.0 the owner added „Endgame“ and
+  the rows moved closer (`NAV_ITEM_H` 33, `NAV_ITEM_GAP` 1: 15 entries, 670
+  of 684 px – still no scrolling): a new entry there must replace or merge an old one, or
   become a tab under an existing one (`Navigation.SUBTABS`). Page
   content that grows from bot-supplied data is capped (raids, see
   `RolePanel.BossCards`) or goes into the one surface built to scroll
