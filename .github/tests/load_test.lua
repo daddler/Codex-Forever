@@ -24197,12 +24197,30 @@ do
     end
 end
 
--- 6.81.1.0: Ironforge - die Kante vom Boden der Stadt auf den Berg
--- (Abschnitt 471, Knoten 52 -> 26) ist gesperrt.
+-- 6.81.1.0: gesperrte Kanten (Ironforge: Boden -> Berg bei Kosten 8). Seit
+-- 1.0.10.1 kommt die Karte aus dem Live-Client; jene Kante gibt es dort nicht
+-- mehr (geprueft: in Abschnitt 471 hat keine Kante weniger Kosten als
+-- Hoehenunterschied, ohne gesperrt zu sein). Hier: die Liste passt zur Karte -
+-- je Kontinent da, nur Abschnitte und Knoten, die es gibt.
 do
-    local B = WeintCodex.NavBlocked
-    Check(type(B) == "table" and type(B[0]) == "table" and B[0][471 * 16777216 + 52 * 4096 + 26] == true,
-        "Gelaendekarte: Ironforge-Kante Boden -> Berg (471:52:26) gesperrt")
+    local B, N = WeintCodex.NavBlocked, WeintCodex.NavData
+    local ok, why = type(B) == "table" and type(N) == "table", "keine Tabellen"
+    if ok then why = "" end
+    for c, D in pairs(ok and N or {}) do
+        -- D.bin: eine Karte aus data/nav (die Pruefkarten dieser Datei nicht).
+        if D.bin then
+            local list = B[c]
+            if type(list) ~= "table" then ok, why = false, "Kontinent " .. c .. " ohne Liste" break end
+            local n = 0
+            for key in pairs(list) do
+                n = n + 1
+                local k, from, to = math.floor(key / 16777216), math.floor(key / 4096) % 4096, key % 4096
+                if k >= D.nx * D.ny or from == to then ok, why = false, "Kontinent " .. c .. ": " .. key break end
+            end
+            if ok and (c == 0 or c == 1) and n == 0 then ok, why = false, "Kontinent " .. c .. " leer" end
+        end
+    end
+    Check(ok, "Gelaendekarte: gesperrte Kanten passen zur Karte: " .. tostring(why))
 end
 
 do -- Questpfeil nach RestedXP: Totband, Geistheiler, Hysterese, naechster Fundort
@@ -30155,7 +30173,11 @@ do
             assert((e.dungeon.maxLevel or 0) >= EG.MIN_DUNGEON, "Dungeon unter Stufe 55: " .. tostring(e.dungeon.id))
         end
         assert(#EG.Dungeons() > 0, "keine Dungeons ab 55")
-        assert(#EG.Attunements() == #WeintCodex.AttunementData.list, "Einstimmungen fehlen")
+        -- 1.0.10.1: Maraudon (Zepter von Celebras, Stufe 46-55) gehoert nicht zu Stufe 60.
+        local atts, leveling = EG.Attunements(), 0
+        for _, a in ipairs(WeintCodex.AttunementData.list) do if a.leveling then leveling = leveling + 1 end end
+        assert(leveling >= 1 and #atts == #WeintCodex.AttunementData.list - leveling, "Einstimmungen fehlen oder zu viele")
+        for _, e in ipairs(atts) do assert(e.att.id ~= "maraudon", "Maraudon im Endgame") end
         for _, cat in ipairs(EG.CATS) do
             EG.cat = cat.key
             EG.Show()

@@ -3,8 +3,8 @@
 --------------------------------------------------
 -- Ein Laufweg ueber das Gelaende statt der Luftlinie: der Pfeil folgt ihm,
 -- die Minikarte zeichnet ihn. Eigener Code. Daten: data/nav/*.lua (erzeugt
--- von .github/scripts/import_nav.py, Art "beta": aus dem Beta-Client
--- gebacken, nicht von uns).
+-- von .github/scripts/import_nav.py, Art "beta": gebacken, nicht von uns -
+-- bis 1.0.10.0 aus dem Beta-Client, seit 1.0.10.1 aus dem Live-Client).
 --
 -- AUFBAU DER DATEN. Ein Kontinent ist in Abschnitte von 1600/3 Einheiten
 -- zerlegt (Abschnitt k: x-Index k // ny, y-Index k % ny), jeder Abschnitt in

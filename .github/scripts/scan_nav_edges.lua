@@ -14,7 +14,7 @@
 local root = arg[1] or "."
 local tmp = os.tmpname()
 
-WeintCodex = { UIKit = {} }
+WeintCodex = { UIKit = {}, Hold = function() end }
 CreateFrame = function() return { SetScript = function() end } end
 local files = {}
 for f in io.popen('ls "' .. root .. '/data/nav"'):lines() do

@@ -9,13 +9,15 @@
 -- Forever 1.2.33 fuer Forever gefuehrt - nicht im Spiel gegengeprueft.
 --   key   = Gegenstand (Schluessel), falls es einen gibt
 --   quest = Nummer, oder { A = Allianz, H = Horde }
+--   leveling = true: ein Zugang beim Leveln, nicht fuer Stufe 60 - die
+--              Endgame-Seite (modules/endgame.lua) laesst ihn weg (1.0.10.1)
 --------------------------------------------------
 
 WeintCodex = WeintCodex or {}
 WeintCodex.AttunementData = {
     SOURCE = { kind = "community", label = "Zugänge wie in Classic" },
     list = {
-        { id = "maraudon",        name = "Maraudon",               key = 17191, quest = 7046 },
+        { id = "maraudon",        name = "Maraudon",               key = 17191, quest = 7046, leveling = true },
         { id = "brd",             name = "Schwarzfelstiefen",      key = 11000, quest = 3802 },
         { id = "scholomance",     name = "Scholomance",            key = 13704, quest = { A = 5505, H = 5511 } },
         { id = "ubrs",            name = "Obere Schwarzfelsspitze", key = 12344, quest = 4743 },

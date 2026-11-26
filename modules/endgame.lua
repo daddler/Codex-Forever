@@ -89,9 +89,12 @@ function EG.Attunements()
     local out = {}
     if not (AT and d) then return out end
     for _, a in ipairs(d.list) do
-        local final = AT.FinalQuest(a)
-        local chain = final and AT.Chain(final) or {}
-        out[#out + 1] = { att = a, chain = chain, st = AT.State(chain) }
+        -- 1.0.10.1: Zugaenge beim Leveln (Maraudon, 46-55) gehoeren nicht hierher.
+        if not a.leveling then
+            local final = AT.FinalQuest(a)
+            local chain = final and AT.Chain(final) or {}
+            out[#out + 1] = { att = a, chain = chain, st = AT.State(chain) }
+        end
     end
     return out
 end

@@ -165,6 +165,10 @@ data/nav/nav0_4.lua
 data/nav/nav0_5.lua
 data/nav/nav0_6.lua
 data/nav/nav0_7.lua
+data/nav/nav0_8.lua
+data/nav/nav0_9.lua
+data/nav/nav0_10.lua
+data/nav/nav0_11.lua
 data/nav/nav1_1.lua
 data/nav/nav1_2.lua
 data/nav/nav1_3.lua
@@ -174,6 +178,10 @@ data/nav/nav1_6.lua
 data/nav/nav1_7.lua
 data/nav/nav1_8.lua
 data/nav/nav1_9.lua
+data/nav/nav1_10.lua
+data/nav/nav1_11.lua
+data/nav/nav1_12.lua
+data/nav/nav1_13.lua
 data/nav/nav2991_1.lua
 # Gesperrte Kanten der Gelaendekarte (6.81.1.0, erzeugt von .github/scripts/scan_nav_edges.lua).
 data/nav_blocked.lua
