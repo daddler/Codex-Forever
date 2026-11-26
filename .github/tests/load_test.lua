@@ -29487,6 +29487,23 @@ do
         CL.Arrange(ch)
         assert(b2._mode == "belowleft", "zu wenig Platz: Knopf verdeckt den Titel")
         assert(CL.CloseOf({ BorderFrame = { CloseButton = ch.CloseButton } }) == ch.CloseButton, "Kreuz der Weltkarte nicht gefunden")
+        -- 1.0.10.2: Weltkarte - links vom Kreuz steht Maximieren/Verkleinern;
+        -- der Codex-Knopf beginnt links davon, ohne ihn am Kreuz.
+        do
+            local map = CreateFrame("Frame", "WeintCodexTestMap", UIParent)
+            map.BorderFrame = CreateFrame("Frame", nil, map)
+            map.BorderFrame.CloseButton = CreateFrame("Button", nil, map.BorderFrame)
+            local mm = CreateFrame("Frame", nil, map.BorderFrame)
+            map.BorderFrame.MaximizeMinimizeFrame = mm
+            mm:Show()
+            local pt
+            local probe2 = { ClearAllPoints = function() end, SetPoint = function(_, ...) pt = { ... } end }
+            CL.Place(probe2, map, "title")
+            assert(pt and pt[2] == mm and pt[3] == "LEFT", "Codex-Knopf liegt auf Maximieren")
+            mm:Hide()
+            CL.Place(probe2, map, "title")
+            assert(pt and pt[2] == map.BorderFrame.CloseButton, "ohne Maximieren nicht am Kreuz")
+        end
         -- 1.0.8.7: steht dort schon ein eigener Knopf (Preise scannen), reiht
         -- sich der Codex-Knopf links davon ein, statt darueber zu liegen.
         do

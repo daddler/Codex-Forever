@@ -293,6 +293,23 @@ function CL.CloseOf(host)
     return type(c) == "table" and c.GetObjectType and c or nil
 end
 
+-- 1.0.10.2 (Rueckmeldung: "bei der Karte ist der Button halb ueber dem
+-- Maximieren-Knopf"): links neben dem Kreuz kann noch ein Knopf des Spiels
+-- stehen (Weltkarte: Maximieren/Verkleinern). Die Reihe beginnt links vom
+-- aeussersten sichtbaren davon; ohne ihn am Kreuz.
+CL.TITLE_NEIGHBOURS = { "MaximizeMinimizeFrame" }
+function CL.TitleEdge(host)
+    local close = CL.CloseOf(host)
+    if not close or type(host) ~= "table" then return close end
+    for _, key in ipairs(CL.TITLE_NEIGHBOURS) do
+        for _, owner in ipairs({ host, host.BorderFrame }) do
+            local nb = type(owner) == "table" and _G.rawget(owner, key) or nil
+            if type(nb) == "table" and nb.GetObjectType and CL.HostVisible(nb) then return nb end
+        end
+    end
+    return close
+end
+
 -- Der Titel des Fensters (FontString) oder nil.
 function CL.TitleOf(host)
     if type(host.GetTitleText) == "function" then
@@ -332,7 +349,7 @@ function CL.Place(b, host, where)
     if where == "title" then
         -- Links neben dem Kreuz des Fensters, auf seiner Mitte; ohne Kreuz
         -- oben rechts in der Titelleiste.
-        local close = CL.CloseOf(host)
+        local close = CL.TitleEdge(host)
         if close then
             b:SetPoint("RIGHT", close, "LEFT", -CL.TITLE_GAP, 0)
         else
@@ -354,7 +371,7 @@ end
 -- Fenster nachziehen").
 function CL.Arrange(frame)
     if type(frame) ~= "table" then return end
-    local close = CL.CloseOf(frame)
+    local close = CL.TitleEdge(frame)
     local used, prev, full = 0, nil, false
     -- Steht dort schon ein eigener Knopf (after), beginnt die Reihe links davon.
     for _, link in ipairs(CL.order) do
