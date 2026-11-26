@@ -9,6 +9,19 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.0.10.3] – 2026-11-26
+
+### Behoben
+- Geländekarte (`ui/navmesh.lua`): 1.0.10.1 räumte nach jeder Suche auf,
+  die nächste entpackte alles neu (Bericht: 323 KB/s Abfall, weniger
+  Bilder je Sekunde). Jetzt `NV.IdleTrim` erst nach `NV.IDLE_TRIM` (30 s)
+  ohne Suche, `NV.CELLS` 24; `NV.Surf` baut die Übergänge in festen
+  Arbeitslisten statt einer Tabelle je Übergang. Offline bei 120
+  Neusuchen 387 → 60 MB Abfall (1.0.10.0: 75 MB), Ergebnisse gleich.
+- Codex-Knöpfe (`ui/codexlinks.lua`): `CL.TitleEdge` kennt weitere Namen
+  und nimmt jeden kleinen sichtbaren Knopf in der Zeile des Kreuzes direkt
+  links davon (`CL.LeftNeighbour`) – Zauberbuch: Maximieren war verdeckt.
+
 ## [1.0.10.2] – 2026-11-26
 
 ### Behoben

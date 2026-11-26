@@ -22,6 +22,14 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.0.10.3",
+        date    = "26.11.2026",
+        notes   = {
+            "|cff7C6CFFWieder flüssig mit dem Questpfeil|r – seit dem letzten Update rechnete der Pfeil beim Laufen ständig neu und kostete Bilder pro Sekunde. Jetzt entsteht beim Neuberechnen nur noch ein Bruchteil davon, weniger als vor der neuen Geländekarte.",
+            "|cff7C6CFFCodex-Knöpfe am Fenster|r – im Zauberbuch und überall, wo neben dem Kreuz noch ein Knopf des Spiels sitzt (Maximieren), liegt der Codex-Knopf jetzt links daneben statt darüber.",
+        },
+    },
+    {
         version = "1.0.10.2",
         date    = "26.11.2026",
         notes   = {
