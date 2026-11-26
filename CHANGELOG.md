@@ -9,6 +9,15 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.0.9.2] – 2026-11-26
+
+### Behoben
+- Entfluchen, Felder zum Anklicken: nur das eigene Feld war zu sehen
+  (Spielerin, Magierin). `RegisterUnitWatch` liest das Attribut `unit`, die
+  Felder hatten nur das Lua-Feld `c.unit` – jedes Mitglied galt als nicht
+  vorhanden. `NewCell` setzt jetzt `c:SetAttribute("unit", unit)`;
+  `load_test.lua` prüft es für alle Felder.
+
 ## [1.0.9.1] – 2026-11-25
 
 ### Behoben

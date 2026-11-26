@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.0.9.2",
+        date    = "26.11.2026",
+        notes   = {
+            "|cff7C6CFFEntfluchen zeigt wieder alle Mitspieler|r – bei den Feldern zum Anklicken stand nur dein eigenes Feld da, die deiner Gruppe blieben unsichtbar. Jetzt hat jedes Gruppenmitglied sein Feld.",
+        },
+    },
+    {
         version = "1.0.9.1",
         date    = "25.11.2026",
         notes   = {
