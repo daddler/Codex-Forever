@@ -23563,6 +23563,21 @@ do
         assert(kinds and kinds.Cloak and kinds.Necklace and kinds.Shield and kinds.Weapon,
             "Plaetze nicht aus den Rezepten der Verzauberkunst gelesen")
         assert(not kinds.Ring and not kinds.Scope, "Platz ohne Rezept")
+        -- 1.0.10.4 (Rueckmeldung: "falsche Werte"): Lernstufe wie auf der
+        -- Seite Berufe (mit deren Korrekturen), nicht roh aus den Daten.
+        local byPro = {}
+        for _, r in ipairs(WeintCodex.Professions.Recipes("enchanting")) do byPro[r.spell] = r.learn end
+        local checked, wrong = 0, nil
+        for _, list in pairs(EN.recipes) do
+            for _, r in ipairs(list) do
+                checked = checked + 1
+                if byPro[r.spell] ~= nil and byPro[r.spell] ~= r.learn then wrong = r.effect .. " " .. r.learn .. "/" .. byPro[r.spell] end
+            end
+        end
+        assert(checked > 100 and not wrong, "Lernstufe anders als auf der Seite Berufe: " .. tostring(wrong))
+        local chestSta
+        for _, r in ipairs(EN.recipes.Chest or {}) do if r.effect == "Inferior Stamina" then chestSta = r end end
+        assert(chestSta and chestSta.learn == 15, "Brust - Schwache Ausdauer nicht ab 15: " .. tostring(chestSta and chestSta.learn))
         local oI = _G.C_Item and _G.C_Item.GetItemInfoInstant
         local oG = _G.GetItemInfoInstant
         local loc = "INVTYPE_HOLDABLE"

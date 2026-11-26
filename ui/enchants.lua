@@ -60,20 +60,25 @@ EN.OFFHAND = { INVTYPE_SHIELD = "Shield", INVTYPE_WEAPON = "Weapon", INVTYPE_WEA
 
 -- Rezeptworte aus der Verzauberkunst: { [Wort] = Anzahl Rezepte }.
 -- nil = Daten fehlen (dann zeigt das Modul nichts - unbekannt, nicht leer).
+-- 1.0.10.4 (Rueckmeldung: "Tooltip Verzauberung zeigt falsche Werte"):
+-- gelesen ueber die Berufe (WeintCodex.Professions.Recipes), mit deren
+-- Korrekturen der Lernstufe (Client-Build, OneForAll) und den Rezepten, die
+-- nur dort stehen. Vorher roh aus P.RAW: 50 von 172 Rezepten mit alter
+-- Lernstufe ("Brust - Schwache Ausdauer" 70 statt 15) - und damit auch
+-- falsche Vorschlaege und "staerkste".
 function EN.Kinds()
     if EN.kinds ~= nil then return EN.kinds or nil end
-    local P = WeintCodex.ProfessionData
-    local raw = P and P.RAW and P.RAW.enchanting
-    if type(raw) ~= "string" then EN.kinds = false return nil end
-    -- 1.0.5.2: auch die Rezepte aus data/professions_su.lua.
-    if P.SU_RAW and type(P.SU_RAW.enchanting) == "string" then raw = raw .. "\n" .. P.SU_RAW.enchanting end
+    local PRO = WeintCodex.Professions
+    local list = PRO and PRO.Recipes and PRO.Recipes("enchanting")
+    if type(list) ~= "table" or #list == 0 then EN.kinds = false return nil end
     local k, r = {}, {}
-    for line in raw:gmatch("[^\n]+") do
-        local spell, learn, w, effect = line:match("^(%d+) %S+ (%S+) .-|Enchant ([^|]-) %- (.+)$")
-        if spell then
+    for _, rec in ipairs(list) do
+        local w, effect
+        if type(rec.name) == "string" then w, effect = rec.name:match("^Enchant (.-) %- (.+)$") end
+        if w and effect and rec.spell then
             k[w] = (k[w] or 0) + 1
             r[w] = r[w] or {}
-            r[w][#r[w] + 1] = { spell = tonumber(spell), learn = tonumber(learn) or 0, effect = effect }
+            r[w][#r[w] + 1] = { spell = rec.spell, learn = rec.learn or 0, effect = effect }
         end
     end
     EN.kinds = _G.next(k) and k or false
