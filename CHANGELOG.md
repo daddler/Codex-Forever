@@ -9,6 +9,25 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.0.10.1] – 2026-11-26
+
+### Geändert
+- **Geländekarte aus dem Live-Client** (`data/nav/*.lua`, 25 Dateien):
+  `.github/scripts/import_nav.py` liest das neue Format von Shortest Path
+  Forever 1.45.12 (Format 4, wowf 1.60.1, mmaps von TrinityCore) und rechnet
+  es in das alte um, das `ui/navmesh.lua` liest. Schritte und
+  Ebenenübergänge nur in beide Richtungen, Sprünge über mehrere Zellen
+  entfallen. Offline über 300 Strecken: keine verloren, 45 neu, Wege im
+  Mittel kürzer. `data/nav_blocked.lua` neu gerechnet
+  (`scan_nav_edges.lua` brauchte einen Stub für `WeintCodex.Hold`); der
+  Test prüft die Liste gegen die Karte statt einer Knotennummer.
+- **Speicher der Geländekarte** (`/wcui speicher`: 17,7 MB): Übergänge der
+  Ebenen flach (`sf.lkAt`/`sf.lkL`), `NV.CELLS` 32 → 8, `NV.Trim` nach
+  jeder Suche auf `NV.CACHE_IDLE` (150) Wegenetze und `NV.CELLS_IDLE` (3)
+  Gitter. Offline nach 120 Suchen 14,1 → 6,4 MB, Ergebnisse gleich.
+- Endgame: Einstimmungen mit `leveling = true` (Maraudon, 46–55) entfallen
+  (`data/attunements.lua`, `EG.Attunements`).
+
 ## [1.0.10.0] – 2026-11-26
 
 ### Hinzugefügt

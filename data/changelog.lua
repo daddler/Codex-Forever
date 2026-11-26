@@ -22,6 +22,15 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.0.10.1",
+        date    = "26.11.2026",
+        notes   = {
+            "|cff7C6CFFQuestpfeil mit neuer Geländekarte|r – das Gelände stammt jetzt aus dem fertigen Spiel statt aus der Beta. Der Pfeil findet mehr Wege und macht weniger Umwege; der alte Abstecher über den Berg in Eisenschmiede ist weg.",
+            "|cff7C6CFFWeniger Speicher|r – der Questpfeil hält nach einer Suche nur noch das Nötige im Speicher, statt viele Megabyte liegen zu lassen.",
+            "|cff7C6CFFMaraudon nicht mehr im Endgame|r – der Zugang zu Maraudon gehört zum Leveln und steht nur noch bei den Einstimmungen, nicht mehr in der Endgame-Rubrik.",
+        },
+    },
+    {
         version = "1.0.10.0",
         date    = "26.11.2026",
         notes   = {
