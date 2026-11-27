@@ -42,6 +42,14 @@ NV.CUT = 5             -- Ecken bis so weit neben der Sichtlinie gelten als gera
 NV.CACHE = 600         -- entpackte Wegenetze im Speicher (je rund 1 KB)
 NV.OFFROAD = 1.5       -- 1.0.10.4: ein Meter abseits der Strasse zaehlt so viel (Daten: D.offroad)
 NV.HEUR_SHARE = 0.5    -- so viel des Aufschlags geht in die Schaetzung zum Ziel
+-- 1.0.10.7 (Spieler: "Route durch Staedte der anderen Fraktion"): ein Meter
+-- in einem feindlichen Ort zaehlt so viel. Orte = Flugmeister der anderen
+-- Fraktion (data/travel.lua) mit Umkreis; liegt ein eigener oder neutraler
+-- Flugmeister daneben (Beutebucht), ist der Ort nicht feindlich.
+NV.HOSTILE = 4
+NV.HOSTILE_R = 150                 -- Umkreis eines Ortes
+NV.HOSTILE_CITY = { [2] = 500, [6] = 350, [11] = 350, [22] = 350, [23] = 500 }  -- Hauptstaedte (Flugpunkt)
+NV.HOSTILE_SHARED = 250            -- so nah ein eigener/neutraler Flugmeister: kein Feindesort
 NV.CELLS = 24          -- entpackte Gitter mit Ebenen im Speicher (1.0.10.1: 8 - zu wenig,
                        -- eine Route entpackte sie immer wieder; 1.0.10.3: 24, geraeumt erst im Leerlauf)
 
@@ -110,6 +118,7 @@ local function State(c)
     -- st.off - die blosse Luftlinie liess lange Suchen an NV.MAX_EXPAND
     -- scheitern. Etwas darueber: zielstrebiger, nicht mehr streng der beste Weg.
     st.hw = 1 + (st.off - 1) * NV.HEUR_SHARE
+    st.c = c
     states[c] = st
     return st
 end
@@ -168,7 +177,7 @@ function NV.Cells(st, cl)
                 if c2 and c2.cells and (not vu or c2.cellsUsed < vu) then victim, vu = c2, c2.cellsUsed end
             end
         end
-        if victim then victim.cells, victim.surf, victim.road, victim.roadN = nil, nil, nil, nil cellsCount = cellsCount - 1 else cellsCount = 0 end
+        if victim then victim.cells, victim.surf, victim.road, victim.roadN, victim.hzSet = nil, nil, nil, nil, nil cellsCount = cellsCount - 1 else cellsCount = 0 end
     end
     local g = Field(st.D, "grid", cl.k + 1)
     if not g then cl.cells = false return nil end
@@ -187,6 +196,7 @@ function NV.Cells(st, cl)
     end
     cl.cells = table.concat(parts)
     NV.DecodeRoad(st, cl)
+    NV.DecodeHostile(st, cl)
     cellsCount = cellsCount + 1
     useTick = useTick + 1
     cl.cellsUsed = useTick
@@ -212,15 +222,107 @@ end
 
 -- Aufschlag fuer Knoten `node` in Zelle `cell` (1 ohne Strassendaten).
 local function RoadF(st, cl, node, cell)
-    if st.off == 1 then return 1 end
+    local hz = cl.hzSet
+    local h = (hz and hz[cell]) and NV.HOSTILE or 1
+    if st.off == 1 then return h end
     local cov = cl.roadN and cl.roadN[node]
     if not cov then
         local b = cl.road and byte(cl.road, cell + 1)
         cov = b and B64[b] or 0
     end
-    return st.rf[cov]
+    return st.rf[cov] * h
 end
 NV.RoadF = RoadF
+
+--------------------------------------------------
+-- 1.0.10.7: feindliche Orte
+--------------------------------------------------
+-- Eigene Fraktion: 1 Allianz, 2 Horde, nil unbekannt (dann kein Aufschlag).
+function NV.Faction()
+    local f = _G.UnitFactionGroup and K.Plain(_G.UnitFactionGroup("player"))
+    return (f == "Alliance" and 1) or (f == "Horde" and 2) or nil
+end
+
+-- Kreise { n, w, r, n, w, r ... } des Kontinents c fuer Fraktion mine.
+function NV.HostileList(c, mine)
+    local out = {}
+    local taxi = mine and WeintCodex.TravelData and WeintCodex.TravelData.taxi
+    if not taxi then return out end
+    local share2 = NV.HOSTILE_SHARED * NV.HOSTILE_SHARED
+    for id, t in pairs(taxi) do
+        if t[1] == c and (t[4] == 1 or t[4] == 2) and t[4] ~= mine then
+            local shared = false
+            for _, o in pairs(taxi) do
+                if o[1] == c and (o[4] == mine or o[4] == 0 or o[4] == 3)
+                   and (o[2] - t[2]) ^ 2 + (o[3] - t[3]) ^ 2 <= share2 then shared = true break end
+            end
+            if not shared then
+                out[#out + 1], out[#out + 2], out[#out + 3] = t[2], t[3], NV.HOSTILE_CITY[id] or NV.HOSTILE_R
+            end
+        end
+    end
+    return out
+end
+
+-- Kreise, die den Abschnitt (mit einem Abschnitt Rand) beruehren, oder false.
+local function ClusterHostile(st, cl)
+    local hzC = cl.hzC
+    if hzC ~= nil then return hzC end
+    hzC = false
+    local list = st.hz
+    if list and #list > 0 then
+        local T = NV.TILE
+        local n0 = (st.cx0 + floor(cl.k / st.ny)) * T
+        local w0 = (st.cy0 + cl.k % st.ny) * T
+        for i = 1, #list, 3 do
+            local n, w, r = list[i], list[i + 1], list[i + 2]
+            if n + r >= n0 - T and n - r <= n0 + 2 * T and w + r >= w0 - T and w - r <= w0 + 2 * T then
+                hzC = hzC or {}
+                hzC[#hzC + 1], hzC[#hzC + 2], hzC[#hzC + 3] = n, w, r
+            end
+        end
+    end
+    cl.hzC = hzC
+    return hzC
+end
+
+-- Liegt (n, w) in einem der Kreise?
+local function InHostile(hzC, n, w)
+    for i = 1, #hzC, 3 do
+        local dn, dw, r = n - hzC[i], w - hzC[i + 1], hzC[i + 2]
+        if dn * dn + dw * dw <= r * r then return true end
+    end
+    return false
+end
+NV.InHostile = InHostile
+
+-- Zellen des Abschnitts in feindlichen Orten ([Zelle] = true), mit dem Gitter.
+local function DecodeHostile(st, cl)
+    cl.hzSet = false
+    local hzC = ClusterHostile(st, cl)
+    if not hzC then return end
+    local set, any = {}, false
+    for cell = 0, st.C * st.C - 1 do
+        local n, w = NV.CellPos(st, cl.k, cell)
+        if InHostile(hzC, n, w) then set[cell], any = true, true end
+    end
+    if any then cl.hzSet = set end
+end
+NV.DecodeHostile = DecodeHostile
+
+-- Kreise fuer die Suche bereitstellen (einmal je Fraktion und Kontinent).
+local function HostileFor(st)
+    local mine = NV.Faction()
+    if st.hzFor == (mine or 0) and st.hz then return end
+    st.hzFor, st.hz = mine or 0, NV.HostileList(st.c, mine)
+    for _, cl in pairs(st.clusters) do
+        if cl then
+            cl.hzC = nil
+            if cl.cells then DecodeHostile(st, cl) else cl.hzSet = nil end
+        end
+    end
+end
+NV.HostileFor = HostileFor
 
 -- Den am laengsten nicht gebrauchten Abschnitt freigeben.
 function NV.Evict()
@@ -256,7 +358,7 @@ function NV.Trim(keepGraphs, keepCells)
             end
         end
         if not victim then cellsCount = 0 break end
-        victim.cells, victim.surf, victim.road, victim.roadN = nil, nil, nil, nil
+        victim.cells, victim.surf, victim.road, victim.roadN, victim.hzSet = nil, nil, nil, nil, nil
         cellsCount = cellsCount - 1
     end
     if cachedCount <= keepGraphs then return end
@@ -835,10 +937,11 @@ local function Sees(cl, C, a, b)
     local water = Walk(cl, a) == 2
     -- 1.0.10.4: zaehlt die Zellen abseits der Strasse, die die Linie kreuzt
     -- (zweiter Rueckgabewert; Pull vergleicht mit dem ersetzten Stueck).
-    local road, offCount = cl.road, 0
+    local road, hz, offCount = cl.road, cl.hzSet, 0
     local function Ok(c)
         local v = Walk(cl, c)
         if road and not OnRoad(road, c) then offCount = offCount + 1 end
+        if hz and hz[c] then offCount = offCount + NV.HOSTILE end
         return v == 1 or (v == 2 and water)
     end
     local ix, iy = 0, 0
@@ -886,8 +989,11 @@ local function Pull(cl, C, cells, list)
     -- 1.0.10.4: eine gerade Linie darf nicht mehr Zellen abseits der Strasse
     -- kreuzen als das Stueck, das sie ersetzt (sonst schnitte das Glaetten
     -- die Strasse ab, die die Suche gewaehlt hat).
-    local road = cl.road
-    local function Off(c) return (road and not OnRoad(road, c)) and 1 or 0 end
+    -- 1.0.10.7: ebenso nicht mehr Zellen in feindlichen Orten (je NV.HOSTILE).
+    local road, hz = cl.road, cl.hzSet
+    local function Off(c)
+        return ((road and not OnRoad(road, c)) and 1 or 0) + ((hz and hz[c]) and NV.HOSTILE or 0)
+    end
     local anchor, i = 1, 2
     local offRun = Off(cells[2] or cells[1])
     while i <= n do
@@ -895,7 +1001,7 @@ local function Pull(cl, C, cells, list)
         local ok, offLine = false, 0
         if i < n and i - anchor < NV.PULL then ok, offLine = Sees(cl, C, cells[anchor], cells[i + 1]) end
         local offNext = i < n and offRun + Off(cells[i + 1]) or offRun
-        if ok and (not road or offLine <= offNext) then
+        if ok and (not (road or hz) or offLine <= offNext) then
             i, offRun = i + 1, offNext
         else
             list[#list + 1] = cells[i]
@@ -1048,6 +1154,7 @@ NV.GridChain = GridChain
 function NV.Search(c, sN, sW, gN, gW)
     local st = State(c)
     if not st then return nil end
+    HostileFor(st)
     local ks, cs0 = NV.Locate(st, sN, sW)
     local kg, cg0 = NV.Locate(st, gN, gW)
     if not (ks and kg) then return nil end
@@ -1133,6 +1240,10 @@ function NV.Search(c, sN, sW, gN, gW)
             local gc = goalCost[u]
             if gc and gu + gc < best then best, bestNode = gu + gc, u end
             local s, pos = cl.s, cl.edge[iu]
+            local hzU = ClusterHostile(st, cl)
+            local un0, uw0
+            if hzU then un0, uw0 = NV.NodePos(st, u) end
+            hzU = hzU and un0 ~= nil
             -- 6.81.1.0 (Ironforge: Kante vom Boden auf den Berg, 194 hoch bei
             -- Kosten 8 - die Route lief ueber den Berg statt durchs Tor):
             -- gesperrte Kanten im Abschnitt (data/nav_blocked.lua, Schluessel
@@ -1146,9 +1257,19 @@ function NV.Search(c, sN, sW, gN, gW)
                 local nd = gu + Num(s, pos + 3, 2)
                 if blocked and kt == ku and blocked[u * 4096 + iv] then
                     -- gesperrt
-                elseif not g[v] or nd < g[v] then
-                    local n, w = NV.NodePos(st, v)
-                    if n then
+                else
+                  local n, w = NV.NodePos(st, v)
+                  -- 1.0.10.7: Kante in einen feindlichen Ort (Ziel oder Mitte
+                  -- der Kante darin) kostet bis zu NV.HOSTILE-mal so viel.
+                  if n and hzU then
+                      local cv = NV.Cluster(st, kt)
+                      local hv = cv and ClusterHostile(st, cv)
+                      if hv then
+                          local hits = (InHostile(hv, n, w) and 1 or 0) + (InHostile(hv, (n + un0) / 2, (w + uw0) / 2) and 1 or 0)
+                          if hits > 0 then nd = gu + Num(s, pos + 3, 2) * (1 + (NV.HOSTILE - 1) * hits / 2) end
+                      end
+                  end
+                  if n and (not g[v] or nd < g[v]) then
                         g[v], from[v] = nd, u
                         HeapPush(heap, nd + sqrt((n - gN) ^ 2 + (w - gW) ^ 2) * st.hw, v)
                     end

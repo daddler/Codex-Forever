@@ -6055,6 +6055,40 @@ do
         -- Ohne Strassendaten: geradeaus wie bisher.
         local _, straight = RoadRun(false, 92)
         assert(straight == 0, "ohne Strassen ueber die Strasse")
+        -- 1.0.10.7: feindliche Orte. Freies Feld, Flugmeister der Horde in
+        -- der Mitte (Umkreis NV.HOSTILE_R): die Allianz geht aussen herum,
+        -- die Horde geradeaus; steht ein Allianz-Flugmeister daneben
+        -- (Beutebucht), ist der Ort nicht feindlich.
+        local savedTravel, savedFaction = WeintCodex.TravelData, _G.UnitFactionGroup
+        local function HostileRun(cid, faction, taxi)
+            WeintCodex.TravelData = { taxi = taxi }
+            _G.UnitFactionGroup = function() return faction end
+            WeintCodex.NavData[cid] = { cx0 = 0, cy0 = 0, nx = 1, ny = 1, cells = 8, swim = 3,
+                graph = {}, grid = {}, fcell = {},
+                raw = { graph = { [1] = E(0, 2) }, grid = { [1] = table.concat(free) }, fcell = {} } }
+            local hp = NV.Search(cid, 0.5 * c8, 3.5 * c8, 7.5 * c8, 3.5 * c8)
+            WeintCodex.NavData[cid] = nil
+            local near = math.huge
+            for i = 1, #hp - 3, 2 do
+                for t = 0, 1, 0.05 do
+                    local n = hp[i] + (hp[i + 2] - hp[i]) * t
+                    local w = hp[i + 1] + (hp[i + 3] - hp[i + 1]) * t
+                    near = math.min(near, math.sqrt((n - 4 * c8) ^ 2 + (w - 3.5 * c8) ^ 2))
+                end
+            end
+            return hp, near
+        end
+        local horde = { [900] = { 91, 4 * c8, 3.5 * c8, 2, "Ort" } }
+        local hp, near = HostileRun(91, "Alliance", horde)
+        assert(hp and near > NV.HOSTILE_R * 0.8, "Allianz quer durch den Hordeort: " .. tostring(near))
+        assert(math.abs(hp[#hp - 1] - 7.5 * c8) < 0.01, "Ziel verfehlt (feindlicher Ort)")
+        local _, nearH = HostileRun(90, "Horde", { [900] = { 90, 4 * c8, 3.5 * c8, 2, "Ort" } })
+        assert(nearH < 40, "Horde meidet den eigenen Ort: " .. tostring(nearH))
+        local _, nearB = HostileRun(89, "Alliance", { [900] = { 89, 4 * c8, 3.5 * c8, 2, "Ort" },
+            [901] = { 89, 4 * c8 + 30, 3.5 * c8, 1, "Ort" } })
+        assert(nearB < 40, "neutraler Ort (beide Flugmeister) gemieden: " .. tostring(nearB))
+        assert(#NV.HostileList(89, nil) == 0, "ohne Fraktion feindliche Orte")
+        WeintCodex.TravelData, _G.UnitFactionGroup = savedTravel, savedFaction
         -- 6.40.1.0: Ebenen. Grund nur an den Enden begehbar, dazwischen zwei
         -- Ebenen (Bruecke) mit Uebergaengen +y/-y: der Weg fuehrt darueber.
         WeintCodex.NavData[96] = { cx0 = 0, cy0 = 0, nx = 1, ny = 1, cells = 4, swim = 3, zstep = 2,
