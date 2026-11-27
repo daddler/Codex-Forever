@@ -22,6 +22,14 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.0.10.7",
+        date    = "28.11.2026",
+        notes   = {
+            "|cff7C6CFFNicht mehr durch feindliche Orte|r – die Route führt um Städte und Lager der anderen Fraktion herum, statt mitten hindurch. Liegt dein Ziel selbst dort oder gibt es keinen anderen Weg, geht sie trotzdem hinein. Neutrale Orte wie Beutebucht bleiben normal.",
+            "|cff7C6CFFPfeil auf der Dungeonkarte|r – statt des Punkts zeigt ein Pfeil, wohin du läufst. Das Spiel verrät in Instanzen nicht, wohin du schaust, deshalb folgt er deiner Laufrichtung und erscheint nach ein paar Schritten; Drehen auf der Stelle sieht er nicht.",
+        },
+    },
+    {
         version = "1.0.10.6",
         date    = "27.11.2026",
         notes   = {

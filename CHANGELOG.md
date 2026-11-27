@@ -9,6 +9,20 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.0.10.7] – 2026-11-28
+
+### Geändert
+- **Route meidet Orte der anderen Fraktion** (`ui/navmesh.lua`): Flugmeister
+  der anderen Fraktion aus `data/travel.lua` markieren Orte (Umkreis 150,
+  Hauptstädte 350/500); ein eigener oder neutraler Flugmeister daneben hebt
+  das auf (Beutebucht). Ein Meter darin kostet das Vierfache – im Gitter, im
+  Wegenetz und beim Glätten. Kein Verbot. Offline 300 Strecken: keine
+  verloren, Suche 5–7 % länger.
+- **Spielerpfeil auf der Dungeonkarte** (`ui/dungeonpos.lua`,
+  `ui/dungeonmap.lua`): `GetPlayerFacing` ist in Instanzen leer – die
+  Richtung kommt aus der Bewegung zwischen zwei Lagen (ab 8 Yards,
+  `DP.Heading`).
+
 ## [1.0.10.6] – 2026-11-27
 
 ### Hinzugefügt
