@@ -65,7 +65,7 @@ D.MAPS[2994] = { name = "Alcaz Island Prison", drawn = true, floors = Floors("29
 D.MAPS[2974] = { name = "Blackmaw Hold", drawn = true, floors = Floors("2974", 6, "Blackmaw Hold") }
 D.MAPS[3001] = { name = "Shaper's Terrace", drawn = true, floors = Floors("3001", 2, "Shaper's Terrace") }
 
--- 1.0.10.7 (Wunsch des Spielers nach den alten Tempelkarten): Tempel von
+-- 1.0.10.8 (Wunsch des Spielers nach den alten Tempelkarten): Tempel von
 -- Atal'Hakkar - die Karte des Spiels (Ebene 1, Kacheln aus dem Client) zeigt
 -- nur die Mitte. Dazu vier Zeichnungen von Santiago Reyes fuer Season of
 -- Discovery, veroeffentlicht am 12.02.2025 auf
