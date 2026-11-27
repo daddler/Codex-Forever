@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.0.10.8",
+        date    = "28.11.2026",
+        notes   = {
+            "|cff7C6CFFMehr Karten für den Tempel von Atal'Hakkar|r – hinter der Karte des Spiels liegen jetzt vier gezeichnete Ebenen von Santiago Reyes: Eingang, Halle der Verfluchten, Grube des Unrats und Halle der Schlangen. Blättern mit den Pfeilen oben; deine eigene Lage zeigt nur die erste Karte.",
+        },
+    },
+    {
         version = "1.0.10.7",
         date    = "28.11.2026",
         notes   = {

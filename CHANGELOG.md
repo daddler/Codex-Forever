@@ -9,6 +9,16 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.0.10.8] – 2026-11-28
+
+### Hinzugefügt
+- **Tempel von Atal'Hakkar: vier Zeichnungen von Santiago Reyes**
+  (`data/dungeonmaps_forever.lua`, `media/dungeonmaps/109_2..5`): Entrance,
+  Hall of the Cursed, Pit of Refuse, Hall of Serpents als Ebenen 2–5 hinter
+  der Karte des Spiels; veröffentlicht 12.02.2025 auf sreyesmaps.com
+  (Season of Discovery), Bilder unverändert aus MapUtils 1.8.2, gepackt mit
+  `make_dungeonmaps.py`. Eigene Lage nur auf Ebene 1.
+
 ## [1.0.10.7] – 2026-11-28
 
 ### Geändert
