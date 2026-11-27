@@ -41,6 +41,11 @@ DP.MIN_FIX = 4        -- so viele Entfernungen mindestens
 DP.ANCHORS = 10       -- Messpunkte im Umlauf
 DP.RES_OK = 12        -- Yards: mittlerer Rest, darueber verworfen
 DP.SHOW_AGE = 3       -- s: so lange gilt eine Lage
+-- 1.0.10.7 (Spieler: "besser wieder der Spielerpfeil"): in Instanzen nennt
+-- das Spiel keine Blickrichtung (GetPlayerFacing leer) - die Richtung kommt
+-- aus der Bewegung zwischen zwei Lagen, erst ab so vielen Yards (darunter
+-- waere es Rauschen der Messung). Drehen auf der Stelle sieht sie nicht.
+DP.HEAD_MOVE = 8
 DP.TAXI = _G.Enum and _G.Enum.SuperTrackingMapPinType and _G.Enum.SuperTrackingMapPinType.TaxiNode or 2
 
 local floor, sqrt, abs = math.floor, math.sqrt, math.abs
@@ -228,6 +233,17 @@ local function Fix(now)
     local f = state.fix or {}
     f.x, f.y, f.z, f.res, f.t, f.n = x, y, z, res, now, n
     state.fix = f
+    -- Richtung aus der Bewegung (x = Norden, y = Westen; 0 = Norden, gegen
+    -- den Uhrzeigersinn wie GetPlayerFacing).
+    if not state.refX then
+        state.refX, state.refY = x, y
+    else
+        local dx, dy = x - state.refX, y - state.refY
+        if dx * dx + dy * dy >= DP.HEAD_MOVE * DP.HEAD_MOVE then
+            state.heading = math.atan2(dy, dx) % (2 * math.pi)
+            state.refX, state.refY = x, y
+        end
+    end
     DP.stats.fixes = DP.stats.fixes + 1
 end
 
@@ -310,6 +326,7 @@ function DP.Start(inst)
     state.saved = Save()
     state.active, state.inst, state.list, state.idx, state.cur, state.last = true, inst, list, 0, nil, nil
     for k in pairs(state.readings) do state.readings[k] = nil end
+    state.refX, state.refY, state.heading = nil, nil, nil
     frame:SetScript("OnUpdate", function() DP.Step() end)
     return true
 end
@@ -327,6 +344,12 @@ function DP.Get(inst)
     local f = state.fix
     if not f or state.inst ~= inst or Now() - f.t > DP.SHOW_AGE then return nil end
     return f.x, f.y, f.z, f.res
+end
+
+-- Blickrichtung aus der Bewegung (Bogenmass wie GetPlayerFacing) oder nil.
+function DP.Heading(inst)
+    if not DP.Get(inst) then return nil end
+    return state.heading
 end
 
 -- Lage auf der Ebene als Anteil (0..1, links -> rechts, oben -> unten) oder nil.

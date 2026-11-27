@@ -24101,6 +24101,21 @@ do
         assert(u and math.abs(u - (b[4] - me[2]) / (b[4] - b[3])) < 0.02 and math.abs(v - (b[2] - me[1]) / (b[2] - b[1])) < 0.02,
             "Lage nicht auf der Karte: " .. tostring(u) .. ", " .. tostring(v))
         assert(DP.OnFloor(33, 99) == nil and DP.OnFloor(34, 1) == nil, "Lage auf fremder Ebene/Instanz")
+        -- 1.0.10.7: Richtung aus der Bewegung. Stehen: keine; 20 yd nach
+        -- Norden: 0; dann 20 yd nach Westen: pi/2 (wie GetPlayerFacing).
+        assert(DP.Heading(33) == nil, "Richtung ohne Bewegung")
+        -- Laufen mit 7 yd/s (Schritte zu 0,06 s), dann kurz stehen.
+        local function Walk(axis, yards)
+            for _ = 1, math.floor(yards / 0.42) do now = now + 0.06 me[axis] = me[axis] + 0.42 DP.Step() end
+            for _ = 1, 10 do now = now + 0.06 DP.Step() end
+        end
+        Walk(1, 30)
+        local hd = DP.Heading(33)
+        assert(hd and (hd < 0.35 or hd > 2 * math.pi - 0.35), "Richtung Norden falsch: " .. tostring(hd))
+        Walk(2, 30)
+        hd = DP.Heading(33)
+        assert(hd and math.abs(hd - math.pi / 2) < 0.35, "Richtung Westen falsch: " .. tostring(hd))
+        assert(DP.Heading(34) == nil, "Richtung fuer fremde Instanz")
         -- Kampf: Messung endet sofort, die Kartenmarke kommt zurueck.
         combat = true
         DP.Step()

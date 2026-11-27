@@ -376,6 +376,9 @@ function DM.PlacePlayer()
     local facing = _G.GetPlayerFacing and _G.GetPlayerFacing() or nil
     if K.IsSecret(facing) then facing = nil end
     facing = K.Plain(facing)
+    -- 1.0.10.7: in Instanzen schweigt GetPlayerFacing - dann die Richtung
+    -- aus der Bewegung; bis man einige Schritte gelaufen ist, der Punkt.
+    if type(facing) ~= "number" then facing = DPm.Heading and DPm.Heading(view.inst) end
     if type(facing) == "number" then
         mark.tex:SetTexture("Interface\\Minimap\\MinimapArrow")
         mark.tex:SetVertexColor(1, 1, 1, 1)
