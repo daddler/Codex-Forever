@@ -30,7 +30,11 @@ local KEY = "comfort"
 
 DM.PIC_W, DM.PIC_H = 1002, 668
 DM.HEAD = 30
-DM.DEFAULTS = { dungeonMaps = true, dungeonPinSize = 100 }
+DM.DEFAULTS = { dungeonMaps = true, dungeonPinSize = 100, dungeonPos = true }
+-- 1.0.10.6 (Wunsch: "sehen, wo man in der Dungeon gerade steht"): eigene
+-- Lage aus ui/dungeonpos.lua, nur bei offener Karte und ausserhalb des Kampfes.
+DM.POS_SIZE = 22
+DM.POS_TICK = 0.1
 -- 1.0.8.20 (Wunsch: "auf den Dungeon Maps genau positioniert die Bosse; mit
 -- Rechtsklick ins Dungeonjournal von Codex"): Bosspunkte aus
 -- data/dungeonpins.lua (Tabellen des Spiels, nur auf denselben Bildern).
@@ -136,6 +140,12 @@ function DM.Probe()
     add("Position in der Welt (y, x, z, Instanz)", Ask(G.UnitPosition, "player"))
     add("Blickrichtung", Ask(G.GetPlayerFacing))
     add("Spiel zeigt hier selbst eine Dungeonkarte", DM.GameHasMap() and "ja" or "nein")
+    -- 1.0.10.6: eigene Lage (ui/dungeonpos.lua) - Entfernung zur Navigation.
+    add("Entfernung zum verfolgten Ziel", Ask(G.C_Navigation and G.C_Navigation.GetDistance))
+    local DPm = WeintCodex.UIDungeonPos
+    if DPm and DPm.StatusLines then
+        for _, l in ipairs(DPm.StatusLines()) do lines[#lines + 1] = l end
+    end
     return lines
 end
 
@@ -318,6 +328,70 @@ function DM.PlacePins()
     return n
 end
 
+-- Eigene Lage auf der gezeigten Ebene: misst (ui/dungeonpos.lua) und setzt
+-- den Pfeil. Ohne Lage kein Pfeil - nie ein geratener.
+function DM.PosWanted()
+    return DM.Active() and K.Get(KEY, "dungeonPos") ~= false
+end
+
+function DM.PlacePlayer()
+    if not view then return false end
+    local DPm = WeintCodex.UIDungeonPos
+    local mark = view.me
+    local want = DM.PosWanted() and view:IsShown() and DPm and DPm.Bounds(view.inst, view.floor) ~= nil
+    if not want then
+        if DPm then DPm.Stop() end
+        if mark then mark:Hide() end
+        if view.posNote then view.posNote:Hide() end
+        return false
+    end
+    local started = DPm.Start(view.inst)
+    -- Warum kein Punkt: eine Zeile unten links, nur wenn es einen Grund gibt.
+    local why
+    if not started then
+        if DPm.QuestTracked() then why = "Eigene Lage: nicht, solange eine Quest verfolgt wird"
+        elseif K.InCombat() then why = "Eigene Lage: nicht im Kampf"
+        elseif not DPm.Available() then why = "Eigene Lage: das Spiel nennt hier keine Entfernungen" end
+    end
+    if why then
+        view.posNote:SetText(why)
+        view.posNote:Show()
+    else
+        view.posNote:Hide()
+    end
+    local u, v = DPm.OnFloor(view.inst, view.floor)
+    local w, h = K.Plain(view.page:GetWidth()), K.Plain(view.page:GetHeight())
+    if not (u and type(w) == "number" and type(h) == "number" and w > 0 and h > 0) then
+        if mark then mark:Hide() end
+        return false
+    end
+    if not mark then
+        mark = CreateFrame("Frame", nil, view.page)
+        mark:SetSize(DM.POS_SIZE, DM.POS_SIZE)
+        mark.tex = mark:CreateTexture(nil, "OVERLAY", nil, 7)
+        mark.tex:SetAllPoints(mark)
+        view.me = mark
+    end
+    mark:SetFrameLevel((K.Plain(view.page:GetFrameLevel()) or 1) + 20)
+    local facing = _G.GetPlayerFacing and _G.GetPlayerFacing() or nil
+    if K.IsSecret(facing) then facing = nil end
+    facing = K.Plain(facing)
+    if type(facing) == "number" then
+        mark.tex:SetTexture("Interface\\Minimap\\MinimapArrow")
+        mark.tex:SetVertexColor(1, 1, 1, 1)
+        if mark.tex.SetRotation then mark.tex:SetRotation(facing) end
+    else
+        local a = C.accent or C.textBright
+        mark.tex:SetTexture(K.MEDIA .. "disc_hd")
+        mark.tex:SetVertexColor(a[1], a[2], a[3], 1)
+        if mark.tex.SetRotation then mark.tex:SetRotation(0) end
+    end
+    mark:ClearAllPoints()
+    mark:SetPoint("CENTER", view.page, "TOPLEFT", u * w, -v * h)
+    mark:Show()
+    return true
+end
+
 -- Ebene i zeigen. false, wenn der Client ein Bild nicht kennt.
 function DM.ShowFloor(i)
     local m, id = view.map, view.inst
@@ -383,6 +457,12 @@ local function Build(wm)
     f.tiles = {}
     for i = 1, 12 do f.tiles[i] = f.page:CreateTexture(nil, "ARTWORK") end
 
+    f.posNote = K.NewText(f, 10)
+    f.posNote:SetPoint("BOTTOMLEFT", f, "BOTTOMLEFT", 8, 4)
+    local mt0 = C.textMuted or C.textNormal
+    f.posNote:SetTextColor(mt0[1], mt0[2], mt0[3])
+    f.posNote:Hide()
+
     f.credit = K.NewText(f, 10)
     f.credit:SetPoint("BOTTOM", f, "BOTTOM", 0, 4)
     local mt = C.textMuted or C.textNormal
@@ -404,6 +484,19 @@ local function Build(wm)
     f:SetScript("OnMouseWheel", function(_, delta) DM.ShowFloor(view.floor + (delta > 0 and -1 or 1)) end)
     f:SetScript("OnSizeChanged", Layout)
     f:SetScript("OnShow", Layout)
+    -- Eigene Lage: im Takt, nur solange die Karte offen ist.
+    local acc = 0
+    f:SetScript("OnUpdate", function(_, el)
+        acc = acc + (el or 0)
+        if acc < DM.POS_TICK then return end
+        acc = 0
+        pcall(DM.PlacePlayer)
+    end)
+    f:SetScript("OnHide", function()
+        local DPm = WeintCodex.UIDungeonPos
+        if DPm then DPm.Stop() end
+        if f.me then f.me:Hide() end
+    end)
     f:Hide()
     return f
 end
@@ -456,7 +549,9 @@ function DM.BuildRows(B)
             description = "In Dungeons und Schlachtzügen zeigt die Weltkarte (M) die Karte der Instanz, mit Ebenen. Klassische Instanzen: Bilder aus dem Spiel. Neue Dungeons: Zeichnungen von Santiago Reyes (Atlas de Azeroth: Forever)." },
           { type = "slider", label = "Bosse auf der Karte", key = "dungeonPinSize", min = 0, max = 150, step = 10,
             format = function(v) return v == 0 and "aus" or string.format("%d %%", v) end,
-            description = "Größe der Bosspunkte auf der Dungeonkarte. Rechtsklick auf einen Boss öffnet ihn im Codex." })
+            description = "Größe der Bosspunkte auf der Dungeonkarte. Rechtsklick auf einen Boss öffnet ihn im Codex." },
+          { type = "toggle", label = "Eigene Lage auf der Dungeonkarte", key = "dungeonPos",
+            description = "Zeigt in klassischen Instanzen, wo du stehst – solange die Karte offen ist, kein Kampf läuft und keine Quest verfolgt wird. Dafür verfolgt das Spiel kurz Flugmeister; eine Kartenmarke kommt beim Schließen zurück." })
 end
 
 local mod = K.Module(KEY)

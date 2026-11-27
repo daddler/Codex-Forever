@@ -24008,6 +24008,80 @@ do
     Check(ok, "Dungeonkarten: Bosse an ihrer Stelle, Rechtsklick oeffnet den Codex" .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 1.0.10.6: eigene Lage im Dungeon - Entfernungen zu Flugmeistern ueber die
+-- Zielverfolgung, daraus die Lage; nur bei offener Karte, nie im Kampf, die
+-- vorige Verfolgung kommt zurueck.
+do
+    local G = _G
+    local ok, err = pcall(function()
+        local DP, D = WeintCodex.UIDungeonPos, WeintCodex.DungeonPosData
+        assert(DP and D and D.FLOORS[33] and D.FLOORS[33][1], "Modul oder Daten fehlen")
+        -- Rechnung allein: exakte Entfernungen -> Lage auf unter 0,5 yd.
+        local me = { -200, 2150, 80 }
+        local pts, dist = {}, {}
+        for _, id in ipairs(D.ANCHORS[33]) do
+            local n = D.NODES[id]
+            pts[#pts + 1] = n
+            dist[#dist + 1] = math.sqrt((me[1] - n[1]) ^ 2 + (me[2] - n[2]) ^ 2 + (me[3] - n[3]) ^ 2)
+        end
+        local x, y, z, res = DP.Trilaterate(pts, dist)
+        assert(x and math.abs(x - me[1]) < 0.5 and math.abs(y - me[2]) < 0.5 and res < 0.5,
+            "Lage falsch: " .. tostring(x) .. ", " .. tostring(y))
+        -- Mit gerundeten Entfernungen (das Spiel nennt ganze Yards) noch auf wenige Yards.
+        for i = 1, #dist do dist[i] = math.floor(dist[i] + 0.5) end
+        x, y = DP.Trilaterate(pts, dist)
+        assert(math.abs(x - me[1]) < 8 and math.abs(y - me[2]) < 8, "gerundet zu ungenau: " .. x .. ", " .. y)
+        assert(DP.Trilaterate({ pts[1], pts[2], pts[3] }, { 1, 2, 3 }) == nil, "aus drei Punkten geraten")
+        -- Ablauf mit nachgebildeter Zielverfolgung.
+        local oST, oNav, oT, oCL, oFac = G.C_SuperTrack, G.C_Navigation, G.GetTime, G.InCombatLockdown, G.UnitFactionGroup
+        local now, pin, quest, combat = 100, nil, 0, false
+        local restoredPin
+        G.GetTime = function() return now end
+        G.InCombatLockdown = function() return combat end
+        G.UnitFactionGroup = function() return "Alliance" end
+        G.C_SuperTrack = {
+            SetSuperTrackedMapPin = function(t, id) pin = id if t == 7 then restoredPin = id end end,
+            GetSuperTrackedMapPin = function() if pin then return DP.TAXI, pin end end,
+            GetSuperTrackedQuestID = function() return quest end,
+            IsSuperTrackingUserWaypoint = function() return false end,
+            ClearAllSuperTracked = function() pin = nil end,
+        }
+        G.C_Navigation = { GetDistance = function()
+            local n = pin and D.NODES[pin]
+            if not n then return 0 end
+            return math.sqrt((me[1] - n[1]) ^ 2 + (me[2] - n[2]) ^ 2 + (me[3] - n[3]) ^ 2)
+        end }
+        assert(DP.Available(), "nicht verfuegbar")
+        -- Verfolgt das Spiel eine Quest: nicht messen (sie kaeme nicht zurueck).
+        quest = 4242
+        assert(not DP.Start(33) and not DP.state.active, "trotz verfolgter Quest gemessen")
+        quest = 0
+        -- Vorher verfolgte Kartenmarke (Art 7) kommt zurueck.
+        G.C_SuperTrack.GetSuperTrackedMapPin = function() if pin then return pin == 77 and 7 or DP.TAXI, pin end end
+        pin = 77
+        for _, id in ipairs(DP.Anchors(33)) do assert(D.NODES[id][4] ~= 2, "Horde-Flugmeister fuer Allianz") end
+        assert(DP.Start(33), "Messung startet nicht")
+        for _ = 1, 60 do now = now + 0.06 DP.Step() end
+        local u, v = DP.OnFloor(33, 1)
+        local b = D.FLOORS[33][1]
+        assert(u and math.abs(u - (b[4] - me[2]) / (b[4] - b[3])) < 0.02 and math.abs(v - (b[2] - me[1]) / (b[2] - b[1])) < 0.02,
+            "Lage nicht auf der Karte: " .. tostring(u) .. ", " .. tostring(v))
+        assert(DP.OnFloor(33, 99) == nil and DP.OnFloor(34, 1) == nil, "Lage auf fremder Ebene/Instanz")
+        -- Kampf: Messung endet sofort, die Kartenmarke kommt zurueck.
+        combat = true
+        DP.Step()
+        assert(not DP.state.active and restoredPin == 77, "Kampf beendet die Messung nicht / Marke nicht zurueck")
+        assert(not DP.Start(33), "im Kampf gestartet")
+        -- Ohne Zielverfolgung im Client: keine Messung, kein Punkt.
+        combat = false
+        G.C_Navigation = nil
+        assert(not DP.Available() and not DP.Start(33), "ohne Navigation gemessen")
+        G.C_SuperTrack, G.C_Navigation, G.GetTime, G.InCombatLockdown, G.UnitFactionGroup = oST, oNav, oT, oCL, oFac
+        DP.state.fix = nil
+    end)
+    Check(ok, "Eigene Lage im Dungeon: Rechnung, Ablauf, nie im Kampf" .. (ok and "" or (": " .. tostring(err))))
+end
+
 -- 6.73.0.0: eigenes Ziel setzt den Wegpunkt des Spiels und nimmt ihn wieder ab.
 do
     local ok, err = pcall(function()
