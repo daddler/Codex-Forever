@@ -23934,6 +23934,13 @@ do
         local DM, D = WeintCodex.UIDungeonMap, WeintCodex.DungeonMapData
         assert(DM and D and D.MAPS and D.MAPS[33], "Bestand fehlt")
         assert(D.SOURCE and D.SOURCE.kind == "community", "Herkunft fehlt")
+        -- 1.0.10.7: Tempel - Karte des Spiels zuerst (eigene Lage), dann vier
+        -- Zeichnungen ohne Grenzen (kein Punkt darauf).
+        local st = D.MAPS[109]
+        assert(st and #st.floors == 5 and st.floors[1].tiles and not st.floors[1].files, "Tempel: Ebenen falsch")
+        for i = 2, 5 do assert(st.floors[i].files and st.floors[i].name, "Tempel: Zeichnung " .. i .. " fehlt") end
+        local DPx = WeintCodex.UIDungeonPos
+        assert(DPx.Bounds(109, 1) and DPx.Bounds(109, 2) == nil, "Tempel: Lage auf der Zeichnung")
         for id, m in pairs(D.MAPS) do
             assert(#m.floors > 0, "Instanz ohne Ebene " .. id)
             for _, f in ipairs(m.floors) do

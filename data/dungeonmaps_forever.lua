@@ -64,3 +64,22 @@ D.MAPS[3039] = { name = "Krol'dok Stronghold", drawn = true, floors = Floors("30
 D.MAPS[2994] = { name = "Alcaz Island Prison", drawn = true, floors = Floors("2994", 2, "Alcaz Island Prison") }
 D.MAPS[2974] = { name = "Blackmaw Hold", drawn = true, floors = Floors("2974", 6, "Blackmaw Hold") }
 D.MAPS[3001] = { name = "Shaper's Terrace", drawn = true, floors = Floors("3001", 2, "Shaper's Terrace") }
+
+-- 1.0.10.7 (Wunsch des Spielers nach den alten Tempelkarten): Tempel von
+-- Atal'Hakkar - die Karte des Spiels (Ebene 1, Kacheln aus dem Client) zeigt
+-- nur die Mitte. Dazu vier Zeichnungen von Santiago Reyes fuer Season of
+-- Discovery, veroeffentlicht am 12.02.2025 auf
+-- https://www.sreyesmaps.com/post/mapas-en-season-of-discovery-con-keystone-guru
+-- („Templo de Atal'Hakkar totalmente cartografiado“, ausdruecklich fuer ein
+-- Addon gedacht); dieselben Bedingungen wie oben. Bilder unveraendert aus
+-- MapUtils 1.8.2 (media/220_2..5.blp, dort mit Nennung des Zeichners),
+-- gepackt mit make_dungeonmaps.py. Eigene Lage nur auf Ebene 1 (fuer die
+-- Zeichnungen kennt niemand die Grenzen).
+local CREDIT_SOD = "Karte: Santiago Reyes – sreyesmaps.com"
+if D.MAPS[109] and D.MAPS[109].floors then
+    for i, label in ipairs({ "Entrance", "Hall of the Cursed", "Pit of Refuse", "Hall of Serpents" }) do
+        local key = "109_" .. (i + 1)
+        table.insert(D.MAPS[109].floors, { files = { PATH .. key .. "_a", PATH .. key .. "_b" }, h = 683,
+            name = "The Temple of Atal'Hakkar – " .. label, credit = CREDIT_SOD })
+    end
+end
