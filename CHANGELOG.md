@@ -9,6 +9,26 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.0.10.6] – 2026-11-27
+
+### Hinzugefügt
+- **Eigene Lage auf der Dungeonkarte** (`ui/dungeonpos.lua`, Daten
+  `data/dungeonpos.lua` aus `.github/scripts/import_dungeonpos.py`, MapUtils
+  1.8.2, GPL-3.0, nur Daten): Entfernungen zu Flugmeistern über
+  `C_SuperTrack.SetSuperTrackedMapPin` + `C_Navigation.GetDistance`,
+  Trilateration. Nur bei offener Karte, nie im Kampf, nie bei verfolgter
+  Quest; jede Änderung über `K.QuietMap`. 25 Instanzen, 62 Ebenen.
+  Schalter `dungeonPos`, Stand in `/wcui dungeonkarte`.
+
+### Geändert
+- Daten aus Naowh Forever 1.5.0 (Build 71139): Kompendium, Questorte ohne
+  Season of Discovery, Malor der Eifrige mit NPC-Nummer.
+
+### Behoben
+- `make_boss_npcs.py` dekodiert Lua-Zeichenketten: Umlaute in
+  `data/boss_npcs.lua` standen als `\\195\\164` im Spiel und wurden je Lauf
+  erneut maskiert.
+
 ## [1.0.10.5] – 2026-11-26
 
 ### Behoben

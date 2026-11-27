@@ -22,6 +22,15 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.0.10.6",
+        date    = "27.11.2026",
+        notes   = {
+            "|cff7C6CFFDu bist hier|r – auf der Dungeonkarte der klassischen Instanzen zeigt ein Punkt, wo du gerade stehst. Er erscheint bei offener Karte außerhalb des Kampfes und wenn keine Quest verfolgt wird; ist etwas davon nicht erfüllt, sagt die Karte unten links, warum. Abschalten auf der Seite „Karte“.",
+            "|cff7C6CFFBossnamen mit Umlauten|r – Reliktwächter, Salzrücken, Theka der Märtyrer und andere standen mit Zeichensalat im Spiel. Jetzt richtig.",
+            "|cff7C6CFFDungeondaten aktualisiert|r – Kompendium auf dem neuesten Spielstand, Quests aus der Season of Discovery, die es hier nicht gibt, sind von der Karte verschwunden.",
+        },
+    },
+    {
         version = "1.0.10.5",
         date    = "26.11.2026",
         notes   = {
