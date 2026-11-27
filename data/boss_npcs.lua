@@ -4,7 +4,7 @@
 -- ERZEUGT von .github/scripts/make_boss_npcs.py - nicht von Hand aendern.
 -- Zuordnung ueber gleiche Beute (data/loot.lua <-> Journal), kein Name
 -- verglichen. B[npc] = { Dungeon, Boss, deutscher Name, englischer Name }.
--- 240 Bosse mit Nummer, 10 ohne (keine eindeutige Beute).
+-- 241 Bosse mit Nummer, 9 ohne (keine eindeutige Beute).
 --------------------------------------------------
 
 WeintCodex = WeintCodex or {}
@@ -85,8 +85,8 @@ WeintCodex.BossNpcs = {
     [264172] = { "drowned_city", "umbra", "Umbra", "Umbra" },
     [270883] = { "drowned_city", "vartaka", "Var'Taka", "Var'Taka" },
     [270882] = { "drowned_city", "zulalai", "Zul'Alai", "Zul'Alai" },
-    [260326] = { "excavation_site", "relic_guardian", "Reliktw\\195\\164chter", "Relic Guardian" },
-    [260322] = { "excavation_site", "saltspine", "Salzr\\195\\188cken", "Saltspine" },
+    [260326] = { "excavation_site", "relic_guardian", "Reliktwächter", "Relic Guardian" },
+    [260322] = { "excavation_site", "saltspine", "Salzrücken", "Saltspine" },
     [260325] = { "excavation_site", "shadetooth", "Schemenzahn", "Shadetooth" },
     [6229] = { "gnomeregan", "crowd_pummeler", "Meute-Verprügler 9-60", "Crowd Pummeler 9-60" },
     [6228] = { "gnomeregan", "dark_iron_ambassador", "Botschafter der Dunkeleisenzwerge", "Dark Iron Ambassador" },
@@ -187,6 +187,7 @@ WeintCodex.BossNpcs = {
     [10558] = { "stratholme", "hearthsinger_forresten", "Herdsinger Forresten", "Hearthsinger Forresten" },
     [10435] = { "stratholme", "magistrate_barthilas", "Magistrat Barthilas", "Magistrate Barthilas" },
     [10438] = { "stratholme", "maleki_the_pallid", "Maleki der Leichenblasse", "Maleki the Pallid" },
+    [11032] = { "stratholme", "malor_the_zealous", "Malor der Eifrige", "Malor the Zealous" },
     [10437] = { "stratholme", "nerubenkan", "Nerub'enkan", "Nerub'enkan" },
     [11143] = { "stratholme", "postmaster_malown", "Postmeister Malown", "Postmaster Malown" },
     [10439] = { "stratholme", "ramstein", "Ramstein der Verschlinger", "Ramstein the Gorger" },
@@ -244,9 +245,9 @@ WeintCodex.BossNpcs = {
     [8127] = { "zulfarrak", "antusul", "Antu'sul", "Antu'sul" },
     [7273] = { "zulfarrak", "gahzrilla", "Gahz'rilla", "Gahz'rilla" },
     [7796] = { "zulfarrak", "nekrum", "Nekrum der Ausweider", "Nekrum Gutchewer" },
-    [7604] = { "zulfarrak", "sergeant_bly", "Sergeant Bly", "Sergeant Bly" },
+    [7604] = { "zulfarrak", "sergeant_bly", "Unteroffizier Bly", "Sergeant Bly" },
     [7275] = { "zulfarrak", "sezzziz", "Schattenpriester Sezz'ziz", "Shadowpriest Sezz'ziz" },
-    [7272] = { "zulfarrak", "theka", "Theka der M\\195\\164rtyrer", "Theka the Martyr" },
+    [7272] = { "zulfarrak", "theka", "Theka der Märtyrer", "Theka the Martyr" },
     [7267] = { "zulfarrak", "ukorz", "Häuptling Ukorz Sandwüter", "Chief Ukorz Sandscalp" },
     [7271] = { "zulfarrak", "zumrah", "Hexendoktor Zum'rah", "Witch Doctor Zum'rah" },
 }

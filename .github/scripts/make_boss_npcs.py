@@ -31,6 +31,32 @@ ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)
 OUT = os.path.join(ROOT, "data", "boss_npcs.lua")
 
 
+def lua_unescape(s):
+    """Text einer Lua-Zeichenkette (zwischen den Anfuehrungszeichen) -> str.
+    1.0.10.6: \\ddd sind Bytes (UTF-8 der Umlaute) - vorher roh uebernommen
+    und beim Schreiben noch einmal maskiert, je Lauf doppelt."""
+    out, i = bytearray(), 0
+    while i < len(s):
+        c = s[i]
+        if c == "\\" and i + 1 < len(s):
+            n = s[i + 1]
+            m = re.match(r"\d{1,3}", s[i + 1:])
+            if m:
+                out.append(int(m.group(0)))
+                i += 1 + len(m.group(0))
+                continue
+            out += {"n": b"\n", "t": b"\t"}.get(n, n.encode("utf-8"))
+            i += 2
+            continue
+        out += c.encode("utf-8")
+        i += 1
+    text = out.decode("utf-8", errors="replace")
+    # Altlast frueherer Laeufe: noch einmal maskierte Bytes ("\\195\\164") aufloesen.
+    while re.search(r"\\\d{3}", text):
+        text = lua_unescape(text)
+    return text
+
+
 def read(name):
     with open(os.path.join(ROOT, "data", name), encoding="utf-8") as f:
         return f.read()
@@ -113,7 +139,7 @@ def main():
                 open(OUT, encoding="utf-8").read(), re.M):
             if (d, b) in have or int(npc) in used or b not in comp.get(d, {}):
                 continue
-            rows.append((d, b, int(npc), de.replace('\\"', '"'), comp[d][b]))
+            rows.append((d, b, int(npc), lua_unescape(de), comp[d][b]))
             have.add((d, b)); used.add(int(npc)); found += 1
             missing = [m for m in missing if m != f"{d}/{b}"]
         rows.sort()
@@ -130,7 +156,7 @@ def main():
         data = os.path.join(sys.argv[1], "Data")
         nf = json.loads(subprocess.run(["lua5.1", os.path.join(ROOT, ".github", "scripts", "nf_dump.lua"), data],
                                        check=True, capture_output=True, text=True).stdout)
-        de = dict((int(k), v) for k, v in re.findall(r'\[(\d+)\] = "((?:[^"\\]|\\.)*)"',
+        de = dict((int(k), lua_unescape(v)) for k, v in re.findall(r'\[(\d+)\] = "((?:[^"\\]|\\.)*)"',
                   open(os.path.join(data, "Names", "deDE.lua"), encoding="utf-8").read()))
         have = {(r[0], r[1]) for r in rows}
         used = {r[2] for r in rows}

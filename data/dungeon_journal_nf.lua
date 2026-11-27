@@ -5,7 +5,7 @@
 -- neu erzeugen. Ergaenzt data/dungeon_journal.lua und den Abgleich mit
 -- ForeverGuide (data/dungeon_journal_fg.lua) ueber J.MergeNaowh().
 --
--- Stand: Daten des Addons vom 24 Nov 2026, Client-Build 1.60.1.71091.
+-- Stand: Daten des Addons vom 25 Nov 2026, Client-Build 1.60.1.71139.
 -- HERKUNFT (nur fuer Betreuer): Beute und Dropchancen von Wowhead Forever
 -- und wowsrc.com, Bosse und Stufen aus den Clienttabellen, "noch nicht im
 -- Spiel" aus ItemSparse und dem, was der Server schickt. Im Spiel steht nur
