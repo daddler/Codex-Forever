@@ -24113,7 +24113,8 @@ do
         assert(DP.Heading(33) == nil, "Richtung ohne Bewegung")
         -- Laufen mit 7 yd/s (Schritte zu 0,06 s), dann kurz stehen.
         local function Walk(axis, yards)
-            for _ = 1, math.floor(yards / 0.42) do now = now + 0.06 me[axis] = me[axis] + 0.42 DP.Step() end
+            local step = yards > 0 and 0.42 or -0.42
+            for _ = 1, math.floor(math.abs(yards) / 0.42) do now = now + 0.06 me[axis] = me[axis] + step DP.Step() end
             for _ = 1, 10 do now = now + 0.06 DP.Step() end
         end
         Walk(1, 30)
@@ -24123,6 +24124,41 @@ do
         hd = DP.Heading(33)
         assert(hd and math.abs(hd - math.pi / 2) < 0.35, "Richtung Westen falsch: " .. tostring(hd))
         assert(DP.Heading(34) == nil, "Richtung fuer fremde Instanz")
+        -- 1.0.10.9 (im Tempel: immer noch ein Punkt): das Spiel nennt nach
+        -- dem Wechsel des Ziels noch einige Bilder lang die Entfernung zum
+        -- VORIGEN Ziel, und nur ganze Yards. Beim Laufen aendert die sich
+        -- auch - sie darf nicht als neue Entfernung zaehlen, sonst wird jede
+        -- Lage verworfen und der Pfeil kommt nie.
+        local prevPin, switchT = nil, -1
+        local realSet = G.C_SuperTrack.SetSuperTrackedMapPin
+        G.C_SuperTrack.SetSuperTrackedMapPin = function(t, id)
+            if id ~= pin then prevPin, switchT = pin, now end
+            realSet(t, id)
+        end
+        G.C_Navigation.GetDistance = function()
+            local id = pin
+            if prevPin and now - switchT < 0.2 then id = prevPin end
+            local n = id and D.NODES[id]
+            if not n then return 0 end
+            return math.floor(math.sqrt((me[1] - n[1]) ^ 2 + (me[2] - n[2]) ^ 2 + (me[3] - n[3]) ^ 2) + 0.5)
+        end
+        local rejected0, fixes0 = DP.stats.rejected, DP.stats.fixes
+        DP.state.heading = nil
+        Walk(1, -40)
+        hd = DP.Heading(33)
+        assert(DP.stats.fixes - fixes0 >= 5, "beim Laufen kaum Lagen: " .. (DP.stats.fixes - fixes0)
+            .. ", verworfen " .. (DP.stats.rejected - rejected0))
+        assert(hd and math.abs(hd - math.pi) < 0.5, "Richtung Sueden falsch: " .. tostring(hd))
+        -- Karte im Laufen geoeffnet (keine Lage zum Vergleichen): trotzdem Lagen.
+        DP.Stop()
+        DP.state.fix, DP.state.heading = nil, nil
+        assert(DP.Start(33), "Neustart")
+        fixes0 = DP.stats.fixes
+        Walk(2, -40)
+        assert(DP.stats.fixes - fixes0 >= 5 and DP.Heading(33), "im Laufen geoeffnet: keine Lage/Richtung ("
+            .. (DP.stats.fixes - fixes0) .. ")")
+        hd = DP.Heading(33)
+        assert(math.abs(hd - 3 * math.pi / 2) < 0.5, "Richtung Osten falsch: " .. tostring(hd))
         -- Kampf: Messung endet sofort, die Kartenmarke kommt zurueck.
         combat = true
         DP.Step()

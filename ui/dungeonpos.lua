@@ -46,6 +46,17 @@ DP.SHOW_AGE = 3       -- s: so lange gilt eine Lage
 -- aus der Bewegung zwischen zwei Lagen, erst ab so vielen Yards (darunter
 -- waere es Rauschen der Messung). Drehen auf der Stelle sieht sie nicht.
 DP.HEAD_MOVE = 8
+-- 1.0.10.9 (im Tempel: "immer noch ein Punkt"): nach dem Wechsel des Ziels
+-- nennt das Spiel noch einige Bilder lang die Entfernung zum VORIGEN Ziel.
+-- Im Stehen fiel das auf (gleicher Wert), beim Laufen nicht - fast jede Lage
+-- wurde verworfen. Jetzt: eine Entfernung muss zur letzten Lage passen
+-- (hoechstens DP.JUMP Yards daneben plus DP.SPEED je Sekunde seither);
+-- ist die letzte Lage aelter als DP.TRUST_AGE, gilt wieder nur "anders als
+-- zuvor".
+DP.JUMP = 15
+DP.SPEED = 12
+DP.TRUST_AGE = 5
+DP.SETTLE = 0.25      -- s: ohne verlaessliche Lage so lange nach dem Wechsel warten
 DP.TAXI = _G.Enum and _G.Enum.SuperTrackingMapPinType and _G.Enum.SuperTrackingMapPinType.TaxiNode or 2
 
 local floor, sqrt, abs = math.floor, math.sqrt, math.abs
@@ -262,6 +273,17 @@ local function ReadDistance()
     return type(d) == "number" and d > 0 and d or nil
 end
 
+-- Passt Entfernung d zu Flugpunkt id, gemessen an der letzten Lage?
+function DP.Plausible(id, d, now)
+    local f = state.fix
+    local node = Data().NODES[id]
+    if not (f and node) then return true end
+    local age = now - f.t
+    if age > DP.TRUST_AGE then return true end
+    local expect = sqrt((f.x - node[1]) ^ 2 + (f.y - node[2]) ^ 2 + (f.z - node[3]) ^ 2)
+    return abs(d - expect) <= DP.JUMP + DP.SPEED * age
+end
+
 local function Switch(now)
     local list = state.list
     if #list == 0 then return end
@@ -289,6 +311,10 @@ function DP.Step()
     if not state.cur then Switch(now) return end
     local age = now - state.since
     if age < DP.STEP then return end
+    -- Ohne verlaessliche Lage (Karte im Laufen geoeffnet) erst nach DP.SETTLE
+    -- lesen - vorher kann noch das vorige Ziel antworten.
+    local f = state.fix
+    if age < DP.SETTLE and not (f and now - f.t <= DP.TRUST_AGE) then return end
     local d = ReadDistance()
     if not Ours() then
         DP.stats.refused = DP.stats.refused + 1
@@ -296,6 +322,11 @@ function DP.Step()
         return
     end
     -- Gleich der vorigen Entfernung: die Navigation zeigt noch das alte Ziel.
+    -- Passt sie nicht zur letzten Lage, ebenso (siehe DP.JUMP).
+    if d and not DP.Plausible(state.cur, d, now) then
+        DP.stats.stale = (DP.stats.stale or 0) + 1
+        d = nil
+    end
     if d and (d ~= state.last or age >= DP.TIMEOUT) then
         state.readings[state.cur] = state.readings[state.cur] or {}
         state.readings[state.cur].d, state.readings[state.cur].t = d, now
@@ -376,8 +407,10 @@ function DP.StatusLines()
     local out = {
         "Eigene Lage: Zielverfolgung " .. (DP.Available() and "da" or "fehlt")
             .. " · misst " .. (state.active and "ja" or "nein")
-            .. string.format(" · Entfernungen %d, stumm %d, abgelehnt %d, Lagen %d, verworfen %d",
-                s.readings, s.misses, s.refused, s.fixes, s.rejected),
+            .. string.format(" · Entfernungen %d, stumm %d, abgelehnt %d, alt %d, Lagen %d, verworfen %d",
+                s.readings, s.misses, s.refused, s.stale or 0, s.fixes, s.rejected),
+        "Richtung aus der Bewegung: " .. (state.heading and string.format("%.0f°", math.deg(state.heading)) or "noch keine")
+            .. " · Blickrichtung vom Spiel: " .. ((_G.GetPlayerFacing and type(K.Plain(_G.GetPlayerFacing())) == "number") and "ja" or "nein"),
     }
     local f = state.fix
     if f then
