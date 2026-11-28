@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.0.10.9",
+        date    = "28.11.2026",
+        notes   = {
+            "|cff7C6CFFPfeil auf der Dungeonkarte, diesmal beim Laufen|r – die eigene Lage wurde beim Laufen fast immer verworfen, deshalb blieb es beim Punkt. Jetzt folgt sie dir, und nach ein paar Schritten zeigt der Pfeil, wohin du läufst.",
+        },
+    },
+    {
         version = "1.0.10.8",
         date    = "28.11.2026",
         notes   = {

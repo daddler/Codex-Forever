@@ -9,6 +9,16 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.0.10.9] – 2026-11-28
+
+### Behoben
+- **Eigene Lage beim Laufen** (`ui/dungeonpos.lua`): nach dem Zielwechsel
+  nennt die Navigation kurz noch die Entfernung zum vorigen Ziel – beim
+  Laufen wurde fast jede Lage verworfen, der Pfeil kam nie. Entfernungen
+  müssen zur letzten Lage passen (`DP.Plausible`), ohne solche wird nach dem
+  Wechsel `DP.SETTLE` gewartet. `/wcui dungeonkarte` zählt „alt“ und nennt
+  die Richtung.
+
 ## [1.0.10.8] – 2026-11-28
 
 ### Hinzugefügt
